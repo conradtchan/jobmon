@@ -1,0 +1,89 @@
+
+bobMonitor (c) Robin Humble 2003-2009
+License: GPLv3
+http://code.google.com/p/bob-monitor/
+
+
+INTRODUCTION:
+
+bobMonitor is a cluster montoring tool that presents near real-time job and cluster
+information in a dynamic web page. it is aimed at both
+cluster administrators and users, and enables them to visually see how jobs
+and the cluster is performing.
+
+python is used on the server side to aggregate and collate information and
+generate an XML file of the cluster and job state. JavaScript is used on the client-side (in the browser) to frequently update the cluster display.
+historical data over the length of the job's run is visible.
+
+bobMonitor has been developed since 2003 and should be portable to most ganglia enabled and PBS compatible cluster environments. it has been developed with HPC clusters and jobs in mind.
+
+
+CONFIGURATION:
+
+a single simple config file is used to setup preferences for both the server-side python code and the client-side JavaScript code.
+
+
+REQUIREMENTS:
+
+bobMonitor relies upon the following:
+ - ganglia  http://ganglia.info/
+ - a PBS variant such as OpenPBS or torque
+ - python 2.4 or above (but not 3.*)
+ - a web server with cgi-bin access
+ - a JavaScript enabled web browser
+
+server-side pie charts of the queue require:
+ - PyChart  http://home.gna.org/pychart/ 
+ - netpbm tools for pieChart image post-processing
+
+optional:
+ - maui scheduler (moab is untested but might work)
+
+bobMonitor gratefully uses and includes a copy of Erik Arvidsson's
+slider implementation:
+  http://webfx.eae.net/dhtml/slider/slider.html
+and a progress bar from the Dynamic Drive DHTML code library:
+  http://www.dynamicdrive.com/dynamicindex11/dhtmlprogress2.htm
+
+
+INSTALLATION:
+
+see the INSTALL file
+
+
+TESTING:
+
+RedHat 4/5 variants are the only tested server-side configuration.
+
+most client testing has been done with gecko based browsers (eg. firefox), but
+webkit (eg. safari) has also been lightly tested. IE is untested, but might work.
+
+
+OPTIMISATIONS:
+
+the bobMonitor client-side JavaScript code is optimised to lower the load on
+browsers by updating only those fields that have changed since the last update.
+it has been tested with clusters of 100's of nodes and it is expected to scale
+1000+ node clusters. the ever improving JavaScript implementations in modern
+browsers will also help.
+
+bandwidth required by the XML stream is small, but probably shouldn't be
+attempted frequently over dial-up.
+
+the server-side load has been optimised by decoupling the state gathering and
+aggregation from the web requests. typically the XML state of
+the cluster is updated every 5 to 10 seconds or so, wheras the cgi-bin script
+may send this XML stream to many clients in the same time.
+
+
+FUTURE:
+
+- currently all compute nodes are assumed to have same number of cpus - allow this to vary (variable amounts of ram is already implemented)
+- direct querying of the PBS server rather than via qstat, pbsnodes etc. - possibly via one of the pbsPython libraries - and the same for maui?
+- client-side 'canvas' or svg pie charts instead of server-side png's - is svg really as ungainly to dynamically generate in a web page as it appears to be?!?
+- further tidying of the code and taking out old cruft
+- make network stats (eg. IB) and temperatures (eg. cpu/motherboard) more pluggable and configurable
+- make the server side dump job stats into a database, not just write them to the log file
+- query ganglia for the layout of nodes in racks instead of using the config file
+- bobMon.js could be shortened, especially in the tooltop init/refresh duplications
+- bobMon.js could be split into sensible sub-classes
