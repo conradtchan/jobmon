@@ -1,0 +1,23 @@
+diff -ruN slider.orig/css/bluecurve/bluecurve.css slider/css/bluecurve/bluecurve.css
+--- slider.orig/css/bluecurve/bluecurve.css	2006-05-26 14:42:30.000000000 +1000
++++ slider/css/bluecurve/bluecurve.css	2007-03-15 05:15:36.000000000 +1100
+@@ -57,9 +57,9 @@
+ 	overflow:			hidden;
+ 	border:				1px solid rgb(90,97,90);
+ 	background:			rgb(189,190,189);
+-	
+-	behavior:			url("css/boxsizing.htc"); /* ie path bug */
+-	box-sizing:			content-box;
++/* merz */	
++/*	behavior:			url("css/boxsizing.htc"); *//* ie path bug */
++/*	box-sizing:			content-box;  */
+ 	-moz-box-sizing:	content-box;
+ }
+ .dynamic-slider-control.vertical .line {
+@@ -77,4 +77,4 @@
+ 	border:				1px solid;
+ 	border-color:		rgb(230,230,230) rgb(189,190,189)
+ 						rgb(189,190,189) rgb(230,230,230);
+-}
+\ No newline at end of file
++}

@@ -1,0 +1,12 @@
+example utilities that use the bobMonitor libraries
+
+  qstat.py
+    a more useful qstat that includes maui information too
+
+  readJobStats.py
+    typically run from PBS epilogue scripts to provide resource usage
+    information to users
+
+  usedCores.py
+    take high level aggregated node use and scheduler info from bobMon
+    output files and dump it into ganglia to it can be plotted

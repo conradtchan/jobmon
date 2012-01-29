@@ -1,0 +1,11 @@
+#!/bin/sh
+
+DATADIR=/var/spool/bobMon
+
+while true; do
+   logger bobMon restart
+   /usr/lib/bobMon/bobMon.py 2>&1 | logger -t bobMon
+   sleep 30
+done
+
+exit 0
