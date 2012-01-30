@@ -114,12 +114,12 @@ def whosQueued( queued, textMode=0 ):
     for job in queued:
         bq = queuedJobState( job )
         if bq == 'b':
-             b.append( job )
+            b.append( job )
         elif bq == 'q':
-             q.append( job )
+            q.append( job )
         else:
-             print 'job has unknown queue state:', job
-             sys.exit(1)
+            print 'job has unknown queue state:', job
+            sys.exit(1)
 
     qRet = ( [], 0 )
     bRet = ( [], 0 )
@@ -581,10 +581,10 @@ def infoFromQueued( queued, availableNodes, availCpus ):
 
 def tagAsBlocked( m, queued ):
     if m != None:
-    # figure out if any of the queued jobs are really blocked
-    id = []
-    for i in m.getBlockedList():   # blocked, held, and otherwise Idle according to maui
-        id.append( i['jobId'] )
+        # figure out if any of the queued jobs are really blocked
+        id = []
+        for i in m.getBlockedList():   # blocked, held, and otherwise Idle according to maui
+            id.append( i['jobId'] )
 
     # loop over queued jobs and tag the 'blocked' ones
     for i in range(len(queued)):
@@ -595,8 +595,8 @@ def tagAsBlocked( m, queued ):
             continue
 
         if m != None:
-        jobInt = int( string.split( jobId, '.' )[0] )
-        if jobInt in id:
+            jobInt = int( string.split( jobId, '.' )[0] )
+            if jobInt in id:
                 queued[i] = ( n, c, 'B', user, jobId, jobName, walltime, comment )
         else:
             # no maui information, so look at PBS comments instead
@@ -652,10 +652,10 @@ def doStatus( freeNow, availableNodes, queued, maui, textMode=0, freeCpus=0, use
     else:
         txt += '%d nodes idle' % freeNow
 
-        if freeCpus == 1:
-            txt += ', 1 cpu idle'
-        else:
-            txt += ', %d cpus idle' % freeCpus
+    if freeCpus == 1:
+        txt += ', 1 cpu idle'
+    else:
+        txt += ', %d cpus idle' % freeCpus
 
     txt += br
 

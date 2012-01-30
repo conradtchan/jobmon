@@ -459,7 +459,7 @@ def doPbsInfo( pbsnodes ):
             i = 'offline'
         else:
             # need to process the drainng*'s in the order they appear 'cos PBS treats them that way:
-        for s in info:
+            for s in info:
                 if s == 'draining':
                     i = 'draining'
                     break
@@ -467,19 +467,19 @@ def doPbsInfo( pbsnodes ):
                     i = 'fill'
                     break
                 elif s[:9] == 'draining-':
-                # translate the time into hrs relative to now
+                    # translate the time into hrs relative to now
                     hrs = drainingHrs(s)
                     if hrs != None:  # could be draining-fill or something else that we don't handle here
-                    if hrs < 0:
+                        if hrs < 0:
                             i = 'draining'
-                    else:
+                        else:
                             if hrs > 10:
                                 i = '%dh' % int(hrs)
                             else:
                                 i = '%.1fh' % hrs
                     else:
                         i = s[9:]
-                break
+                    break
 
         #print 'n', n, 'info', info, 'hw', hw, 'i', i
         infoHw.append( (n, i, hw) )
@@ -498,9 +498,9 @@ def doPbsNodes( pbsnodes ):
         if info != '':
             state += info + ', '
         for s in hw:
-            state += s + ','
+            state += s + ', '
         state = state[:-2]
-        state += '"],'
+        state += '"], '
 
     if len(state) > 1 and state[-2] == ', ':
         state = state[:-2]
@@ -590,9 +590,9 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes=None ):   # work out how 
                 pbs[n] = []
     else:
         p = pbsnodes
-    for i in range(1,config.numNodes+1):
-        n = config.baseNodeName + '%d' % i
-        pbs[n] = []
+        for i in range(1,config.numNodes+1):
+            n = config.baseNodeName + '%d' % i
+            pbs[n] = []
 
     # add all nodes and their status's into a pbs dict
     for node, status, cores in p:  # make into a dict
@@ -647,7 +647,7 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes=None ):   # work out how 
             #    nonAvailNodes += 1
             continue
 
-            availNodes += 1
+        availNodes += 1
         #print 'avail', node
         if cores != None:
             freeCpus += cores
@@ -656,10 +656,10 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes=None ):   # work out how 
             freeCpus += config.coresPerNode
             availCpus += config.coresPerNode
 
-            if node in jobList.keys():
-                freeCpus -= len(jobList[node])
-            else:
-                freeNodes += 1
+        if node in jobList.keys():
+            freeCpus -= len(jobList[node])
+        else:
+            freeNodes += 1
 
     #print 'freeCpus, freeNodes, availCpus, availNodes', freeCpus, freeNodes, availCpus, availNodes
     return ( freeCpus, freeNodes, availCpus, availNodes )
@@ -761,7 +761,7 @@ def doHash( jobs, queued, availCpus ):
 def findOldPies( hashes ):
     # look for files of that hash basename in piePath
     try:
-    files = os.listdir( config.piePath )
+        files = os.listdir( config.piePath )
     except OSError, theError:
         print theError, "... continuing anyway"
         return {}
@@ -888,7 +888,7 @@ def writeUserColours( u ):
     tmpFilename = config.piePath + '.tmp'
 
     try:
-    f = open( tmpFilename, 'w+b' )
+        f = open( tmpFilename, 'w+b' )
     except IOError, theError:
         errNum, errStr = theError
         print 'writeUserColours - open failed. IOError', theError
@@ -1215,9 +1215,9 @@ def statsForJob( j, doPrint=0 ):
             bigAve[j] += data[n]['max'][j]
 
         try:
-        u = int(invCnt * data[n]['data'][0])
-        s = int(invCnt * data[n]['data'][1])
-        w = int(invCnt * data[n]['data'][2])
+            u = int(invCnt * data[n]['data'][0])
+            s = int(invCnt * data[n]['data'][1])
+            w = int(invCnt * data[n]['data'][2])
             #print 'normal user/sys/wait', n, data[n]['data'], 'job', j
         except:
             # occasionally get eg.
@@ -1308,14 +1308,14 @@ def doJobStats( jobs, err ):
 
     # find jobs that have finished
     if err == None:  # only delete if the qstat was ok
-    for j in stats.keys():
-        if j not in running:
-            print 'finished',
-            t = statsForJob( j, doPrint=1 )
-            # save all about job and it's stats to file here...
-            # ie. dump all of stats[j] and jobs[j] and statsForJob(j) to a file
+        for j in stats.keys():
+            if j not in running:
+                print 'finished',
+                t = statsForJob( j, doPrint=1 )
+                # save all about job and it's stats to file here...
+                # ie. dump all of stats[j] and jobs[j] and statsForJob(j) to a file
 
-            del stats[j]
+                del stats[j]
 
     return txt
 
@@ -1475,11 +1475,11 @@ def doAll():
     pastie = findOldPies( hashes )  # see if we've done it all before...
     if not debug:
         if not len(pastie):
-        queuedup, blocked = whosQueued( queued )
+            queuedup, blocked = whosQueued( queued )
             #print 'running', running,'suspended',suspended,'queuedup',queuedup,'blocked', blocked,'availCpus',availCpus
-        pieNames, pieTitles, userColour = plotPie( running, suspended, queuedup, blocked, availCpus )
+            pieNames, pieTitles, userColour = plotPie( running, suspended, queuedup, blocked, availCpus )
             #print 'userColour', userColour
-        colourFile = writeUserColours( userColour )
+            colourFile = writeUserColours( userColour )
         #else:
         #    print 'old pies found'
 
@@ -1527,7 +1527,7 @@ def doWrite( txt, fileName, doGzip='no' ):
         tmpFilename += '.gz'
         f = gzip.open( tmpFilename, 'wb' )
     else:
-    f = open( tmpFilename, 'w+b' )
+        f = open( tmpFilename, 'w+b' )
     f.write( doHeader() + txt + doFooter() )
     f.close()
     os.chmod( tmpFilename, mode644 )
