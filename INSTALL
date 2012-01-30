@@ -7,19 +7,27 @@ MANUAL INSTALLATION:
 no bobMonitor code needs to run as root, but it has to be able to write to
 its spool dir and to /tmp. simplest setup is to make root owned dirs, so here's
 that setup...
-the cgi-bin shell scripts for pies and cat'ing the XML file usually run as the
-web server user (eg. 'apache') and have to be able to read the data files.
+the cgi-bin shell scripts for cat'ing the XML file and pie images usually runs as the
+web server user (eg. 'apache') so that user has to be able to read the data files.
 
 as root:
-  # make data dir:
-  # optionally chown /var/spool/bobMon to the user you run bobMon as
+  # make the data dir - this is where the xml files will be written to:
   mkdir /var/spool/bobMon
 
-  # web:
+  # install cgi-bin scripts:
   cp cgi-bin/* /var/www/cgi-bin/
+
+  # install javascript and html:
   mkdir /var/www/html/bobMon
   cp -r www/* /var/www/html/bobMon/
-  chown apache.apache /var/www/html/bobMon/pies/
+
+  # make the directory that the pie images will be written to:
+  mkdir /var/www/html/bobMon/pies/
+
+  # optionally ->
+  # chown the spool and pie directories to the user you run bobMon as eg.
+  chown rjh.rjh /var/spool/bobMon
+  chown rjh.rjh /var/www/html/bobMon/pies/
 
   # unpack the slider zip file into the web dir
   cd /var/www/html/bobMon/
@@ -28,7 +36,7 @@ as root:
   patch -p0 < slider.patch
   # go back to installing the rest of bobMon...
 
-  # server-side:
+  # install the python and shell scripts that make up the server side of bobMon:
   cp sbin/* /usr/sbin/
   mkdir /usr/lib/bobMon
   cp lib/* /usr/lib/bobMon/
@@ -36,13 +44,15 @@ as root:
 the config file setup is a bit trickier:
   mkdir /etc/bobMon
   cp conf/bobMonitorConf.py /etc/bobMon/
-  # edit the config file for your cluster and paths
+
+  # now setup the config file for your cluster config and your path choices
+  #  - see the comments in the conf file.
 
   # bobMon.py needs to be able to import the config, so link it back to lib
   ln -s /etc/bobMon/bobMonitorConf.py /usr/lib/bobMon/
-then check the conf file is ok, and generate the javascript conf from the
+
+then check the conf file syntax is accepted, and generate the javascript conf from the
 python conf with:
-  cd /etc/bobMon
   /usr/lib/bobMon/bobMon.py --config > /var/www/html/bobMon/bobMonitorConf.js
 
 NOTE: every time /etc/bobMon/bobMonitorConf.py is changed, the .js file needs
