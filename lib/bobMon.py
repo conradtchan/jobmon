@@ -770,53 +770,48 @@ def findOldPies( hashes ):
 
     # check the colours .txt file is there
     txt = hashes['running'] + '.txt'
-    if txt not in files:
-        # oops - didn't find, so force a re-pie
-        return {}
-    else:
+    if txt in files:
         fresh['colours'] = txt
+        prebaked = 1
+        #print 'pies might be there. looking'
+    else:
+        prebaked = 0
 
-    # remove all other txt files
+    # search for valid pies and remove stale pies
+    #  - need to go through this loop regularly as stale pies could accumulate indefinitely
     for f in files:
-        # skip all non-png files
+        # skip all non txt,png files
         suffix = string.split( f, '.' )[-1]
-        if suffix != 'txt':
+        if suffix != 'png' and suffix != 'txt':
             continue
 
-        # no longer used, so delete if it's old
-        s = os.stat( config.piePath + f )
-        if time.time() - s.st_atime > 300:  # 5 mins old
-            #print 'removing "' + f + '" as it\'s', str(time.time() - s.st_atime), 'seconds old'
-            try:
-                os.remove( config.piePath + f )
-            except:
-                pass # don't worry about it too much - hope it's transient
-
-    for f in files:
-        # skip all non-png files
-        suffix = string.split( f, '.' )[-1]
-        if suffix != 'png':
-            continue
-
-        base = string.split( f, '.' )[0]
         tasty = 0
-        for k, h in hashes.iteritems():
-            if base == h:
-                #print 'found a current ok "' + k + '" image', f
-                tasty = 1
-                if k not in fresh.keys():
-                    fresh[k] = []
-                fresh[k].append( f )
+        if prebaked:
+            base = string.split( f, '.' )[0]
+            for k, h in hashes.iteritems():
+                if base == h:
+                    #print 'found a current ok "' + k + '" image', f
+                    tasty = 1
+                    if suffix == 'png':
+                        if k not in fresh.keys():
+                            fresh[k] = []
+                        fresh[k].append( f )
 
         if not tasty:
-            # no longer used, so delete if it's old
+            # no longer used, so delete if it's old.
+            # allow a bit of slack as browser queries could still be in flight
             s = os.stat( config.piePath + f )
-            if time.time() - s.st_atime > 300:  # 5 mins old
-                #print 'removing "' + f + '" as it\'s', str(time.time() - s.st_atime), 'seconds old'
+            if time.time() - s.st_mtime > 300:  # 5 mins old
+                #print 'removing "' + f + '" as it\'s', str(time.time() - s.st_mtime), 'seconds old'
                 try:
                     os.remove( config.piePath + f )
                 except:
                     pass # don't worry about it too much - hope it's transient
+
+    if txt not in files:
+        # oops - didn't find, so force a re-pie.
+        #print 'no txt - re-pie'
+        return {}
 
     # check that we found all the images
     hk = hashes.keys()
@@ -826,8 +821,11 @@ def findOldPies( hashes ):
     fk.sort()
     if hk != fk:
         # oops - didn't find all images so force a re-pie
+        # this can happen if queued jobs change but nothing else
+        #print 'not all pies found - re-pie. expected', hk, 'found', fk
         return {}
 
+    #print 'cached'
     fresh['cached'] = [ 'yup' ]
     return fresh
 
