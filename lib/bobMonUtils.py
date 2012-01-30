@@ -31,6 +31,14 @@ class loadedNets(loadedNetsGmond):
 
         return ( netLoad, self.loads, self.cpuUsage, self.up )
 
+    def calcLoadsOnNets( self ):
+        # code used to be here to compute loadedNet[] and unloadedNet[] based on
+        # loads[] and intimate knowledge of which nodes are on which switch.
+        # however network switch topology is different on each cluster, and I don't think
+        # these loadedNet numbers ever meant much anyway.
+        # leave this placeholder here in case anyone wants to implement it later.
+        return
+
     def nameToNum( self, name ):
         if name in config.nonBackendNodes:
             return name
