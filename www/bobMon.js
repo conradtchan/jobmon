@@ -40,7 +40,8 @@ var connectionTimeoutMultiple = 1; // multiple of the refresh rate...
 var connectionTimeout = 30000; // ... plus this, to wait before declaring the link dead
 
 var reconnectTime = 30000; // retry every 30s if the link is down
-var reconnectUpdateTime = 1000; // 1s
+var reconnectUpdateTime = 1000; // time in ms
+var refreshCountDownInterval = 1000;  // time in ms
 
 var items = []; // list of all the node table td objects
 
@@ -110,6 +111,7 @@ var nextMode = currentMode;
 var refresh = 0;
 var prevRefresh = 0;
 var nextRefresh = 0;
+var refreshTimeToGo = 0;
 
 // these are set from the aspectSlider
 numCols = 0;
@@ -380,6 +382,25 @@ function connectAlert() {
     reConnectTimeout = setTimeout( 'reConnectTimer(1);', reconnectUpdateTime );
 }
 
+function resetRefreshCountDownTimer( r ) {
+    var d = document.getElementById( "countdown-1" );
+    if ( r == 0 )
+       d.style.width = '0%';
+    else
+       d.style.width = '100%';
+    refreshTimeToGo = r;
+}
+
+function refreshCountDownTimer() {
+    refreshTimeToGo -= refreshCountDownInterval;
+    var d = document.getElementById( "countdown-1" );
+    var p = 100*refreshTimeToGo/refresh;
+    p = parseInt(p); // now an int
+    if ( p < 0 ) p = 0;
+    if ( p > 100 ) p = 100;
+    d.style.width = p.toString() + '%';
+}
+
 var timeoutCookie;
 var timeoutCookieTime = 1000;  // wait a short time after the slider's stopped moving, and then set a cookie
 cookieName = 'bobMon-' + config.clusterName;
@@ -395,6 +416,8 @@ function setRefreshCookie() {
 	    // refresh has changed. so cancel the next update and reschedule it for the correct time
 	    if ( nextRefresh ) clearTimeout( nextRefresh );
 	    nextRefresh = setTimeout( 'GetAsyncData()', refresh );  // time in ms
+	    resetRefreshCountDownTimer( refresh );
+
 	    prevRefresh = refresh;
 	}
     }
@@ -963,11 +986,14 @@ function doSpecialRowTop() {
     //txt += '    <div style="border: 1px dashed black" id="h-value-1"></div>';
     //txt += '</td>';
     txt += '<td NOWRAP>';
-    txt += '  <table class="refresh" cellpadding="0" cellspacing="0" border="0"><tr>';
+    txt += '  <table class="refresh" cellpadding="0" cellspacing="0" border="0">';
+    txt += '    <tr>';
     txt += '    <td>Refresh Interval:</td>';
     txt += '    <td><div class="slider" id="slider-1" style="width: 100; margin: 1px;"><input class="slider-input" id="slider-input-1"/></div></td>';
     txt += '    <td><div style="padding: 2px; border: 1px dashed black;" id="h-value-1"></div></td>';
-    txt += '  </tr></table>';
+    txt += '    </tr>';
+    txt += '    <tr><td></td><td></td><td><div style="height:3px; width:0; background-color:black;" id="countdown-1"></div></td></tr>';
+    txt += '  </table>';
     txt += '</td>';
 
     txt += '<td width=' + spacing + 'px></td>';
@@ -1420,6 +1446,9 @@ function generateBasicPage() {
     buildTempSlider( colourMapName );
     buildAspectSlider( aspectSliderVal );
     buildOrientSlider( nodeOrientation );
+
+    countDownTimer = setInterval( "refreshCountDownTimer()", refreshCountDownInterval );
+    resetRefreshCountDownTimer(0);
 
     redrawNodesTable(1); // first
 }
@@ -4350,6 +4379,7 @@ function finishedLoop( nextFn ) {
 
     // Schedule next call to wait for data
     nextRefresh = setTimeout( 'GetAsyncData()', r );  // time in ms
+    resetRefreshCountDownTimer(r);
 
     if ( currentMode != nextMode ) {
 	fns = allFns[nextMode];
