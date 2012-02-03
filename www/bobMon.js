@@ -1598,6 +1598,9 @@ function readPrefs() {
 function GetAsyncData() {
     base = config.bobDataCmdURL;
 
+    // there are a bunch of shortcut ways to get here, so clear the timer to avoid double-loading
+    if ( nextRefresh ) clearTimeout( nextRefresh );
+
     setReconnectLabel( 'Reconnecting...' );
 
     if ( first ) {
