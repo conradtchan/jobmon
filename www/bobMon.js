@@ -4372,17 +4372,9 @@ startLoopTime = 0;
 function finishedLoop( nextFn ) {
     if ( nextRefresh ) clearTimeout( nextRefresh );
 
-    // work out how long we spent processing the data, and schedule
-    // the next update accordingly
-    t = new Date();
-    timeTaken = t - startLoopTime;
-    r = refresh - timeTaken;
-    if ( r < 1000 ) // minimum 1s spent doing nothing before requesting more data
-	r = 1000;
-
     // Schedule next call to wait for data
-    nextRefresh = setTimeout( 'GetAsyncData()', r );  // time in ms
-    resetRefreshCountDownTimer(r);
+    nextRefresh = setTimeout( 'GetAsyncData()', refresh );  // time in ms
+    resetRefreshCountDownTimer( refresh );
 
     if ( currentMode != nextMode ) {
 	fns = allFns[nextMode];
