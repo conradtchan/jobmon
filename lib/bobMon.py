@@ -908,6 +908,13 @@ def doUsage( free, running ):
     realUsedCpus = totalRunCpus - freeCpus
     return '["pbs_running",%d,"pbs_avail",%d]' % ( realUsedCpus, totalRunCpus )
 
+def doTimeStamp():
+    txt = '['
+    txt += '"' + time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()) + '"'
+    txt += ',%d' % config.sleepTime
+    txt += ']'
+    return txt
+
 def doText( jobs, queued, running, m, free ):
     freeCpus, freeNodes, availCpus, availNodes = free
     usedCpus = availCpus - freeCpus
@@ -1413,6 +1420,7 @@ def doAll():
     txt += '<api>["' + api + '"]</api>\n'
 
     txt += '<configHash>["' + configHash() + '"]</configHash>\n'
+    txt += '<timeStamp>' + doTimeStamp() + '</timeStamp>\n'
 
     g = gangliaStats( doCpus=1 )
     all = g.getAll()
