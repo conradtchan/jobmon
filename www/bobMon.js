@@ -112,6 +112,8 @@ var refresh = 0;
 var prevRefresh = 0;
 var nextRefresh = 0;
 var refreshTimeToGo = 0;
+var tsPrev = 0;
+var tsUtcPrev = '';
 
 // these are set from the aspectSlider
 numCols = 0;
@@ -1407,6 +1409,7 @@ function generateBasicPage() {
     for (var i=0; i < txtNames.length; i++ )
 	txt += '<div id="text_' + txtNames[i] + '"></div>';
     txt += '     </td></tr>';
+    txt += '     <tr><td><div id="stale"></div></td></tr>';
     txt += '  </table>';
     txt += '  <table cellpadding="0" cellspacing="0" border="0"><tr height=420><td><div class="pies" id="pies"></div></td></tr></table>';
     txt += '</div>';
@@ -4435,6 +4438,38 @@ function startLoop( nextFn ) {
     }
     catch(failure) {
 	addErr( 'configHash check. err ' + failure );
+    }
+
+    try {
+	timeStamp = get( 'timeStamp', 0 );
+
+	if ( timeStamp ) {
+	    tsUtc = timeStamp[0];
+	    serverRefresh = timeStamp[1];  // == config.sleepTime, could just use that instead
+	    tNow = start;
+
+	    // if tsUtc changed, then all good and update Prev's and move alone
+	    if ( tsUtc != tsUtcPrev ) {
+		tsPrev = tNow;
+		tsUtcPrev = tsUtc;
+		d = document.getElementById( 'stale' );
+		changeInner( d, '', 'change stale' );
+	    }
+	    else { // server hasn't updated data
+		// if server should have updated data by now then warn
+		if ( tNow - tsPrev > 2*serverRefresh ) {
+		    // post or continue to post warning about stale server data
+		    hidebar();
+
+		    d = document.getElementById( 'stale' );
+		    txt = "<font color=red>Warning: stale data from server - last update " + tsUtc + " UTC</font>";
+		    changeInner( d, txt, 'change stale' );
+		}
+	    }
+	}
+    }
+    catch(failure) {
+	addErr( 'timeStamp check. err ' + failure );
     }
 
     doNextFn( nextFn );
