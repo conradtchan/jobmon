@@ -61,3 +61,15 @@ while 1:
    #print 'pbs running, avail', pbsRunning, pbsAvail
    #sys.exit(1)
    #continue
+
+   try:
+      # non-spoofing
+      #os.system( gmetric + ' -t uint32 -n "pbs_alloc_cores" -v %d' % pbsRunning )
+      #os.system( gmetric + ' -t uint32 -n "pbs_avail_cores" -v %d' % pbsAvail )
+      # spoofing
+      os.system( gmetric + ' -S ' + spoofStr + ' -t uint32 -n "pbs_alloc_cores" -v %d' % pbsRunning )
+      os.system( gmetric + ' -S ' + spoofStr + ' -t uint32 -n "pbs_avail_cores" -v %d' % pbsAvail )
+   except:
+      s = 'logger "' + sys.argv[0] + ': feeding to gmetric: Unexpected error: ' + str(sys.exc_info()[0]) + '"'
+      os.system(s)
+      continue
