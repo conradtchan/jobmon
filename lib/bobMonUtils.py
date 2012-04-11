@@ -305,7 +305,17 @@ def plotPie( r, s, q, b, availCpus ):
             if username not in userColour.keys():
                 userColour[username] = cnt
                 cnt += 1
-                cnt %= len(colours)
+                if cnt == len(colours):
+                    break
+
+    # the rest of the colours are hashes of the username
+    for cpus, cpusList, username in all:
+        if username not in userColourHash.keys():
+            h = md5.new(username).hexdigest()
+            h = int(h, 16) % len(colours)      # random colour number
+            userColourHash[username] = int(h)  # cast to int from long
+        if username not in userColour.keys():
+            userColour[username] = userColourHash[username]
 
     data = []
     arcOffsets = []
@@ -339,21 +349,9 @@ def plotPie( r, s, q, b, availCpus ):
     ar.draw(can)
     can.close()  # flush to file ASAP
 
-    # sort out which colour indices are used/free
-    usedColour = []
-    for k, v in userColour.iteritems():
-        usedColour.append( v )
-
-    freeColours = []
-    for i in range(len(colours)):
-        if i not in usedColour:
-            freeColours.append( i )
-    if len(freeColours) == 0:  # hmmm - no colours at all to use. buggerit, just use them all...
-        freeColours = range(len(colours))
-
-    queuedPies( suspended,  'Suspended', 75, names, titles, size, availCpus, colours, userColour, freeColours )
-    queuedPies( queued,        'Queued', 60, names, titles, size, availCpus, colours, userColour, freeColours )
-    queuedPies( blocked, 'Blocked/Held', 40, names, titles, size, availCpus, colours, userColour, freeColours )
+    queuedPies( suspended,  'Suspended', 75, names, titles, size, availCpus, colours, userColour )
+    queuedPies( queued,        'Queued', 60, names, titles, size, availCpus, colours, userColour )
+    queuedPies( blocked, 'Blocked/Held', 40, names, titles, size, availCpus, colours, userColour )
 
     # map userColour numbers to colour names
     c = {}
@@ -363,7 +361,7 @@ def plotPie( r, s, q, b, availCpus ):
     return names, titles, c
 
 
-def queuedPies( queued, title, radius, names, titles, size, availCpus, colours, userColour, freeColours ):
+def queuedPies( queued, title, radius, names, titles, size, availCpus, colours, userColour ):
     # re-order the sorted 'queued' so that the labels fit on the pie better
     queued = bigSmallOrder( queued )
 
@@ -413,11 +411,11 @@ def queuedPies( queued, title, radius, names, titles, size, availCpus, colours, 
             # don't like their colour then tough luck
             if username not in userColourHash.keys():
                 h = md5.new(username).hexdigest()
-                h = int(h, 16) % len(freeColours)  # random colour number
+                h = int(h, 16) % len(colours)  # random colour number
                 userColourHash[username] = int(h)  # cast to int from long
             c = userColourHash[username]
 
-        #print c, len(colour), len(colours), len(freeColours)
+        #print c, len(colour), len(colours)
         colour.append( colours[c] )
 
         while doPlot and plotNum < maxPlots:
