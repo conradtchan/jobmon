@@ -2054,8 +2054,16 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     toolTip.prevAveState = [];
     toolTip.prevNetworkState = [];
 
-    if ( nodes.length > config.coresPerNode )
+    var maxRows = 128;
+    var visibleMaxRows = 100; // an even number. # of rows to show if rows > maxRows (== # nodes)
+    var halfvisibleMaxRows = visibleMaxRows/2;
+
+    if ( nodes.length > config.coresPerNode ) {
 	rowsToDraw = nodes.length/config.coresPerNode;  // assume using all cores on a node
+							// assume all nodes have same number of cores
+	if ( rowsToDraw > maxRows )
+	    rowsToDraw = visibleMaxRows + 1;
+    }
     else
 	rowsToDraw = 1.5;
 
@@ -2113,6 +2121,7 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     }
 
     cnt = 0;
+    hiddenNode = [];
     for (var j=0; j < nodeList.length; j++ ) {
     	n = nodeList[j];
 
@@ -2130,17 +2139,41 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 	}
 
 	// one row per node
-	txt += '<div style="position:absolute; top:' + y + 'px;">';
+        compactMode = 0;
+	if ( nodeList.length - 1 > maxRows ) { // hide rows for big jobs, -1 for 'ave'
+	    if ( j == halfvisibleMaxRows ) { // a row with '...' in it
+		y += 4;
+		compactMode = 2;
+	    }
+	    else if ( j > halfvisibleMaxRows && j < (nodeList.length - halfvisibleMaxRows) ) {
+		compactMode = 1;
+	    }
+	}
+
+	if ( compactMode != 1 ) {
+	    txt += '<div style="position:absolute; top:' + y + 'px;">';
+	    hiddenNode[cnt] = 0;
+	}
+	else {
+	    txt += '<div style="position:absolute; visibility:hidden; top:' + y + 'px;">';
+	    hiddenNode[cnt] = 1;
+	}
+
 	// node name text
 	if ( n == 'ave' )
 	    txt +=   '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + 20 + 'px;">' + 'average' + '</div>';
 	else {
-	    if ( n == thisNode && nodeList.length > 2 ) // 2. because one node and one ave
-		colour = 'green';
-	    else
-		colour = nodesFgColour;
-	    txt +=   '<div style="position:absolute; font-size:80%; color:' + colour + '; top:-6px; left:' + (cnt % 2 ? 35 : 5) + 'px;">' + n + '</div>';
+	    if ( !hiddenNode[cnt] ) {
+		if ( n == thisNode && nodeList.length > 2 ) // 2. because one node and one ave
+		    colour = 'green';
+		else
+		    colour = nodesFgColour;
+		txt +=   '<div style="position:absolute; font-size:80%; color:' + colour + '; top:-6px; left:' + (cnt % 2 ? 35 : 5) + 'px;">' + n + '</div>';
+	    }
 	}
+
+	if ( compactMode == 2 )
+	    txt += '<div style="position:absolute; border:dashed 1px grey; top:-3px; height:0px; width:' + (tipWidth/2)+ 'px; left:150px;"></div>';
 
 	u = 0;
 	s = 0;
@@ -2152,7 +2185,8 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 
 	toolTip.prevState[cnt] = [ u, s, w, i, m, swap, load ];
 
-	txt += drawCpuMem( 80, n, u, s, w, i, m, 50*totMem/maxMemOnNode, swap, -1, -1, 10, labelU, labelM );
+	if ( !hiddenNode[cnt] )
+	    txt += drawCpuMem( 80, n, u, s, w, i, m, 50*totMem/maxMemOnNode, swap, -1, -1, 10, labelU, labelM );
 
 	try {
 	    // bytes
@@ -2165,9 +2199,11 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 	    pixels = -1;
 	    dodgy = 0;
 
-	    txt += '<div style="position:absolute; left:' + 200 + 'px;">';  // byte rate
-	    txt += drawNet( 'tt_' + id, pixels, netBytePixelThresh, dodgy?networkSharedColour:networkColour, -1, 15, labelTxt, 1 );
-	    txt += '</div>';
+	    if ( !hiddenNode[cnt] ) {
+		txt += '<div style="position:absolute; left:' + 200 + 'px;">';  // byte rate
+		txt += drawNet( 'tt_' + id, pixels, netBytePixelThresh, dodgy?networkSharedColour:networkColour, -1, 15, labelTxt, 1 );
+		txt += '</div>';
+	    }
 
 	    toolTip.prevNetworkState[cnt] = [ pixels, dodgy ];
 	}
@@ -2201,11 +2237,13 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 		labelM = '-';   // placeholder
 	    }
 
-	    txt += drawCpuMem( 280, n + '_ave', u, s, w, i, mScaled, parseInt(50*totMem/maxMemOnNode), swap, maxU, maxMScaled, 0, labelU, labelM );
+	    if ( !hiddenNode[cnt] ) {
+		txt += drawCpuMem( 280, n + '_ave', u, s, w, i, mScaled, parseInt(50*totMem/maxMemOnNode), swap, maxU, maxMScaled, 0, labelU, labelM );
 
-	    txt += '<div style="position:absolute; left:' + 400 + 'px;">';  // byte rate
-	    txt += drawNet( 'tt_' + n + '_n_ave', b, netBytePixelThresh,  dodgyNet?networkSharedColour:networkColour, maxB, 1, labelTxt, 1 );
-	    txt += '</div>';
+		txt += '<div style="position:absolute; left:' + 400 + 'px;">';  // byte rate
+		txt += drawNet( 'tt_' + n + '_n_ave', b, netBytePixelThresh,  dodgyNet?networkSharedColour:networkColour, maxB, 1, labelTxt, 1 );
+		txt += '</div>';
+	    }
 	}
 	catch (failure) {
 	    // do nothing
@@ -2214,7 +2252,8 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 
 	txt += '</div>';
 
-	y += 4;
+	if ( compactMode == 0 )
+	    y += 4;
 	cnt++;
     }
 
@@ -2222,6 +2261,7 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     toolTip.doAverages = doAverages;
     toolTip.jobId = jobId;
     toolTip.maxMemOnNode = maxMemOnNode;
+    toolTip.hiddenNode = hiddenNode;
 
     percToolTipChange = '';
 
@@ -2494,7 +2534,8 @@ function refreshToolTipBars(first) {
 	    load = 0;
 	    newState[cnt] = [ u, s, w, i, m, swap, load ];
 
-	    updateCpuMem( 80, n, u, s, w, i, m, swap, -1, -1, prevU, prevS, prevW, prevI, prevM, prevSwap, -1, -1, doLabels, realM, 0 );
+	    if ( !toolTip.hiddenNode[cnt] )
+		updateCpuMem( 80, n, u, s, w, i, m, swap, -1, -1, prevU, prevS, prevW, prevI, prevM, prevSwap, -1, -1, doLabels, realM, 0 );
 
 	    try {
 		// bytes
@@ -2523,7 +2564,8 @@ function refreshToolTipBars(first) {
 			dodgyAve = 1;
 		}
 
-		updateNetChart( pixels, prevPixels, 'tt_' + id, netBytePixelThresh, -1, -1, dodgy, prevDodgy );
+		if ( !toolTip.hiddenNode[cnt] )
+		    updateNetChart( pixels, prevPixels, 'tt_' + id, netBytePixelThresh, -1, -1, dodgy, prevDodgy );
 
 		newNetworkState[cnt] = [ pixels, dodgy ];
 	    }
@@ -2582,9 +2624,11 @@ function refreshToolTipBars(first) {
 
 		    newAveState[cnt] = [ u, s, w, i, mScaled, swap, b, maxU, maxMScaled, maxB, dodgyNet ];
 
-		    updateCpuMem( 280, n + '_ave', u, s, w, i, mScaled, swap, maxU, maxMScaled, prevU, prevS, prevW, prevI, prevM, prevSwap, prevMaxU, prevMaxM, doLabels, m, maxM );
+		    if ( !toolTip.hiddenNode[cnt] ) {
+			updateCpuMem( 280, n + '_ave', u, s, w, i, mScaled, swap, maxU, maxMScaled, prevU, prevS, prevW, prevI, prevM, prevSwap, prevMaxU, prevMaxM, doLabels, m, maxM );
 
-		    updateNetChart( b, prevB, 'tt_' + n + '_n_ave', netBytePixelThresh, maxB, prevMaxB, dodgyNet, prevDodgy );
+			updateNetChart( b, prevB, 'tt_' + n + '_n_ave', netBytePixelThresh, maxB, prevMaxB, dodgyNet, prevDodgy );
+		    }
 
 		    if ( n == 'ave' && ( b != prevB || maxB != prevMaxB ) ) {
 			d = document.getElementById( 'tt_' + n + '_n_ave_txt' );
