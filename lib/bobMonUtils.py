@@ -7,6 +7,7 @@ import os
 import sys
 import string
 import time
+import md5
 from pbsMauiGanglia import pbsNodes, pbsJobs, maui, loadedNetsGmond, gangliaStats, timeToInt
 
 import bobMonitorConf as config
@@ -18,6 +19,9 @@ try:
     import tempfile
 except:
     doPie = 0
+
+# usernames hash to a colour number
+userColourHash = {}
 
 # look at the list of machine loads and what switch/network they are on
 #   ... can also use gstat instead of gmond to get stats...
@@ -292,6 +296,7 @@ def plotPie( r, s, q, b, availCpus ):
     #all.extend(queued)
     #all.extend(blocked)
 
+    # prescribe the colours for current biggest users. eg. biggest user is always in red
     userColour = {}  # dict of colours that have been used for specific users
     cnt = 0
     for cpus, cpusList, username in all:
@@ -401,9 +406,16 @@ def queuedPies( queued, title, radius, names, titles, size, availCpus, colours, 
         if username in userColour.keys():
             c = userColour[username]
         else:
-            c = freeColours[cnt]
-            cnt += 1
-            cnt %= len(freeColours)
+            # used to round-robin the colours, but with many jobs coming and
+            # going it's just a vast amount of colour churn - every update
+            # changes the colours of many running jobs.
+            # so instead choose one colour per user and stick to it. if users
+            # don't like their colour then tough luck
+            if username not in userColourHash.keys():
+                h = md5.new(username).hexdigest()
+                h = int(h, 16) % len(freeColours)  # random colour number
+                userColourHash[username] = int(h)  # cast to int from long
+            c = userColourHash[username]
 
         #print c, len(colour), len(colours), len(freeColours)
         colour.append( colours[c] )
