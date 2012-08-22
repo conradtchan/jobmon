@@ -1008,7 +1008,7 @@ def doNetwork( all, sharedNetNodes ):
     for k, i in all.iteritems():
         j = string.split( k, '.' )[0]
 
-        # bytes
+        # ib bytes
         try:
             # filter for ridiculous values
             inB  = filterByteValues( float(i['ib_bytes_in']) )
@@ -1018,7 +1018,7 @@ def doNetwork( all, sharedNetNodes ):
             bytesPerSec = 0.0
         bw, scaleB = scalarToScaled( bytesPerSec )
 
-        # packets
+        # ib packets
         try:
             inP  = filterPacketValues( float(i['ib_pkts_in']) )
             outP = filterPacketValues( float(i['ib_pkts_out']) )
@@ -1036,6 +1036,63 @@ def doNetwork( all, sharedNetNodes ):
         data[j] = ( bytesPerSec, packetsPerSec )
 
     state = state[:-1]
+    state += ']'
+    return state, data
+
+
+def doFilesystems( all ):
+    state = '['
+    data = {}
+
+    for k, i in all.iteritems():
+        j = string.split( k, '.' )[0]
+
+        # 'vu_short_read_bytes', 'vu_short_write_bytes',  # bytes to the main lustre fs
+        # 'vu_apps_mds_ops', 'vu_home_mds_ops', 'vu_images_mds_ops', 'vu_short_mds_ops', # iops to a range of lustre fs's
+
+        skip = 0
+
+        # fs bytes
+        bytes = []
+        r = 0.0
+        w = 0.0
+        for n, rv, wv in [ ('short', 'vu_short_read_bytes', 'vu_short_write_bytes') ]:  # bobMon fs name and gmetric r,w name tuples
+            try:
+                # filter for ridiculous values
+                readB  = filterByteValues( float(i[rv]) )
+                writeB = filterByteValues( float(i[wv]) )
+            except:
+                #print j, 'doing except for fs data n,rv,wv', n,rv,wv
+                skip = 1
+                continue
+            bytes.append( (n, (readB, writeB)) )
+            r += readB
+            w += writeB
+        rbw, rscaleB = scalarToScaled( r )
+        wbw, wscaleB = scalarToScaled( w )
+
+        # fs metadata
+        mdOps = []
+        ops = 0.0
+        for n, v in [ ('apps','vu_apps_mds_ops'), ('home','vu_home_mds_ops'), ('images','vu_images_mds_ops'), ('short','vu_short_mds_ops') ]:
+            try:
+                o = float(i[v])
+            except:
+                #print j, 'doing except for fs metadata n,v', n,v
+                skip = 1
+                continue
+            mdOps.append( (n,o) )
+            ops += o
+        #obw, oscale = scalarToScaled( ops )
+
+        if not skip:
+            data[j] = ( bytes, mdOps )
+
+            # sum of r,w,ops across all fs's
+            state += '["' + j + '_fs",%.1f,"' % rbw + rscaleB + '",%.1f,"' % wbw + wscaleB + '",%.1f' % ops + '],'
+
+    if state[-1] == ',':
+        state = state[:-1]
     state += ']'
     return state, data
 
@@ -1059,7 +1116,7 @@ def getMemVm( pbsInfo ):
         vmem = pbsInfo['vmem']/1048576.0 # in MB
     return ( mem, vmem )
 
-def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power ):
+def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsData ):
     for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
         #print 'jobId', jobId, 'nodeList', nodeList, 'state', pbsInfo['state']
         first = 0
@@ -1126,6 +1183,11 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power ):
             except:
                 watts = 0.0
 
+            try:
+                ( fsBytes, fsOps ) = fsData[n]
+            except:
+                ( fsBytes, fsOps ) = ( [], [] )
+
             used = (tot - buf - cached - free)/1024.0  # in Mbytes
             tot /= 1024.0  # in Mbytes
 
@@ -1136,7 +1198,13 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power ):
                 stats[jobId]['stats'][n]['max'] = [ 0.0, 0.0, 0.0, 0.0, 0.0 ]        # u,m,b,p,watts
                 stats[jobId]['stats'][n]['totMem'] = tot   # ram on the node
                 stats[jobId]['stats'][n]['taintedNet'] = 0   # network stats reliable/unreliable
-
+                # fs's are a bit too many and varied to treat as vectors, so use dicts
+                stats[jobId]['stats'][n]['fs'] = {}        # global filesystems sum
+                stats[jobId]['stats'][n]['fsmax'] = {}     # global filesystems maximums
+                stats[jobId]['stats'][n]['fscurrent'] = {} # global filesystems current value
+                                                           #   'fs current' is different to the other stats[] metrics. detailed r,w,ops data
+                                                           #   for each fs only really makes sense per job, and so we store it here so we can
+                                                           #   send it out conveniently with the rest of the job stats.
 
             stats[jobId]['stats'][n]['cnt'] += 1
             stats[jobId]['stats'][n]['data'][0] += cpu      # percent
@@ -1160,7 +1228,46 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power ):
             big[3] = max(big[3], pkts)
             big[4] = max(big[4], watts)
 
+            s = stats[jobId]['stats'][n]['fs']
+            sm = stats[jobId]['stats'][n]['fsmax']
+	    sc = stats[jobId]['stats'][n]['fscurrent']
+
+            # bytes
+            for f, v in fsBytes:   # name of fs, and (read,write) bytes/s
+               if f not in s.keys():
+                  s[f] = {}
+                  s[f]['read']  = 0.0
+                  s[f]['write'] = 0.0
+                  sm[f] = {}
+                  sm[f]['read']  = 0.0
+                  sm[f]['write'] = 0.0
+                  sc[f] = {}
+                  sc[f]['read']  = 0.0
+                  sc[f]['write'] = 0.0
+               r,w = v
+               s[f]['read']  += r
+               s[f]['write'] += w
+               sm[f]['read']  = max(sm[f]['read'], r)
+               sm[f]['write'] = max(sm[f]['write'], w)
+               sc[f]['read']  = r
+               sc[f]['write'] = w
+
+            # ops
+            for f, v in fsOps:   # name of fs, operations/s
+               if f not in s.keys():
+                  s[f] = {}
+                  sm[f] = {}
+                  sc[f] = {}
+               if 'ops' not in s[f].keys():
+                  s[f]['ops'] = 0.0
+                  sm[f]['ops'] = 0.0
+                  sc[f]['ops'] = 0.0
+               s[f]['ops'] += v
+               sm[f]['ops'] = max(sm[f]['ops'], v)
+               sc[f]['ops'] = v
+
             #print 'n', n, 'data', stats[jobId]['stats'][n], 'cpuData', cpuData[n]
+            #print 'n', n, 'fs', s, 'fsmax', sm, 'current', sc
 
 
 def statsForJob( j, doPrint=0 ):
@@ -1177,8 +1284,8 @@ def statsForJob( j, doPrint=0 ):
     #   []
     # if it's a 1 cpu job, or if no stats are collected yet
 
-    ave = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]  # u,s,w,i,m,b,p,watts,swapCnt
-    bigAve = [ 0.0, 0.0, 0.0, 0.0, 0.0 ]    # u,m,b,p,watts
+    ave = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]  # ave over nodes of ave over job life of:  u,s,w,i,m,b,p,watts,swapCnt
+    bigAve = [ 0.0, 0.0, 0.0, 0.0, 0.0 ]                   # ave over nodes of max over job life of:  u,m,b,p,watts
 
     nodes = st['nodes']
     if nodes == None:
@@ -1197,6 +1304,8 @@ def statsForJob( j, doPrint=0 ):
     nodesCnt = 0
     maxMemOnNodes = 0
     tMax = 0
+    fs = {}
+    invCnt = -1
     for n in st['nodes']:
         try:
             cnt = data[n]['cnt']
@@ -1213,11 +1322,11 @@ def statsForJob( j, doPrint=0 ):
 
         # compute whole job average
         nodesCnt += 1
-        for j in range(len(ave)):
-            ave[j] += ( data[n]['data'][j] * invCnt )
+        for i in range(len(ave)):
+            ave[i] += ( data[n]['data'][i] * invCnt )
 
-        for j in range(len(bigAve)):
-            bigAve[j] += data[n]['max'][j]
+        for i in range(len(bigAve)):
+            bigAve[i] += data[n]['max'][i]
 
         try:
             u = int(invCnt * data[n]['data'][0])
@@ -1260,6 +1369,48 @@ def statsForJob( j, doPrint=0 ):
         #txt += '["' + n + '",[%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.1f,"%s",%.3f],[%d,%d,%.1f,"%s",%.1f,"%s",%.1f,"%s"],%d,%d],' % ( u, s, w, i, m, b[0], b[1], p[0], p[1], watts[0], watts[1], swapping, maxU, maxM, maxB[0], maxB[1], maxP[0], maxP[1], maxWatts[0], maxWatts[1], totMem, t )
         txt += '["' + n + '",[%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.3f],[%d,%d,%.1f,"%s",%.1f,"%s"],%d,%d],' % ( u, s, w, i, m, b[0], b[1], p[0], p[1], swapping, maxU, maxM, maxB[0], maxB[1], maxP[0], maxP[1], totMem, t )
 
+        # we don't send any per node fs info in the above txt,
+        # but we need to sum across nodes to generate totals and aves
+        for d in ( 'fs', 'fsmax', 'fscurrent' ):
+            if d not in fs.keys():
+                fs[d] = {}
+            s = data[n][d]
+            for f in s.keys():  # fs names
+                fs[d][f] = {}
+                for t in s[f].keys():  # r,w,ops
+                    if t not in fs[d][f].keys():
+                        fs[d][f][t] = 0.0
+                    fs[d][f][t] += s[f][t]
+
+    # for fs, would be good to display
+    #  - now read/write/iops   = sum(simplified fsData[nodes]) == sum(stats['fscurrent']))
+    #  - ave read/write/iops over job lifetime   = sum(stats['fs'])/jobtime  for all fs fields/fs's
+    #  - max read/write/iops over job lifetime   = sum(stats['fsmax'])               ""      on the same plot
+    # where all these are first summed over all nodes in the job
+
+    if invCnt > 0 and 'fs' in fs.keys():
+        for f in fs['fs'].keys():  # fs names
+            for t in fs['fs'][f].keys():  # r,w,ops
+                fs['fs'][f][t] = fs['fs'][f][t] * invCnt
+    #print j, 'fs', fs
+
+    # find job's fs current, ave, max
+    fsSum = {}
+    fsStr = '['
+    if 'fs' in fs.keys():
+        for f in fs['fs'].keys():  # fs names
+            fsSum[f] = {}
+            fsStr += '["' + f + '",'
+            for t in fs['fs'][f].keys():  # r,w,ops
+                # above we create fs, fsmax, fscurrent with the same keys, so the below is safe
+                fsSum[f][t] = ( int(fs['fscurrent'][f][t]), int(fs['fs'][f][t]), int(fs['fsmax'][f][t]) )
+                fsStr += '["' + t + '",[%d,%d,%d]' % fsSum[f][t] + '],'
+            fsStr += '],'
+    fsStr += ']'
+    fsStr = string.replace(fsStr,'],]',']]')
+    fsStr = string.replace(fsStr,'],]',']]')
+    #print j, 'fsSum', fsSum
+    #print j, 'fsStr', fsStr
 
     if nodesCnt > 0:
         u = ave[0]/numNodesInJob
@@ -1284,7 +1435,8 @@ def statsForJob( j, doPrint=0 ):
         txt += '["ave",'
         # could also send watts here
         txt +=   '[%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.3f],' % ( int(u), int(s), int(w), 100 - int(u+s+w), int(m), b[0], b[1], p[0], p[1], swapping )
-        txt +=   '[%d,%d,%.1f,"%s",%.1f,"%s"],%d,%d' % ( int(bigAve[0]/numNodesInJob), int(bigAve[1]/numNodesInJob), bAve[0], bAve[1], pAve[0], pAve[1], maxMemOnNodes, tMax )
+        txt +=   '[%d,%d,%.1f,"%s",%.1f,"%s"],%d,%d,' % ( int(bigAve[0]/numNodesInJob), int(bigAve[1]/numNodesInJob), bAve[0], bAve[1], pAve[0], pAve[1], maxMemOnNodes, tMax )
+        txt +=   fsStr
         txt += ']'
     else:
         return ''
@@ -1313,6 +1465,8 @@ def doJobStats( jobs, err ):
 
     # find jobs that have finished
     if err == None:  # only delete if the qstat was ok
+                     # otherwise we can lose a whole job history just 'cos of
+                     # one missed poll of pbs
         for j in stats.keys():
             if j not in running:
                 print 'finished',
@@ -1416,7 +1570,7 @@ def doAll():
     txt = ''
 
     # increment this (and the client to match) if server changes are going to break the client
-    api = '8'
+    api = '9'
     txt += '<api>["' + api + '"]</api>\n'
 
     txt += '<configHash>["' + configHash() + '"]</configHash>\n'
@@ -1505,10 +1659,15 @@ def doAll():
     netTxt, netData = doNetwork( all, sharedNetNodes )
     txt += '<network>' + netTxt + '</network>\n'
 
+    # get filesystem data and metadata
+    fsTxt, fsData = doFilesystems(all)
+    # r,w,ops triples are the sum of all monitored (usually global) fs's on each node
+    txt += '<fs>' + fsTxt + '</fs>\n'
+
     # store cpu loads with the running jobs
     if p.error == None:
         # only process if we got an ok qstat otherwise we will wipe job histories
-        storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power )
+        storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsData )
     else:
         print 'error from pbs'
     txt += '<averages>' + doJobStats( jobs, p.error ) + '</averages>\n'
