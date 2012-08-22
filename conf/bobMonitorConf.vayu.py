@@ -26,25 +26,37 @@ clusterName = 'vayu'  # what you called the cluster in ganglia
 gangliaNodeSuffix  = ''   # eg. '.mckenzie' if ganglia names for nodes
                           # are 'eh1.mckenzie' instead of just 'eh1'
 
+# non-standard data in ganglia that we want to harvest and use
+# NOTE: there needs to be server code in bobMon.py to insert these into the xml
+#       and client side code in bobMon.js to display them.
+#       so this line isn't all that is required to enable these features
+extraGangliaMetrics = [ 'ib_bytes_in', 'ib_bytes_out',  # infiniband bytes/s
+			'ib_pkts_in', 'ib_pkts_out',    # infiniband packets/s
+			'cpu1_temp', 'cpu2_temp', 'ambient_temp', 'chassis_temp', 'rear_temp', 'front_temp', # temperatures
+			'node_power', 'cmm_power_in', 'fan_rms',   # node and cmm input kw, cmm fans
+			'vu_short_read_bytes', 'vu_short_write_bytes',  # bytes to the main lustre fs
+			'vu_apps_mds_ops', 'vu_home_mds_ops', 'vu_images_mds_ops', 'vu_short_mds_ops', # iops to a range of lustre fs's
+			]
+
 # cluster config:
 numNodes = 1492
 nodeNumStart = 1     # eg. 1 means x1 is first node, not x0
 # probably need a node name format in here one day - eg. x0001 vs. x1
 baseNodeName = 'v'   # 'x' here means nodes are ... x77, x78, ...
 
-headNodes = [ 'vayu1', 'vayu2', 'vayu3', 'vayu4', 'vu-pbs', 'vu-man2', 'vu-man3', 'vu-man4', 'gopher1', 'gopher2', 'gopher3', 'gopher4' ]
+headNodes = [ 'vayu1', 'vayu2', 'vayu3', 'vayu4', 'vu-pbs', 'vu-man2', 'vu-man3', 'vu-man4', 'gopher1', 'gopher2', 'gopher3', 'gopher4', 'knet00', 'knet01' ]
 ioNodes = [ 'marmot1', 'marmot2', 'marmot3', 'marmot4', 'hamster1', 'hamster2', 'hamster3', 'hamster4', 'hamster5', 'hamster6', 'hamster7', 'hamster8', 'hamster9', 'hamster10', 'hamster11', 'hamster12', 'hamster13', 'hamster14', 'hamster15', 'hamster16', 'hamster17', 'hamster18', 'hamster19', 'hamster20', 'hamster21', 'hamster22', 'hamster23', 'hamster24', 'hamster25', 'hamster26' ]
 
 # should really read this from PBS...
 coresPerNode = 8
 
 # time to sleep between stats gathering from ganglia, pbs etc.
-sleepTime = 5   # time in seconds
+sleepTime = 10   # time in seconds
 
 # jobs stats are ignored for several iterations when a job starts and also when
 # it comes back from being suspended because ganglia has a ~30s+ lag in it
 # and we don't want to record leftover node stats from the previous job
-ignoreStatsLoops = 12   # in units of sleepTime. eg. 12 cycles ~= 60s
+ignoreStatsLoops = 6   # in units of sleepTime. eg. sleepTime * ignoreStatsLoops ~= 60s
 
 # this hasn't been tested for a long time - might be broken:
 showRackLoads = 0
@@ -88,7 +100,10 @@ specialRows = [
 		['gopher1','node'],
 		['gopher2','node'],
 		['gopher3','node'],
-		['gopher4','node'] ],
+		['gopher4','node'],
+		['routers', 'head' ],
+		['knet00','node'],
+		['knet01','node'] ],
 
               [ ['mds','head'],
                 ['marmot1','node'],

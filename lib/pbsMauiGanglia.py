@@ -205,20 +205,15 @@ class gangliaStats:
             sock.shutdown(2)
             xmlData = string.split( xmlData )
 
-
-        metrics = 'mem_free mem_cached mem_shared mem_buffers mem_total disk_free disk_total swap_free swap_total'
+        # standard ganglia metrics
+        metrics = [ 'mem_free', 'mem_cached', 'mem_shared', 'mem_buffers', 'mem_total', 'disk_free', 'disk_total', 'swap_free', 'swap_total', 'boottime' ]
         if doCpus:
-            metrics += ' load_one cpu_user cpu_nice cpu_system cpu_idle cpu_wio'
-        #metrics += ' uber_free uber_total' # kb
-        metrics += ' ib_bytes_in ib_bytes_out'   # bytes/s
-        metrics += ' ib_pkts_in ib_pkts_out'     # packets/s
-        metrics += ' cpu1_temp cpu2_temp ambient_temp chassis_temp rear_temp front_temp'
-        metrics += ' node_power cmm_power_in fan_rms'   # node and cmm input kw, cmm fans
-        metrics += ' boottime'
+            metrics.extend( [ 'load_one', 'cpu_user', 'cpu_nice', 'cpu_system', 'cpu_idle', 'cpu_wio' ] )
 
-        metrics = string.split( metrics )
+        # the rest are non-standard and are in the config file
+        metrics.extend( config.extraGangliaMetrics )
 
-        # ultra-lame parse of all xml data into a dict of dicts
+        # ultra-lame (but fast) parse of all xml data into a dict of dicts
         i = 0
         max = len(xmlData)
         all = {}
