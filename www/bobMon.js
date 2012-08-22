@@ -9,7 +9,7 @@ config = new bobMonitorConf();
 document.onkeypress = doKeyPress;
 
 // server to client API version
-api = 8;
+api = 9;
 
 // map for refresh slider between 0->10 and a pseudo logarithmic scale in seconds
 var steps = [ 5, 10, 20, 60, 120, 300, 600, 1200, 1800, 3600 ];
@@ -1776,6 +1776,8 @@ var useDivs = 1;
 var useDivCache = 1;
 
 function findAveragesForJob( job ) {
+    // return prevAveragesMap( job );
+
     // shitty linear search 'cos @#%@#%@#%@ maps aren't working...
     for (var i=0; i < prevAverages.length; i++ ) {
 	if ( prevAverages[i][0] == job )
@@ -2628,6 +2630,10 @@ function refreshToolTipBars(first) {
 			updateCpuMem( 280, n + '_ave', u, s, w, i, mScaled, swap, maxU, maxMScaled, prevU, prevS, prevW, prevI, prevM, prevSwap, prevMaxU, prevMaxM, doLabels, m, maxM );
 
 			updateNetChart( b, prevB, 'tt_' + n + '_n_ave', netBytePixelThresh, maxB, prevMaxB, dodgyNet, prevDodgy );
+		    }
+
+		    if ( n == 'ave' ) {
+			fs = nodeInfo[5];
 		    }
 
 		    if ( n == 'ave' && ( b != prevB || maxB != prevMaxB ) ) {
@@ -4175,16 +4181,27 @@ debugAve = '';
 
 function processJobAverages( nextFn ) {
     // data is formated like:
-    //   [ ["job", ["node",[u,s,i,m]], .... , ["ave",[u,s,i,m]]], ["job",[ ...
+    //   [ ["job", [["node",[u,s,i,m]], .... , ["ave",[u,s,i,m]]]], ["job",[[ ...
     // or
     //  [  ["job",[]], ["job",[ ...
     // if it's a 1 cpu job, or if no stats are collected yet
 
     // just store them here and do nothing else - the popup will draw them
+//    var pj = new Array();
 
     averages = get( 'averages', 1 );
 
+//    if ( averages ) {
+//	for(var i=0;i<averages.length;i++) {
+//	    n = averages[i][0];
+//	    // make it a map so we can easily reuse it
+//	    pj[n] = averages[i][1];
+//	}
+//    }
+
     prevAverages = averages;
+//    prevAveragesMap = pj;
+
     start = addToTimeStr( 'averagesTime', start );
     doNextFn( nextFn );
 }
