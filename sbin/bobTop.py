@@ -19,9 +19,10 @@ coresPerNode = 8
 
 # filesystem limits that we want to flag as bad
 meg = 1000000
-high = {   # threshholds for [current, average, max]
+
+high = {   # fs threshholds for [current, average, max]
    'single job' :
-       { 'ops':[1000,5000,20000],
+       { 'ops':[500,5000,20000],
         'read':[100*meg,100*meg,1000*meg],
        'write':[100*meg,100*meg,1000*meg] },
    'sum user' :
@@ -51,6 +52,13 @@ def hmsToSeconds(hms):
    return int(t[0])*3600 + int(t[1])*60 + int(t[2])
 
 
+def hms( t ):
+   h = int(t/3600)
+   m = int((t - h*3600)/60)
+   s = t - h*3600 - m*60
+   return '%2d:%02d:%02d' % ( h, m, s )
+
+
 def terminal_size():
    import fcntl, termios, struct
    h, w, hp, wp = struct.unpack('HHHH', fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH', 0, 0, 0, 0)))
@@ -68,6 +76,7 @@ def display(flagged, jobs):
    lenJobName = len('name')
    lenJobId = len('job id')
    lenKey = len('usr proj')
+   lenWalltime = len('walltime')
    ul = {}
    for j in flagged.keys():
       u = jobs[j]['data'][1]     # user
@@ -78,6 +87,10 @@ def display(flagged, jobs):
          lenJobName = len(n)
       if len(jobs[j]['jobid']) > lenJobId:
          lenJobIb = len(jobs[j]['jobid'])
+      if jobs[j]['walltime'] != None:
+         w = hms(jobs[j]['walltime'])
+         if len(w) > lenWalltime:
+            lenWalltime = len(w)
 
       k = ( u, p )
       if k not in ul.keys():
@@ -106,7 +119,7 @@ def display(flagged, jobs):
 
    # print title bar
    print 'usr proj' + ' '*(lenKey - len('usr proj')) + gap, 'jobid' + ' '*(lenJobId - len('jobid')), gap,
-   print 'name' + ' '*(lenJobName - len('name')), gap, 'cores ', gap, 'flagged' # , w,h # debug
+   print 'name' + ' '*(lenJobName - len('name')), gap, 'cores ', gap, 'walltime' + ' '*(lenWalltime-len('walltime')), gap, 'flagged' # , w,h # debug
 
    lines = 0
    for num, k in cnt:
@@ -120,7 +133,11 @@ def display(flagged, jobs):
          else:
             print ' '*lenKey,
          n = jobs[j]['data'][4][1]
-         print gap + jobs[j]['jobid'] + ' '*(lenJobId-len(jobs[j]['jobid'])), gap, n + ' '*(lenJobName - len(n)), gap, '%5d' % jobs[j]['cores'], gap, flagged[j]
+         if jobs[j]['walltime'] == None:
+            w = '-'
+         else:
+            w = hms(jobs[j]['walltime'])
+         print gap + jobs[j]['jobid'] + ' '*(lenJobId-len(jobs[j]['jobid'])), gap, n + ' '*(lenJobName - len(n)), gap, '%5d' % jobs[j]['cores'], gap + ' '*(lenWalltime - len(w)), w, gap, flagged[j]
          first = 0
          lines += 1
    if lines <= h-3:
