@@ -201,21 +201,24 @@ def flagByAve(av, j):
 
 
 def flagByFs(fs, mode):
+   ret = []
    for fsdata in fs:
       f = fsdata[0]
       s = fsdata[1:]
       #print 'fs', f, 'stats', s, 'len(s)', len(s)
-      h = 0
       # disk stats are in pairs
       for k in range(len(s)):
          m = s[k][0]    # ops | read | write
          cam = s[k][1]  # [ current, ave, max ]
          #print 'm', m, 'cam', cam
          assert(len(cam) == 3)
+         h = 0
          for n in range(3):
             if cam[n] > high[mode][m][n]:  # check for over threshold
                h = 1
-   return (h,(f,s))
+         if h:
+            ret.append((f,(m,cam)))
+   return ret
 
 
 def readAndParse():
@@ -354,12 +357,12 @@ def flag(o, jobs, mode):
             flagged[j].extend((s))
 
          # find high fs jobs
-         h,(f,s) = flagByFs(fs, mode)
-         if h:
+         h = flagByFs(fs, mode)
+         if len(h):
             #print 'high', j, 'fs', f, 'stats', s
             if j not in flagged.keys():
                flagged[j] = []
-            flagged[j].append((f,s))
+            flagged[j].append(h)
 
       elif mode == 'sum user':
          # sum fs stats for each user
@@ -381,9 +384,9 @@ def flag(o, jobs, mode):
       return flagged, {}
 
    for u in grouped.keys():
-      h,(f,s) = flagByFs(grouped[u]['fs'], 'single job')
-      if h:
-         flagged[u] = [(f,s)]
+      h = flagByFs(grouped[u]['fs'], 'single job')
+      if len(h):
+         flagged[u] = h
 
    return flagged, grouped
 
