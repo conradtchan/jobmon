@@ -1376,7 +1376,8 @@ def statsForJob( j, doPrint=0 ):
                 fs[d] = {}
             s = data[n][d]
             for f in s.keys():  # fs names
-                fs[d][f] = {}
+                if f not in fs[d].keys():
+                    fs[d][f] = {}
                 for t in s[f].keys():  # r,w,ops
                     if t not in fs[d][f].keys():
                         fs[d][f][t] = 0.0
