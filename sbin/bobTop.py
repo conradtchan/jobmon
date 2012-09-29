@@ -88,9 +88,9 @@ def display(flagged, jobs):
       if len(jobs[j]['jobid']) > lenJobId:
          lenJobIb = len(jobs[j]['jobid'])
       if jobs[j]['walltime'] != None:
-         w = hms(jobs[j]['walltime'])
-         if len(w) > lenWalltime:
-            lenWalltime = len(w)
+         wt = hms(jobs[j]['walltime'])
+         if len(wt) > lenWalltime:
+            lenWalltime = len(wt)
 
       k = ( u, p )
       if k not in ul.keys():
@@ -118,28 +118,38 @@ def display(flagged, jobs):
    print chr(27) + '[2J'
 
    # print title bar
-   print 'usr proj' + ' '*(lenKey - len('usr proj')) + gap, 'jobid' + ' '*(lenJobId - len('jobid')), gap,
-   print 'name' + ' '*(lenJobName - len('name')), gap, 'cores ', gap, 'walltime' + ' '*(lenWalltime-len('walltime')), gap, 'flagged' # , w,h # debug
+   print 'usr proj' + ' '*(lenKey - len('usr proj')) + gap + 'jobid' + ' '*(lenJobId - len('jobid')) + gap + 'name' + ' '*(lenJobName - len('name')) + gap + 'cores ' + gap + 'walltime' + ' '*(lenWalltime-len('walltime')) + gap + 'flagged' # , w,h # debug
 
    lines = 0
+   end = 0
    for num, k in cnt:
       first = 1
       for j in ul[k]:
-         if lines > h-3:
+         if end or lines > h-3:
+            end = 1
             continue
          if first:
             up = k[0] + gap + k[1]
-            print up + ' '*(lenKey - len(up)),
+            printstr = str(up) + ' '*(lenKey - len(up))
          else:
-            print ' '*lenKey,
+            printstr = ' '*lenKey
          n = jobs[j]['data'][4][1]
          if jobs[j]['walltime'] == None:
-            w = '-'
+            wt = '-'
          else:
-            w = hms(jobs[j]['walltime'])
-         print gap + jobs[j]['jobid'] + ' '*(lenJobId-len(jobs[j]['jobid'])), gap, n + ' '*(lenJobName - len(n)), gap, '%5d' % jobs[j]['cores'], gap + ' '*(lenWalltime - len(w)), w, gap, flagged[j]
+            wt = hms(jobs[j]['walltime'])
+         printstr += gap + jobs[j]['jobid'] + ' '*(lenJobId-len(jobs[j]['jobid']))
+         printstr += gap + str(n) + ' '*(lenJobName - len(n))
+         printstr += gap + '%5d' % jobs[j]['cores']
+         printstr += gap + ' '*(lenWalltime - len(wt)) + str(wt)
+         printstr += gap + str(flagged[j])
+         l = (1 + (len(printstr)-1)/w) # handle wrapped lines
+         if lines+l > h-3:
+            end = 1
+            continue
+         print printstr
          first = 0
-         lines += 1
+         lines += l
    if lines <= h-3:
       print '\n'*(h-3-lines)
 
@@ -167,13 +177,22 @@ def displayUser(flagged, grouped):
    print chr(27) + '[2J'
 
    # print title bar
-   print 'usr' + ' '*(lenUser - len('usr')), gap, 'cores' + ' '*(lenCores - len('cores')), gap, 'flagged'
+   print 'usr' + ' '*(lenUser - len('usr')) + gap + 'cores' + ' '*(lenCores - len('cores')) + gap + 'flagged'
 
    lines = 0
+   end = 0
    for n, u in cnt:
+      if end or lines > h-3:
+         end = 1
+         continue
       nn = str(n)
-      print u + ' '*(lenUser - len(u)), gap, ' '*(lenCores - len(nn)) + nn, gap, flagged[u]
-      lines += 1
+      printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn + gap + str(flagged[u])
+      l = (1 + (len(printstr)-1)/w) # handle wrapped lines
+      if lines+l > h-3:
+         end = 1
+         continue
+      print printstr
+      lines += l
    if lines <= h-3:
       print '\n'*(h-3-lines)
 
