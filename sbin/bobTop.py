@@ -221,15 +221,9 @@ def flagByAve(av, j):
 
 def flagByFs(fs, mode):
    ret = []
-   for fsdata in fs:
-      f = fsdata[0]
-      s = fsdata[1:]
-      #print 'fs', f, 'stats', s, 'len(s)', len(s)
-      # disk stats are in pairs
-      for k in range(len(s)):
-         m = s[k][0]    # ops | read | write
-         cam = s[k][1]  # [ current, ave, max ]
-         #print 'm', m, 'cam', cam
+   for f in fs.keys():
+      for m, cam in fs[f].iteritems():
+         #print 'f', f, 'm', m, 'cam', cam
          assert(len(cam) == 3)
          h = 0
          for n in range(3):
@@ -300,38 +294,41 @@ def dictByJobs(o):
 
 
 def addFsData(a,b):
-   assert(len(a) == len(b))
+   assert(a.keys() == b.keys())
    #print 'a', a
-   c = []
-   for i in range(len(a)):
-      fa = a[i][0]
-      sa = a[i][1:]
-      fb = b[i][0]
-      sb = b[i][1:]
-      assert(fa == fb)
-      #print 'fa', fa, 'sa', sa, 'len(sa)', len(sa), 'fb', fb, 'sb', sb, 'len(sb)', len(sb)
-      assert(len(sa) == len(sb))
-      # disk stats are in pairs
-      cc = [fa]
-      for k in range(len(sa)):
-         ma = sa[k][0]    #  ops | read | write
-         mb = sb[k][0]    #    ""
-         cama = sa[k][1]  # [ current, ave, max ]
-         camb = sb[k][1]  #    ""
-         assert(ma == mb)
-         assert(len(cama) == 3)
-         assert(len(camb) == 3)
-         #print 'ma', ma, 'cama', cama
+   #print 'b', b
+   c = {}
+   for fs in a.keys(): # fs
+      c[fs] = {}
+      assert(a[fs].keys() == b[fs].keys())
+      for k in a[fs].keys():  # read, write or ops
+         av = a[fs][k]
+         bv = b[fs][k]
          cam = []
          for n in range(3):
-            cam.append(cama[n]+camb[n])
-         #print 'cam', cam
-         cc.append([ma,cam])
-      #print 'cc', cc
-      c.append(cc)
+            cam.append(av[n]+bv[n])
+         c[fs][k] = cam
    #print 'c', c
    return c
 
+def fsToDict(fs):
+   """handing fs data as a dict of dicts like in server code is just so much easier..."""
+   fsd = {}
+   for fsdata in fs:
+      f = fsdata[0]
+      s = fsdata[1:]
+      #print 'fs', f, 'stats', s, 'len(s)', len(s)
+      if f not in fsd.keys():
+         fsd[f] = {}
+      # disk stats are in pairs
+      for k in range(len(s)):
+         m = s[k][0]    # ops | read | write
+         cam = s[k][1]  # [ current, ave, max ]
+         #print 'm', m, 'cam', cam
+         assert(len(cam) == 3)
+         if m not in fsd[f].keys():
+            fsd[f][m] = cam
+   return fsd
 
 def flag(o, jobs, mode):
    flagged = {}
@@ -351,6 +348,7 @@ def flag(o, jobs, mode):
       maxmemonnodes = ave[3]  # eg. all 24g nodes
       taintednet = ave[4]
       fs = ave[5]
+      fs = fsToDict(fs)
       #print 'job', j, 'job ave', av, 'job max', ma, 'fs', fs, 'len(ave)', len(ave), 'ave', ave, 'len(nodes)', len(n), n
 
       # ignore jobs that have just started...
