@@ -1206,7 +1206,6 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsDat
                 stats[jobId]['stats'][n]['taintedNet'] = 0   # network stats reliable/unreliable
                 # fs's are a bit too many and varied to treat as vectors, so use dicts
                 stats[jobId]['stats'][n]['fs'] = {}        # global filesystems sum
-                stats[jobId]['stats'][n]['fsmax'] = {}     # global filesystems maximums on each node
                 stats[jobId]['stats'][n]['fscurrent'] = {} # global filesystems current value
                                                            #   'fs current' is different to the other stats[] metrics. detailed r,w,ops data
                                                            #   for each fs only really makes sense per job, and so we store it here so we can
@@ -1235,7 +1234,6 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsDat
             big[4] = max(big[4], watts)
 
             s = stats[jobId]['stats'][n]['fs']
-            sm = stats[jobId]['stats'][n]['fsmax']
 	    sc = stats[jobId]['stats'][n]['fscurrent']
 
             # bytes
@@ -1244,17 +1242,12 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsDat
                   s[f] = {}
                   s[f]['read']  = 0.0
                   s[f]['write'] = 0.0
-                  sm[f] = {}
-                  sm[f]['read']  = 0.0
-                  sm[f]['write'] = 0.0
                   sc[f] = {}
                   sc[f]['read']  = 0.0
                   sc[f]['write'] = 0.0
                r,w = v
                s[f]['read']  += r
                s[f]['write'] += w
-               sm[f]['read']  = max(sm[f]['read'], r)
-               sm[f]['write'] = max(sm[f]['write'], w)
                sc[f]['read']  = r
                sc[f]['write'] = w
 
@@ -1274,14 +1267,11 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsDat
             for f, v in fsOps:   # name of fs, operations/s
                if f not in s.keys():
                   s[f] = {}
-                  sm[f] = {}
                   sc[f] = {}
                if 'ops' not in s[f].keys():
                   s[f]['ops'] = 0.0
-                  sm[f]['ops'] = 0.0
                   sc[f]['ops'] = 0.0
                s[f]['ops'] += v
-               sm[f]['ops'] = max(sm[f]['ops'], v)
                sc[f]['ops'] = v
 
                if f not in fsmax.keys():
@@ -1296,7 +1286,7 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsDat
                fssum[f]['ops'] += v
 
             #print 'n', n, 'data', stats[jobId]['stats'][n], 'cpuData', cpuData[n]
-            #print 'n', n, 'fs', s, 'fsmax', sm, 'current', sc
+            #print 'n', n, 'fs', s, 'current', sc
 
         # now have fssum across the nodes, so compare to max over job life
         for f in fssum.keys():
@@ -1406,7 +1396,7 @@ def statsForJob( j, doPrint=0 ):
 
         # we don't send any per node fs info in the above txt,
         # but we need to sum across nodes to generate totals and aves
-        for d in ( 'fs', 'fsmax', 'fscurrent' ):
+        for d in ( 'fs', 'fscurrent' ):
             if d not in fs.keys():
                 fs[d] = {}
             s = data[n][d]
@@ -1438,8 +1428,7 @@ def statsForJob( j, doPrint=0 ):
             fsSum[f] = {}
             fsStr += '["' + f + '",'
             for t in fs['fs'][f].keys():  # r,w,ops
-                # above we create fs, fsmax, fscurrent with the same keys, so the below is safe
-                #fsSum[f][t] = ( int(fs['fscurrent'][f][t]), int(fs['fs'][f][t]), int(fs['fsmax'][f][t]) )
+                # above we create fs, fscurrent and fsmax with the same keys, so the below is safe
                 fsSum[f][t] = ( int(fs['fscurrent'][f][t]), int(fs['fs'][f][t]), int(st['fsMax'][f][t]) )
                 fsStr += '["' + t + '",[%d,%d,%d]' % fsSum[f][t] + '],'
             fsStr += '],'
@@ -1448,18 +1437,7 @@ def statsForJob( j, doPrint=0 ):
     fsStr = string.replace(fsStr,'],]',']]')
     #print j, 'fsSum', fsSum
     #print j, 'fsStr', fsStr
-    #print j, 'fsmax via nodes',
-    #if 'fsmax' in fs.keys():
-    #   print fs['fsmax']
-    #print j, 'fsMax via job  ', st['fsMax']
-    #if 'fsmax' in fs.keys():
-    #   for f in fs['fsmax'].keys():
-    #      for v in fs['fsmax'][f].keys():
-    #         if fs['fsmax'][f][v] < st['fsMax'][f][v]:
-    #            print 'fs max by job is more than fs max by nodes. should not happen', f, v
-    #            sys.exit(1)
-    #         elif fs['fsmax'][f][v] > 1.5*(st['fsMax'][f][v]):
-    #            print 'interesting. fs max by job is < 1.5x fs max by nodes', f, v
+    #print j, 'fsMax', st['fsMax']
 
     if nodesCnt > 0:
         u = ave[0]/numNodesInJob
