@@ -13,7 +13,7 @@ url = 'http://www.vu.nci.org.au/cgi-bin/catBobData'
 sleep = 10   # seconds between refreshes
 
 # ignore jobs that are short and those that are just starting up
-skipLowWalltime = 120   # time in seconds
+skipLowWalltime = 30   # time in seconds
 
 coresPerNode = 8
 
@@ -115,9 +115,10 @@ def makeFlagStr(flagged, fs):
       flagged.remove('fs')
    flagStr = ''
    if len(flagged):
-      flagStr += str(flagged)
-   if len(flagStr) and len(fsStr):
-      flagStr += ', '
+      for f in flagged:
+         flagStr += str(f) + ', '
+   if not len(fsStr):
+      flagStr = flagStr[:-2]
    flagStr += fsStr
    return flagStr
 
@@ -139,20 +140,16 @@ def display(flagged, jobs):
       p = jobs[j]['data'][2]     # project
       n = jobs[j]['data'][4][1]  # job name
 
-      if len(n) > lenJobName:
-         lenJobName = len(n)
-      if len(jobs[j]['jobid']) > lenJobId:
-         lenJobIb = len(jobs[j]['jobid'])
+      lenJobName = max(lenJobName, len(n))
+      lenJobId = max(lenJobId, len(jobs[j]['jobid']))
       if jobs[j]['walltime'] != None:
          wt = hms(jobs[j]['walltime'])
-         if len(wt) > lenWalltime:
-            lenWalltime = len(wt)
+         lenWalltime = max(lenWalltime, len(wt))
 
       k = ( u, p )
       if k not in ul.keys():
          ul[k] = []
-         if len(u + gap + p) > lenKey:
-            lenKey = len(u + gap + p)
+         lenKey = max(lenKey, len(u + gap + p))
       ul[k].append(j)
    #print 'ul', ul, 'lenKey', lenKey
 
@@ -173,7 +170,7 @@ def display(flagged, jobs):
    print clear
 
    # print title bar
-   print 'usr proj' + ' '*(lenKey - len('usr proj')) + gap + 'jobid' + ' '*(lenJobId - len('jobid')) + gap + 'name' + ' '*(lenJobName - len('name')) + gap + 'cores ' + gap + 'walltime' + ' '*(lenWalltime-len('walltime')) + gap + 'flagged' # , w,h # debug
+   print 'usr proj' + ' '*(lenKey - len('usr proj')) + gap + 'jobid' + ' '*(lenJobId - len('jobid')) + gap + 'name' + ' '*(lenJobName - len('name')) + gap + 'cores ' + gap + ' '*(lenWalltime-len('walltime')) + 'walltime' + gap + 'flagged' # , w,h # debug
 
    lines = 0
    end = 0
@@ -196,7 +193,7 @@ def display(flagged, jobs):
          printstr += gap + jobs[j]['jobid'] + ' '*(lenJobId-len(jobs[j]['jobid']))
          printstr += gap + str(n) + ' '*(lenJobName - len(n))
          printstr += gap + '%5d' % jobs[j]['cores']
-         printstr += gap + ' '*(lenWalltime - len(wt)) + wt
+         printstr += gap + ' '*(lenWalltime - len(wt)) + wt + gap
          flagStr = makeFlagStr(flagged[j], jobs[j]['fs'])
          printstr += gap + flagStr
          ctrlChars = 8*printstr.count(bold)  # escape sequences are 4 chars long and in pairs
@@ -232,10 +229,14 @@ def findCommonPrefix(l):
    return prefix + '*'
 
 
-def displayUser(flagged, grouped, jobs):
+def displayGrouped(flagged, grouped, jobs, mode):
    # find users with the most flagged cores
    cnt = []
-   lenUser = len('usr')
+   if mode == 'sum user':
+      modeStr = 'usr'
+   else:
+      modeStr = 'proj'
+   lenMode = len(modeStr)
    lenCores = len('cores')
    lenAveWt = len('ave walltime')
    lenAveCores = len('ave cores')
@@ -243,7 +244,7 @@ def displayUser(flagged, grouped, jobs):
    lenNumJobs = len('jobs')
    for u in flagged.keys():
       n = grouped[u]['cores']
-      lenUser = max(lenUser, len(u))
+      lenMode = max(lenMode, len(u))
       lenCores = max(lenCores, len(str(n)))
       cnt.append((n, u))
 
@@ -281,7 +282,7 @@ def displayUser(flagged, grouped, jobs):
    print clear
 
    # print title bar
-   print 'usr' + ' '*(lenUser - len('usr')) + gap + 'cores' + ' '*(lenCores - len('cores')) + gap + 'jobs' + ' '*(lenNumJobs - len('jobs')) + gap + 'name' + ' '*(lenName - len('name')) + gap + 'ave-walltime' + ' '*(lenAveWt - len('ave walltime')) + gap + 'flagged'
+   print modeStr + ' '*(lenMode - len(modeStr)) + gap + 'cores' + ' '*(lenCores - len('cores')) + gap + 'jobs' + ' '*(lenNumJobs - len('jobs')) + gap + 'name' + ' '*(lenName - len('name')) + gap + 'ave-walltime' + ' '*(lenAveWt - len('ave walltime')) + gap + 'flagged'
 
    lines = 0
    end = 0
@@ -290,7 +291,7 @@ def displayUser(flagged, grouped, jobs):
          end = 1
          continue
       nn = str(n)
-      printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn 
+      printstr = str(u) + ' '*(lenMode - len(u)) + gap + ' '*(lenCores - len(nn)) + nn 
       printstr += gap + ' '*(lenNumJobs - len(grouped[u]['numJobs'])) + grouped[u]['numJobs']
       printstr += gap + grouped[u]['pre'] + ' '*(lenName - len(grouped[u]['pre']))
       printstr += gap + ' '*(lenAveWt - len(grouped[u]['aveWt'])) + grouped[u]['aveWt']
@@ -445,10 +446,9 @@ def fsToDict(fs):
             fsd[f][m] = cam
    return fsd
 
-def flag(o, jobs, mode):
+def flag(a, jobs, mode):
    flagged = {}
    grouped = {}
-   a = o['averages']
 
    # loop over jobs
    for i in a:
@@ -497,9 +497,12 @@ def flag(o, jobs, mode):
                flagged[j] = []
             flagged[j].append('fs')
 
-      elif mode == 'sum user':
-         # sum fs stats for each user
-         u = jobs[j]['data'][1]     # user
+      elif mode == 'sum user' or mode == 'sum project':
+         # sum fs stats for each user/project
+         if mode == 'sum user':
+            u = jobs[j]['data'][1]     # user
+         else:
+            u = jobs[j]['data'][2]     # project
 
          if u not in grouped.keys():
             grouped[u] = {}
@@ -519,19 +522,29 @@ def flag(o, jobs, mode):
       return flagged, {}
 
    for u in grouped.keys():
-      flagByFs(grouped[u]['fs'], 'sum user')
+      flagByFs(grouped[u]['fs'], 'sum user')  # sum project is the same
       if 'flag' in grouped[u]['fs'].keys():
          flagged[u] = ['fs']
 
    return flagged, grouped
 
 
+def help():
+   print sys.argv[0], '[--sum-user|--user|--sum-project|--project]'
+   print 'default is to not group jobs at all. ie. single job mode'
+   print ' --sum-user|--user        group together jobs for each user'
+   print ' --sum-project|--project  group together jobs for each project'
+   sys.exit(1)
+
+
 def args():
    if len(sys.argv) > 1:
-      if sys.argv[1] == '--sum-user':
+      if sys.argv[1] in ( '--sum-user', '--user' ):
          return 'sum user'
-      elif sys.argv[1] == '--sum-project':
+      elif sys.argv[1] in ( '--sum-project', '--project' ):
          return 'sum project'
+      else:
+         help()
    # default mode
    return 'single job'
 
@@ -542,15 +555,12 @@ if __name__ == '__main__':
    while 1:
       o = readAndParse()
       jobs = dictByJobs(o)
-      if mode == 'single job' or mode == 'sum user':
-         flagged, grouped = flag(o, jobs, mode)
-      else:
-         print 'unknown mode', mode
-         sys.exit(1)
+      av = o['averages']
+      flagged, grouped = flag(av, jobs, mode)
 
       if mode == 'single job':
          display(flagged, jobs)
-      elif mode == 'sum user':
-         displayUser(flagged, grouped, jobs)
+      else:
+         displayGrouped(flagged, grouped, jobs, mode)
 
       time.sleep(sleep)
