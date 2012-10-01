@@ -193,7 +193,7 @@ def display(flagged, jobs):
          flagStr = ''
          if len(flagged[j]):
             flagStr += str(flagged[j])
-         if len(flagStr):
+         if len(flagStr) and len(fsStr):
             flagStr += ', '
          flagStr += fsStr
          printstr += gap + flagStr
@@ -246,7 +246,7 @@ def displayUser(flagged, grouped):
       flagStr = ''
       if len(flagged[u]):
          flagStr += str(flagged[u])
-      if len(flagStr):
+      if len(flagStr) and len(fsStr):
          flagStr += ', '
       flagStr += fsStr
       printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn + gap + flagStr
