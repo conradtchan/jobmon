@@ -36,6 +36,11 @@ wantToRead = ( 'api', 'jobs', 'averages' )
 
 gap = ' '
 
+# vt100 escape sequences
+bold =   chr(27) + '[1m'
+normal = chr(27) + '[0m'
+clear =  chr(27) + '[2j'
+
 
 def uniq( list ):
    l = []
@@ -64,6 +69,46 @@ def terminal_size():
    h, w, hp, wp = struct.unpack('HHHH', fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH', 0, 0, 0, 0)))
    return w, h
 
+
+gig = 1024.0*1024.0*1024.0
+meg = 1024.0*1024.0
+kay = 1024.0
+
+def scalarToScaled( d ):
+    if d > 2000000000:
+        return ( d/gig, 'GB/s' )
+    elif d > 1500000:
+        return ( d/meg, 'MB/s' )
+    elif d > 1500:
+        return ( d/kay, 'KB/s' )
+    return ( d, '' )
+
+def printBytes(b, highlight, units):
+   if units:
+      v, u = scalarToScaled(b)
+   else:
+      v = b
+   if highlight:
+      s = bold + '%.0f' % v + normal
+   else:
+      s = '%.0f' % v
+   if units:
+      s += ' ' + u
+   return s
+
+def fsFlaggedToStr(fs):
+   fsStr = ''
+   for f in fs['flag'].keys(): # fs's
+      for m, cam in fs['flag'][f].iteritems():
+         # cam has a 1 where an item has been flagged
+         fsStr += f + ' ' + m + ' ['
+         for n in range(3):
+            fsStr += printBytes(fs[f][m][n], cam[n], m != 'ops')
+            if n != 2:
+               fsStr += ', '
+         fsStr += '], '
+   fsStr = fsStr[:-2]
+   return fsStr
 
 def display(flagged, jobs):
    if 0:
@@ -114,8 +159,7 @@ def display(flagged, jobs):
    w, h = terminal_size()
    #print 'w,h', w,h
 
-   # clear the screen - fully dodgy method...
-   print chr(27) + '[2J'
+   print clear
 
    # print title bar
    print 'usr proj' + ' '*(lenKey - len('usr proj')) + gap + 'jobid' + ' '*(lenJobId - len('jobid')) + gap + 'name' + ' '*(lenJobName - len('name')) + gap + 'cores ' + gap + 'walltime' + ' '*(lenWalltime-len('walltime')) + gap + 'flagged' # , w,h # debug
@@ -142,7 +186,17 @@ def display(flagged, jobs):
          printstr += gap + str(n) + ' '*(lenJobName - len(n))
          printstr += gap + '%5d' % jobs[j]['cores']
          printstr += gap + ' '*(lenWalltime - len(wt)) + str(wt)
-         printstr += gap + str(flagged[j])
+         fsStr = ''
+         if 'fs' in flagged[j]:
+            fsStr = fsFlaggedToStr(jobs[j]['fs'])
+            flagged[j].remove('fs')
+         flagStr = ''
+         if len(flagged[j]):
+            flagStr += str(flagged[j])
+         if len(flagStr):
+            flagStr += ', '
+         flagStr += fsStr
+         printstr += gap + flagStr
          l = (1 + (len(printstr)-1)/w) # handle wrapped lines
          if lines+l > h-3:
             end = 1
@@ -173,8 +227,7 @@ def displayUser(flagged, grouped):
    w, h = terminal_size()
    #print 'w,h', w,h
 
-   # clear the screen - fully dodgy method...
-   print chr(27) + '[2J'
+   print clear
 
    # print title bar
    print 'usr' + ' '*(lenUser - len('usr')) + gap + 'cores' + ' '*(lenCores - len('cores')) + gap + 'flagged'
@@ -186,7 +239,17 @@ def displayUser(flagged, grouped):
          end = 1
          continue
       nn = str(n)
-      printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn + gap + str(flagged[u])
+      fsStr = ''
+      if 'fs' in flagged[u]:
+         fsStr = fsFlaggedToStr(grouped[u]['fs'])
+         flagged[u].remove('fs')
+      flagStr = ''
+      if len(flagged[u]):
+         flagStr += str(flagged[u])
+      if len(flagStr):
+         flagStr += ', '
+      flagStr += fsStr
+      printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn + gap + flagStr
       l = (1 + (len(printstr)-1)/w) # handle wrapped lines
       if lines+l > h-3:
          end = 1
@@ -220,18 +283,24 @@ def flagByAve(av, j):
 
 
 def flagByFs(fs, mode):
-   ret = []
+   # insert a flag field into the dict if there's something flagged in this fs entry
+   flagd = {}
    for f in fs.keys():
+      flagd[f] = {}
       for m, cam in fs[f].iteritems():
          #print 'f', f, 'm', m, 'cam', cam
          assert(len(cam) == 3)
          h = 0
+         flag = []
          for n in range(3):
             if cam[n] > high[mode][m][n]:  # check for over threshold
                h = 1
+               flag.append(1)
+            else:
+               flag.append(0)
          if h:
-            ret.append((f,(m,cam)))
-   return ret
+            flagd[f][m] = flag
+            fs['flag'] = flagd
 
 
 def readAndParse():
@@ -349,6 +418,7 @@ def flag(o, jobs, mode):
       taintednet = ave[4]
       fs = ave[5]
       fs = fsToDict(fs)
+      jobs[j]['fs'] = fs
       #print 'job', j, 'job ave', av, 'job max', ma, 'fs', fs, 'len(ave)', len(ave), 'ave', ave, 'len(nodes)', len(n), n
 
       # ignore jobs that have just started...
@@ -374,12 +444,12 @@ def flag(o, jobs, mode):
             flagged[j].extend((s))
 
          # find high fs jobs
-         h = flagByFs(fs, mode)
-         if len(h):
+         flagByFs(fs, mode)
+         if 'flag' in fs.keys():
             #print 'high', j, 'fs', f, 'stats', s
             if j not in flagged.keys():
                flagged[j] = []
-            flagged[j].append(h)
+            flagged[j].append('fs')
 
       elif mode == 'sum user':
          # sum fs stats for each user
@@ -401,9 +471,9 @@ def flag(o, jobs, mode):
       return flagged, {}
 
    for u in grouped.keys():
-      h = flagByFs(grouped[u]['fs'], 'single job')
-      if len(h):
-         flagged[u] = h
+      flagByFs(grouped[u]['fs'], 'single job')
+      if 'flag' in grouped[u]['fs'].keys():
+         flagged[u] = ['fs']
 
    return flagged, grouped
 
