@@ -17,9 +17,11 @@ skipLowWalltime = 120   # time in seconds
 
 coresPerNode = 8
 
-# filesystem limits that we want to flag as bad
-meg = 1000000
+gig = 1024.0*1024.0*1024.0
+meg = 1024.0*1024.0
+kay = 1024.0
 
+# filesystem limits that we want to flag as bad
 high = {   # fs threshholds for [current, average, max]
    'single job' :
        { 'ops':[500,5000,20000],
@@ -27,8 +29,8 @@ high = {   # fs threshholds for [current, average, max]
        'write':[100*meg,100*meg,1000*meg] },
    'sum user' :
        { 'ops':[1000,5000,20000],
-        'read':[1000*meg,1000*meg,1000*meg],
-       'write':[1000*meg,1000*meg,1000*meg] },
+        'read':[1000*meg,1000*meg,2000*meg],
+       'write':[1000*meg,1000*meg,2000*meg] },
   }
 
 # ignore all fields from the XML except these
@@ -70,12 +72,8 @@ def terminal_size():
    return w, h
 
 
-gig = 1024.0*1024.0*1024.0
-meg = 1024.0*1024.0
-kay = 1024.0
-
 def scalarToScaled( d ):
-    if d > 2000000000:
+    if d > 3000000000:
         return ( d/gig, 'GB/s' )
     elif d > 1500000:
         return ( d/meg, 'MB/s' )
@@ -198,7 +196,7 @@ def display(flagged, jobs):
          printstr += gap + jobs[j]['jobid'] + ' '*(lenJobId-len(jobs[j]['jobid']))
          printstr += gap + str(n) + ' '*(lenJobName - len(n))
          printstr += gap + '%5d' % jobs[j]['cores']
-         printstr += gap + ' '*(lenWalltime - len(wt)) + str(wt)
+         printstr += gap + ' '*(lenWalltime - len(wt)) + wt
          flagStr = makeFlagStr(flagged[j], jobs[j]['fs'])
          printstr += gap + flagStr
          l = (1 + (len(printstr)-1)/w) # handle wrapped lines
@@ -212,18 +210,66 @@ def display(flagged, jobs):
       print '\n'*(h-3-lines)
 
 
-def displayUser(flagged, grouped):
+def findCommonPrefix(l):
+   """given a list of items find the longest common prefix. from stackexchange"""
+   if not l:
+      return ''
+   if len(uniq(l)) == 1: # all jobs the same name
+      return l[0]
+   prefix = l[0]
+   for s in l:
+      if len(s) < len(prefix):
+         prefix = prefix[:len(s)]
+      if not prefix:
+         return '*'
+      for i in range(len(prefix)):
+         if prefix[i] != s[i]:
+            prefix = prefix[:i]
+            break
+   if len(prefix) < 2:  # don't bother with short names
+      prefix = '*'
+   return prefix + '*'
+
+
+def displayUser(flagged, grouped, jobs):
    # find users with the most flagged cores
    cnt = []
    lenUser = len('usr')
    lenCores = len('cores')
+   lenAveWt = len('ave walltime')
+   lenAveCores = len('ave cores')
+   lenName = len('name')
+   lenNumJobs = len('jobs')
    for u in flagged.keys():
       n = grouped[u]['cores']
-      if len(u) > lenUser:
-         lenUser = len(u)
-      if len(str(n)) > lenCores:
-         lenCores = len(str(n))
+      lenUser = max(lenUser, len(u))
+      lenCores = max(lenCores, len(str(n)))
       cnt.append((n, u))
+
+      # pre-process things we might want to print later
+      grouped[u]['flagStr'] = makeFlagStr(flagged[u], grouped[u]['fs'])
+      wt = 0
+      jobNames = []
+      for j in grouped[u]['jobs']:
+         if jobs[j]['walltime'] != None:
+            wt += jobs[j]['walltime']
+         nm = jobs[j]['data'][4][1]  # job name
+         jobNames.append(nm)
+      numJobs = len(grouped[u]['jobs'])
+      grouped[u]['numJobs'] = str(numJobs)
+      if numJobs == 1:
+         grouped[u]['aveCores'] = str(n)
+         grouped[u]['aveWt'] = hms(wt)
+         grouped[u]['pre'] = jobNames[0]
+      else:
+         grouped[u]['aveCores'] = str(n/numJobs)
+         grouped[u]['aveWt'] = hms(wt/numJobs)
+         grouped[u]['pre'] = findCommonPrefix(jobNames)
+      lenAveCores = max(lenAveCores, len(grouped[u]['aveCores']))
+      lenNumJobs = max(lenNumJobs, len(grouped[u]['numJobs']))
+      lenAveWt = max(lenAveWt, len(grouped[u]['aveWt']))
+      lenName = max(lenName, len(grouped[u]['pre']))
+
    cnt.sort()
    cnt.reverse()
    #print 'cnt', cnt
@@ -234,7 +280,7 @@ def displayUser(flagged, grouped):
    print clear
 
    # print title bar
-   print 'usr' + ' '*(lenUser - len('usr')) + gap + 'cores' + ' '*(lenCores - len('cores')) + gap + 'flagged'
+   print 'usr' + ' '*(lenUser - len('usr')) + gap + 'cores' + ' '*(lenCores - len('cores')) + gap + 'jobs' + ' '*(lenNumJobs - len('jobs')) + gap + 'name' + ' '*(lenName - len('name')) + gap + 'ave-walltime' + ' '*(lenAveWt - len('ave walltime')) + gap + 'flagged'
 
    lines = 0
    end = 0
@@ -243,8 +289,11 @@ def displayUser(flagged, grouped):
          end = 1
          continue
       nn = str(n)
-      flagStr = makeFlagStr(flagged[u], grouped[u]['fs'])
-      printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn + gap + flagStr
+      printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn 
+      printstr += gap + ' '*(lenNumJobs - len(grouped[u]['numJobs'])) + grouped[u]['numJobs']
+      printstr += gap + grouped[u]['pre'] + ' '*(lenName - len(grouped[u]['pre']))
+      printstr += gap + ' '*(lenAveWt - len(grouped[u]['aveWt'])) + grouped[u]['aveWt']
+      printstr += gap + grouped[u]['flagStr']
       l = (1 + (len(printstr)-1)/w) # handle wrapped lines
       if lines+l > h-3:
          end = 1
@@ -453,6 +502,7 @@ def flag(o, jobs, mode):
          if u not in grouped.keys():
             grouped[u] = {}
             grouped[u]['cores'] = 0
+            grouped[u]['jobs'] = []
 
          if 'fs' not in grouped[u].keys():
             grouped[u]['fs'] = fs
@@ -461,12 +511,13 @@ def flag(o, jobs, mode):
 
          coreList = jobs[j]['data'][3]
          grouped[u]['cores'] += len(coreList)
+         grouped[u]['jobs'].append(j)  # store a list of the users jobs for later
 
    if mode == 'single job':
       return flagged, {}
 
    for u in grouped.keys():
-      flagByFs(grouped[u]['fs'], 'single job')
+      flagByFs(grouped[u]['fs'], 'sum user')
       if 'flag' in grouped[u]['fs'].keys():
          flagged[u] = ['fs']
 
@@ -498,6 +549,6 @@ if __name__ == '__main__':
       if mode == 'single job':
          display(flagged, jobs)
       elif mode == 'sum user':
-         displayUser(flagged, grouped)
+         displayUser(flagged, grouped, jobs)
 
       time.sleep(sleep)
