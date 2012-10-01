@@ -110,6 +110,19 @@ def fsFlaggedToStr(fs):
    fsStr = fsStr[:-2]
    return fsStr
 
+def makeFlagStr(flagged, fs):
+   fsStr = ''
+   if 'fs' in flagged:
+      fsStr = fsFlaggedToStr(fs)
+      flagged.remove('fs')
+   flagStr = ''
+   if len(flagged):
+      flagStr += str(flagged)
+   if len(flagStr) and len(fsStr):
+      flagStr += ', '
+   flagStr += fsStr
+   return flagStr
+
 def display(flagged, jobs):
    if 0:
       for j in flagged.keys():
@@ -186,16 +199,7 @@ def display(flagged, jobs):
          printstr += gap + str(n) + ' '*(lenJobName - len(n))
          printstr += gap + '%5d' % jobs[j]['cores']
          printstr += gap + ' '*(lenWalltime - len(wt)) + str(wt)
-         fsStr = ''
-         if 'fs' in flagged[j]:
-            fsStr = fsFlaggedToStr(jobs[j]['fs'])
-            flagged[j].remove('fs')
-         flagStr = ''
-         if len(flagged[j]):
-            flagStr += str(flagged[j])
-         if len(flagStr) and len(fsStr):
-            flagStr += ', '
-         flagStr += fsStr
+         flagStr = makeFlagStr(flagged[j], jobs[j]['fs'])
          printstr += gap + flagStr
          l = (1 + (len(printstr)-1)/w) # handle wrapped lines
          if lines+l > h-3:
@@ -239,16 +243,7 @@ def displayUser(flagged, grouped):
          end = 1
          continue
       nn = str(n)
-      fsStr = ''
-      if 'fs' in flagged[u]:
-         fsStr = fsFlaggedToStr(grouped[u]['fs'])
-         flagged[u].remove('fs')
-      flagStr = ''
-      if len(flagged[u]):
-         flagStr += str(flagged[u])
-      if len(flagStr) and len(fsStr):
-         flagStr += ', '
-      flagStr += fsStr
+      flagStr = makeFlagStr(flagged[u], grouped[u]['fs'])
       printstr = str(u) + ' '*(lenUser - len(u)) + gap + ' '*(lenCores - len(nn)) + nn + gap + flagStr
       l = (1 + (len(printstr)-1)/w) # handle wrapped lines
       if lines+l > h-3:
