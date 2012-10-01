@@ -74,12 +74,12 @@ def terminal_size():
 
 def scalarToScaled( d ):
     if d > 3000000000:
-        return ( d/gig, 'GB/s' )
+        return ( d/gig, ' GB/s' )
     elif d > 1500000:
-        return ( d/meg, 'MB/s' )
+        return ( d/meg, ' MB/s' )
     elif d > 1500:
-        return ( d/kay, 'KB/s' )
-    return ( d, '' )
+        return ( d/kay, ' KB/s' )
+    return ( d, ' B/s' )
 
 def printBytes(b, highlight, units):
    if units:
@@ -91,7 +91,7 @@ def printBytes(b, highlight, units):
    else:
       s = '%.0f' % v
    if units:
-      s += ' ' + u
+      s += u
    return s
 
 def fsFlaggedToStr(fs):
@@ -199,7 +199,8 @@ def display(flagged, jobs):
          printstr += gap + ' '*(lenWalltime - len(wt)) + wt
          flagStr = makeFlagStr(flagged[j], jobs[j]['fs'])
          printstr += gap + flagStr
-         l = (1 + (len(printstr)-1)/w) # handle wrapped lines
+         ctrlChars = 8*printstr.count(bold)  # escape sequences are 4 chars long and in pairs
+         l = (1 + (len(printstr)-ctrlChars-1)/w) # handle wrapped lines
          if lines+l > h-3:
             end = 1
             continue
@@ -294,7 +295,8 @@ def displayUser(flagged, grouped, jobs):
       printstr += gap + grouped[u]['pre'] + ' '*(lenName - len(grouped[u]['pre']))
       printstr += gap + ' '*(lenAveWt - len(grouped[u]['aveWt'])) + grouped[u]['aveWt']
       printstr += gap + grouped[u]['flagStr']
-      l = (1 + (len(printstr)-1)/w) # handle wrapped lines
+      ctrlChars = 8*printstr.count(bold)  # escape sequences are 4 chars long and in pairs
+      l = (1 + (len(printstr)-ctrlChars-1)/w) # handle wrapped lines
       if lines+l > h-3:
          end = 1
          continue
