@@ -41,7 +41,10 @@ gap = ' '
 # vt100 escape sequences
 bold =   chr(27) + '[1m'
 normal = chr(27) + '[0m'
-clear =  chr(27) + '[2j'
+clear =  chr(27) + '[2J'
+origin = chr(27) + '[H'
+hide =   chr(27) + '[>5l'
+show =   chr(27) + '[>5h'
 
 
 def uniq( list ):
@@ -122,7 +125,17 @@ def makeFlagStr(flagged, fs):
    flagStr += fsStr
    return flagStr
 
-def display(flagged, jobs):
+def fsSumStr(fss):
+   fs = fss['fs']
+   n = fss['nodes']
+   s = 'fs now: '
+   for f in fs.keys(): # fs's
+      for m, cam in fs[f].iteritems():
+         s += f + ' ' + m + ' ' + printBytes(cam[0], 0, m != 'ops') + ', '
+   s += 'nodes ' + str(n)
+   return s
+
+def display(fss, flagged, jobs):
    if 0:
       for j in flagged.keys():
          jd = jobs[j]['data']
@@ -167,12 +180,16 @@ def display(flagged, jobs):
    w, h = terminal_size()
    #print 'w,h', w,h
 
-   print clear
+   sys.stdout.write(clear + origin)
+
+   fssStr = fsSumStr(fss)
+   print fssStr
+   headl = (1 + (len(fssStr)-1)/w) # handle wrapped lines
 
    # print title bar
    print 'usr proj' + ' '*(lenKey - len('usr proj')) + gap + 'jobid' + ' '*(lenJobId - len('jobid')) + gap + 'name' + ' '*(lenJobName - len('name')) + gap + 'cores ' + gap + ' '*(lenWalltime-len('walltime')) + 'walltime' + gap + 'flagged' # , w,h # debug
 
-   lines = 0
+   lines = headl
    end = 0
    for num, k in cnt:
       first = 1
@@ -204,8 +221,6 @@ def display(flagged, jobs):
          print printstr
          first = 0
          lines += l
-   if lines <= h-3:
-      print '\n'*(h-3-lines)
 
 
 def findCommonPrefix(l):
@@ -229,7 +244,7 @@ def findCommonPrefix(l):
    return prefix + '*'
 
 
-def displayGrouped(flagged, grouped, jobs, mode):
+def displayGrouped(fss, flagged, grouped, jobs, mode):
    # find users with the most flagged cores
    cnt = []
    if mode == 'sum user':
@@ -279,12 +294,16 @@ def displayGrouped(flagged, grouped, jobs, mode):
    w, h = terminal_size()
    #print 'w,h', w,h
 
-   print clear
+   sys.stdout.write(clear + origin)
+
+   fssStr = fsSumStr(fss)
+   print fssStr
+   headl = (1 + (len(fssStr)-1)/w) # handle wrapped lines
 
    # print title bar
    print modeStr + ' '*(lenMode - len(modeStr)) + gap + 'cores' + ' '*(lenCores - len('cores')) + gap + 'jobs' + ' '*(lenNumJobs - len('jobs')) + gap + 'name' + ' '*(lenName - len('name')) + gap + 'ave-walltime' + ' '*(lenAveWt - len('ave walltime')) + gap + 'flagged'
 
-   lines = 0
+   lines = headl
    end = 0
    for n, u in cnt:
       if end or lines > h-3:
@@ -303,8 +322,6 @@ def displayGrouped(flagged, grouped, jobs, mode):
          continue
       print printstr
       lines += l
-   if lines <= h-3:
-      print '\n'*(h-3-lines)
 
 
 def flagByAve(av, j):
@@ -410,11 +427,13 @@ def dictByJobs(o):
 
 
 def addFsData(a,b):
-   assert(a.keys() == b.keys())
+   #assert(a.keys() == b.keys())
    #print 'a', a
    #print 'b', b
    c = {}
    for fs in a.keys(): # fs
+      if fs == 'flag':
+         continue
       c[fs] = {}
       assert(a[fs].keys() == b[fs].keys())
       for k in a[fs].keys():  # read, write or ops
@@ -529,6 +548,53 @@ def flag(a, jobs, mode):
    return flagged, grouped
 
 
+def fsSum(jobs):
+   fss = {}  # sum over all fs's, as seen by jobs
+   shared = []
+   nl = []
+   allnl = []  # all nodes we have data for - some jobs running <=4 core jobs are excluded
+   first = 1
+   for j in jobs.keys():
+      if 'fs' not in jobs[j].keys():
+         #print 'skip', j, 'cores', jobs[j]['cores']
+         continue
+      #print 'cores', jobs[j]['cores']
+      n = uniq(jobs[j]['data'][3])  # node list
+      allnl.extend(n)
+      if jobs[j]['cores'] < coresPerNode:
+         assert(len(n) == 1)
+         n = n[0]
+         shared.append((n,j))
+         nl.append(n)
+         continue
+      fs = jobs[j]['fs']
+      if first:
+         fss = fs
+      else:
+         fss = addFsData(fss, fs)
+      first = 0
+
+   # deal with <1 node jobs that have fs data by only including each node once
+   s = {}
+   nl = uniq(nl)
+   for n in nl:
+      s[n] = []
+   for n, j in shared:
+      s[n].append(j)
+   for n in s.keys():
+      #for j in s[n]:
+      #   print 'n', n, j, jobs[j]['fs']
+      j = s[n][0]
+      fs = jobs[j]['fs']
+      fss = addFsData(fss, fs)
+
+   #print 'fss', fss
+   allnl.sort()
+   allnl = uniq(allnl)
+   #print 'nodes', len(allnl)
+   return {'fs':fss, 'nodes':len(allnl)}
+
+
 def help():
    print sys.argv[0], '[--sum-user|--user|--sum-project|--project]'
    print 'default is to not group jobs at all. ie. single job mode'
@@ -557,10 +623,11 @@ if __name__ == '__main__':
       jobs = dictByJobs(o)
       av = o['averages']
       flagged, grouped = flag(av, jobs, mode)
+      fs = fsSum(jobs)
 
       if mode == 'single job':
-         display(flagged, jobs)
+         display(fs, flagged, jobs)
       else:
-         displayGrouped(flagged, grouped, jobs, mode)
+         displayGrouped(fs, flagged, grouped, jobs, mode)
 
       time.sleep(sleep)
