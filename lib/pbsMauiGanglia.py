@@ -536,6 +536,8 @@ class pbsJobs:
             field = string.split( l )[0]
             if field in fields:  # we want to read this in...
                 l = self.processLine( l, delim )
+                if field == 'Job_Name':
+                    l[1] = l[1].replace('&', '_')  # an '&' in the job name will kill the xml stream...
                 dict[ l[0] ] = l[1] # ok, punch it into the dict
 
             delim = '='
