@@ -10,3 +10,6 @@ example utilities that use the bobMonitor libraries
   usedCores.py
     take high level aggregated node use and scheduler info from bobMon
     output files and dump it into ganglia to it can be plotted
+
+  nextToClear.py
+    display when currently draining nodes will become idle
