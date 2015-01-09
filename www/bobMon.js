@@ -54,7 +54,7 @@ var items = []; // list of all the node table td objects
 
 
 // names of the text fields sent to us by the server
-var txtNames = [ 'eta1', 'eta2', 'stats' ];
+var txtNames = [ 'stats' ];
 
 var req;
 var win;

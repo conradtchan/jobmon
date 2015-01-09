@@ -24,7 +24,7 @@ from bobMonUtils import queuedJobState, whosQueued, plotPie, endPlotPie, tagAsBl
 from pbsMauiGanglia import maui
 import hashlib, os, time, tempfile, cPickle
 # for text
-from bobMonUtils import nextJobRuns, doStatus
+from bobMonUtils import doStatus
 # for tempfiles
 import stat
 # for flush
@@ -954,44 +954,14 @@ def doTimeStamp():
     return txt
 
 def doText( jobs, queued, running, m, free ):
-    freeCpus, freeNodes, availCpus, availNodes = free
-    usedCpus = availCpus - freeCpus
-    usedNodes = availNodes - freeNodes
-    #print 'freeCpus, freeNodes, availCpus, availNodes', free
-    #print 'usedNodes, usedCpus', usedNodes, usedCpus
-
     # totalRunCpus (includes freeCpus) is the effective size of the machine at
     # the moment which includes jobs on nodes that are draining/offline
     # (unfortunately also on down nodes).
-    runList, totalRunCpus = running
-    realUsedCpus = totalRunCpus - freeCpus
-
-    txt = ''
-
-    # work out the starting time for the next queued job
-    if haveMaui:
-        n = m.nextToRunNodes()
-        bf = m.getBackFillList()
-
-        # work out and print the next job to run
-        for f in ( 'eta1', 'eta2' ):
-            # eta1 can be total crap as it doesn't consider reservations, so just don't print it
-            # should run 'showstart' instead as it gives an accurate 'next job runs ...'
-            if f == 'eta1': #   and ( len(queued) == 0 or n == None ):
-                t = ''
-            else:
-                t = nextJobRuns( jobs, freeNodes, n, bf, f, textMode=2 )
-            txt += '<' + f + '>"' + t + '"</' + f + '>'
-    else:   # rjh - fix later if it's possible at all?
-        for f in ( 'eta1', 'eta2' ):
-            t = ''
-            txt += '<' + f + '>"' + t + '"</' + f + '>'
+    runList, totalRunCpus, totalRunGpus = running
 
     # stats
-    txt += '<stats>"' + doStatus( freeNodes, availNodes, queued, m, textMode=2, freeCpus=freeCpus, usedCpus=usedCpus, usedNodes=usedNodes, availCpus=availCpus, realUsedCpus=realUsedCpus ) + '"</stats>'
-
+    txt = '<stats>"' + doStatus( free, totalRunCpus, totalRunGpus, queued, m, textMode=2 ) + '"</stats>'
     return txt
-
 
 def doReservations( m ):
     res = m.getRes()
