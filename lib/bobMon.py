@@ -1004,14 +1004,19 @@ def doNetwork( all, sharedNetNodes ):
     state = '['
     data = {}
 
+    bytes_in =  config.mm['network']['bytes_in']
+    bytes_out = config.mm['network']['bytes_out']
+    packets_in =  config.mm['network']['packets_in']
+    packets_out = config.mm['network']['packets_out']
+
     for k, i in all.iteritems():
         j = string.split( k, '.' )[0]
 
         # ib bytes
         try:
             # filter for ridiculous values
-            inB  = filterByteValues( float(i['ib_bytes_in']) )
-            outB = filterByteValues( float(i['ib_bytes_out']) )
+            inB  = filterByteValues( float(i[bytes_in[0]]) *bytes_in[1] )
+            outB = filterByteValues( float(i[bytes_out[0]])*bytes_out[1] )
             bytesPerSec = inB + outB
         except:
             bytesPerSec = 0.0
@@ -1019,8 +1024,8 @@ def doNetwork( all, sharedNetNodes ):
 
         # ib packets
         try:
-            inP  = filterPacketValues( float(i['ib_pkts_in']) )
-            outP = filterPacketValues( float(i['ib_pkts_out']) )
+            inP  = filterPacketValues( float(i[packets_in[0]]) *packets_in[1] )
+            outP = filterPacketValues( float(i[packets_out[0]])*packets_out[1] )
             packetsPerSec = inP + outP
         except:
             packetsPerSec = 0.0
