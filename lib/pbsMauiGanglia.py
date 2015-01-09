@@ -77,27 +77,23 @@ class loadedNetsGmond():
         now = time.time()  # seconds since 1970
 
         for host in all.keys():
-            num = self.nameToNum( host )
-            if num == None:
-                continue
-
             if dummyRun:
-                self.up.append( num ) # all are up
+                self.up.append( host ) # all are up
             else:
                 if now - all[host]['reported'] < deadTimeout:   # 2 min
-                    self.up.append( num )  # list of up nodes
+                    self.up.append( host )  # list of up nodes
 
             # check for broken ganglia
             if 'load_one' not in all[host].keys():
                 continue
 
             try:
-                self.loads[num] = float(all[host]['load_one'])
+                self.loads[host] = float(all[host]['load_one'])
             except KeyError, theError:
                 print host, 'load_one not in ganglia'
                 #pass  # silent failure
             try:
-                self.cpuUsage[num] = ( float(all[host]['cpu_user']), float(all[host]['cpu_nice']), float(all[host]['cpu_system']), float(all[host]['cpu_wio']), float(all[host]['cpu_idle']) )
+                self.cpuUsage[host] = ( float(all[host]['cpu_user']), float(all[host]['cpu_nice']), float(all[host]['cpu_system']), float(all[host]['cpu_wio']), float(all[host]['cpu_idle']) )
             except KeyError, theError:
                 print host, 'cpu user/nice/system/wio/idle not in ganglia'
                 #pass  # silent failure
@@ -228,98 +224,94 @@ class gangliaStats:
         self.all = all
         gb = 1.0/(1024.0*1024.0)
 
-        for name in all.keys():
+        d = self.all
+        for name in d.keys():
             # print 'name', name
-            num = self.gangliaNameToKey( name )
-            if num == None:
-                # delete from 'all' if it's not supposed to be there
-                del all[name]
-                continue
 
             ## check for broken/incomplete ganglia data
-            #if 'mem_free' not in all[name].keys() or 'mem_total' not in all[name].keys() or 'disk_total' not in all[name].keys() or 'swap_total' not in all[name].keys():
+            #if 'mem_free' not in d[name].keys() or 'mem_total' not in d[name].keys() or 'disk_total' not in d[name].keys() or 'swap_total' not in d[name].keys():
             #    print 'ganglia info busted for', name
             #    continue
 
             try:
-                self.mem[num]  = ( float(all[name]['mem_free']), float(all[name]['mem_cached']), float(all[name]['mem_shared']), float(all[name]['mem_buffers']), float(all[name]['mem_total']) )
+                self.mem[name]  = ( float(d[name]['mem_free']), float(d[name]['mem_cached']), float(d[name]['mem_shared']), float(d[name]['mem_buffers']), float(d[name]['mem_total']) )
             except:
-                if not self.quiet and name[:3] != 'cmm':  # hack for vayu cmm's
+                if not quiet and name not in config.shn:  # skip spoof'd data without a time from shelves
                     now = time.time()
-                    if now - all[name]['reported'] < self.deadTimeout:  # up but confused
+                    if now - d[name]['reported'] < deadTimeout:  # up but confused
                         print 'mem gmond data from', name, 'is incomplete in a confusing way - restart its gmond?'
-                #print all[name]
+                #print d[name]
                 #sys.exit(1)
 
             try:
-                #if 'uber_free' in all[name].keys():
-                #    self.disk[num] = ( float(all[name]['disk_free']) - float(all[name]['uber_free'])*gb, float(all[name]['disk_total']) - float(all[name]['uber_total'])*gb )
-                #    #print 'disk free', float(all[name]['disk_free']), 'uber_free', float(all[name]['uber_free'])*gb, 'disk_total', float(all[name]['disk_total']), 'uber_free', float(all[name]['uber_total'])*gb
+                #if 'uber_free' in d[name].keys():
+                #    self.disk[name] = ( float(d[name]['disk_free']) - float(d[name]['uber_free'])*gb, float(d[name]['disk_total']) - float(d[name]['uber_total'])*gb )
+                #    #print 'disk free', float(d[name]['disk_free']), 'uber_free', float(d[name]['uber_free'])*gb, 'disk_total', float(d[name]['disk_total']), 'uber_free', float(d[name]['uber_total'])*gb
                 #else:
-                #    self.disk[num] = ( float(all[name]['disk_free']), float(all[name]['disk_total']) )
-                self.disk[num] = ( float(all[name]['disk_free']), float(all[name]['disk_total']) )
-                self.swap[num] = ( float(all[name]['swap_free']), float(all[name]['swap_total']) )
+                #    self.disk[name] = ( float(d[name]['disk_free']), float(d[name]['disk_total']) )
+                self.disk[name] = ( float(d[name]['disk_free']), float(d[name]['disk_total']) )
+                self.swap[name] = ( float(d[name]['swap_free']), float(d[name]['swap_total']) )
             except:
                 pass
                 #print 'disk or uber gmond data from', name, 'is incomplete in a confusing way - restart it\'s gmond?'
                 #if name[:3] != 'cmm':  # hack for vayu cmm's
                 #    print 'disk or swap gmond data from', name, 'is incomplete in a confusing way - restart its gmond?'
-                #print all[name]
+                #print d[name]
                 #sys.exit(1)
 
-            self.temps[num] = ()
+            self.temps[name] = ()
             haveC=0
             haveFR=0
             haveCh=0
             # some nodes don't have temps, some temps have control chars in them!
-            if 'cpu1_temp' in all[name].keys():
-                c = all[name]['cpu1_temp'] 
+            if 'cpu1_temp' in d[name].keys():
+                c = d[name]['cpu1_temp']
                 c1 = int(c.split('.')[0])
-                if 'cpu2_temp' in all[name].keys():
-                    c = all[name]['cpu2_temp'] 
+                if 'cpu2_temp' in d[name].keys():
+                    c = d[name]['cpu2_temp']
                     c2 = int(c.split('.')[0])
                 else:
                     c2 = c1
                 haveC=1
 
-            if 'front_temp' in all[name].keys():
+            if 'front_temp' in d[name].keys():
                 haveFR=1
-                if 'rear_temp' in all[name].keys():
-                    a1 = all[name]['rear_temp'] 
-                    a2 = all[name]['front_temp'] 
+                if 'rear_temp' in d[name].keys():
+                    a1 = d[name]['rear_temp']
+                    a2 = d[name]['front_temp']
                     a1 = int(a1.split('.')[0])
                     a2 = int(a2.split('.')[0])
                 else:
-                    a2 = all[name]['front_temp'] 
+                    a2 = d[name]['front_temp']
                     a2 = int(a2.split('.')[0])
                     a1 = a2
 
-            if 'chassis_temp' in all[name].keys():
-                ch = int(all[name]['chassis_temp'])
+            if 'chassis_temp' in d[name].keys():
+                ch = int(d[name]['chassis_temp'])
                 haveCh=1
 
             if haveFR and haveC:
-                self.temps[num] = ( c1, c2, a1, a2 )
+                self.temps[name] = ( c1, c2, a1, a2 )
             elif haveFR:
-                self.temps[num] = ( a1, a2 )
+                self.temps[name] = ( a1, a2 )
             elif haveC and haveCh:
-                self.temps[num] = ( c1, c2, ch, ch )
+                self.temps[name] = ( c1, c2, ch, ch )
             elif haveC:
-                self.temps[num] = ( c1, c2 )
+                self.temps[name] = ( c1, c2 )
             elif haveCh:
-                self.temps[num] = ( ch, ch )
+                self.temps[name] = ( ch, ch )
 
             # power in watts
-            self.power[num] = None
-            if 'node_power' in all[name].keys():   # node
-                self.power[num] = int(all[name]['node_power'].split('.')[0])
-            if 'cmm_power_in' in all[name].keys(): # blade chassis
-                self.power[num] = int(all[name]['cmm_power_in'].split('.')[0])
+            self.power[name] = None
+            if 'node_power' in d[name].keys():   # node
+                self.power[name] = int(d[name]['node_power'].split('.')[0])
+            if 'cmm_power_in' in d[name].keys(): # blade chassis
+                self.power[name] = int(d[name]['cmm_power_in'].split('.')[0])
 
             # fan speed
-            self.fans[num] = None
-            if 'fan_rms' in all[name].keys():
-                self.fans[num] = int(all[name]['fan_rms'].split('.')[0])
+            self.fans[name] = None
+            if 'fan_rms' in d[name].keys():
+                self.fans[name] = int(d[name]['fan_rms'].split('.')[0])
 
 class pbsNodes:
     def __init__( self ):
