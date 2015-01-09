@@ -37,10 +37,10 @@ bobMonitor relies upon the following:
 
 server-side pie charts of the queue require:
  - PyChart  http://home.gna.org/pychart/ 
- - netpbm tools for pieChart image post-processing
+ - netpbm tools (netpbm-progs) for pieChart image post-processing
 
 optional:
- - maui scheduler (moab is untested but might work)
+ - maui or moab scheduler
 
 bobMonitor gratefully uses and includes a copy of Erik Arvidsson's
 slider implementation:
