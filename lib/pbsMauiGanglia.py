@@ -55,7 +55,7 @@ def parseCpuList( cpus ):
             c.append(int(i))
     return c
 
-class loadedNetsBase:
+class loadedNetsGmond():
     def __init__( self ):
         self.up = []    # list of up nodes
         self.loads = {} # dictionary of loads
@@ -63,61 +63,14 @@ class loadedNetsBase:
         self.loadedNet = {}   # dict of active net loads
         self.unloadedNet = {} #   ""     idle  ""
 
-class loadedNetsGstat(loadedNetsBase):
-    def process( self ):
-        self.read()  # load em up
-        self.calcLoadsOnNets()  # build per-net statistics
+    def getLoads( self ):
+        # combine the loaded/unloads nets dicts into one...
+        netLoad = {}
+        for d in ( self.loadedNet, self.unloadedNet ):
+            for k, v in d.iteritems():
+                netLoad[k] = v
 
-    def read( self ):
-        if dummyRun:
-            f = open( 'yo-gstat', 'r' )
-        else:
-            f = os.popen( 'gstat -a1l', 'r' )
-
-        # format is:
-        #                                       LOAD                       CPU              Gexec
-        # hostname  CPUs (Procs/Total) [     1,     5, 15min] [  User,  Nice, System, Idle]
-
-        readingOk = 1
-        while readingOk:
-            try:
-                l = f.readline()
-            except:
-                readingOk = 0
-
-            if len(l) == 0:
-                readingOk = 0
-            else:
-	        # print 'init', l
-                l = string.split( l, ')' )
-                name = string.split( l[0] )[0]
-	        # print 'name', name
-                if len(l) > 1:  # if they're up, then check on their status
-                    l = string.split( l[1], '[' )
-                    loads = l[1]
-                    cpus = string.split( l[2], ',' )
-                    # print 'loads',loads, 'cpus', cpus
-                    load = float( string.split( loads, ',' )[0] )  # 1 min load
-                    cpu = ( float(cpus[0]), float(cpus[1]), float(cpus[2]), float(string.split( cpus[3], ']' )[0]) )
-                    # print name, load, cpu
-
-                    num = self.nameToNum( name )
-                    if num == None:
-                        continue
-    
-                    self.up.append( num )
-                    self.loads[num] = load
-                    self.cpuUsage[num] = cpu
-
-        #print 'self.loads', self.loads
-        f.close()
-
-        self.up.sort()
-
-
-class loadedNetsGmond(loadedNetsBase):
-    def process( self ):
-        self.calcLoadsOnNets()  # build per-net statistics
+        return ( netLoad, self.loads, self.cpuUsage, self.up )
 
     def feedInData( self, all, deadTimeout=120 ):
         # take the dicts from gmond stats and pull out the fields we want...

@@ -17,8 +17,8 @@
 
 
 import string
-from pbsMauiGanglia import gangliaStats, pbsNodes
-from bobMonUtils import loadedNets, pbsJobs
+from pbsMauiGanglia import gangliaStats, pbsNodes, loadedNetsGmond
+from bobMonUtils import pbsJobs
 # for pie
 from bobMonUtils import queuedJobState, whosQueued, plotPie, endPlotPie, tagAsBlocked
 from pbsMauiGanglia import maui
@@ -1601,9 +1601,8 @@ def doAll():
     prune(all)
 
     # loads on nodes:
-    q = loadedNets()
+    q = loadedNetsGmond()
     q.feedInData( all, deadTimeout=60 )  # re-use the data from querying gmond
-    q.process()
     ( netLoad, loads, cpuUsage, up ) = q.getLoads()
     txt += '<netloads>' + doNetLoads( netLoad ) + '</netloads>\n'
     txt += '<loads>' + doLoads( all, up ) + '</loads>\n'

@@ -7,8 +7,8 @@ import os
 import sys
 import string
 import time
-import md5
-from pbsMauiGanglia import pbsNodes, pbsJobs, maui, loadedNetsGmond, gangliaStats, timeToInt
+import hashlib
+from pbsMauiGanglia import pbsNodes, pbsJobs, maui, timeToInt
 
 import bobMonConf
 config = bobMonConf.config()
@@ -23,45 +23,6 @@ except:
 
 # usernames hash to a colour number
 userColourHash = {}
-
-# look at the list of machine loads and what switch/network they are on
-#   ... can also use gstat instead of gmond to get stats...
-class loadedNets(loadedNetsGmond):
-    def getLoads( self ):
-        # combine the loaded/unloads nets dicts into one...
-        netLoad = {}
-        for d in ( self.loadedNet, self.unloadedNet ):
-            for k, v in d.iteritems():
-                netLoad[k] = v
-
-        return ( netLoad, self.loads, self.cpuUsage, self.up )
-
-    def calcLoadsOnNets( self ):
-        # code used to be here to compute loadedNet[] and unloadedNet[] based on
-        # loads[] and intimate knowledge of which nodes are on which switch.
-        # however network switch topology is different on each cluster, and I don't think
-        # these loadedNet numbers ever meant much anyway.
-        # leave this placeholder here in case anyone wants to implement it later.
-        return
-
-    def nameToNum( self, name ):
-        if name in config.nonBackendNodes:
-            return name
-
-        # nuke all after the first '.'
-        name = string.split( name, '.' )[0]
-
-        if name in config.nonBackendNodes:
-            return name
-
-        try:
-            rest = string.replace( name, config.baseNodeName, '' )
-            num = int(rest)
-        except:
-            # something we can't handle
-            return None
-
-        return num
 
 
 def intToTime( time ):
