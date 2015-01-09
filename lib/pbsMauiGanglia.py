@@ -7,6 +7,7 @@ import os
 import sys
 import string
 import time
+from xml.dom import minidom
 
 import bobMonConf
 config = bobMonConf.config()
@@ -315,71 +316,133 @@ class gangliaStats:
 
 class pbsNodes:
     def __init__( self ):
-        if dummyRun:
-            f = open( 'yo-pbsnodes', 'r' )
-        else:
-            f = os.popen( config.pbsPath + '/pbsnodes ' + config.pbsNodesCommand, 'r' )
-
         # "interesting nodes"
         self.pbsNodesList = []
         # the full set of nodes that PBS knows about
         self.pbsFullNodesList = []
 
-        readingOk = 1
-        while readingOk:
+        if config.batchType == 'anupbs':
+            pbsNodesCommand = 'pbsnodes -a'
+            parse = self.parseAnuPbs
+        elif config.batchType == 'torque':
+            pbsNodesCommand = 'pbsnodes -x'  # used to be -l
+            parse = self.parseTorqueXml
+        else:
+            print 'unknown batch system in pbsNodes:', config.batchType
+            sys.exit(1)
+
+        if dummyRun:
+            f = open( 'yo-pbsnodes', 'r' )
+        else:
+            f = os.popen( config.pbsPath + '/' + pbsNodesCommand, 'r' )
+        l = f.readlines()
+        f.close()
+
+        parse(l)
+
+    def parseAnuPbs(self, ll):
+        for l in ll:
+            if len(l.strip()) == 0:
+                continue
+
+            # parse the PBS pbsnodes output
+            # eg.   v199  job-exclusive  np =  8  properties = onlydistjobs,draining-2010/03/22-09:00:00  jobfs_root = /jobfs/live  numa_nodes =  2
+            l = string.split( l )
+            node = l[0]
+            status = string.split( l[1], ',' )
+            #print 'l', l
             try:
-                l = f.readline()
+                cores = int(l[4])
             except:
-                readingOk = 0
+                print 'parseAnuPbs: could not read cores from pbsnodes'
+                sys.exit(1)
 
-            # print 'line **', l, '**'
+            try:
+                properties = string.split( l[7], ',' )
+            except:
+                properties = []
+            #print 'node', node, 'status', status, 'properties', properties, 'cores', cores
 
-            if len(l) == 0:
-                readingOk = 0
-            else:
-                # parse the PBS pbsnodes output
-                # eg.   v199  job-exclusive  np =  8  properties = onlydistjobs,draining-2010/03/22-09:00:00  jobfs_root = /jobfs/live  numa_nodes =  2
-                l = string.split( l )
-                node = l[0]
-                status = string.split( l[1], ',' )
-                #print 'l', l
-                try:
-                    cores = int(l[4])
-                except:
-                    cores = None
-                try:
-                    properties = string.split( l[7], ',' )
-                except:
-                    properties = []
-                #print 'node', node, 'status', status, 'properties', properties, 'cores', cores
+            j = []
+            if len(status) != 1 or status[0] not in ( 'free', 'job-exclusive' ):
+                j.extend( status )
 
-                j = []
-                if len(status) != 1 or status[0] not in ( 'free', 'job-exclusive' ):
-                    j.extend( status )
+            k = []
+            k.extend(status)
 
-                k = []
-                k.extend(status)
+            # append any draining properties to the node status
+            for p in properties:
+                if p[:8] == 'draining':
+                    j.extend( [ p ] )
+                    k.extend( [ p ] )
+
+            # append any HW_ properties to the node status
+            for p in properties:
+                if p[:3] == 'HW_' or p[:3] == 'SW_':
+                    j.extend( [ p ] )
+                    k.extend( [ p ] )
+            #print 'node', node, 'j', j
+
+            if len(j):
+                self.pbsNodesList.append( ( node, j, cores ) )
+
+            if len(k):
+                self.pbsFullNodesList.append( ( node, k, cores ) )
+
+    def parseTorqueXml(self, ll):
+        if len(ll) == 0:
+            print 'possible connection problem to the pbs server'
+            return
+        elif len(ll) != 1:
+            print 'cannot talk to pbs server, or pbsnodes -x format has changed - expect all one line'
+            sys.exit(1)
+
+        dom = minidom.parseString( ll[0] )
+        xmlnodelist = dom.getElementsByTagName('Node')
+        for xmlnode in xmlnodelist:
+            dom1 = minidom.parseString( xmlnode.toxml() )
+
+            x = dom1.getElementsByTagName('name')[0].toxml()
+            node = x.replace('<name>','').replace('</name>','')
+
+            x = dom1.getElementsByTagName('np')[0].toxml()
+            cores = int(x.replace('<np>','').replace('</np>',''))
+
+            x = dom1.getElementsByTagName('state')[0].toxml()
+            state = x.replace('<state>','').replace('</state>','')
+
+            #print node, cores, status
+            j = []
+            k = []
+            for s in state.strip().split(','):
+                if s not in ( 'free', 'job-exclusive' ):
+                    j.append( s )
+                k.append( s )
+
+            try:
+                x = dom1.getElementsByTagName('note')[0].toxml()
+                properties = x.replace('<note>','').replace('</note>','').strip().split(',')
 
                 # append any draining properties to the node status
                 for p in properties:
                     if p[:8] == 'draining':
-                        j.extend( [ p ] )
-                        k.extend( [ p ] )
+                        j.append( p )
+                        k.append( p )
 
                 # append any HW_ properties to the node status
                 for p in properties:
                     if p[:3] == 'HW_' or p[:3] == 'SW_':
-                        j.extend( [ p ] )
-                        k.extend( [ p ] )
+                        j.append( p )
+                        k.append( p )
                 #print 'node', node, 'j', j
+            except:
+                pass
 
-                if len(j):
-                    self.pbsNodesList.append( ( node, j, cores ) )
+            if len(j):
+                self.pbsNodesList.append( ( node, j, cores ) )
 
-                if len(k):
-                    self.pbsFullNodesList.append( ( node, k, cores ) )
-
-        f.close()
+            if len(k):
+                self.pbsFullNodesList.append( ( node, k, cores ) )
 
     def getNodesList( self ):
         return self.pbsNodesList
@@ -396,7 +459,7 @@ class pbsJobs:
         else:
             bufsize = 1024*1024
             if cmd == None:
-                f = os.popen( config.pbsPath + '/qstat -f', 'r', bufsize )
+                f = os.popen( config.pbsPath + '/qstat -tf', 'r', bufsize )
             else:
                 f = os.popen( cmd, 'r', bufsize )
 
@@ -457,7 +520,8 @@ class pbsJobs:
                    'resources_used.vmem', 'resources_used.walltime',
                    'job_state', 'exec_host', 'Resource_List.nodes',
                    'Resource_List.cput', 'Resource_List.walltime',
-                   'Resource_List.other', 'comment', 'Account_Name' ]
+                   'Resource_List.other', 'comment', 'Account_Name',
+                   'Resource_List.select', 'Resource_List.procs' ]
 
         # loop over and merge multiple lines into one
         merged = []
@@ -552,15 +616,13 @@ class pbsJobs:
 
             if 'exec_host' in dict.keys():
                 l = dict[ 'exec_host' ]
-                l = l.strip()
-                nodes = string.split( l, '+' )
+                nnn = l.strip().split('+')
                 trimNodes = []
-                for n in nodes:   #     torque format ... tpb183.sunnyvale/1+tpb183.sunnyvale/0 ...
-                                  #     anupbs format ... x1/cpus=0-3/mems=0+x2/cpus=0-3/mems=0 ...
-                                  # new anupbs format ... v[1-2,9-12,17]/cpus=0-3/mems=0 ...
-                    n = string.split( n, '/' )
-                    nn = n[0]
-                    nn = string.split( nn, '.' )[0]
+                for n in nnn:   #     torque format ... tpb183.sunnyvale/1+tpb183.sunnyvale/0 ...
+                                #     anupbs format ... x1/cpus=0-3/mems=0+x2/cpus=0-3/mems=0 ...
+                                # new anupbs format ... v[1-2,9-12,17]/cpus=0-3/mems=0 ...
+                    n = n.split('/')
+                    nn = n[0].split('.')[0]
                     if len(n) == 3 and len(n[1]) > 5 and n[1][0:5] == 'cpus=':  # anu pbs
                         if '[' in nn: # new anu format
                             nnn = nn.split('[')
@@ -570,14 +632,14 @@ class pbsJobs:
                             nnn = parseCpuList( nnn )
                             for nn in nnn:
                                 #print 'new', pren + str(nn)
-                                c = string.split( n[1], '=' )[1]
+                                c = n[1].split('=')[1]
                                 # format 0-3,7-8,10,12
                                 cpus = parseCpuList( c )
                                 for i in cpus:
                                     trimNodes.append( pren + str(nn) )
                         else:
                             #print 'old', nn
-                            c = string.split( n[1], '=' )[1]
+                            c = n[1].split('=')[1]
                             # format 0-3,7-8,10,12
                             cpus = parseCpuList( c )
                             for i in cpus:
@@ -649,7 +711,7 @@ class pbsJobs:
         pbsInfo['numNodes'] = reqNodes
         pbsInfo['numCpus'] = cpus
         pbsInfo['wallLimit'] = wallLimit
-        pbsInfo['nodes'] = dict[ 'Resource_List.nodes' ]
+        pbsInfo['nodes'] = dict[nodes_k]
         if 'comment' in dict.keys():
             pbsInfo['comment'] = dict[ 'comment' ]
         else:
@@ -803,7 +865,7 @@ class maui:
                 print 'impossible'
                 sys.exit(1)
 
-            jobId = int(l[0])
+            jobId = l[0]  # can be a job array string [], so can't make this an int
             name = l[1]
             state = l[2]
             cpus = int(l[3])
