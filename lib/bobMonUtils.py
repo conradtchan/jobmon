@@ -81,7 +81,7 @@ def queuedJobState( job ):
     return None
 
 
-def whosQueued( queued, textMode=0 ):
+def whosQueued( queued ):
     # split up queued into queued and blocked
     q = []
     b = []
@@ -98,13 +98,14 @@ def whosQueued( queued, textMode=0 ):
     qRet = ( [], 0 )
     bRet = ( [], 0 )
     if len(q):
-        qRet = whosNadgered( q, 'queued', textMode )
+        qRet = sortByUser( q )
     if len(b):
-        bRet = whosNadgered( b, 'blocked', textMode )
+        bRet = sortByUser( b )
 
     return ( qRet, bRet )
 
-def whosNadgered( queued, title, textMode=0 ):
+
+def sortByUser( queued ):
     users = {}
     totalCpus = 0
     totalCpuHours = 0.0
@@ -123,18 +124,6 @@ def whosNadgered( queued, title, textMode=0 ):
         list.append( ( sum(cpus), cpus, k ) )  # ( sumCpus, [ job1cpus, job2cpus, ... ], username )
     list.sort()
     list.reverse()
-
-    if textMode:
-        if len(list):
-            print
-            print title, 'for %.1f%% of sunnyvale,' % ( 100.0*float(totalCpus)/float(config.coresPerNode*availNodes()) ),
-            print 'or %.1f machine hours' % ( totalCpuHours/float(config.coresPerNode*availNodes()) )
-            for cpus, cpusList, username in list:
-                print ' ', username, cpus,   # , '%.1f%%' % ( 100.0*float(cpus)/float(totalCpus) )  #, '(', users[username], ')'
-                if len(cpusList) == 1:
-                    print '(1 job)'
-                else:
-                    print '(%d jobs)' % len(cpusList)
 
     return ( list, totalCpus )
 
