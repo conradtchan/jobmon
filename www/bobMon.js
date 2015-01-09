@@ -2428,7 +2428,7 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     // tooltip width and height
     //addErr( 'toolTip.offsetWidth ' + toolTip.offsetWidth + ', toolTip.offsetHeight ' + toolTip.offsetHeight ); // debug
     var tpHt = toolTip.offsetHeight;
-    if ((mouseY+offY+tpHt)>winHt) 
+    if ((mouseY+offY+tpHt)>winHt)
 	toolTip.style.top = winHt-(tpHt+offY)+"px";
     else
 	toolTip.style.top = mouseY+offY+"px";
@@ -4127,8 +4127,13 @@ function processJobs( nextFn ) {
 			   // html += '</span>';
 			//}
 			//else {
+
+			// approximate a square for whole node jobs - should do this using an integer sqrt instead?
 			h = 1;
-			if ( multiJobCnt > 3 ) {
+			if ( multiJobCnt > 4 ) {
+			    h = 4;
+			}
+			else if ( multiJobCnt > 2 ) {
 			    h = 3;
 			}
 			else if ( multiJobCnt > 1 ) {
@@ -4137,7 +4142,7 @@ function processJobs( nextFn ) {
 			w = multiJobCnt/h;
 			    // multiJobCnt is # cpus for this job
 			    //html += '<div style="position:relative; float:left;clear:left; font-size: 0px; line-height: 0%; width:' + (5*multiJobCnt) + 'px; height:5px; background-color:' + bgColour + '; color:' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();">' + cpusSoFar + '</div>'
-			if ( state == 'S' )
+			if ( state == 'S' ) // triangle
 			    html += '<div style="position:relative; font-size: 0px; line-height: 0%; width: 0px; border-top: ' + (4*w) + 'px solid ' + bgColour + '; border-right: ' + (4*w) + 'px solid white;" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();"></div>'; // ' + cpusSoFar + '</div>'
 			else
 			    html += '<div style="position:relative; width:' + (4*w) + 'px; height:' + (4*h) + 'px; background-color:' + bgColour + '; color:' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();"></div>'; // ' + cpusSoFar + '</div>'
