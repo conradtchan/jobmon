@@ -32,11 +32,13 @@ import sys
 # for compressed xml
 import gzip
 
-import bobMonitorConf as config
+import bobMonConf
+config = bobMonConf.config()
 
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
 haveMaui = 1
+configHashVal = None
 
 # store stats for all the currently running jobs
 stats = {}
@@ -106,12 +108,12 @@ def doLoads( all, up ):
     cnt = 0
     length = len(all)
     for k, i in all.iteritems():
-        j = string.split( k, '.' )[0]
-        if j in config.nonBackendNodes:
-            if j in config.shelves:  # shelves don't have a load
-                continue
-            n = j
-        else:
+        n = string.split( k, '.' )[0]
+        if n in config.shn:  # shelves don't have a load
+            continue
+        if n not in config.cn and n not in config.nben:
+            continue
+
             try:
                 n = int(j[len(config.baseNodeName):])
             except:
@@ -621,7 +623,7 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes=None ):   # work out how 
     # that have jobs on them, etc.
     for node, sc in pbs.iteritems():
         status, cores = sc
-        if node in config.headNodes:
+        if node in config.hn:
             #print 'el-heado', node, sc
             continue
 
@@ -1546,10 +1548,12 @@ def configHash( doPrint = 0):
         print 'function bobMonitorConf() {'
 
     for f in keys:
-       if f[0:2] == '__':   # skip python internal objects
-          continue
-       item = getattr(config, f)
-       d[f] = item
+        if f[0:2] == '__':   # skip python internal objects
+            continue
+        if f[0:1] == '_':   # skip python methods
+            continue
+        item = getattr(config, f)
+        d[f] = item
 
        if doPrint:
            if type(item) == types.StringType:
@@ -1567,27 +1571,11 @@ def configHash( doPrint = 0):
 
     return hexhash
 
-def nodeOk(n):   # accept node name or number
-    if n in config.nonBackendNodes or n in config.shelves:
-        return 1
-
-    try:
-        i = int(n[len(config.baseNodeName):])
-        if n[:len(config.baseNodeName)] == config.baseNodeName and i >= config.nodeNumStart and i <= config.nodeNumStart+config.numNodes-1:
-            return 1
-    except:
-        try:
-            if n >= config.nodeNumStart and n <= config.nodeNumStart+config.numNodes-1:
-                return 1
-        except:
-            return 0
-    return 0
-
 def prune(all):
     todel = []
     for k, i in all.iteritems():
-        j = string.split( k, '.' )[0]
-        if not nodeOk(j):
+        n = string.split( k, '.' )[0]
+        if not ( n in config.nben or n in config.shn or n in config.cn ):
             todel.append(k)
     for k in todel:
         del all[k]
@@ -1603,7 +1591,7 @@ def doAll():
     api = '9'
     txt += '<api>["' + api + '"]</api>\n'
 
-    txt += '<configHash>["' + configHash() + '"]</configHash>\n'
+    txt += '<configHash>["' + configHashVal + '"]</configHash>\n'
     txt += '<timeStamp>' + doTimeStamp() + '</timeStamp>\n'
 
     g = gangliaStats( doCpus=1 )
@@ -1741,6 +1729,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == '--config':
         configHash( doPrint=1 )
         sys.exit(0)
+
+    configHashVal = configHash()
 
     # loop here infinitely and every so often run a doAll
     while ( 1 ):

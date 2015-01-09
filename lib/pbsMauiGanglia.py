@@ -8,7 +8,8 @@ import sys
 import string
 import time
 
-import bobMonitorConf as config
+import bobMonConf
+config = bobMonConf.config()
 
 dummyRun = 0
 

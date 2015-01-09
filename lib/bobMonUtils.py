@@ -10,7 +10,8 @@ import time
 import md5
 from pbsMauiGanglia import pbsNodes, pbsJobs, maui, loadedNetsGmond, gangliaStats, timeToInt
 
-import bobMonitorConf as config
+import bobMonConf
+config = bobMonConf.config()
 
 doPie = 1
 try:
@@ -93,7 +94,7 @@ def rgbToHex( a, scaleBy=1 ):
 
 def availNodes():   # work out how many online/up nodes we have
     i = 0
-    for k in range(1,config.numNodes+1):
+    for k in config.cn:
         ( n, name, upDown, load, extras, jobList, status ) = yoMomma[k]
         if status == []:  # not offline/down and no jobs running
             i += 1

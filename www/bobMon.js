@@ -66,15 +66,8 @@ var start = 0;
 var delay = 200;
 var doIncrs = 1;
 
-// gen allNodes
 var allNodes = [];
-for(var i=0;i<config.numNodes;i++)
-    allNodes[i] = config.baseNodeName + (i+config.nodeNumStart);
-var cnt = 0;
-for(var i=config.numNodes; i<config.numNodes+config.nonBackendNodes.length; i++ ) {
-    allNodes[i] = config.nonBackendNodes[cnt];
-    cnt += 1;
-}
+
 
 // init prev variables
 var prevJobs, prevLoads, prevShow, prevCpu, prevMem;
@@ -162,6 +155,94 @@ numRows = 0;
 function minFn(x,y) { return ( (x) < (y) ? (x) : (y) ); }
 function maxFn(x,y) { return ( (x) > (y) ? (x) : (y) ); }
 
+
+// http://stackoverflow.com/questions/2998784/how-to-output-integers-with-leading-zeros-in-javascript
+function pad(num, size) {
+    var s = num+'';
+    while (s.length < size) s = '0' + s;
+    return s;
+}
+
+function expandNodeExpr(ne) {
+    // eg.
+    //    pbs -> [ pbs ]
+    //    v[1-1492] -> [ v1, v2, ... ]
+    //    x[003-007,100-200]-ib -> [ x003-ib, ... ]
+
+    // prefix
+    var s = ne.split('[');
+    if ( s.length > 2 )
+        return [];
+    var pre = s[0];
+    if (pre.length == 0)
+	return [];
+    if (s.length == 1) // there is no node range
+        return [ pre ];
+    // suffix
+    var s = ne.split(']');
+    if (s.length != 2)
+	return [];
+    var suf = s[1];
+
+    var n = [];
+
+    // node range
+    var idx = s[0].split('[')[1];    // eg. 003-007,100-200  or 1-2,7-9
+    for ( var ii=0; ii < idx.split(',').length; ii++) {   // eg. 003-007
+	var i = idx.split(',')[ii];
+	var s = i.split('-');
+        //assert(s.length == 2);
+	var i0 = s[0];
+        var i1 = s[1];
+        // see if there is formatting involved
+        var formatLen = 0;
+	var i00 = '' + parseInt(i0, 10);
+        if ( i00.length != i0.length ) {
+            formatLen = i0.length;
+            // assert(len(i0) == len(i1))
+	}
+        for ( var j=parseInt(i0, 10); j < parseInt(i1, 10)+1; j++ ) {
+            if ( formatLen ) {
+                var k = pad(j, formatLen);
+                n.push( pre + k + suf );
+	    }
+            else {
+                n.push( pre + j + suf );
+	    }
+	}
+    }
+    return n;
+}
+
+function expandAllNodeRanges() {
+    // allNodes = computeNodes + non-backend nodes
+    allNodes = [].concat(config.cn);
+    Array.prototype.push.apply(allNodes, config.nben);
+
+    // expand specialRows
+    var sr = [];
+    for (var i=0; i < config.specialRows.length; i++) {
+	sr[i] = [];
+	var jj = 0;
+	for (var j=0; j < config.specialRows[i].length; j++ ) {
+	    // row[i] is eg. [ ['login','head'],['g2','node'],[''],['infra- structure','head'],['pbs','node'],['ldap[1-2]','node'] ]
+	    if (config.specialRows[i][j].length == 1 || config.specialRows[i][j][1] == 'head') { // just copy
+		sr[i][jj++] = config.specialRows[i][j];  // eg. ['login','head'] or ['']
+	    }
+	    else { // expand node list
+		if (config.specialRows[i][j][1] != "node")
+		    addErr('specialRows pair is not X,node' + config.specialRows[i][j]);
+		// eg. ['g2','node']  -> ['g2','node']
+		// or  ['ldap[1-2]','node']  -> ['ldap1','node'],['ldap2','node']
+		var expanded = expandNodeExpr(config.specialRows[i][j][0]);
+		for (var k=0; k < expanded.length; k++)
+		    sr[i][jj++] = [ expanded[k], 'node' ];
+	    }
+	}
+    }
+    config.sr = sr;
+}
+
 function initVars() {
     // init prev variables
     prevJobs = [];
@@ -201,15 +282,17 @@ function initVars() {
 
 
 function nodeTitle( n ) {
-    if ( n.substring(0,config.baseNodeName.length) != config.baseNodeName )
+    // return n if it's not a compute node
+    i = config.nben.indexOf(n);
+    if ( i != -1 )
+	return n;
+    // double check
+    i = config.cn.indexOf(n);
+    if ( i == -1 )
 	return n;
 
-    for ( var i=0;i<config.nonBackendNodes.length;i++)
-	if ( config.nonBackendNodes[i] == n )
-	    return n;
-
     // figure out rack and shelf of compute nodes
-    num = parseInt(n.substring(config.baseNodeName.length));
+    num = i;  // node index
 
     // eg. racks = [ [42,'pizza'], [96,['blade',24,1]], [96,['blade',12,2]], ['fe','pizza'] ]
     running = 0;
@@ -232,10 +315,13 @@ function nodeTitle( n ) {
 	if ( r[1].length == 3 && r[1][0] == 'blade' ) {   // eg. [96,['blade',12,2]]
 	    blades = r[1][1];                             // eg. 12 blades per shelf
 	    nodesPerBlade = r[1][2];                      // eg. 2
-	    shelves = r[0]/(blades*nodesPerBlade);        //  => 4 shelves per rack
+	    //shelves = r[0]/(blades*nodesPerBlade);        //  => 4 shelves per rack
 
-	    s = config.shelfStart + parseInt((num - 1)/(blades*nodesPerBlade));
-	    ret += ', ' + config.shelfName + s;
+	    shelfIndex = parseInt(num/(blades*nodesPerBlade));
+	    if (shelfIndex < 0 || shelfIndex > config.shn.length-1)
+		addErr( 'shelf index ' + shelfIndex + ' out of range' );
+	    else
+		ret += ', ' + config.shn[shelfIndex];
 	}
 	return ret;
     }
@@ -243,13 +329,10 @@ function nodeTitle( n ) {
 }
 
 function writeNodeTable( n ) {
-    suffix = '';
     title = '';
 
     // this might not always work, depending how ganglia sees node names
-    if ( isComputeNode(n) )
-	suffix = config.gangliaNodeSuffix;
-    else
+    if ( ! isComputeNode(n) )
 	title = n;
 
     txt  = '<table cellpadding=0 cellspacing=0 border=0>';
@@ -550,8 +633,8 @@ function buildAspectSlider( initAspectSliderVal ) {
         // we want linear steps in the slider to be ~equal angles to the far corner of the grid.
         // call the slider values theta, then equal area of grid means x*y = nodes,
         // and x = y/tan(theta), so  x = sqrt(nodes/tan(theta))
-        var N = config.numNodes;
-//        var N = config.numNodes/2; // multi-layer hack
+        var N = config.cn.length;
+//        var N = config.cn.length/2; // multi-layer hack
 	numCols = parseInt(Math.sqrt(N/Math.tan(radians)));
         if ( numCols < 1 ) numCols = 1;
         if ( numCols > N ) numCols = N;
@@ -810,19 +893,22 @@ function drawRacks() {
     ht = 0;
     for (var rack=0; rack<config.racks.length; rack++ ) {
 	r = config.racks[rack];
-	if ( r[0] == 'fe' ) // ignore fe's
-	    continue;
+	var num;
+	if ( r[0] == 'fe' )
+	    num = config.nben.length;
+	else
+	    num = r[0];
 
 	if (r[1].length == 3 && r[1][0] == 'blade') {   // eg. [96,['blade',24,1]] or [96,['blade',12,2]]
 	    blades = r[1][1];      // eg. 24 nodes per shelf
 	    nodesPerBlade = r[1][2]; // eg. 2
-	    shelves = r[0]/(blades*nodesPerBlade); //  => 4 shelves per rack
+	    shelves = num/(blades*nodesPerBlade); //  => 4 shelves per rack
 	    var h = shelves*(shelfHeight + shelfSpacing);
             if ( h > ht )
 		ht = h;
 	}
 	else if ( r[1] == 'pizza' ) {   // eg. [42, 'pizza']
-	    var h = r[0] * (nodeHeight + nodeSpacing);
+	    var h = num * (nodeHeight + nodeSpacing);
 	    if ( h > ht )
 	        ht = h;
 	}
@@ -830,14 +916,14 @@ function drawRacks() {
     bottom = ht*1.02;
 
     cnt = 0;
-    shelfCnt = config.shelfStart;
+    shelfCnt = 0;
     for (var rack=0; rack<config.racks.length; rack++ ) {
 	r = config.racks[rack];
 	txt += '<div style="position:absolute; left:' + (rack*(rackWidth + rackSpacing)) + 'px;">';
 	if ( r[0] == 'fe' ) {
 	    if ( r[1] == 'pizza' ) {   // eg. ['fe', 'pizza']
-		for (var i=0; i<config.nonBackendNodes.length; i++ ) {
-		    txt += drawPizzaTempDiv( config.nonBackendNodes[i], nodeHeight, rackWidth, (10+i)*(nodeHeight + nodeSpacing) );
+		for (var i=0; i<config.nben.length; i++ ) {
+		    txt += drawPizzaTempDiv( config.nben[i], nodeHeight, rackWidth, (i+1)*(nodeHeight + nodeSpacing) );
 		}
 	    }
 	    else if (r[1].length == 3 && r[1][0] == 'blade') {   // eg. ['fe',['blade',24,1]]
@@ -852,8 +938,12 @@ function drawRacks() {
 	    if ( r[1] == 'pizza' ) {   // eg. [42, 'pizza']
                 maxR = ht/(nodeHeight + nodeSpacing);
 		for (var i=0; i<r[0]; i++ ) {
+		    if ( cnt < 0 || cnt > config.cn.length-1 ) {
+			addErr( 'node number ' + cnt + ' out of range in pizza node rendering' );
+			continue;
+		    }
+		    n = config.cn[cnt];
 		    cnt++;
-		    n = config.baseNodeName + cnt;
 		    j=i;
 		    if ( config.rackTempOrder == 'up' )
 			j=maxR-j;
@@ -870,8 +960,12 @@ function drawRacks() {
                 rw = bladeWidth*blades;  // an integer version of 0.9*rackWidth
 		var c = 0;
 		for (var j=0; j<shelves; j++ ) {
+		    if (shelfCnt < 0 || shelfCnt > config.shn.length-1 ) {
+			addErr( 'shelf number ' + shelfCnt + ' out of range in rack rendering' );
+			continue;
+		    }
 	            txt += '<div id="shelf_' + shelfCnt + '" style="position:absolute; top:' + (bottom - (shelfHeight + shelfSpacing)*(j+1)) + 'px;">';
-		    s = config.shelfName + shelfCnt;
+		    s = config.shn[shelfCnt];
 		    txt += '<div id="' + s + '">';
 		    txt += drawBladeChassisDiv( s, 1.8*shelfHeight/nodesPerBlade, 2*bladeWidth, -2*bladeWidth );
 		    txt += '</div>';
@@ -879,11 +973,15 @@ function drawRacks() {
 		    for (var i=0; i<blades; i++ ) {  // blades
 			x = i*bladeWidth;
 			for (var k=0; k<nodesPerBlade; k++ ) {
-			    cnt += 1;
 			    c += 1;
 			    if (c > r[0]) // off the top of the nodes in this rack
 				continue;
-			    n = config.baseNodeName + cnt;
+			    if (cnt < 0 || cnt > config.cn.length-1) {
+				addErr( 'compute node cnt ' + cnt + ' out of range in blade node rendering' );
+				continue;
+			    }
+			    n = config.cn[cnt];
+			    cnt += 1;
 			    txt += '<div style="position:absolute; top:' + (k*shelfHeight/nodesPerBlade) + 'px;">';
 			    txt += drawBladeTempDiv( n, 0.95*shelfHeight/nodesPerBlade, bladeWidth, x );
 			    txt += '</div>';
@@ -956,8 +1054,8 @@ function doSpecialRow(row) {
 function doSpecialRows() {
     var txt = '';
 
-    for (i=0; i < config.specialRows.length; i++ )
-	txt += doSpecialRow(config.specialRows[i]);
+    for (var i=0; i < config.sr.length; i++ )
+	txt += doSpecialRow(config.sr[i]);
 
     return txt;
 }
@@ -1302,7 +1400,7 @@ function writeTable(tableName, rows, cols, first) {
    t.setAttribute('cellpadding', 0);
    t.setAttribute('border', 0);
 
-   var geom = computeOrient(rows, cols, config.numNodes);
+   var geom = computeOrient(rows, cols, config.cn.length);
    var start = geom[0];
    var dx = geom[1];
    var dy = geom[2];
@@ -1310,30 +1408,30 @@ function writeTable(tableName, rows, cols, first) {
 //   var debug = document.getElementById( 'tableDebug' );
 //   debug.innerHTML = 'orient = ' + nodeOrientation;
 //   debug.innerHTML += '<br>[start=' + start + ', dx=' + dx + ', dy=' + dy + ']';
-//   debug.innerHTML += '<br>[rows=' + rows + ', cols=' + cols + ', cells=' + config.numNodes + ']<p>';
+//   debug.innerHTML += '<br>[rows=' + rows + ', cols=' + cols + ', cells=' + config.cn.length + ']<p>';
 
    var c, r, name;
-   var cnt = start + config.nodeNumStart; // multi-layer hack: + offset;
+   var cnt = start; // multi-layer hack: + offset;
    for (var i=0; i < rows; i++ ) {
       r = document.createElement('tr');
       for (var j=0; j < cols; j++ ) {
          //debug.innerHTML += '[cnt=' + cnt + ', i=' + i + ', j=' + j + ']';
-         name = config.baseNodeName + cnt;
-         if ( first ) {
-            c = document.createElement('td');
-            if ( cnt >= config.nodeNumStart && cnt < config.numNodes+config.nodeNumStart ) {
+         if ( cnt >= 0 && cnt < config.cn.length ) {
+            name = config.cn[cnt];
+            if ( first ) {
+               c = document.createElement('td');
                c.innerHTML = writeNodeTable(name);
                c.id = name;
 //               // multi-layer hack
 //               c.innerHTML = writeNodeTable(hackPrefix + name);
 //               c.id = hackPrefix + name;
             }
-         }
-         else {
-            if ( cnt >= config.nodeNumStart && cnt < config.numNodes+config.nodeNumStart )
+            else {
                c = items[name];
-            else
-               c = document.createElement('td');
+            }
+         }
+         else {  // grid is bigger than number of nodes
+            c = document.createElement('td');
          }
          r.appendChild(c);
          cnt += dx;
@@ -1359,8 +1457,8 @@ function redrawNodesTable( first ) {
 
     if ( first ) {
 	// populate items[] with the td's
-	for (var i=config.nodeNumStart; i < config.numNodes+config.nodeNumStart; i++ ) {
-	    name = config.baseNodeName + i;
+	for (var i=0; i < config.cn.length; i++ ) {
+	    name = config.cn[i];
 	    items[name] = document.getElementById(name);
 	}
     }
@@ -1607,6 +1705,9 @@ function GetAsyncData() {
     setReconnectLabel( 'Reconnecting...' );
 
     if ( first ) {
+	// read the config class and expand node lists
+	expandAllNodeRanges();
+
 	initVars();
 
 	// build colourMap(s)
@@ -2829,7 +2930,7 @@ function processCpuBar( nextFn ) {
 	c[id] = val; // map it to compare later...
 
 	// skip drawing all bars except head nodes in the lighter modes
-	if ( ( nextMode == 'sub-lite' || nextMode == 'lite' ) && ( id.substring(0,config.baseNodeName.length) == config.baseNodeName ) )
+	if ( ( nextMode == 'sub-lite' || nextMode == 'lite' ) && !isComputeNode(id) )
 	    continue;
 
 	cnt += 1;
@@ -2873,7 +2974,7 @@ function processMem( nextFn ) {
 	pm[id] = [ m, totMem, swapping ];
 
 	// skip drawing all bars except head nodes in the lighter modes
-	if ( ( nextMode == 'sub-lite' || nextMode == 'lite' ) && ( id.substring(0,config.baseNodeName.length) == config.baseNodeName ) && !swapping )
+	if ( ( nextMode == 'sub-lite' || nextMode == 'lite' ) && !isComputeNode(id) && !swapping )
 	    continue;
 
 	// img width
@@ -3175,12 +3276,12 @@ function floatAsStr( f, dig ) {
 // for normal/heavy mode
 function processRackTempsPower( nextFn ) {
     cnt = 0;
-    shelfCnt = config.shelfStart;
+    shelfCnt = 0;
     for (var rack=0; rack<config.racks.length; rack++ ) {
 	r = config.racks[rack];
 	if ( r[0] == 'fe' ) {
-	    for (var i=0; i<config.nonBackendNodes.length; i++ ) {
-		n = config.nonBackendNodes[i];
+	    for (var i=0; i<config.nben.length; i++ ) {
+		n = config.nben[i];
 		p = prevPower[n];
 		updateTempPowerDiv( n, 0, p );
 	    }
@@ -3198,8 +3299,8 @@ function processRackTempsPower( nextFn ) {
 	    rackCntShelf = 0;
 	    rackShelfPower = 0.0;
 	    for (var i=0; i<r[0]; i++ ) {
+		n = config.cn[cnt];
 		cnt++;
-		n = config.baseNodeName + cnt;
 		p = prevPower[n];
 		t = updateTempPowerDiv( n, 0, p );
 
@@ -3258,7 +3359,7 @@ function processRackTempsPower( nextFn ) {
 		nodesPerBlade = r[1][2];      // eg. 2
 		shelves = r[0]/(blades*nodesPerBlade);        //  => 4 shelves per rack
 		for (var j=0; j<shelves; j++ ) {
-		    p = prevPower[config.shelfName + shelfCnt];
+		    p = prevPower[config.shn[shelfCnt]];
 		    if ( p != null ) {
 		        rackCntShelf += 1;
 			rackShelfPower += 0.001*p;
@@ -3872,9 +3973,9 @@ function processJobs( nextFn ) {
 
 
 function hideJobs( nextFn ) {
-    for(var i=config.nodeNumStart;i<config.numNodes+config.nodeNumStart;i++) {
-	id = config.baseNodeName + i + '_job';
-	d = document.getElementById( id );
+    for(var i=0; i<config.cn.length; i++) {
+	var id = config.cn[i] + '_job';
+	var d = document.getElementById( id );
 	d.innerHTML = '';
     }
     jobsMap = [];
@@ -3886,8 +3987,8 @@ function hideJobs( nextFn ) {
 function hideCpuMemBars( nextFn ) {
 //    for(var i=0;i<allNodes.length;i++) {
 //	n = allNodes[i];
-    for(var i=config.nodeNumStart;i<config.numNodes+config.nodeNumStart;i++) {
-	n = config.baseNodeName + i;
+    for(var i=0; i<config.cn.length; i++) {
+	var n = config.cn[i];
 	turnOffBars( n );
     }
     doNextFn( nextFn );
@@ -3949,22 +4050,16 @@ function setBarHeight( n, ht ) {
 }
 
 function isComputeNode( node ) {
-    // check prefix
-    if ( node.substring(0,config.baseNodeName.length) != config.baseNodeName )
-        return 0;
-    // double check it's not in the frontend list
-    for ( var i=0;i<config.nonBackendNodes.length;i++) {
-        if ( config.nonBackendNodes[i] == node )
-            return 0;
-    }
-    // ok, then it's a compute node
-    return 1;
+    if (config.cn.length > config.nben.length) // search the shortest list
+	return (config.nben.indexOf(node) == -1);
+    else
+	return (config.cn.indexOf(node) != -1);
 }
 
 function processBlockBars( nextFn ) {
     if ( first || doIncrs )  // always show cpu/mem bars for special machines
-	for(var i=0;i<config.nonBackendNodes.length;i++) {
-	    node = config.nonBackendNodes[i];
+	for(var i=0;i<config.nben.length;i++) {
+	    var node = config.nben[i];
 	    turnOnBars( node );
 	}
 
