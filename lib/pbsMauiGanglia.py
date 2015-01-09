@@ -102,7 +102,7 @@ class loadedNetsGmond():
         #print 'self.loads', self.loads
 
 class gangliaStats:
-    def __init__( self, doCpus=0, gmondHost='localhost', reportTimeOnly=0, quiet=0, deadTimeout=120 ):
+    def __init__( self, doCpus=0, reportTimeOnly=0, quiet=0, deadTimeout=120 ):
         self.mem = {}  # dict of mem usage
         self.disk = {} # dict of disk usage
         self.swap = {} # dict of swap usage
@@ -111,10 +111,56 @@ class gangliaStats:
         self.fans = {} # dict of fan speeds
         self.gpu_util = {} # dict of gpu loads
         self.all = None
-        self.quiet = quiet
-        self.deadTimeout = deadTimeout
 
-        self.read( doCpus, gmondHost, reportTimeOnly )  # load em up
+        # standard ganglia metrics
+        metrics = [ 'mem_free', 'mem_cached', 'mem_shared', 'mem_buffers', 'mem_total', 'disk_free', 'disk_total', 'swap_free', 'swap_total', 'boottime' ]
+        if doCpus:
+            metrics.extend( [ 'load_one', 'cpu_user', 'cpu_nice', 'cpu_system', 'cpu_idle', 'cpu_wio', 'cpu_num' ] )
+        # the rest are non-standard and are in the config file
+        metrics.extend( config.extraGangliaMetrics )
+
+        gmondCount=0
+        for hp in config.gmonds:
+            gmondHost = hp[0]
+            gmondPort = int(hp[1])
+            gmondUrl = hp[2]
+            x = self.read( gmondHost, gmondPort )  # load em up
+            if x == None:
+                print 'no data from gmondHost, gmondPort', gmondHost, gmondPort
+                continue
+            a = self.parseXml( x, metrics, reportTimeOnly )
+
+            # tag this set of hosts with which gmond group they came from
+            # so that later on the web stuff can reference the correct url
+            self.tagByGmondGroup(a, gmondCount)
+            gmondCount += 1
+
+            # merge data from each gmond into self.all
+            self.merge( a )
+
+        # process self.all into separate metrics
+        if reportTimeOnly == 0:
+            self.process( quiet, deadTimeout )
+
+    def tagByGmondGroup(self, a, cnt):
+        for k in a.keys():
+            a[k]['gmondGroup'] = cnt
+
+    def gmondConfigByHost(self, host):
+        """for a given host return where we are getting its gmond data from"""
+        a = self.all
+        if host not in a.keys():
+            # print 'host not found', host
+            return None
+        if 'gmondGroup' not in a[host].keys():
+            # print 'gmondGroup not found for host', host
+            return None
+        i = a[host]['gmondGroup']
+        if i > len(config.gmonds):
+            print 'gmondConfigByHost: error: len(gmond.gmonds)', len(config.gmonds), 'i', i
+            sys.exit(1)
+        c = config.gmonds[i]  # array of host,port,url
+        return ( i, c[0], c[1], c[2] )  # return as tuple
 
     def getStats( self ):
         return ( self.mem, self.disk, self.swap, self.temps, self.power, self.fans, self.gpu_util )
@@ -122,11 +168,7 @@ class gangliaStats:
     def getAll( self ):
         return self.all
 
-    def gangliaNameToKey( self, name ):
-        """override this if you want to map or delete names specially"""
-        return name
-
-    def read( self, doCpus, gmondHost, reportTimeOnly ):
+    def read( self, gmondHost, gmondPort ):
         if dummyRun:
             f = open( 'yo-ganglia-xml', 'r' )
             lines = f.readlines()
@@ -134,37 +176,36 @@ class gangliaStats:
             xmlData = []
             for l in lines:
                 xmlData.extend( string.split( l ) )
+            if len(xmlData) == 0:
+                xmlData = None
+            return xmlData
 
-        else:
-            # very very very slow
-            # f = os.popen( '/usr/sbin/ganglia mem_free mem_cached mem_shared mem_buffers mem_total disk_free disk_total swap_free swap_total cpu0_temp cpu1_temp mb0_temp mb1_temp', 'r' )
+        # very very very slow
+        # f = os.popen( '/usr/sbin/ganglia mem_free mem_cached mem_shared mem_buffers mem_total disk_free disk_total swap_free swap_total cpu0_temp cpu1_temp mb0_temp mb1_temp', 'r' )
 
-            # instead, use sockets and process the xml data ourselves
-            import socket
-            sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-            try:
-                sock.connect( (gmondHost, 8649) )
-            except:
-                return
+        # instead, use sockets and process the xml data ourselves
+        import socket
+        sock = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+        try:
+            sock.connect( (gmondHost, gmondPort) )
+        except:
+            return None
 
-            xmlData = ''
-            data = 1
-            while 1:
-                data = sock.recv(102400)
-                if not data:
-                    break
-                xmlData += data
-            sock.shutdown(2)
-            xmlData = string.split( xmlData )
+        xmlData = ''
+        data = 1
+        while 1:
+            data = sock.recv(102400)
+            if not data:
+                break
+            xmlData += data
+        sock.shutdown(2)
+        xmlData = string.split( xmlData )
 
-        # standard ganglia metrics
-        metrics = [ 'mem_free', 'mem_cached', 'mem_shared', 'mem_buffers', 'mem_total', 'disk_free', 'disk_total', 'swap_free', 'swap_total', 'boottime' ]
-        if doCpus:
-            metrics.extend( [ 'load_one', 'cpu_user', 'cpu_nice', 'cpu_system', 'cpu_idle', 'cpu_wio' ] )
+        if len(xmlData) == 0:
+            xmlData = None
+        return xmlData
 
-        # the rest are non-standard and are in the config file
-        metrics.extend( config.extraGangliaMetrics )
-
+    def parseXml( self, xmlData, metrics, reportTimeOnly ):
         # ultra-lame (but fast) parse of all xml data into a dict of dicts
         i = 0
         max = len(xmlData)
@@ -186,8 +227,7 @@ class gangliaStats:
                     all[host]['reported'] = int(reported)
 
                 i += 1
-            self.all = all
-            return
+            return all
 
         while i < max:
             if xmlData[i] == '<METRIC':
@@ -208,7 +248,7 @@ class gangliaStats:
                 #    host = socket.gethostbyaddr(host)[0]
 
                 i += 2
-                if xmlData[i][:4] == 'TAGS':   # must be ganglia 3.2.0
+                if xmlData[i][:4] == 'TAGS':   # must be >= ganglia 3.2.0
                     i += 1
                 all[host] = {}
                 reported = string.split( xmlData[i], '"' )[1]
@@ -221,9 +261,20 @@ class gangliaStats:
                 i += 1
 
             i += 1
-
         # print 'all', all
-        self.all = all
+        return all
+
+    def merge(self, a):
+        if self.all == None:
+            self.all = a
+            return
+
+        # very simplistic merge. could check field completeness etc.
+        for k in a.keys():
+            if k not in self.all.keys():
+                self.all[k] = a[k]
+
+    def process( self, quiet, deadTimeout ):
         gb = 1.0/(1024.0*1024.0)
 
         d = self.all
@@ -519,7 +570,7 @@ class pbsJobs:
         l = string.split( l, delim, 1 )
 
         for i in range(len(l)):  # strip more whitespace
-            l[i] = l[i].strip()                
+            l[i] = l[i].strip()
 
         if len(l) != 2:
             print 'not 2 fields - weird', l
@@ -604,7 +655,7 @@ class pbsJobs:
 
     def printBytes( self, num ):
         """pretty-print bytes as kb/mb/whatever..."""
-        
+
         thresh = 2
         if num > thresh*1024*1024*1024:
             return '%dG' % (num/(1024*1024*1024))
@@ -1005,7 +1056,7 @@ class maui:
         # first 4 lines are headers, last one is footer
         for i in range(4,len(lines)-1):
             l = lines[i]
-            
+
             if len(l) == 0:  # end
                 continue
 

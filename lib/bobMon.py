@@ -136,6 +136,22 @@ def doLoads( all, up, pbsAllMap ):
     state += ']'
     return state
 
+def doGmondGroup( all ):
+    state = '['
+
+    cnt = 0
+    for k, i in all.iteritems():
+        n = string.split( k, '.' )[0]
+        group = int(i['gmondGroup'])
+        s = '["' + n + '",%d]' % group
+        state += s + ','
+        cnt += 1
+
+    if cnt:
+        state = state[:-1]
+    state += ']'
+    return state
+
 def doGpuLoads( gpu, up, pbsAllMap ):
     state = '['
 
@@ -1625,6 +1641,7 @@ def doAll():
     txt += '<netloads>' + doNetLoads( netLoad ) + '</netloads>\n'
     cpuTxt, cpuData = cpuBar( all )
     txt += '<cpuBar>' + cpuTxt + '</cpuBar>\n'
+    txt += '<gmondGroup>' + doGmondGroup( all ) + '</gmondGroup>\n'
 
     ( mem, disk, swap, temps, power, fans, gpu ) = g.getStats()
     pruneMany( ( mem, disk, swap, temps, power, fans ) )

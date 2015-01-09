@@ -11,6 +11,9 @@ document.onkeypress = doKeyPress;
 // server to client API version
 api = 10;
 
+// about this code
+aboutURL = 'https://github.com/plaguedbypenguins/bobMonitor'
+
 // map for refresh slider between 0->10 and a pseudo logarithmic scale in seconds
 var steps = [ 5, 10, 20, 60, 120, 300, 600, 1200, 1800, 3600 ];
 
@@ -78,7 +81,7 @@ var prevNetwork, prevAverages; // , prevAveragesMap;
 var prevPower, prevFans;
 // for heavy mode
 var prevDisk, prevTemp, prevTempMap, tempChanged;
-var numCores, numGpus;
+var numCores, numGpus, gmondGroupMap;
 
 var jobsMap = [];
 
@@ -281,6 +284,7 @@ function initVars() {
 
     numCores = [];
     numGpus = [];
+    gmondGroupMap = [];
 
     prevNodes = [];
     for(var i=0;i<allNodes.length;i++)
@@ -346,7 +350,7 @@ function writeNodeTable( n ) {
     txt +=   '<tr><td><div id="' + n + '_warn">' + title + '</div></td></tr>';
     txt +=   '<tr><td><table cellpadding=0 cellspacing=0 border=0><tr>';
     txt +=     '<td><div id="' + n + '_temps"></div></td>';
-    txt +=     '<td id="' + n + '_l_bg"><a title="' + nodeTitle( n ) + '" id="' + n + '_l" target="_new" href="/ganglia/?c=' + config.clusterName + '&h=' + n + suffix + '"></a></td>';
+    txt +=     '<td id="' + n + '_l_bg"><a title="' + nodeTitle( n ) + '" id="' + n + '_l" target="_new"></a></td>';
     txt +=     '<td><div id="' + n + '_job"></div></td>';
     txt +=   '</tr></table></td></tr>';
     txt +=   '<tr><td NOWRAP><img id="' + n + '_u" src="' + config.gifDir + 'blue.gif" width=0 height=0><img id="' + n + '_w" src="' + config.gifDir + 'yellow.gif" width=0 height=0><img id="' + n + '_s" src="' + config.gifDir + 'red.gif" width=0 height=0><img id="' + n + '_i" src="' + config.gifDir + 'green.gif" width=0 height=0></td></tr>';
@@ -496,7 +500,7 @@ function refreshCountDownTimer() {
 
 var timeoutCookie;
 var timeoutCookieTime = 1000;  // wait a short time after the slider's stopped moving, and then set a cookie
-cookieName = 'bobMon-' + config.clusterName;
+cookieName = 'bobMon-' + config.cookieSuffix;
 
 // set a cookie if the prefs have changed
 function setRefreshCookie() {
@@ -812,13 +816,7 @@ function drawTempScale( minT, maxT, topLabel, midLabel, botLabel ) {
 function drawPizzaTempDiv( n, height, width, y ) {
     var txt = '';
 
-    // this might not always work, depending how ganglia sees node names
-    if ( isComputeNode(n) )
-        suffix = config.gangliaNodeSuffix;
-    else
-        title = n;
-
-    txt += '<a target="_new" href="/ganglia/?c=' + config.clusterName + '&h=' + n + suffix + '">';
+    txt += '<a target="_new" id="temp_' + n + '">';
 
     if ( rackStyle == 'cpu' )
 	txt += '<div id="rack_cpu_' + n + '" title="' + n + '" style="position:absolute; height:' + height + 'px; width:' + width + 'px; top:' + y + 'px;"></div>';
@@ -845,13 +843,7 @@ function drawPizzaTempDiv( n, height, width, y ) {
 function drawBladeTempDiv( n, height, width, x ) {
     var txt = '';
 
-    // this might not always work, depending how ganglia sees node names
-    if ( isComputeNode(n) )
-        suffix = config.gangliaNodeSuffix;
-    else
-        title = n;
-
-    txt += '<a target="_new" href="/ganglia/?c=' + config.clusterName + '&h=' + n + suffix + '">';
+    txt += '<a target="_new" id="temp_' + n + '">';
 
     if ( rackStyle == 'cpu' )
    /// @@@ not done... ->
@@ -880,8 +872,7 @@ function drawBladeTempDiv( n, height, width, x ) {
 function drawBladeChassisDiv( n, height, width, x ) {
     var txt = '';
 
-    suffix = config.gangliaNodeSuffix;
-    txt += '<a target="_new" href="/ganglia/?c=' + config.clusterName + '&h=' + n + suffix + '">';
+    txt += '<a target="_new" id="temp_' + n + '">';
     txt += '<div id="power_' + n + '" title="' + n + '" style="position:absolute; height:' + 0.3*height + 'px; top:' + 0.2*height + 'px; width:' + width + 'px; left:' + x + 'px; background-color: #9e9e9e;"></div>';
     txt += '<div id="fan_' + n + '" title="' + n + '" style="position:absolute; height:' + 0.3*height + 'px; top:' + 0.5*height + 'px; width:' + width + 'px; left:' + x + 'px; background-color: #e9e9e9;"></div>';
     txt += '</a>';
@@ -1178,13 +1169,22 @@ function doSpecialRowBot() {
 
     txt += '<td NOWRAP>';
     txt += 'bobMonitor<br>';
-    txt += '<a class="blue" target="_new" href="' + config.aboutURL + '">About</a>';
+    txt += '<a class="blue" target="_new" href="' + aboutURL + '">About</a>';
     txt += '</td>';
 
     txt += '<td width=' + spacing + 'px></td>';
 
     txt += '<td NOWRAP>';
-    txt += '<a class="blue" target="_new" href="/ganglia/?r=hour&c=' + config.clusterName + '&h=&sh=0">Ganglia</a> / <a class="blue" target="_new" href="/ganglia/index.php?h=&c=' + config.clusterName + '&p=1">Ganglia physical view</a><br>';
+    var t = '';
+    for (var i=0; i < config.gmonds.length; i++) {
+	var urlTemplate = config.gmonds[i][2];
+	t += '<a class="blue" target="_new" href="' + urlTemplate.replace( '%h', '' ) + '&sh=0' + '">Ganglia</a>';
+	if (i == config.gmonds.length-1 )
+	    t += '<br>';
+	else
+	    t += ' / ';
+    }
+    txt += t;
     txt += '<a target="_new" href="' + config.siteURL + '"><font color="red">' + config.siteName + '</font></a>';
     txt += '</td>';
 
@@ -3029,6 +3029,78 @@ function processCpuBar( nextFn ) {
     doNextFn( nextFn );
 }
 
+function setUrl(n, id, url) {
+    try {
+	// there may be more nodes in ganglia that we are displaying?
+	var d = document.getElementById(id);
+	if (typeof d === 'undefined' )
+	    addErr('setUrl load element is undefined for ' + n + ' using id ' + id);
+    }
+    catch (failure) {
+	addErr('failed to setUrl for ' + n + ' using id ' + id);
+	return;
+    }
+
+    d.href = url;
+}
+
+function setSingleNodeUrl(n) {
+    var gm = gmondGroupMap[n];
+
+    if ( typeof gm === 'undefined' )
+	addErr('failed to setSingleNodeUrl for ' + n + '. could not find its gmondGroup');
+    else
+	setUrl(n, n+'_l', gm);
+}
+
+function processGmondGroup( nextFn ) {
+    // this won't change so just do it once
+    if ( ! first ) {
+	doNextFn( nextFn );
+	return;
+    }
+
+    var g = get( 'gmondGroup', 1 );
+
+    for (var i=0; i < g.length; i++) {
+	var n = g[i][0];
+	var gm = g[i][1];
+
+	// make a map to use below and later for down nodes
+        gmondGroupMap[n] = gm;
+
+	var urlTemplate = config.gmonds[gm][2];
+	var url = urlTemplate.replace( '%h', n );
+
+	// set ganglia url for this node
+	setUrl(n, n+'_l',  url);
+
+	// same for the temperature divs
+	setUrl(n, 'temp_'+n, url);
+    }
+
+    // there may be nodes that aren't in ganglia that we are displaying.
+    // make a best-guess as to which gmondGroup they belong to
+    var gm = 0;
+    for (var i=0; i < allNodes.length; i++) {
+	var n = allNodes[i];
+	var m = gmondGroupMap[n];
+	if ( typeof m === 'undefined' ) {
+	    // node isn't in gmMap, so use previous node's value of gm to set its url
+	    setUrl(n, n+'_l', gm);
+
+	    // store gmMap setting
+	    gmondGroupMap[n] = gm;
+	}
+	else {
+	    gm = m;
+	}
+    }
+
+    doNextFn( nextFn );
+}
+
+
 function processGpuBar( nextFn ) {
     var gpuBar = get( 'gpuloads', 1 );
 
@@ -4258,6 +4330,7 @@ function processUpDown( nextFn ) {
 	if ( up[n] == 0 && prevUp[n] != up[n] ) { // newly down
 	    d = document.getElementById( n + '_l' );
 	    d.innerHTML = n;
+	    setSingleNodeUrl(n); // odd. shouldn't have to re-set the href=
 
 	    d = document.getElementById( n + '_l_bg');
 	    d.bgColor = downColour;
@@ -4775,47 +4848,47 @@ function startLoop( nextFn ) {
 }
 
 // sub-lite version
-allFns['sub-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads',   // 'processCpuBar', 'processGpuBar', 'processMem'
+allFns['sub-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processGmondGroup',   // 'processCpuBar', 'processGpuBar', 'processMem'
 		       'processDiskWarn', 'processTempWarn', 'processLoads',
 		       'processUpDown', 'processPies', 'processText', 'processReservations',
 		       'debugText', 'finishedLoop' ];
 
 // pocket-lite version
-allFns['pocket-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads',
+allFns['pocket-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processGmondGroup',
 		          'processDiskWarn', 'processCpuBar', 'processGpuBar', 'processMem', 'processTempWarn', 'processLoads',
 		          'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		          'debugText', 'finishedLoop' ];
 
 // lite version
-allFns['lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads',
+allFns['lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processGmondGroup',
 		   'processDiskWarn', 'processCpuBar', 'processGpuBar', 'processMem', 'processTempWarn', 'processLoads', 'processJobs',
 		   'processUpDown', 'processPies', 'processText', 'processReservations',
 		   'processNetworkPartial', 'processJobAverages', 'processToolTip',
 		   'debugText', 'finishedLoop' ];
 
 // regular version
-allFns['normal'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem',
+allFns['normal'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processGmondGroup', 'processCpuBar', 'processGpuBar', 'processMem',
 		     'processDiskWarn', 'processTempWarn', 'processLoads', 'processJobs',
 		     'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		     'processNetworkPartial', 'processJobAverages', 'processToolTip', 'processTemp', 'processRackTempsPower',
 		     'debugText', 'finishedLoop' ];
 
 // regular version except with 'heavy'-like job display colours and swatches
-allFns['normal-usr'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem', 'processPower', 'processFans',
+allFns['normal-usr'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processGmondGroup', 'processCpuBar', 'processGpuBar', 'processMem', 'processPower', 'processFans',
 		         'processDiskWarn', 'processTempWarn', 'processLoads', 'processJobColours', 'processJobs',
 		         'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		         'processNetworkPartial', 'processJobAverages', 'processToolTip', 'processTemp', 'processRackTempsPower',
 		         'debugText', 'finishedLoop' ];
 
 // regular + networking and general test mode...
-allFns['network'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem',
+allFns['network'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processGmondGroup', 'processCpuBar', 'processGpuBar', 'processMem',
 		      'processDiskWarn', 'processTempWarn', 'processLoads', 'processJobs',
 		      'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		      'processNetwork', 'processJobAverages', 'processToolTip',
 		      'debugText', 'finishedLoop' ];
 
 // heavy version
-allFns['heavy'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem',
+allFns['heavy'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processGmondGroup', 'processCpuBar', 'processGpuBar', 'processMem',
 		    'processDisk', 'processTemp', 'processLoads', 'processJobColours', 'processJobs',
 		    'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		    'processNetworkPartial', 'processJobAverages', 'processToolTip', 'processRackTempsPower',
