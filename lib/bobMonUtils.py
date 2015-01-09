@@ -273,7 +273,7 @@ def plotPie( r, s, q, b, availCpus ):
     # the rest of the colours are hashes of the username
     for cpus, cpusList, username in all:
         if username not in userColourHash.keys():
-            h = md5.new(username).hexdigest()
+            h = hashlib.md5(username).hexdigest()
             h = int(h, 16) % len(colours)      # random colour number
             userColourHash[username] = int(h)  # cast to int from long
         if username not in userColour.keys():
@@ -372,7 +372,7 @@ def queuedPies( queued, title, radius, names, titles, size, availCpus, colours, 
             # so instead choose one colour per user and stick to it. if users
             # don't like their colour then tough luck
             if username not in userColourHash.keys():
-                h = md5.new(username).hexdigest()
+                h = hashlib.md5(username).hexdigest()
                 h = int(h, 16) % len(colours)  # random colour number
                 userColourHash[username] = int(h)  # cast to int from long
             c = userColourHash[username]

@@ -22,7 +22,7 @@ from bobMonUtils import pbsJobs
 # for pie
 from bobMonUtils import queuedJobState, whosQueued, plotPie, endPlotPie, tagAsBlocked
 from pbsMauiGanglia import maui
-import md5, os, time, tempfile, cPickle
+import hashlib, os, time, tempfile, cPickle
 # for text
 from bobMonUtils import nextJobRuns, doStatus
 # for tempfiles
@@ -718,12 +718,10 @@ def doHash( jobs, queued, availCpus ):
             for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in q:
                 txt += jobId + ' '
             txt += '%d' % availCpus
-            m = md5.new(txt)
-            hashes[name] = m.hexdigest()
+            hashes[name] = hashlib.md5(txt).hexdigest()
         else:
             if name == 'running':
-                m = md5.new('100% idle')
-                hashes[name] = m.hexdigest()
+                hashes[name] = hashlib.md5('100% idle').hexdigest()
 
     # split up queued into queued and blocked
     q = []
@@ -754,8 +752,7 @@ def doHash( jobs, queued, availCpus ):
             for n, c, state, username, jobId, jobName, walltime, comment in blah:
                 txt += jobId + state + ' '
             txt += '%d' % availCpus
-            m = md5.new(txt)
-            hashes[name]  = m.hexdigest()
+            hashes[name]  = hashlib.md5(txt).hexdigest()
 
     return hashes
 
@@ -1529,12 +1526,7 @@ class gangliaStatsSunnyvale(gangliaStats):
 
 def configHash( doPrint = 0):
     import types
-    try:  # in python 2.5
-        import hashlib
-        m = hashlib.sha1()
-    except:
-        import sha
-        m = sha.new()
+    m = hashlib.sha1()
 
     keys = dir(config)
     d = {}
