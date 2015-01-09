@@ -136,6 +136,44 @@ def doLoads( all, up, pbsAllMap ):
     state += ']'
     return state
 
+def doGpuLoads( gpu, up, pbsAllMap ):
+    state = '['
+
+    cnt = 0
+    data = {}
+    for k in gpu.keys():
+        if gpu[k] == None:
+            continue
+        n = string.split( k, '.' )[0]
+        if n in config.shn:  # shelves don't have a load
+            continue
+        if n not in config.cn and n not in config.nben:
+            continue
+
+        if n in up:  # only write a load if it's really 'up'
+            if n in pbsAllMap.keys():
+                # use the pbs value of gpus if possible
+                status, cores, gpus = pbsAllMap[n]
+            else:
+                # a sensible default?
+                gpus = 1
+            try:
+                gpuLoad = int(gpu[n])
+            except:
+                gpuLoad = 0
+                print n, 'gpu load not set'
+
+            s = '["' + n + '_g",%d,%d]' % (gpuLoad, gpus)
+            data[n] = gpuLoad
+
+            state += s + ','
+            cnt += 1
+
+    if cnt:
+        state = state[:-1]
+    state += ']'
+    return state, data
+
 def doMem( mem, swap, cpuData ):
     state = '['
 
@@ -337,30 +375,30 @@ def minimalOscufucatedUserList( u ):
 def obscufucateJobsList( jobs, queued ):
     # generate a minimal list of usernames for running and queued jobs
     u = []
-    for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
+    for username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
         u.append(username)
 
-    for n, c, state, username, jobId, jobName, walltime, comment in queued:
+    for n, c, g, state, username, jobId, jobName, walltime, comment in queued:
         u.append(username)
 
     # create a mapping between each username and the minimal obscufucated version
     u = minimalOscufucatedUserList( u )
 
     j = []
-    for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
+    for username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
         user = u[username]
-        j.append( ( user, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo ) )
+        j.append( ( user, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo ) )
 
     q = []
-    for n, c, state, username, jobId, jobName, walltime, comment in queued:
+    for n, c, g, state, username, jobId, jobName, walltime, comment in queued:
         user = u[username]
-        q.append( ( n, c, state, user, jobId, jobName, walltime, comment ) )
+        q.append( ( n, c, g, state, user, jobId, jobName, walltime, comment ) )
 
     return j, q
 
 def doJobs( jobs ):
     state = '['
-    for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:  # append to joblist field
+    for username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:  # append to joblist field
         group = 'none'
         if 'group' in pbsInfo.keys():  # accounting group name, usually == unix group
             group = pbsInfo['group']
@@ -437,7 +475,7 @@ def drainingHrs( s ):
 
 def doPbsInfo( pbsnodes ):
     infoHw = []
-    for n, info, cores in pbsnodes:
+    for n, info, cores, gpus in pbsnodes:
         n = string.split( n, '.' )[0]
 
         hw = []
@@ -522,14 +560,18 @@ def doNetLoads( n ):
 def sortByUser( jobs ):
     users = {}
     totalCpus = 0
+    totalGpus = 0
     jobList = {}
+    gpuJobList = {}
     for job in jobs:
-        username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo = job
+        username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo = job
         cpus = len(nodeList)
+        gpus = len(gpuList)
         if username not in users.keys():
             users[username] = []
         users[username].append(cpus)
         totalCpus += cpus
+        totalGpus += gpus
 
         # calc joblist
         for n in nodeList:
@@ -537,59 +579,68 @@ def sortByUser( jobs ):
                 jobList[n] = []
             jobList[n].append( username )
 
-    # sort by fatness
+        # calc gpu joblist
+        for n in gpuList:
+            if n not in gpuJobList.keys():
+                gpuJobList[n] = []
+            gpuJobList[n].append( username )
+
+    # sort by (cpu use) fatness
     list = []
     for k, cpus in users.iteritems():
         list.append( ( sum(cpus), cpus, k ) )  # ( sumCpus, [ job1cpus, job2cpus, ... ], username )
     list.sort()
     list.reverse()
 
-    return list, jobList, totalCpus
+    return list, jobList, gpuJobList, totalCpus, totalGpus
 
 def whosUsingItAll( jobs, pbsnodes, pbsAllMap):
     # split into running ('R' 'E') and suspended 'S'
     r = []
     s = []
     for job in jobs:
-        username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo = job
+        username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo = job
         if pbsInfo['state'] == 'S':
             s.append( job )
         else:
             r.append( job )
 
     # process the list of running jobs
-    runList, jobList, totalRunCpus = sortByUser( r )
+    runList, jobList, gpuJobList, totalRunCpus, totalRunGpus = sortByUser( r )
 
-    free = freeAvailCpusNodes( pbsnodes, jobList, pbsAllMap )
-    idleCpus, freeNodes, availCpus, availNodes = free
+    free = freeAvailCpusNodes( pbsnodes, jobList, gpuJobList, pbsAllMap )
+    idleCpus, idleGpus, freeNodes, availCpus, availGpus, availNodes = free
     #print 'idleCpus, freeNodes, availCpus, availNodes', free
     totalRunCpus += idleCpus
+    totalRunGpus += idleGpus
 
     if idleCpus != 0:
         runList.append( ( idleCpus, [ idleCpus ], 'idle' ) )
 
     # process suspended jobs
-    suspList, blah, totalSuspCpus = sortByUser( s )
+    suspList, blah, blah, totalSuspCpus, totalSuspGpus = sortByUser( s )
 
     #print 'runList', runList, 'totalRunCpus', totalRunCpus, 'availNodes', availNodes
     #print 'suspList', suspList, 'totalSuspCpus', totalSuspCpus
 
-    return (runList, totalRunCpus), (suspList, totalSuspCpus), free
+    return (runList, totalRunCpus, totalRunGpus), (suspList, totalSuspCpus, totalSuspGpus), free
 
 def pbsMap(p):
     # add all nodes and their status's into a pbs dict
     pbs = {}
-    for n, status, cores in p:  # make into a dict
+    for n, status, cores, gpus in p:  # make into a dict
         if n not in config.cn:
             continue
-        pbs[n] = ( status, cores )
+        pbs[n] = ( status, cores, gpus )
         #print n, status
     return pbs
 
-def freeAvailCpusNodes( pbsnodes, jobList, pbsAllMap ):   # work out how many free cpus we have
+def freeAvailCpusNodes( pbsnodes, jobList, gpuJobList, pbsAllMap ):   # work out how many free cpus we have
     freeCpus = 0
+    freeGpus = 0
     freeNodes = 0
     availCpus = 0
+    availGpus = 0
     availNodes = 0
     #nonAvailNodes = 0
 
@@ -605,7 +656,7 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllMap ):   # work out how many fr
     # but we could also easily count all nodes, or all non-avail nodes
     # that have jobs on them, etc.
     for node, sc in pbsAllMap.iteritems():
-        status, cores = sc
+        status, cores, gpus = sc
         #print 'node', node, sc
         if node in config.hn:
             #print 'el-heado', node, sc
@@ -636,7 +687,9 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllMap ):   # work out how many fr
         availNodes += 1
         #print 'avail', node
         freeCpus += cores
+        freeGpus += gpus
         availCpus += cores
+        availGpus += gpus
 
         # subtract off used cpus, nodes
         if node in jobList.keys():
@@ -644,8 +697,12 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllMap ):   # work out how many fr
         else:
             freeNodes += 1
 
-    #print 'freeCpus, freeNodes, availCpus, availNodes', freeCpus, freeNodes, availCpus, availNodes
-    return ( freeCpus, freeNodes, availCpus, availNodes )
+        # subtract off used gpus
+        if node in gpuJobList.keys():
+            freeGpus -= len(gpuJobList[node])
+
+    #print 'freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes', freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes
+    return ( freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes )
 
 def doPies( withFries ):
     state = ''
@@ -679,15 +736,15 @@ def doPies( withFries ):
     return state
 
 def doHash( jobs, queued, availCpus ):
-    # running jobs looks like: ( username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo )
-    # queued looks like: ( n, c, state, username, jobId, jobName, walltime, comment )
+    # running jobs looks like: ( username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo )
+    # queued looks like: ( n, c, g, state, username, jobId, jobName, walltime, comment )
     hashes = {}
 
     # split up running into running and suspended
     r = []
     s = []
     for j in jobs:
-        username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo = j
+        username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo = j
         if pbsInfo['state'] == 'S':
             s.append(j)
         else:
@@ -696,7 +753,7 @@ def doHash( jobs, queued, availCpus ):
     for name, q in ( ('running', r), ('suspended', s)):
         if len( q ):
             txt = name + ' '
-            for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in q:
+            for username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo in q:
                 txt += jobId + ' '
             txt += '%d' % availCpus
             hashes[name] = hashlib.md5(txt).hexdigest()
@@ -730,7 +787,7 @@ def doHash( jobs, queued, availCpus ):
     for name, blah in ( ( 'queued', q ), ( 'blocked', b ) ):
         if len(blah):
             txt = preHash + ' ' + name + ' '
-            for n, c, state, username, jobId, jobName, walltime, comment in blah:
+            for n, c, g, state, username, jobId, jobName, walltime, comment in blah:
                 txt += jobId + state + ' '
             txt += '%d' % availCpus
             hashes[name]  = hashlib.md5(txt).hexdigest()
@@ -883,10 +940,11 @@ def readUserColours( f ):
     return cPickle.load( open( f, 'r' ) )
 
 def doUsage( free, running ):
-    freeCpus, freeNodes, availCpus, availNodes = free
-    runList, totalRunCpus = running
+    freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes = free
+    runList, totalRunCpus, totalRunGpus = running
     realUsedCpus = totalRunCpus - freeCpus
-    return '["pbs_running",%d,"pbs_avail",%d]' % ( realUsedCpus, totalRunCpus )
+    realUsedGpus = totalRunGpus - freeGpus
+    return '["pbs_running_cores",%d,"pbs_avail_cores",%d,"pbs_running_gpus",%d,"pbs_avail_gpus",%d]' % ( realUsedCpus, totalRunCpus, realUsedGpus, totalRunGpus )
 
 def doTimeStamp():
     txt = '['
@@ -1101,9 +1159,9 @@ def getMemVm( pbsInfo ):
         vmem = pbsInfo['vmem']/1048576.0 # in MB
     return ( mem, vmem )
 
-def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsData ):
-    for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
-        #print 'jobId', jobId, 'nodeList', nodeList, 'state', pbsInfo['state']
+def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsData, gpuData ):
+    for username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
+        #print 'jobId', jobId, 'nodeList', nodeList, 'gpuList', gpuList, 'state', pbsInfo['state']
         first = 0
         if jobId not in stats.keys():
             stats[jobId] = { 'nodes':None, 'stats':None, 'pbsMaxMem':[0.0, 0.0], 'jobState':None, 'warmupLoopCnt':0 }
@@ -1179,14 +1237,19 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsDat
             except:
                 ( fsBytes, fsOps ) = ( [], [] )
 
+            try:
+                gpuLoad = gpuData[n]
+            except:
+                gpuLoad = 0
+
             used = (tot - buf - cached - free)/1024.0  # in Mbytes
             tot /= 1024.0  # in Mbytes
 
             if n not in stats[jobId]['stats'].keys():  # first time we've seen this node
                 stats[jobId]['stats'][n] = {}
                 stats[jobId]['stats'][n]['cnt'] = 0
-                stats[jobId]['stats'][n]['data'] = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0 ]  # u,s,w,i,m,b,p,watts,swapCnt
-                stats[jobId]['stats'][n]['max'] = [ 0.0, 0.0, 0.0, 0.0, 0.0 ]        # u,m,b,p,watts
+                stats[jobId]['stats'][n]['data'] = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0 ]  # u,s,w,i,g,m,b,p,watts,swapCnt
+                stats[jobId]['stats'][n]['max'] = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]        # u,g,m,b,p,watts
                 stats[jobId]['stats'][n]['totMem'] = tot   # ram on the node
                 stats[jobId]['stats'][n]['taintedNet'] = 0   # network stats reliable/unreliable
                 # fs's are a bit too many and varied to treat as vectors, so use dicts
@@ -1201,22 +1264,24 @@ def storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsDat
             stats[jobId]['stats'][n]['data'][1] += system   #   ""
             stats[jobId]['stats'][n]['data'][2] += wio      #   ""
             stats[jobId]['stats'][n]['data'][3] += idle     #   ""
-            stats[jobId]['stats'][n]['data'][4] += used
-            stats[jobId]['stats'][n]['data'][5] += bytes
-            stats[jobId]['stats'][n]['data'][6] += pkts
-            stats[jobId]['stats'][n]['data'][7] += watts
+            stats[jobId]['stats'][n]['data'][4] += gpuLoad
+            stats[jobId]['stats'][n]['data'][5] += used
+            stats[jobId]['stats'][n]['data'][6] += bytes
+            stats[jobId]['stats'][n]['data'][7] += pkts
+            stats[jobId]['stats'][n]['data'][8] += watts
             if swapping:
-                stats[jobId]['stats'][n]['data'][8] += 1
+                stats[jobId]['stats'][n]['data'][9] += 1
 
             if n in sharedNetNodes:
                 stats[jobId]['stats'][n]['taintedNet'] = 1
 
             big = stats[jobId]['stats'][n]['max']
             big[0] = max(big[0], cpu)      # percent
-            big[1] = max(big[1], used)
-            big[2] = max(big[2], bytes)
-            big[3] = max(big[3], pkts)
-            big[4] = max(big[4], watts)
+            big[1] = max(big[1], gpuLoad)
+            big[2] = max(big[2], used)
+            big[3] = max(big[3], bytes)
+            big[4] = max(big[4], pkts)
+            big[5] = max(big[5], watts)
 
             s = stats[jobId]['stats'][n]['fs']
 	    sc = stats[jobId]['stats'][n]['fscurrent']
@@ -1294,8 +1359,8 @@ def statsForJob( j, doPrint=0 ):
     #   []
     # if it's a 1 cpu job, or if no stats are collected yet
 
-    ave = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]  # ave over nodes of ave over job life of:  u,s,w,i,m,b,p,watts,swapCnt
-    bigAve = [ 0.0, 0.0, 0.0, 0.0, 0.0 ]                   # ave over nodes of max over job life of:  u,m,b,p,watts
+    ave = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]  # ave over nodes of ave over job life of:  u,s,w,i,g,m,b,p,watts,swapCnt
+    bigAve = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]                   # ave over nodes of max over job life of:  u,g,m,b,p,watts
 
     nodes = st['nodes']
     if nodes == None:
@@ -1353,18 +1418,20 @@ def statsForJob( j, doPrint=0 ):
             w = 0
 
         i = 100 - u - s - w
-        m = int(invCnt * data[n]['data'][4])
-        b = scalarToScaled( invCnt*data[n]['data'][5] )
-        p = scalarToScaled( invCnt*data[n]['data'][6] )
-        #watts = scalarToScaled( invCnt*data[n]['data'][7] )
-        swapping = invCnt * data[n]['data'][8]  # % of time this node's been swapping
+        g = int(invCnt * data[n]['data'][4])
+        m = int(invCnt * data[n]['data'][5])
+        b = scalarToScaled( invCnt*data[n]['data'][6] )
+        p = scalarToScaled( invCnt*data[n]['data'][7] )
+        #watts = scalarToScaled( invCnt*data[n]['data'][8] )
+        swapping = invCnt * data[n]['data'][9]  # % of time this node's been swapping
 
         # max of user, mem
         maxU = int(data[n]['max'][0])
-        maxM = int(data[n]['max'][1])
-        maxB = scalarToScaled( data[n]['max'][2] )
-        maxP = scalarToScaled( data[n]['max'][3] )
-        maxWatts = scalarToScaled( data[n]['max'][4] )
+        maxG = int(data[n]['max'][1])
+        maxM = int(data[n]['max'][2])
+        maxB = scalarToScaled( data[n]['max'][3] )
+        maxP = scalarToScaled( data[n]['max'][4] )
+        maxWatts = scalarToScaled( data[n]['max'][5] )
 
         totMem = int( data[n]['totMem'] )
         if totMem > maxMemOnNodes:
@@ -1375,9 +1442,10 @@ def statsForJob( j, doPrint=0 ):
         if t > tMax:
             tMax = t
 
-        # send watts
-        #txt += '["' + n + '",[%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.1f,"%s",%.3f],[%d,%d,%.1f,"%s",%.1f,"%s",%.1f,"%s"],%d,%d],' % ( u, s, w, i, m, b[0], b[1], p[0], p[1], watts[0], watts[1], swapping, maxU, maxM, maxB[0], maxB[1], maxP[0], maxP[1], maxWatts[0], maxWatts[1], totMem, t )
-        txt += '["' + n + '",[%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.3f],[%d,%d,%.1f,"%s",%.1f,"%s"],%d,%d],' % ( u, s, w, i, m, b[0], b[1], p[0], p[1], swapping, maxU, maxM, maxB[0], maxB[1], maxP[0], maxP[1], totMem, t )
+        # for now don't send watts
+        txt += '["' + n + '",[%d,%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.3f],' % ( u, s, w, i, g, m, b[0], b[1], p[0], p[1], swapping )
+        txt += '[%d,%d,%d,%.1f,"%s",%.1f,"%s"],' % ( maxU, maxG, maxM, maxB[0], maxB[1], maxP[0], maxP[1] )
+        txt += '%d,%d],' % ( totMem, t )
 
         # we don't send any per node fs info in the above txt,
         # but we need to sum across nodes to generate totals and aves
@@ -1430,18 +1498,19 @@ def statsForJob( j, doPrint=0 ):
         w = ave[2]/numNodesInJob
         i = ave[3]/numNodesInJob
         tot = int((ave[0] + ave[1] + ave[2] + ave[3])/numNodesInJob)
-        m = ave[4]/numNodesInJob
-        b = scalarToScaled( ave[5]/numNodesInJob )
-        p = scalarToScaled( ave[6]/numNodesInJob )
-        watts = ave[7]/numNodesInJob
-        swapping = ave[8]/numNodesInJob
+        g = ave[4]/numNodesInJob
+        m = ave[5]/numNodesInJob
+        b = scalarToScaled( ave[6]/numNodesInJob )
+        p = scalarToScaled( ave[7]/numNodesInJob )
+        watts = ave[8]/numNodesInJob
+        swapping = ave[9]/numNodesInJob
 
-        bAve = scalarToScaled( bigAve[2]/numNodesInJob )
-        pAve = scalarToScaled( bigAve[3]/numNodesInJob )
-        wattsAve = bigAve[4]/numNodesInJob
+        bAve = scalarToScaled( bigAve[3]/numNodesInJob )
+        pAve = scalarToScaled( bigAve[4]/numNodesInJob )
+        wattsAve = bigAve[5]/numNodesInJob
 
         if doPrint:
-            print 'samples', cnt, 'nodes', numNodesInJob, 'averages: cpu % u/s/w/i/tot', int(u), int(s), int(w), int(i), tot, 'mem', int(m), 'Mbytes', b, 'pkts', p, 'per node watts ave/max', int(watts), int(wattsAve), 'fs ave',
+            print 'samples', cnt, 'nodes', numNodesInJob, 'averages: cpu % u/s/w/i/tot', int(u), int(s), int(w), int(i), tot, 'gpu', int(g), 'mem', int(m), 'Mbytes', b, 'pkts', p, 'per node watts ave/max', int(watts), int(wattsAve), 'fs ave',
             if 'fs' in fs.keys():
                print fs['fs'],
             print
@@ -1449,8 +1518,9 @@ def statsForJob( j, doPrint=0 ):
 
         txt += '["ave",'
         # could also send watts here
-        txt +=   '[%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.3f],' % ( int(u), int(s), int(w), 100 - int(u+s+w), int(m), b[0], b[1], p[0], p[1], swapping )
-        txt +=   '[%d,%d,%.1f,"%s",%.1f,"%s"],%d,%d,' % ( int(bigAve[0]/numNodesInJob), int(bigAve[1]/numNodesInJob), bAve[0], bAve[1], pAve[0], pAve[1], maxMemOnNodes, tMax )
+        txt +=   '[%d,%d,%d,%d,%d,%d,%.1f,"%s",%.1f,"%s",%.3f],' % ( int(u), int(s), int(w), 100 - int(u+s+w), int(g), int(m), b[0], b[1], p[0], p[1], swapping )
+        txt +=   '[%d,%d,%d,%.1f,"%s",%.1f,"%s"],' % ( int(bigAve[0]/numNodesInJob), int(bigAve[1]/numNodesInJob), int(bigAve[2]/numNodesInJob), bAve[0], bAve[1], pAve[0], pAve[1] )
+        txt +=   '%d,%d,' % ( maxMemOnNodes, tMax )
         txt +=   fsStr
         txt += ']'
     else:
@@ -1463,7 +1533,7 @@ def statsForJob( j, doPrint=0 ):
 
 def doJobStats( jobs, err ):
     running = []
-    for username, nodeList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
+    for username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, pbsInfo in jobs:
         running.append( jobId )
 
     txt = '['
@@ -1586,7 +1656,7 @@ def doAll():
     cpuTxt, cpuData = cpuBar( all )
     txt += '<cpuBar>' + cpuTxt + '</cpuBar>\n'
 
-    ( mem, disk, swap, temps, power, fans ) = g.getStats()
+    ( mem, disk, swap, temps, power, fans, gpu ) = g.getStats()
     pruneMany( ( mem, disk, swap, temps, power, fans ) )
     memTxt, memData = doMem( mem, swap, cpuData )
     txt += '<mem>' + memTxt + '</mem>\n'
@@ -1614,10 +1684,12 @@ def doAll():
     pbsAllMap = pbsMap(pbsAllNodes)
 
     txt += '<loads>' + doLoads( all, up, pbsAllMap ) + '</loads>\n'
+    gpuTxt, gpuData = doGpuLoads( gpu, up, pbsAllMap )
+    txt += '<gpuloads>' + gpuTxt + '</gpuloads>\n'
 
     running, suspended, free = whosUsingItAll( jobs, pbsnodes, pbsAllMap )
     #print 'running', running,'suspended', suspended
-    freeCpus, freeNodes, availCpus, availNodes = free
+    freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes = free
     #print 'free', free
 
     global haveMaui
@@ -1665,7 +1737,7 @@ def doAll():
     # store cpu loads with the running jobs
     if p.error == None:
         # only process if we got an ok qstat otherwise we will wipe job histories
-        storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsData )
+        storeJobStats( jobs, cpuData, memData, netData, sharedNetNodes, power, fsData, gpuData )
     else:
         print 'error from pbs'
     txt += '<averages>' + doJobStats( jobs, p.error ) + '</averages>\n'

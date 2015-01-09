@@ -73,7 +73,7 @@ def uniq( list ):
 
 
 def queuedJobState( job ):
-    nodes, cpus, state, username, jobId, jobName, walltime, comment = job
+    nodes, cpus, gpus, state, username, jobId, jobName, walltime, comment = job
     if state in ( 'H', 'B', 'W', 'T' ):
         return 'b'
     elif state in ( 'Q' ):
@@ -110,7 +110,7 @@ def sortByUser( queued ):
     totalCpus = 0
     totalCpuHours = 0.0
     for job in queued:
-        nodes, cpus, state, username, jobId, jobName, walltime, comment = job
+        nodes, cpus, gpus, state, username, jobId, jobName, walltime, comment = job
         if username not in users.keys():
             users[username] = []
         users[username].append(cpus)
@@ -178,7 +178,7 @@ if doPie:
 
 def plotPie( r, s, q, b, availCpus ):
     if not doPie:
-        return []
+        return [], [], []
 
     if availCpus <= 0:
         availCpus = 1
@@ -187,8 +187,8 @@ def plotPie( r, s, q, b, availCpus ):
     # availCpus is the total number of online/up cpus.
     # NOTE: offlined nodes that are still running jobs can push the total to >100% !
 
-    running, totalCpus = r
-    suspended, totalSuspendedCpus = s
+    running, totalCpus, totalGpus = r
+    suspended, totalSuspendedCpus, totalSuspendedGpus = s
     queued, totalQueuedCpus = q
     blocked, totalBlockedCpus = b
 
@@ -533,11 +533,13 @@ def nextJobRuns( jobs, freeNow, n, bf, j, textMode=0 ):
 def infoFromQueued( queued, availableNodes, availCpus ):
     node = 0
     cpus = 0
+    gpus = 0
     cpuHours = 0.0
 
-    for n, c, s, u, jobId, jobName, walltime, comment in queued:
+    for n, c, g, s, u, jobId, jobName, walltime, comment in queued:
         node += n
         cpus += c
+        gpus += g
         cpuHours += c*walltime/3600.0
 
     if availableNodes > 0:
@@ -545,7 +547,7 @@ def infoFromQueued( queued, availableNodes, availCpus ):
     else:
         machineHours = 0
 
-    return ( node, cpus, machineHours )
+    return ( node, cpus, gpus, machineHours )
 
 
 def tagAsBlocked( m, queued ):
@@ -558,19 +560,19 @@ def tagAsBlocked( m, queued ):
     # loop over queued jobs and tag the 'blocked' ones
     for i in range(len(queued)):
         j = queued[i]
-        n, c, state, user, jobId, jobName, walltime, comment = j
+        n, c, g, state, user, jobId, jobName, walltime, comment = j
 
         if state == 'H':  # already held, so no point tagging it as blocked as well
             continue
 
         if m != None:
-            jobInt = int( string.split( jobId, '.' )[0] )
-            if jobInt in id:
-                queued[i] = ( n, c, 'B', user, jobId, jobName, walltime, comment )
+            job = string.split( jobId, '.' )[0]
+            if job in id:
+                queued[i] = ( n, c, g, 'B', user, jobId, jobName, walltime, comment )
         else:
             # no maui information, so look at PBS comments instead
             if comment in ( 'Software licenses unavailable', 'Disk quota exceeded', 'Bonus job not starting - over usage threshold', 'Bonus jobs not starting' ):
-                queued[i] = ( n, c, 'B', user, jobId, jobName, walltime, comment )
+                queued[i] = ( n, c, g, 'B', user, jobId, jobName, walltime, comment )
 
     return queued
 
@@ -578,17 +580,19 @@ def tagAsBlocked( m, queued ):
 def doStatus( free, totalRunCpus, totalRunGpus, queued, maui, textMode=0 ):
     freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes = free
     usedCpus = availCpus - freeCpus
+    usedGpus = availGpus - freeGpus
     usedNodes = availNodes - freeNodes
-    #print 'freeCpus, freeNodes, availCpus, availNodes', free
-    #print 'usedNodes, usedCpus', usedNodes, usedCpus
+    #print 'freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes', free
+    #print 'usedNodes, usedCpus, usedGpus', usedNodes, usedCpus, usedGpus
 
     # this includes jobs running on offline nodes
     realUsedCpus = totalRunCpus - freeCpus
-    #print 'realUsedCpus', realUsedCpus
+    realUsedGpus = totalRunGpus - freeGpus
+    #print 'realUsedCpus, realUsedGpus', realUsedCpus, realUsedGpus
 
     # how loaded is this puppy?
     # and how many queued jobs
-    node, cpus, machineHours = infoFromQueued( queued, availNodes, availCpus )
+    node, cpus, gpus, machineHours = infoFromQueued( queued, availNodes, availCpus )
 
     txt = ''
 
@@ -622,7 +626,18 @@ def doStatus( free, totalRunCpus, totalRunGpus, queued, maui, textMode=0 ):
     else:
         txt += td
 
-    if freeNow == 1:
+    if availGpus != 0:
+        txt += td
+        if realUsedGpus == 1:
+            txt += '%d gpu used' % realUsedGpus
+        else:
+            txt += '%d gpus used' % realUsedGpus
+        txt += ' = %.1f%% of available' % (100.0*float(realUsedGpus)/float(realUsedGpus + freeGpus))
+        txt += br
+    else:
+        txt += td
+
+    if freeNodes == 1:
         txt += '1 node idle'
     else:
         txt += '%d nodes idle' % freeNodes
@@ -631,6 +646,11 @@ def doStatus( free, totalRunCpus, totalRunGpus, queued, maui, textMode=0 ):
         txt += ', 1 cpu idle'
     else:
         txt += ', %d cpus idle' % freeCpus
+
+    if freeGpus == 1:
+        txt += ', 1 gpu idle'
+    else:
+        txt += ', %d gpus idle' % freeGpus
 
     txt += br
 
@@ -650,6 +670,7 @@ def doStatus( free, totalRunCpus, totalRunGpus, queued, maui, textMode=0 ):
     else:
         jobsQueued = len(queued) - blockedJobs
         cpusQueued = cpus - blockedCpus
+        gpusQueued = gpus   # this isn't right. @@@ TODO
 
         if jobsQueued == 0:
             txt += 'no jobs queued'
@@ -664,6 +685,12 @@ def doStatus( free, totalRunCpus, totalRunGpus, queued, maui, textMode=0 ):
             txt += ' for 1 cpu'
         else:
             txt += ' for %d cpus' % cpusQueued
+        if gpusQueued == 0:
+            pass
+        elif gpusQueued == 1:
+            txt += ' 1 gpu'
+        else:
+            txt += ' %d gpus' % gpusQueued
         txt += ' or %.1f machine hours' % machineHours
 
 

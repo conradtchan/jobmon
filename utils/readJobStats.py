@@ -48,7 +48,7 @@ def parse( key, data, job=None ):
    # format is
    #   <averages>[ "jobId", [nodeinfo1,nodeInfo2, ..., aveNodeInfo] ]</averages>
    # nodeInfo format is
-   #   ["node",[u,s,w,i,mem,bytes/s,"m",pkts/s,"k",swapping],[maxU,maxMem,maxBytes/s,"m",maxPkts/s,"g"],totMemOnNode,dodgNetworkStats]
+   #   ["node",[u,s,w,i,g,mem,bytes/s,"m",pkts/s,"k",swapping],[maxU,maxG,maxMem,maxBytes/s,"m",maxPkts/s,"g"],totMemOnNode,dodgNetworkStats]
 
    if key not in prevParse.keys():
       # pull off the XML crap
@@ -112,12 +112,12 @@ def prettyPrint( n, showNode=1 ):
 
    if showNode:
       print '%8s' % n[0],
-   print '  %3d %3d %3d %3d     %4dmb' % ( stats[0], stats[1], stats[2], stats[3], stats[4] ),
-   doNet( stats[5], stats[6], stats[7], stats[8] )
-   print '    %3d   %4dmb ' % ( maxStats[0], maxStats[1] ),
-   doNet( maxStats[2], maxStats[3], maxStats[4], maxStats[5] )
-   if stats[9] > 0.01:
-      print ' %5.1f%%' % (100.0*stats[9]),
+   print '  %3d %3d %3d %3d     %3d    %4dmb' % ( stats[0], stats[1], stats[2], stats[3], stats[4], stats[5] ),
+   doNet( stats[6], stats[7], stats[8], stats[9] )
+   print '    %3d  %3d   %4dmb ' % ( maxStats[0], maxStats[1], maxStats[2] ),
+   doNet( maxStats[3], maxStats[4], maxStats[5], maxStats[6] )
+   if stats[10] > 0.01:
+      print ' %5.1f%%' % (100.0*stats[10]),
    else:
       print '   -   ',
    if showNode:
@@ -128,10 +128,10 @@ def prettyPrint( n, showNode=1 ):
 
 
 def printHeader( firstColumn, padding='' ):
-   print padding + '                                 ave      ave      ave      max    max      max      max    time'
-   print    firstColumn + '        ave % cpu        memory bandwidth packets  % user  memory bandwidth packets  spent'
-   print padding + '          user,sys,wait_io,idle                    /sec     cpu                     /sec   swapping'
-   print padding + '--------  ----------------------------------------------   -----------------------------------------'
+   print padding + '                                  ave   ave      ave      ave      max   max   max      max      max    time'
+   print    firstColumn + '        ave % cpu        % gpu  memory bandwidth packets   %user %gpu  memory bandwidth packets  spent'
+   print padding + '          user,sys,wait_io,idle                          /sec     cpu                           /sec   swapping'
+   print padding + '--------  -----------------------------------------------------   ----------------------------------------------'
 
 
 def doJob():
@@ -221,7 +221,7 @@ def doAve():
          a = parse( 'averages', ave, j )
          a = a[0]  # only one field
          #print j, a[-1]
-         print j,
+         print j[:11],
          prettyPrint( a[-1], showNode=0 )
 
 

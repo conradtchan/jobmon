@@ -79,11 +79,11 @@ q = p.getQueuedList()
 # merge PBS job names into a dict indexed by job id
 name = {}
 for j in jobs:
-    username, nodeList, line, tagId, timeToGo, jobId, jobName, memVm = j
+    username, nodeList, gpuList, line, tagId, timeToGo, jobId, jobName, memVm = j
     jobId = int(string.split( jobId, '.' )[0])
     name[jobId] = jobName
 for j in q:
-    nodes, cpus, state, username, jobId, jobName, walltime = j
+    nodes, cpus, gpus, state, username, jobId, jobName, walltime, comment = j
     jobId = int(string.split( jobId, '.' )[0])
     name[jobId] = jobName
 

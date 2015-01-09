@@ -109,6 +109,7 @@ class gangliaStats:
         self.temps = {} # dict of temperatures
         self.power = {} # dict of watts used
         self.fans = {} # dict of fan speeds
+        self.gpu_util = {} # dict of gpu loads
         self.all = None
         self.quiet = quiet
         self.deadTimeout = deadTimeout
@@ -116,7 +117,7 @@ class gangliaStats:
         self.read( doCpus, gmondHost, reportTimeOnly )  # load em up
 
     def getStats( self ):
-        return ( self.mem, self.disk, self.swap, self.temps, self.power, self.fans )
+        return ( self.mem, self.disk, self.swap, self.temps, self.power, self.fans, self.gpu_util )
 
     def getAll( self ):
         return self.all
@@ -314,6 +315,19 @@ class gangliaStats:
             if 'fan_rms' in d[name].keys():
                 self.fans[name] = int(d[name]['fan_rms'].split('.')[0])
 
+            # sum up all the gpu*_util metrics into one
+            self.gpu_util[name] = None
+            gCnt = 0
+            gUtil = 0.0
+            for i in range(7):
+                m = 'gpu%d_util' % i
+                if m in d[name].keys():
+                    gCnt += 1
+                    gUtil += float(d[name][m])
+            if gCnt:
+                self.gpu_util[name] = float(gUtil/gCnt)
+
+
 class pbsNodes:
     def __init__( self ):
         # "interesting nodes"
@@ -408,6 +422,9 @@ class pbsNodes:
             x = dom1.getElementsByTagName('np')[0].toxml()
             cores = int(x.replace('<np>','').replace('</np>',''))
 
+            x = dom1.getElementsByTagName('gpus')[0].toxml()
+            gpus = int(x.replace('<gpus>','').replace('</gpus>',''))
+
             x = dom1.getElementsByTagName('state')[0].toxml()
             state = x.replace('<state>','').replace('</state>','')
 
@@ -439,10 +456,10 @@ class pbsNodes:
                 pass
 
             if len(j):
-                self.pbsNodesList.append( ( node, j, cores ) )
+                self.pbsNodesList.append( ( node, j, cores, gpus ) )
 
             if len(k):
-                self.pbsFullNodesList.append( ( node, k, cores ) )
+                self.pbsFullNodesList.append( ( node, k, cores, gpus ) )
 
     def getNodesList( self ):
         return self.pbsNodesList
@@ -521,7 +538,8 @@ class pbsJobs:
                    'job_state', 'exec_host', 'Resource_List.nodes',
                    'Resource_List.cput', 'Resource_List.walltime',
                    'Resource_List.other', 'comment', 'Account_Name',
-                   'Resource_List.select', 'Resource_List.procs' ]
+                   'Resource_List.select', 'Resource_List.procs',
+                   'exec_gpus' ]
 
         # loop over and merge multiple lines into one
         merged = []
@@ -610,6 +628,7 @@ class pbsJobs:
         # print 'dict is', dict
 
         nodes = []
+        gpus = []
         if dict[ 'job_state' ] not in ( 'Q', 'H', 'W', 'T' ):  # mostly ignore queued, held, waiting jobs
 
             # 'E' 'R' and 'S' jobs -->
@@ -648,6 +667,16 @@ class pbsJobs:
                         trimNodes.append( nn )
                 nodes = trimNodes
 
+            if 'exec_gpus' in dict.keys():
+                l = dict[ 'exec_gpus' ]
+                nnn = l.strip().split('+')
+                trimNodes = []
+                for n in nnn:   # torque format ... gstar103-gpu/1+gstar103-gpu/0+gstar102-gpu/1+gstar102-gpu/0 ...
+                    nn = n.split('/')[0].split('.')[0].split('-')[0]
+                    trimNodes.append( nn )
+                gpus = trimNodes
+                #print 'gpus', gpus
+
             line.append( 'Job ' + dict['Job Id'] )
             line.append( dict['Job_Name'] )
             line.append( dict[ 'job_state' ] )
@@ -657,26 +686,65 @@ class pbsJobs:
 
         # nodes requests looks like 15:ppn=2  or  2:ppn=2:mem2g
         # or  1:ppn=1:mem2g+8:ppn=2  or  machine1:ppn=2+machine2:ppn=2
+        # or  2:gpus=2:ppn=6 or 1:ppn=8:gpus=1
         reqNodes = 0
         cpus = 0
-        req = string.split( dict[ 'Resource_List.nodes' ], '+' )  # split the parts of a multi-req
-        for r in req:   # each part looks like eg. 1:ppn=1:mem2g
-            rr = string.split( r, ':' )
-            if rr[0][0] in string.digits:
-                n = int(rr[0])    # first is num nodes
-            else:
-                n = 1             # or might be a machine name
-            reqNodes += n
+        numGpus = 0
+        # some really odd queued jobs might have 'select' instead of 'nodes'
+        nodes_k = 'Resource_List.nodes'
+	if nodes_k not in dict.keys():
+            if dict['job_state'] == 'Q' and 'Resource_List.select' in dict.keys():
+                nodes_k = 'Resource_List.select'
+                #print 'using select'
+            elif 'Resource_List.procs' in dict.keys():
+                nodes_k = 'Resource_List.procs'
+                #print 'using procs'
 
-            # look for the ppn=
-            found = 0
-            for rrr in rr[1:]:
-                f = string.split( rrr, '=' )
-                if f[0] == 'ppn':
-                    found = 1
-                    cpus += n*int(f[1])
-            if not found:  # they didn't put a ppn=, so the machine assumes ppn=1
-                cpus += n
+        if nodes_k not in dict.keys():  # default
+            #print 'default cpu req assumed'
+            nodes_k = 'Resource_List.nodes'
+            dict[nodes_k] = '1:ppn=1'
+
+        state = dict[ 'job_state' ]
+
+        if state in ( 'Q', 'H', 'W', 'T' ):
+            req = string.split( dict[nodes_k], '+' )  # split the parts of a multi-req
+            for r in req:   # each part looks like eg. 1:ppn=1:mem2g
+                rr = string.split( r, ':' )
+                if rr[0][0] in string.digits:
+                    n = int(rr[0])    # first is num nodes
+                else:
+                    n = 1             # or might be a machine name
+                reqNodes += n
+
+                # look for the ppn=
+                found = 0
+                for rrr in rr[1:]:
+                    f = string.split( rrr, '=' )
+                    if f[0] == 'ppn':
+                        found = 1
+                        cpus += n*int(f[1])
+                if not found:  # they didn't put a ppn=, so the machine assumes ppn=1
+                    cpus += n
+
+                # look for gpus=
+                found = 0
+                for rrr in rr[1:]:
+                    f = string.split( rrr, '=' )
+                    if f[0] == 'gpus':
+                        found = 1
+                        numGpus += n*int(f[1])
+        else:
+            # the above fails when 12:ppn=1 is actually stacked onto 3 nodes with 4 cores each by the sheduler
+            # so if it's in run state, ignore what was requested and look at what they actually got given:
+            cpus = len(nodes)
+            numGpus = len(gpus)
+            # if qstat isn't giving us sorted nodes, then we'll need a compare
+            # function that strips off prefixes and just compares by node number,
+            # otherwise sort() of x7,x8,x10 will yield x10,x7,x8 :-/
+            #nodes.sort()
+            reqNodes = len(uniq(nodes))
+
 
         ## sanity check:
         ### rjh - this fails when suspended jobs are present... disable for now
@@ -687,20 +755,10 @@ class pbsJobs:
         #        sys.exit(1)
 
 
-        state = dict[ 'job_state' ]
-
-        # the above fails when 12:ppn=1 is actually stacked onto 3 nodes with 4 cores each by the sheduler
-        # so if it's in run state, ignore what was requested and look at what they actually got given: 
-        if state not in ( 'Q', 'H', 'W', 'T' ):
-            cpus = len(nodes)
-            # if qstat isn't giving us sorted nodes, then we'll need a compare
-            # function that strips off prefixes and just compares by node number,
-            # otherwise sort() of x7,x8,x10 will yield x10,x7,x8 :-/
-            #nodes.sort()
-            reqNodes = len(uniq(nodes))
-
         line.append( 'Nodes %d' % reqNodes )
         line.append( 'Cpus %d' % cpus )
+        if numGpus:
+            line.append( 'Gpus %d' % numGpus )
 
         wallLimit = timeToInt( dict[ 'Resource_List.walltime' ] )
 
@@ -710,6 +768,7 @@ class pbsJobs:
         pbsInfo['username'] = username
         pbsInfo['numNodes'] = reqNodes
         pbsInfo['numCpus'] = cpus
+        pbsInfo['numGpus'] = numGpus
         pbsInfo['wallLimit'] = wallLimit
         pbsInfo['nodes'] = dict[nodes_k]
         if 'comment' in dict.keys():
@@ -718,7 +777,7 @@ class pbsJobs:
             pbsInfo['comment'] = ''
 
         if state in ( 'Q', 'H', 'W', 'T' ):  # bale here and return minimal info...
-            return ( int(reqNodes), cpus, state, username, dict[ 'Job Id' ], dict[ 'Job_Name' ], wallLimit, pbsInfo['comment'] ), 'queued'
+            return ( int(reqNodes), cpus, numGpus, state, username, dict[ 'Job Id' ], dict[ 'Job_Name' ], wallLimit, pbsInfo['comment'] ), 'queued'
 
         if 'resources_used.cput' in dict.keys() and 'resources_used.walltime' in dict.keys():
             cpuTime = dict[ 'resources_used.cput' ]
@@ -770,7 +829,7 @@ class pbsJobs:
 
         self.tagId += 1
 
-        return ( username, nodes, line, self.tagId, timeToGo, dict[ 'Job Id' ], dict[ 'Job_Name' ], pbsInfo ), 'run'
+        return ( username, nodes, gpus, line, self.tagId, timeToGo, dict[ 'Job Id' ], dict[ 'Job_Name' ], pbsInfo ), 'run'
 
     def getJobList( self ):
         return self.jobs

@@ -70,7 +70,7 @@ var allNodes = [];
 
 
 // init prev variables
-var prevJobs, prevLoads, prevShow, prevCpu, prevMem;
+var prevJobs, prevLoads, prevShow, prevCpu, prevGpu, prevMem;
 var prevUp, prevDiskWarnMap, prevDiskWarn, prevTempWarnMap, prevTempWarn;
 var prevPbsNodesMap, prevPbsNodes, prevReservations, pieColours;
 var prevNodes, prevRunning, prevSuspended, prevQueued, prevBlocked;
@@ -78,7 +78,7 @@ var prevNetwork, prevAverages; // , prevAveragesMap;
 var prevPower, prevFans;
 // for heavy mode
 var prevDisk, prevTemp, prevTempMap, tempChanged;
-var numCores;
+var numCores, numGpus;
 
 var jobsMap = [];
 
@@ -86,6 +86,8 @@ var statusText = '';
 var errStr = '';
 var numCpuChanged = 0;
 var percCpuChanged = 0;
+var numGpuChanged = 0;
+var percGpuChanged = 0;
 var percTempChanged = 0;
 var percToolTipChange = '';
 var pieChanged = 0;
@@ -250,6 +252,7 @@ function initVars() {
     prevLoads = [];
     prevShow = [];
     prevCpu = [];
+    prevGpu = [];
     prevMem = [];
     prevUp = [];
     prevDiskWarnMap = [];
@@ -277,6 +280,7 @@ function initVars() {
     tempChanged = [];
 
     numCores = [];
+    numGpus = [];
 
     prevNodes = [];
     for(var i=0;i<allNodes.length;i++)
@@ -346,6 +350,7 @@ function writeNodeTable( n ) {
     txt +=     '<td><div id="' + n + '_job"></div></td>';
     txt +=   '</tr></table></td></tr>';
     txt +=   '<tr><td NOWRAP><img id="' + n + '_u" src="' + config.gifDir + 'blue.gif" width=0 height=0><img id="' + n + '_w" src="' + config.gifDir + 'yellow.gif" width=0 height=0><img id="' + n + '_s" src="' + config.gifDir + 'red.gif" width=0 height=0><img id="' + n + '_i" src="' + config.gifDir + 'green.gif" width=0 height=0></td></tr>';
+    txt +=   '<tr><td NOWRAP><img id="' + n + '_g" src="' + config.gifDir + 'orange.gif" width=0 height=0></td></tr>';
     txt +=   '<tr><td NOWRAP><img id="' + n + '_m" src="' + config.gifDir + 'green.gif" width=0 height=0></td></tr>';
     txt +=   '<tr><td NOWRAP><img id="' + n + '_d" src="' + config.gifDir + 'black.gif" width=0 height=0></td></tr>';
     // networking stuff for each node that we're not using yet
@@ -1150,6 +1155,7 @@ function doSpecialRowBot() {
 
     txt += '<td><table cellpadding=0 cellspacing=0 border=0>';
     txt +=   '<tr><td NOWRAP><img src="' + config.gifDir + 'blue.gif" width=12 height=3><img src="' + config.gifDir + 'yellow.gif" width=13 height=3><img src="' + config.gifDir + 'red.gif" width=12 height=3><img src="' + config.gifDir + 'green.gif" width=13 height=3> user/wait_io/sys/idle cpu</td></tr>';
+    txt +=   '<tr><td NOWRAP><img src="' + config.gifDir + 'orange.gif" width=50 height=3> gpu used</td></tr>';
     txt +=   '<tr><td NOWRAP><img src="' + config.gifDir + 'green.gif" width=50 height=3> mem used</td></tr>';
     txt +=   '<tr><td NOWRAP><img src="' + config.gifDir + 'black.gif" width=50 height=3> disk used</td></tr>';
     txt += '</table></td>';
@@ -1900,7 +1906,7 @@ function findNodeAve( l, n ) {
     return [];
 }
 
-function drawCpuMem( offset, id, u, s, w, i, m, totMem, swap, maxU, maxM, labelOff, labelU, labelM ) {
+function drawCpuMem( offset, id, doGpu, u, s, w, i, g, m, totMem, swap, maxU, maxG, maxM, labelOff, labelU, labelG, labelM ) {
     var txt = '';
 
     if ( useDivs ) {
@@ -1918,8 +1924,19 @@ function drawCpuMem( offset, id, u, s, w, i, m, totMem, swap, maxU, maxM, labelO
 	if ( labelU != '' )
 	    txt += '<div id="tt_' + id + '_u_txt" style="position:absolute; font-size:80%; color:white; top:2px; left:' + (left + labelOff) + 'px;">' + labelU + '</div>';
 
+	// gpu
+	if ( doGpu ) {
+	    left = offset + 60;
+	    txt += '<div id="tt_' + id + '_g" style="position:absolute; background-color:#ff8000; font-size:1px; height:3px; width:' + g + 'px; left:' + left + 'px;"></div>';
+	    // max gpu
+	    if ( maxG >= 0 )
+		txt += '<div id="tt_' + id + '_maxg" style="position:absolute; background-color:#ff8000; font-size:1px; height:3px; width:1px; left:' + (left + maxG) + 'px;"></div>';
+	    if ( labelG != '' )
+		txt += '<div id="tt_' + id + '_g_txt" style="position:absolute; font-size:80%; color:white; top:2px; left:' + (left + labelOff) + 'px;">' + labelG + '</div>';
+	}
+
 	// mem
-	left = offset + 60;
+	left = offset + 60 + 60*doGpu;
 	// background box
 	if ( totMem >= 0 )
 	    txt += '<div style="position:absolute; background-color:' + barBGColour + '; font-size:1px; height:3px; width:' + totMem + 'px; left:' + left + 'px;"></div>';
@@ -2084,6 +2101,12 @@ function drawNet( id, pixels, threshs, colour, maxPixels, labelOff, labelTxt, dr
 }
 
 
+function jobRequestsGpus( line ) {
+    if ( line[5].split(' ')[0] == 'Gpus' )
+	return 1;
+    return 0;
+}
+
 function toolTipJobTextAdd( username, line, group ) {
     var txt = '';
     txt += '<b>' + username + '</b>, ';
@@ -2095,8 +2118,12 @@ function toolTipJobTextAdd( username, line, group ) {
     txt += '<font color="red">State ' + line[2] + '</font>, ';  // state
     txt += '<font color="blue">' + line[3] + '</font>, ';
     txt += '<font color="blue">' + line[4] + '</font>, ';
+    var gpu = jobRequestsGpus( line );
+    if ( gpu == 1 ) {
+	txt += '<font color="blue">' + line[5] + '</font>, ';
+    }
     //txt += 'line length ' + line.length + ',';
-    for (var i=5; i<line.length; i++) {
+    for (var i=5+gpu; i<line.length; i++) {
 	txt += line[i];
 	if ( i != line.length-1 ) txt += ', ';
     }
@@ -2130,14 +2157,19 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     // check mouse position against tip and window dimensions
     // and position the tooltip
 
+    // tip width is wider for a gpu job
+    var tw = tipWidth;
+    toolTip.jobHasGpus = jobRequestsGpus( jobsMap[jobId][3] ); // parse line for gpus=
+    if ( toolTip.jobHasGpus )
+	tw += 140; // 2 columns of ~70 each
+
     // tooltip width (height is below, as that's variable)
-    var tpWd = toolTip.offsetWidth;
-    if ((mouseX+offX+tpWd)>winWd) 
-	toolTip.style.left = mouseX-(tpWd+offX)+"px";
+    if ((mouseX+offX+tw)>winWd)
+	toolTip.style.left = mouseX-(tw+offX)+"px";
     else
 	toolTip.style.left = mouseX+offX+"px";
 
-    var txt = '<table bgcolor="' + toolBgColour + '" width="' + tipWidth + '">';  // #ffffaa or cc is the typical post-it note yellow
+    var txt = '<table bgcolor="' + toolBgColour + '" width="' + tw + '">';  // #ffffaa or cc is the typical post-it note yellow
     txt += '<tr><td>';
     txt += '<div id="toolTipJobText"></div>';
 
@@ -2188,21 +2220,27 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 	rowsToDraw = 1.5;
 
     y = 5;
-    txt += '<div style="position:relative; top:0px; left:5px; height:' + (4*(rowsToDraw + 1 + 5*doAverages) + 20) + 'px; width:' + (tipWidth - 15)+ 'px; background-color:' + nodesBgColour + ';">';
+    txt += '<div style="position:relative; top:0px; left:5px; height:' + (4*(rowsToDraw + 1 + 5*doAverages) + 20) + 'px; width:' + (tw - 15)+ 'px; background-color:' + nodesBgColour + ';">';
 
     // column titles
     txt +=   '<div style="position:absolute; top:' + y + 'px;">';
-    txt +=     '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + 140 + 'px;">' + 'instantaneous' + '</div>';
-    txt +=     '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + 330 + 'px;">' + 'job&nbsp;average&nbsp;/&nbsp;max' + '</div>';
+    txt +=     '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + (140 + 70*toolTip.jobHasGpus/2) + 'px;">' + 'instantaneous' + '</div>';
+    txt +=     '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + (330 + 3*70*toolTip.jobHasGpus/2) + 'px;">' + 'job&nbsp;average&nbsp;/&nbsp;max' + '</div>';
     txt +=   '</div>';
     y += 7;
 
     // more column titles
     txt +=   '<div style="position:absolute; top:' + y + 'px;">';
-    cols = [ '  cpu', 'memory', 'network' ];
-    for ( var j = 0; j < 2; j++ )
-	for ( var i = 0; i < 3; i++ )
-	    txt +=    '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + (j*200 + i*60 + 90) + 'px;">' + cols[i] + '</div>';
+    cols = [ '  cpu', 'gpu', 'memory', 'network' ];
+    for ( var j = 0; j < 2; j++ ) {
+	var l =  j*(200 + 70*toolTip.jobHasGpus) + 90;
+	for ( var i = 0; i < 4; i++ ) {
+	    if ( i == 1 && toolTip.jobHasGpus == 0 )
+		continue;
+	    txt +=    '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + l + 'px;">' + cols[i] + '</div>';
+	    l += 60;
+	}
+    }
     txt +=   '</div>';
     y += 10;
 
@@ -2229,10 +2267,12 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     	n = nodeList[j];
 
 	labelU = '';
+	labelG = '';
 	labelM = '';
 	if ( n == 'ave' ) { // compute averages
 	    if ( doAverages && cnt > 1 ) {
 		labelU = 'placeholder';
+		labelG = 'placeholder';
 		labelM = 'placeholder';
 		y += 4;
 	    }
@@ -2276,20 +2316,21 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 	}
 
 	if ( compactMode == 2 )
-	    txt += '<div style="position:absolute; border:dashed 1px grey; top:-3px; height:0px; width:' + (tipWidth/2)+ 'px; left:150px;"></div>';
+	    txt += '<div style="position:absolute; border:dashed 1px grey; top:-3px; height:0px; width:' + (tw/2)+ 'px; left:150px;"></div>';
 
 	u = 0;
 	s = 0;
 	w = 0;
 	i = 50 - s - u - w;
+	g = 0;
 	m = 0;
 	swap = 0;
 	load = 0;
 
-	toolTip.prevState[cnt] = [ u, s, w, i, m, swap, load ];
+	toolTip.prevState[cnt] = [ u, s, w, i, g, m, swap, load ];
 
 	if ( !hiddenNode[cnt] )
-	    txt += drawCpuMem( 80, n, u, s, w, i, m, 50*totMem/maxMemOnNode, swap, -1, -1, 10, labelU, labelM );
+	    txt += drawCpuMem( 80, n, toolTip.jobHasGpus, u, s, w, i, g, m, 50*totMem/maxMemOnNode, swap, -1, -1, -1, 10, labelU, labelG, labelM );
 
 	try {
 	    // bytes
@@ -2303,7 +2344,7 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 	    dodgy = 0;
 
 	    if ( !hiddenNode[cnt] ) {
-		txt += '<div style="position:absolute; left:' + 200 + 'px;">';  // byte rate
+		txt += '<div style="position:absolute; left:' + (200 + 70*toolTip.jobHasGpus) + 'px;">';  // byte rate
 		txt += drawNet( 'tt_' + id, pixels, netBytePixelThresh, dodgy?networkSharedColour:networkColour, -1, 15, labelTxt, 1 );
 		txt += '</div>';
 	    }
@@ -2320,30 +2361,34 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 	    s = 0;
 	    w = 0;
 	    i = 50 - s - u - w;
+	    g = 0;
 	    b = 0;
 	    swap = 0;
 	    maxU = 0;
+	    maxG = 0;
 	    maxM = 0;
 	    maxB = 0;
 	    mScaled = 0;
 	    maxMScaled = 0;
 	    dodgyNet = 0;
 
-	    toolTip.prevAveState[cnt] = [ u, s, w, i, mScaled, swap, b, maxU, maxMScaled, maxB, dodgyNet ];
+	    toolTip.prevAveState[cnt] = [ u, s, w, i, g, mScaled, swap, b, maxU, maxG, maxMScaled, maxB, dodgyNet ];
 
 	    labelTxt = '';
 	    labelU = '';
+	    labelG = '';
 	    labelM = '';
 	    if ( n == 'ave' ) {
 		labelTxt = '-'; // placeholder
 		labelU = '-';   // placeholder
+		labelG = '-';   // placeholder
 		labelM = '-';   // placeholder
 	    }
 
 	    if ( !hiddenNode[cnt] ) {
-		txt += drawCpuMem( 280, n + '_ave', u, s, w, i, mScaled, parseInt(50*totMem/maxMemOnNode), swap, maxU, maxMScaled, 0, labelU, labelM );
+		txt += drawCpuMem( 280 + 70*toolTip.jobHasGpus, n + '_ave', toolTip.jobHasGpus, u, s, w, i, g, mScaled, parseInt(50*totMem/maxMemOnNode), swap, maxU, maxG, maxMScaled, 0, labelU, labelG, labelM );
 
-		txt += '<div style="position:absolute; left:' + 400 + 'px;">';  // byte rate
+		txt += '<div style="position:absolute; left:' + (400 + 2*70*toolTip.jobHasGpus) + 'px;">';  // byte rate
 		txt += drawNet( 'tt_' + n + '_n_ave', b, netBytePixelThresh,  dodgyNet?networkSharedColour:networkColour, maxB, 1, labelTxt, 1 );
 		txt += '</div>';
 	    }
@@ -2453,7 +2498,7 @@ function memText( m ) {
    return floatAsStr( m, 0 ) + suffix;
 }
 
-function updateCpuMem( offset, id, u, s, w, i, m, swap, maxU, maxM, prevU, prevS, prevW, prevI, prevM, prevSwap, prevMaxU, prevMaxM, doLabels, realM, realMaxM ) {
+function updateCpuMem( offset, id, doGpu, u, s, w, i, g, m, swap, maxU, maxG, maxM, prevU, prevS, prevW, prevI, prevG, prevM, prevSwap, prevMaxU, prevMaxG, prevMaxM, doLabels, realM, realMaxM ) {
     // cpu
     left = offset;
     if ( u != prevU || s != prevS || w != prevW) {
@@ -2495,8 +2540,30 @@ function updateCpuMem( offset, id, u, s, w, i, m, swap, maxU, maxM, prevU, prevS
 	d.innerHTML = txt;
     }
 
+    // gpu
+    if ( doGpu ) {
+	left = offset + 60;
+	if ( g != prevG ) {
+	    if ( useDivs ) {
+		d = document.getElementById( 'tt_' + id + '_g' );
+		d.style.width = '' + g + 'px';
+	    }
+	}
+	if ( maxG >= 0 && maxG != prevMaxG ) {
+	    d = document.getElementById( 'tt_' + id + '_maxg' );
+	    d.style.left = '' + (left + maxG) + 'px';
+	}
+	if ( doLabels && ( g != prevG || ( maxG >= 0 && maxG != prevMaxG ) ) ) {
+	    d = document.getElementById( 'tt_' + id + '_g_txt' );
+	    var txt = floatAsStr( 2.0*g, 0 ) + '%';
+	    if ( maxG >= 0 )
+		txt += '&nbsp;/&nbsp;' + floatAsStr( 2.0*maxG, 0 ) + '%';
+	    d.innerHTML = txt;
+	}
+    }
+
     // mem
-    left = offset + 60;
+    left = offset + 60 + 60*doGpu;
     if ( m != prevM || swap != prevSwap ) {
 	memId = 'tt_' + id + '_m';
 	if ( useDivs ) {
@@ -2575,6 +2642,7 @@ function refreshToolTipBars(first) {
 	aveU = 0.0;
 	aveS = 0.0;
 	aveW = 0.0;
+	aveG = 0.0;
 	aveM = 0.0;
 	aveSwap = 0.0;
 	aveNet = 0.0;
@@ -2590,8 +2658,9 @@ function refreshToolTipBars(first) {
 	    prevS = prev[1];
 	    prevW = prev[2];
 	    prevI = prev[3];
-	    prevM = prev[4];
-	    prevSwap = prev[5];
+	    prevG = prev[4];
+	    prevM = prev[5];
+	    prevSwap = prev[6];
 
 	    if ( n == 'ave' ) {
 		doLabels = 1;
@@ -2602,6 +2671,7 @@ function refreshToolTipBars(first) {
 		    s = parseInt( aveS/cnt );
 		    w = parseInt( aveW/cnt );
 		    i = 50 - s - u - w;
+		    g = parseInt( aveG/cnt );
 		    realM = aveM/cnt;
 		    m = parseInt( 50*realM/maxMemOnNode );
 		    swap = 0;
@@ -2620,6 +2690,7 @@ function refreshToolTipBars(first) {
 		s = prevCpu[ n + '_s' ];
 		w = prevCpu[ n + '_w' ];
 		i = prevCpu[ n + '_i' ];
+		g = prevGpu[ n + '_g' ];
 		m = prevMem[ n + '_m' ][0];
 		totMem = prevMem[n + '_m'][1];
 		m *= 0.01*totMem; // convert from a percentage to real memory
@@ -2628,6 +2699,7 @@ function refreshToolTipBars(first) {
 		aveU += u;
 		aveS += s;
 		aveW += w;
+		aveG += g;
 		aveM += m;
 		aveSwap += swap;
 
@@ -2635,10 +2707,10 @@ function refreshToolTipBars(first) {
 	    }
 
 	    load = 0;
-	    newState[cnt] = [ u, s, w, i, m, swap, load ];
+	    newState[cnt] = [ u, s, w, i, g, m, swap, load ];
 
 	    if ( !toolTip.hiddenNode[cnt] )
-		updateCpuMem( 80, n, u, s, w, i, m, swap, -1, -1, prevU, prevS, prevW, prevI, prevM, prevSwap, -1, -1, doLabels, realM, 0 );
+		updateCpuMem( 80, n, toolTip.jobHasGpus, u, s, w, i, g, m, swap, -1, -1, -1, prevU, prevS, prevW, prevI, prevG, prevM, prevSwap, -1, -1, -1, doLabels, realM, 0 );
 
 	    try {
 		// bytes
@@ -2691,22 +2763,24 @@ function refreshToolTipBars(first) {
 		    s = aveSoFar[1]/2;
 		    w = aveSoFar[2]/2;
 		    i = aveSoFar[3]/2;
-		    m = aveSoFar[4];
+		    g = aveSoFar[4]/2;
+		    m = aveSoFar[5];
 
-		    t = descaleTraffic( aveSoFar[5], aveSoFar[6] );
+		    t = descaleTraffic( aveSoFar[6], aveSoFar[7] );
 		    b = bytesTrafficToPixels( t );
-		    //p = pktsTrafficToPixels( descaleTraffic( aveSoFar[7], aveSoFar[8] ) );
+		    //p = pktsTrafficToPixels( descaleTraffic( aveSoFar[8], aveSoFar[9] ) );
 
 		    swap = 0;
-		    if ( aveSoFar[9] > 0.5 )
+		    if ( aveSoFar[10] > 0.5 )
 			swap = 1;
 
 		    maxU = maxSoFar[0]/2; // scale percentage into 0->50
-		    maxM = maxSoFar[1];
+		    maxG = maxSoFar[1];
+		    maxM = maxSoFar[2];
 
-		    maxT = descaleTraffic( maxSoFar[2], maxSoFar[3] );
+		    maxT = descaleTraffic( maxSoFar[3], maxSoFar[4] );
 		    maxB = bytesTrafficToPixels( maxT );
-		    //maxP = pktsTrafficToPixels( descalTraffic( maxSoFar[4], maxSoFar[5] ) );
+		    //maxP = pktsTrafficToPixels( descalTraffic( maxSoFar[5], maxSoFar[6] ) );
 
 		    prev = toolTip.prevAveState[cnt];
 
@@ -2714,21 +2788,23 @@ function refreshToolTipBars(first) {
 		    prevS = prev[1];
 		    prevW = prev[2];
 		    prevI = prev[3];
-		    prevM = prev[4];
-		    prevSwap = prev[5];
-		    prevB = prev[6];
-		    prevMaxU = prev[7];
-		    prevMaxM = prev[8];
-		    prevMaxB = prev[9];
-		    prevDodgy = prev[10];
+		    prevG = prev[4];
+		    prevM = prev[5];
+		    prevSwap = prev[6];
+		    prevB = prev[7];
+		    prevMaxU = prev[8];
+		    prevMaxG = prev[9];
+		    prevMaxM = prev[10];
+		    prevMaxB = prev[11];
+		    prevDodgy = prev[12];
 
 		    mScaled = parseInt( 50*m/maxMemOnNode );
 		    maxMScaled = parseInt( 50*maxM/maxMemOnNode );
 
-		    newAveState[cnt] = [ u, s, w, i, mScaled, swap, b, maxU, maxMScaled, maxB, dodgyNet ];
+		    newAveState[cnt] = [ u, s, w, i, g, mScaled, swap, b, maxU, maxG, maxMScaled, maxB, dodgyNet ];
 
 		    if ( !toolTip.hiddenNode[cnt] ) {
-			updateCpuMem( 280, n + '_ave', u, s, w, i, mScaled, swap, maxU, maxMScaled, prevU, prevS, prevW, prevI, prevM, prevSwap, prevMaxU, prevMaxM, doLabels, m, maxM );
+			updateCpuMem( 280 + 70*toolTip.jobHasGpus, n + '_ave', toolTip.jobHasGpus, u, s, w, i, g, mScaled, swap, maxU, maxG, maxMScaled, prevU, prevS, prevW, prevI, prevG, prevM, prevSwap, prevMaxU, prevMaxG, prevMaxM, doLabels, m, maxM );
 
 			updateNetChart( b, prevB, 'tt_' + n + '_n_ave', netBytePixelThresh, maxB, prevMaxB, dodgyNet, prevDodgy );
 		    }
@@ -2946,6 +3022,52 @@ function processCpuBar( nextFn ) {
     numCpuChanged = changed;
     prevCpu = c;
     start = addToTimeStr( 'cpuBarTime', start );
+
+    if ( !(doIncrs || first) )
+	extraDelay = typicalExtraDelay;
+
+    doNextFn( nextFn );
+}
+
+function processGpuBar( nextFn ) {
+    var gpuBar = get( 'gpuloads', 1 );
+
+    var c = new Array();
+    var gg = new Array();
+    var cnt = 0;
+    var changed = 0;
+
+    if ( first )  // hide em all
+	for(var i=0;i<gpuBar.length;i++) {
+	    var id = gpuBar[i][0];
+	    var d = document.getElementById(id);
+	    if (d) d.height = 0;
+	}
+
+    for(var i=0;i<gpuBar.length;i++) {
+	var id = gpuBar[i][0];
+	var val = gpuBar[i][1]/2;  // scale percentage into 0->50
+	var g = gpuBar[i][2];
+
+	c[id] = val; // map it to compare later...
+	gg[id] = g;
+
+	// skip drawing all bars except head nodes in the lighter modes
+	if ( ( nextMode == 'sub-lite' || nextMode == 'lite' ) && !isComputeNode(id) )
+	    continue;
+
+	cnt += 1;
+	if ( prevGpu[id] != val ) {
+	    changed += 1;
+	    d = document.getElementById(id);
+	    if (d) d.width = val;
+	}
+    }
+    percGpuChanged = parseInt((100.0*changed)/cnt);
+    numGpuChanged = changed;
+    prevGpu = c;
+    numGpus = gg;
+    start = addToTimeStr( 'gpuBarTime', start );
 
     if ( !(doIncrs || first) )
 	extraDelay = typicalExtraDelay;
@@ -4026,6 +4148,18 @@ function zeroTemps( nextFn ) {
     doNextFn( nextFn );
 }
 
+function hasGpu(n) {
+    var g;
+    try {
+	g = numGpus[n];
+    }
+    catch (failure) {
+	numGpus[n] = 0;
+	g = 0;
+    }
+    return g;
+}
+
 function turnOffBars( n ) {
     setBarHeight( n, 0 );
 }
@@ -4046,6 +4180,10 @@ function setBarHeight( n, ht ) {
 	d.height = ht;
 	d = document.getElementById(n + '_m');
 	d.height = ht;
+	if ( hasGpu(n + '_g') ) {
+	    d = document.getElementById(n + '_g');
+	    d.height = ht;
+	}
 	if ( nextMode == 'heavy' ) {
 	    d = document.getElementById(n + '_d');
 	    d.height = ht;
@@ -4511,6 +4649,7 @@ function debugText( nextFn ) {
 	if ( pieChanged )
 	    txt += 'pie images changed\n';
 	txt += '\ntime in ms\n' + timeStr + '\ncpu bars changed: ' + numCpuChanged + ' (' + percCpuChanged + '%)\n';
+	txt += 'gpu bars changed: ' + numGpuChanged + ' (' + percGpuChanged + '%)\n';
 	if ( percToolTipChange != '' )
 	    txt += percToolTipChange + '\n';
 	if ( nextMode == 'heavy' )
@@ -4636,47 +4775,47 @@ function startLoop( nextFn ) {
 }
 
 // sub-lite version
-allFns['sub-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads',   // 'processCpuBar', 'processMem'
+allFns['sub-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads',   // 'processCpuBar', 'processGpuBar', 'processMem'
 		       'processDiskWarn', 'processTempWarn', 'processLoads',
 		       'processUpDown', 'processPies', 'processText', 'processReservations',
 		       'debugText', 'finishedLoop' ];
 
 // pocket-lite version
-allFns['pocket-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 
-		          'processDiskWarn', 'processCpuBar', 'processMem', 'processTempWarn', 'processLoads',
+allFns['pocket-lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads',
+		          'processDiskWarn', 'processCpuBar', 'processGpuBar', 'processMem', 'processTempWarn', 'processLoads',
 		          'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		          'debugText', 'finishedLoop' ];
 
 // lite version
 allFns['lite'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads',
-		   'processDiskWarn', 'processCpuBar', 'processMem', 'processTempWarn', 'processLoads', 'processJobs',
+		   'processDiskWarn', 'processCpuBar', 'processGpuBar', 'processMem', 'processTempWarn', 'processLoads', 'processJobs',
 		   'processUpDown', 'processPies', 'processText', 'processReservations',
 		   'processNetworkPartial', 'processJobAverages', 'processToolTip',
 		   'debugText', 'finishedLoop' ];
 
 // regular version
-allFns['normal'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processMem',
+allFns['normal'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem',
 		     'processDiskWarn', 'processTempWarn', 'processLoads', 'processJobs',
 		     'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		     'processNetworkPartial', 'processJobAverages', 'processToolTip', 'processTemp', 'processRackTempsPower',
 		     'debugText', 'finishedLoop' ];
 
 // regular version except with 'heavy'-like job display colours and swatches
-allFns['normal-usr'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processMem', 'processPower', 'processFans',
+allFns['normal-usr'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem', 'processPower', 'processFans',
 		         'processDiskWarn', 'processTempWarn', 'processLoads', 'processJobColours', 'processJobs',
 		         'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		         'processNetworkPartial', 'processJobAverages', 'processToolTip', 'processTemp', 'processRackTempsPower',
 		         'debugText', 'finishedLoop' ];
 
 // regular + networking and general test mode...
-allFns['network'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processMem',
+allFns['network'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem',
 		      'processDiskWarn', 'processTempWarn', 'processLoads', 'processJobs',
 		      'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		      'processNetwork', 'processJobAverages', 'processToolTip',
 		      'debugText', 'finishedLoop' ];
 
 // heavy version
-allFns['heavy'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processMem',
+allFns['heavy'] = [ 'startLoop', 'processPbsNodes', 'processNetLoads', 'processCpuBar', 'processGpuBar', 'processMem',
 		    'processDisk', 'processTemp', 'processLoads', 'processJobColours', 'processJobs',
 		    'processBlockBars', 'processUpDown', 'processPies', 'processText', 'processReservations',
 		    'processNetworkPartial', 'processJobAverages', 'processToolTip', 'processRackTempsPower',
@@ -4694,35 +4833,39 @@ function changeDisplayModes( m ) {
 	}
 	else if ( m == 'pocket-lite' ) {
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem',
 		    'processBlockBars', 'finishedLoop' ];
 	}
 	else if ( m == 'normal' ) {
 	    prevJobs = [];
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem', 'processNetworkPartial', 'processJobs',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem', 'processNetworkPartial', 'processJobs',
 		    'processBlockBars', 'processTemp', 'processRackTempsPower', 'showRackTemps', 'finishedLoop' ];
 	}
 	else if ( m == 'normal-usr' ) {
 	    prevJobs = [];
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem', 'processNetworkPartial', 'processJobColours', 'processJobs',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem', 'processNetworkPartial', 'processJobColours', 'processJobs',
 		    'processBlockBars', 'processTemp', 'processRackTempsPower', 'showRackTemps', 'finishedLoop' ];
 	}
 	else if ( m == 'heavy' ) {
 	    prevJobs = [];
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
 	    prevTempMap = [];
 	    prevDisk = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem',
 		    'processDisk', 'showDiskBars', 'processTemp',
 		    'processJobColours', 'processJobs', 'processRackTempsPower', 'showRackTemps',
 		    'processNetworkPartial', 'processBlockBars', 'finishedLoop' ];
@@ -4738,27 +4881,30 @@ function changeDisplayModes( m ) {
 	else if ( m == 'normal' ) {
 	    prevJobs = [];
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem', 'processNetworkPartial', 'processJobs',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem', 'processNetworkPartial', 'processJobs',
 		    'processBlockBars', 'processTemp', 'processRackTempsPower', 'showRackTemps', 'finishedLoop' ];
 	}
 	else if ( m == 'normal-usr' ) {
 	    prevJobs = [];
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem', 'processNetworkPartial', 'processJobColours', 'processJobs',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem', 'processNetworkPartial', 'processJobColours', 'processJobs',
 		    'processBlockBars', 'processTemp', 'processRackTempsPower', 'showRackTemps', 'finishedLoop' ];
 	}
 	else if ( m == 'heavy' ) {
 	    prevJobs = [];
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
 	    prevTempMap = [];
 	    prevDisk = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem',
 		    'processDisk', 'showDiskBars', 'processTemp',
 		    'processJobColours', 'processJobs', 'processRackTempsPower', 'showRackTemps',
 		    'processNetworkPartial', 'processBlockBars', 'finishedLoop' ];
@@ -4769,35 +4915,39 @@ function changeDisplayModes( m ) {
 	    fns = [ 'startLoop', 'hideJobs', 'finishedLoop' ];
 	else if ( m == 'pocket-lite' ) {
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
-	    fns = [ 'startLoop', 'hideJobs', 'processCpuBar', 'processMem', 'processBlockBars', 'finishedLoop' ];
+	    fns = [ 'startLoop', 'hideJobs', 'processCpuBar', 'processGpuBar', 'processMem', 'processBlockBars', 'finishedLoop' ];
 	}
 	else if ( m == 'normal' ) {
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevTempMap = [];
 	    prevShow = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem', 'processBlockBars',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem', 'processBlockBars',
 		    'processTemp', 'processRackTempsPower', 'showRackTemps', 'finishedLoop' ];
 	}
 	else if ( m == 'normal-usr' ) {
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevTempMap = [];
 	    prevShow = [];
 	    prevJobs = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem', 'processBlockBars',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem', 'processBlockBars',
 		    'processJobColours', 'processJobs', 'processTemp', 'processRackTempsPower', 'showRackTemps', 'finishedLoop' ];
 	}
 	else if ( m == 'heavy' ) {
 	    prevCpu = [];
+	    prevGpu = [];
 	    prevMem = [];
 	    prevShow = [];
 	    prevTempMap = [];
 	    prevDisk = [];
 	    prevJobs = [];
-	    fns = [ 'startLoop', 'processCpuBar', 'processMem',
+	    fns = [ 'startLoop', 'processCpuBar', 'processGpuBar', 'processMem',
 		    'processDisk', 'showDiskBars', 'processTemp',
 		    'processJobColours', 'processJobs', 'processRackTempsPower', 'showRackTemps', 'processBlockBars', 'finishedLoop' ];
 	}
