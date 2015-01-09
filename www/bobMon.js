@@ -20,7 +20,7 @@ var loadColours = ['#b8f977', '#d5f977', '#e4f977', '#f5f977', '#f9ef77', '#f9db
 var jobColoursBg = [ 'cyan', 'indigo', 'orange', 'blue', 'fuchsia', '#f9db77', 'green', 'lime', 'maroon', 'navy', 'olive', 'purple', 'red', '#b8f977', 'teal', 'yellow' ];
 var jobColoursFg = [ 'black', 'white', 'black', 'white', 'black', 'black', 'white', 'black', 'white', 'white', 'black', 'white', 'white', 'black', 'black', 'black' ];
 var jobColoursBWbg = [ '#f0f0f0', '#d7d7d7', '#bebebe', '#a5a5a5', '#8c8c8c', '#737373', '#5a5a5a', '#414141', '#282828' ];
-var jobColoursBWfg = [ 'black', 'black', 'black', 'black', 'black', 'black', 'white', 'white', 'white' ]; 
+var jobColoursBWfg = [ 'black', 'black', 'black', 'black', 'black', 'black', 'white', 'white', 'white' ];
 var tempColoursBg = []; // set in makeColourMap
 var reservationColours = [ 'red', 'blue', 'orange', 'black', 'purple', 'indigo' ];
 var reservationColoursBg = [ '#ffaaaa', '#aaaaff', '#aaddff', '#666666', '#ddaaff', '#ddaaff' ];
@@ -383,7 +383,7 @@ function doSpecialElements( row, i ) {
     widgy = row[i];
 
     if ( widgy.length == 1 ) // blank
-	return ''; 
+	return '';
 
     name = widgy[0];
     type = widgy[1];
@@ -893,7 +893,7 @@ function drawRacks() {
 
     // figure out the max vertical height
     // eg. racks = [ [42,'pizza'], [96,['blade',24,1]], [96,['blade',12,2]], ['fe','pizza'] ]
-    ht = 0;
+    var ht = 0;
     for (var rack=0; rack<config.racks.length; rack++ ) {
 	r = config.racks[rack];
 	var num;
@@ -916,7 +916,7 @@ function drawRacks() {
 	        ht = h;
 	}
     }
-    bottom = ht*1.02;
+    var bottom = ht*1.02;
 
     cnt = 0;
     shelfCnt = 0;
@@ -1397,54 +1397,54 @@ function displayOrient(o) {
 //function writeTable(tableName, rows, cols, first, offset, hackPrefix) {
 
 function writeTable(tableName, rows, cols, first) {
-   var t = document.createElement('table');
-   t.id = tableName;
-   t.setAttribute('cellspacing', 1);
-   t.setAttribute('cellpadding', 0);
-   t.setAttribute('border', 0);
+    var t = document.createElement('table');
+    t.id = tableName;
+    t.setAttribute('cellspacing', 1);
+    t.setAttribute('cellpadding', 0);
+    t.setAttribute('border', 0);
 
-   var geom = computeOrient(rows, cols, config.cn.length);
-   var start = geom[0];
-   var dx = geom[1];
-   var dy = geom[2];
+    var geom = computeOrient(rows, cols, config.cn.length);
+    var start = geom[0];
+    var dx = geom[1];
+    var dy = geom[2];
 
 //   var debug = document.getElementById( 'tableDebug' );
 //   debug.innerHTML = 'orient = ' + nodeOrientation;
 //   debug.innerHTML += '<br>[start=' + start + ', dx=' + dx + ', dy=' + dy + ']';
 //   debug.innerHTML += '<br>[rows=' + rows + ', cols=' + cols + ', cells=' + config.cn.length + ']<p>';
 
-   var c, r, name;
-   var cnt = start; // multi-layer hack: + offset;
-   for (var i=0; i < rows; i++ ) {
-      r = document.createElement('tr');
-      for (var j=0; j < cols; j++ ) {
-         //debug.innerHTML += '[cnt=' + cnt + ', i=' + i + ', j=' + j + ']';
-         if ( cnt >= 0 && cnt < config.cn.length ) {
-            name = config.cn[cnt];
-            if ( first ) {
-               c = document.createElement('td');
-               c.innerHTML = writeNodeTable(name);
-               c.id = name;
+    var c, r, name;
+    var cnt = start; // multi-layer hack: + offset;
+    for (var i=0; i < rows; i++ ) {
+	r = document.createElement('tr');
+	for (var j=0; j < cols; j++ ) {
+	    //debug.innerHTML += '[cnt=' + cnt + ', i=' + i + ', j=' + j + ']';
+	    if ( cnt >= 0 && cnt < config.cn.length ) {
+		name = config.cn[cnt];
+		if ( first ) {
+		    c = document.createElement('td');
+		    c.innerHTML = writeNodeTable(name);
+		    c.id = name;
 //               // multi-layer hack
 //               c.innerHTML = writeNodeTable(hackPrefix + name);
 //               c.id = hackPrefix + name;
-            }
-            else {
-               c = items[name];
-            }
-         }
-         else {  // grid is bigger than number of nodes
-            c = document.createElement('td');
-         }
-         r.appendChild(c);
-         cnt += dx;
-      }
-      t.appendChild(r);
+		}
+		else {
+		    c = items[name];
+		}
+	    }
+	    else {  // grid is bigger than number of nodes
+		c = document.createElement('td');
+	    }
+	    r.appendChild(c);
+	    cnt += dx;
+	}
+	t.appendChild(r);
 
-      cnt -= cols*dx;
-      cnt += dy;
-   }
-   return t;
+	cnt -= cols*dx;
+	cnt += dy;
+    }
+    return t;
 }
 
 function redrawNodesTable( first ) {
@@ -1864,7 +1864,7 @@ function addToTimeStr( name, start ) {
 var toolTip;
 var tipWidth = 490;
 var offX= 10;	// how far from mouse to show tip
-var offY= 5; 
+var offY= 5;
 var toolTimeoutShow = 200;   // delay appearance of tip by 0.2s
 var toolTimeoutHide = 120000;  // tip goes away on its own after 120s
 var timeoutShow, timeoutHide;
@@ -2053,7 +2053,7 @@ function trafficToString( t ) {
     else
 	n = floatAsStr( n, 0 );
 
-    return n + scale; 
+    return n + scale;
 }
 
 function drawNet( id, pixels, threshs, colour, maxPixels, labelOff, labelTxt, drawBg ) {
@@ -2085,7 +2085,7 @@ function drawNet( id, pixels, threshs, colour, maxPixels, labelOff, labelTxt, dr
 
 
 function toolTipJobTextAdd( username, line, group ) {
-    txt = '';
+    var txt = '';
     txt += '<b>' + username + '</b>, ';
     if ( group != 'none' ) txt += group + ', ';
 
@@ -2128,7 +2128,7 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     var winWd = window.innerWidth-20+window.pageXOffset;
     var winHt = window.innerHeight-20+window.pageYOffset;
     // check mouse position against tip and window dimensions
-    // and position the tooltip 
+    // and position the tooltip
 
     // tooltip width (height is below, as that's variable)
     var tpWd = toolTip.offsetWidth;
@@ -2552,7 +2552,7 @@ function refreshToolTipBars(first) {
     // kinda need this all in a try/catch as the tooltip may disappear
     // at any time during this update ...
 
-    // I don't understand why, but this update is _REALLY_ slow ... 
+    // I don't understand why, but this update is _REALLY_ slow ...
     // it's not strongly related to a) div vs. gif b) opacity
     // ... just seems to be that getElementById's are way slow in a tooltip
 
@@ -2911,11 +2911,11 @@ function processNetLoads( nextFn ) {
 
 
 function processCpuBar( nextFn ) {
-    cpuBar = get( 'cpuBar', 1 );
+    var cpuBar = get( 'cpuBar', 1 );
 
     var c = new Array();
     var cnt = 0;
-    changed = 0;
+    var changed = 0;
 
     if ( first )  // hide em all
 	for(var i=0;i<cpuBar.length;i++) {
@@ -3853,7 +3853,7 @@ function processJobs( nextFn ) {
 		}
 	    }
 
-	    // loop jobs on this node and write html 
+	    // loop jobs on this node and write html
 	    if ( nextMode == 'lite' || nextMode == 'normal' ) {
 		for(var j=0; j<ids.length;j++ ) {
 		    html += '<tr><td ';
@@ -4000,7 +4000,7 @@ function hideCpuMemBars( nextFn ) {
 
 function hideDiskBars( nextFn ) {
     for(var i=0;i<allNodes.length;i++) {
-	d = document.getElementById( allNodes[i] + '_d');
+	var d = document.getElementById( allNodes[i] + '_d');
 	d.height = 0;
     }
     doNextFn( nextFn );
@@ -4008,7 +4008,7 @@ function hideDiskBars( nextFn ) {
 
 function showDiskBars( nextFn ) {
     for(var i=0;i<allNodes.length;i++) {
-	d = document.getElementById( allNodes[i] + '_d');
+	var d = document.getElementById( allNodes[i] + '_d');
 	d.height = 3;
     }
     doNextFn( nextFn );
@@ -4017,7 +4017,7 @@ function showDiskBars( nextFn ) {
 function zeroTemps( nextFn ) {
     // nuke all temp displays
     for(var i=0;i<allNodes.length;i++) {
-	d = document.getElementById(allNodes[i] + '_temps');
+	var d = document.getElementById(allNodes[i] + '_temps');
 	d.innerHTML = '';
     }
     // but also we need to wipe this temp warn map so that warnings are recreated
@@ -4035,7 +4035,7 @@ function turnOnBars( n ) {
 }
 
 function setBarHeight( n, ht ) {
-    d = document.getElementById(n + '_u');
+    var d = document.getElementById(n + '_u');
     if ( d ) {
 	d.height = ht;
 	d = document.getElementById(n + '_s');
@@ -4068,7 +4068,7 @@ function processBlockBars( nextFn ) {
 	}
 
     // or do this on the server side?
-    var show = new Array();    
+    var show = new Array();
     for(var i=0;i<loads.length;i++) {
 	arr = loads[i][0].split('_');
 	node = arr[0];
