@@ -21,6 +21,9 @@ as root:
   mkdir /var/www/html/bobMon
   cp -r www/* /var/www/html/bobMon/
 
+  # install gifs
+  cp -r gif /var/www/html/bobMon/
+
   # make the directory that the pie images will be written to:
   mkdir /var/www/html/bobMon/pies/
 
