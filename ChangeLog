@@ -1,3 +1,17 @@
+2015-01-09; rjh
+  - API version 10
+  - add automatic detection of number of cores on nodes
+  - update torque support
+  - add gpu support (via nvidia ganglia plugin)
+  - source data from multiple ganglia networks
+  - allow multiple compute node name prefixes
+  - protocol changes:
+    - add a <gpu> group for gpu utilisation and number of gpus
+    - many changes to the input config file
+    - add gpus to pbs summary <usage>
+    - add number of cores on each node to <load>
+    - add a <gmondGroup> group so we can set a ganglia url for each host
+
 2012-01-29; rjh
   - version 0.91 - initial public release - API version 8
   - server: added power, fan metrics
