@@ -9,7 +9,7 @@ config = new bobMonitorConf();
 document.onkeypress = doKeyPress;
 
 // server to client API version
-api = 9;
+api = 10;
 
 // map for refresh slider between 0->10 and a pseudo logarithmic scale in seconds
 var steps = [ 5, 10, 20, 60, 120, 300, 600, 1200, 1800, 3600 ];
@@ -78,6 +78,7 @@ var prevNetwork, prevAverages; // , prevAveragesMap;
 var prevPower, prevFans;
 // for heavy mode
 var prevDisk, prevTemp, prevTempMap, tempChanged;
+var numCores;
 
 var jobsMap = [];
 
@@ -274,6 +275,8 @@ function initVars() {
     prevTemp = [];
     prevTempMap = [];
     tempChanged = [];
+
+    numCores = [];
 
     prevNodes = [];
     for(var i=0;i<allNodes.length;i++)
@@ -1559,9 +1562,9 @@ function addErr( str ) {
     errStr += str + ', time ' + t + '\n';
 }
 
-function loadToLevel( load, vec ) {
+function loadToLevel( load, vec, cores ) {
     maxL = vec.length;
-    level = ( (load/config.coresPerNode)*0.5*maxL );
+    level = ( load*0.5*maxL/cores );
     level = parseInt(level);
     if ( level >= maxL ) {
 	level = maxL - 1;
@@ -2149,9 +2152,24 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 
     nodes = jobsMap[jobId][2];
 
-    doAverages = 0;
-    if ( nodes.length > config.coresPerNode )
+    var doAverages = 0;
+    // make a uniq list of nodes with an extra 'ave' at the end
+    var nodeList = [];
+    var cnt = 0;
+    prevN = '';
+    for (var j=0; j < nodes.length; j++ ) {
+	n = nodes[j];
+	if ( n == prevN )
+	    continue;
+	nodeList[cnt] = n;
+	prevN = n;
+	cnt++;
+    }
+    if ( cnt > 1 ) // >1 node
 	doAverages = 1;
+    if ( doAverages )
+	nodeList[cnt] = 'ave';
+    toolTip.nodeList = nodeList;
 
     toolTip.prevState = [];
     toolTip.prevAveState = [];
@@ -2161,9 +2179,8 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     var visibleMaxRows = 100; // an even number. # of rows to show if rows > maxRows (== # nodes)
     var halfvisibleMaxRows = visibleMaxRows/2;
 
-    if ( nodes.length > config.coresPerNode ) {
-	rowsToDraw = nodes.length/config.coresPerNode;  // assume using all cores on a node
-							// assume all nodes have same number of cores
+    if ( cnt > 1 ) {
+	rowsToDraw = cnt;
 	if ( rowsToDraw > maxRows )
 	    rowsToDraw = visibleMaxRows + 1;
     }
@@ -2188,23 +2205,6 @@ function jobInfoWindow( evt, jobId, thisNode ) {
 	    txt +=    '<div style="position:absolute; font-size:80%; color:' + nodesFgColour + '; top:-6px; left:' + (j*200 + i*60 + 90) + 'px;">' + cols[i] + '</div>';
     txt +=   '</div>';
     y += 10;
-
-    // make a uniq list of nodes with an extra 'ave' at the end
-    nodeList = [];
-    cnt = 0;
-    prevN = '';
-    for (var j=0; j < nodes.length; j++ ) {
-	n = nodes[j];
-	if ( n == prevN )
-	    continue;
-    	nodeList[cnt] = n;
-	prevN = n;
-	cnt++;
-    }
-    if ( doAverages )
-	nodeList[cnt] = 'ave';
-
-    toolTip.nodeList = nodeList;
 
     // find max memory of the nodes in this job - allows for some nodes having more ram than others
     maxMemOnNode = 0.0;
@@ -3508,17 +3508,20 @@ function processTempWarn( nextFn ) {
 function processLoads( nextFn ) {
     loads = get( 'loads', 1 );
     var ld = new Array();
+    var co = new Array();
     for(var i=0;i<loads.length;i++) {
 	id = loads[i][0];
 	load = loads[i][1];
+	cores = loads[i][2];
 
 	// make it a map that we can compare to next time
 	ld[id] = load;
+	co[id] = cores;
 
 	if ( prevLoads[id] != load )
 	{
 	    // need to map load to colour and set display fg ...
-	    level = loadToLevel( load, loadBWbg );
+	    level = loadToLevel( load, loadBWbg, cores );
 
 	    var str =  load.toString();
 	    if ( str.indexOf('.') == -1 )
@@ -3537,6 +3540,7 @@ function processLoads( nextFn ) {
 	}
     }
     prevLoads = ld;
+    numCores = co;
     start = addToTimeStr( 'nodeLoadsTime', start );
     doNextFn( nextFn );
 }

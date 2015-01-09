@@ -575,10 +575,20 @@ def tagAsBlocked( m, queued ):
     return queued
 
 
-def doStatus( freeNow, availableNodes, queued, maui, textMode=0, freeCpus=0, usedCpus=0, usedNodes=0, availCpus=0, realUsedCpus=0 ):
+def doStatus( free, totalRunCpus, totalRunGpus, queued, maui, textMode=0 ):
+    freeCpus, freeGpus, freeNodes, availCpus, availGpus, availNodes = free
+    usedCpus = availCpus - freeCpus
+    usedNodes = availNodes - freeNodes
+    #print 'freeCpus, freeNodes, availCpus, availNodes', free
+    #print 'usedNodes, usedCpus', usedNodes, usedCpus
+
+    # this includes jobs running on offline nodes
+    realUsedCpus = totalRunCpus - freeCpus
+    #print 'realUsedCpus', realUsedCpus
+
     # how loaded is this puppy?
     # and how many queued jobs
-    node, cpus, machineHours = infoFromQueued( queued, availableNodes, availCpus )
+    node, cpus, machineHours = infoFromQueued( queued, availNodes, availCpus )
 
     txt = ''
 
@@ -597,20 +607,16 @@ def doStatus( freeNow, availableNodes, queued, maui, textMode=0, freeCpus=0, use
         endTd = '</td>'
         br = '<br>'
 
-    #print 'usedCpus, usedNodes, availCpus', usedCpus, usedNodes, availCpus
     if availCpus != 0:
         txt += td
         if usedNodes == 1:
             txt += '%d node used' % usedNodes
         else:
             txt += '%d nodes used' % usedNodes
-        if usedCpus == 1:
-            #txt += ', %d core used' % usedCpus
+        if realUsedCpus == 1:
             txt += ', %d core used' % realUsedCpus
         else:
-            #txt += ', %d cores used' % usedCpus
             txt += ', %d cores used' % realUsedCpus
-        #txt += ' = %.1f%% of available' % (100.0*float(usedCpus)/float(availCpus))
         txt += ' = %.1f%% of available' % (100.0*float(realUsedCpus)/float(realUsedCpus + freeCpus))
         txt += br
     else:
@@ -619,7 +625,7 @@ def doStatus( freeNow, availableNodes, queued, maui, textMode=0, freeCpus=0, use
     if freeNow == 1:
         txt += '1 node idle'
     else:
-        txt += '%d nodes idle' % freeNow
+        txt += '%d nodes idle' % freeNodes
 
     if freeCpus == 1:
         txt += ', 1 cpu idle'
@@ -657,7 +663,9 @@ def doStatus( freeNow, availableNodes, queued, maui, textMode=0, freeCpus=0, use
         elif cpusQueued == 1:
             txt += ' for 1 cpu'
         else:
-            txt += ' for %d cpus, or %.1f machine hours' % ( cpusQueued, machineHours )
+            txt += ' for %d cpus' % cpusQueued
+        txt += ' or %.1f machine hours' % machineHours
+
 
         if blockedCpus > 0:
             if blockedJobs == 1:

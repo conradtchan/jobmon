@@ -102,11 +102,10 @@ def cpuBar( all ):
     state += ']'
     return state, data
 
-def doLoads( all, up ):
+def doLoads( all, up, pbsAllMap ):
     state = '['
 
     cnt = 0
-    length = len(all)
     for k, i in all.iteritems():
         n = string.split( k, '.' )[0]
         if n in config.shn:  # shelves don't have a load
@@ -114,24 +113,26 @@ def doLoads( all, up ):
         if n not in config.cn and n not in config.nben:
             continue
 
-            try:
-                n = int(j[len(config.baseNodeName):])
-            except:
-                # might be a node that we don't recognise... skip it
-                continue
-
         if n in up:  # only write a load if it's really 'up'
+            if n in pbsAllMap.keys():
+                # use the pbs value of cores if possible
+                status, cores, gpus = pbsAllMap[n]
+            else:
+                try:
+                    # fallback to the ganglia number of cores
+                    cores = int(i['cpu_num'])
+                except:
+                    cores = 1
             try:
-               s = '["' + j + '_l",%.1f]' % float(i['load_one'])
+               s = '["' + n + '_l",%.1f,%d]' % (float(i['load_one']), cores)
             except:
                print n, 'load_one not set'
-               s = '["' + j + '_l",%.1f]' % 0.0
-            state += s
-
-            if cnt != length-1:
-                state += ','
+               s = '["' + n + '_l",%.1f,%d]' % (0.0, cores)
+            state += s + ','
             cnt += 1
 
+    if cnt:
+        state = state[:-1]
     state += ']'
     return state
 
@@ -545,7 +546,7 @@ def sortByUser( jobs ):
 
     return list, jobList, totalCpus
 
-def whosUsingItAll( jobs, pbsnodes, pbsAllNodes=None ):
+def whosUsingItAll( jobs, pbsnodes, pbsAllMap):
     # split into running ('R' 'E') and suspended 'S'
     r = []
     s = []
@@ -559,7 +560,7 @@ def whosUsingItAll( jobs, pbsnodes, pbsAllNodes=None ):
     # process the list of running jobs
     runList, jobList, totalRunCpus = sortByUser( r )
 
-    free = freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes )
+    free = freeAvailCpusNodes( pbsnodes, jobList, pbsAllMap )
     idleCpus, freeNodes, availCpus, availNodes = free
     #print 'idleCpus, freeNodes, availCpus, availNodes', free
     totalRunCpus += idleCpus
@@ -575,35 +576,17 @@ def whosUsingItAll( jobs, pbsnodes, pbsAllNodes=None ):
 
     return (runList, totalRunCpus), (suspList, totalSuspCpus), free
 
-def freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes=None ):   # work out how many free cpus we have
-    # can choose whether to base the list of nodes off all nodes known to PBS (pbsAllNodes)
-    # or off the config of nodes names.
-    pbs = {}
-    lb = len(config.baseNodeName)
-    if pbsAllNodes != None:
-        p = pbsAllNodes
-        for n, status, cores in pbsAllNodes:
-            # check it's a compute node
-            try:
-                num = int(n[lb:])
-            except:
-                num = config.numNodes+999
-            if n[:lb] == config.baseNodeName and num > 1 and num < config.numNodes+1:
-                pbs[n] = []
-    else:
-        p = pbsnodes
-        for i in range(1,config.numNodes+1):
-            n = config.baseNodeName + '%d' % i
-            pbs[n] = []
-
+def pbsMap(p):
     # add all nodes and their status's into a pbs dict
-    for node, status, cores in p:  # make into a dict
-        n = string.split( node, '.' )[0]
-        if n[:lb] != config.baseNodeName:
+    pbs = {}
+    for n, status, cores in p:  # make into a dict
+        if n not in config.cn:
             continue
         pbs[n] = ( status, cores )
         #print n, status
+    return pbs
 
+def freeAvailCpusNodes( pbsnodes, jobList, pbsAllMap ):   # work out how many free cpus we have
     freeCpus = 0
     freeNodes = 0
     availCpus = 0
@@ -621,8 +604,9 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes=None ):   # work out how 
     # that they could use.
     # but we could also easily count all nodes, or all non-avail nodes
     # that have jobs on them, etc.
-    for node, sc in pbs.iteritems():
+    for node, sc in pbsAllMap.iteritems():
         status, cores = sc
+        #print 'node', node, sc
         if node in config.hn:
             #print 'el-heado', node, sc
             continue
@@ -651,13 +635,10 @@ def freeAvailCpusNodes( pbsnodes, jobList, pbsAllNodes=None ):   # work out how 
 
         availNodes += 1
         #print 'avail', node
-        if cores != None:
-            freeCpus += cores
-            availCpus += cores
-        else:
-            freeCpus += config.coresPerNode
-            availCpus += config.coresPerNode
+        freeCpus += cores
+        availCpus += cores
 
+        # subtract off used cpus, nodes
         if node in jobList.keys():
             freeCpus -= len(jobList[node])
         else:
@@ -1585,7 +1566,7 @@ def doAll():
     txt = ''
 
     # increment this (and the client to match) if server changes are going to break the client
-    api = '9'
+    api = '10'
     txt += '<api>["' + api + '"]</api>\n'
 
     txt += '<configHash>["' + configHashVal + '"]</configHash>\n'
@@ -1602,7 +1583,6 @@ def doAll():
     q.feedInData( all, deadTimeout=60 )  # re-use the data from querying gmond
     ( netLoad, loads, cpuUsage, up ) = q.getLoads()
     txt += '<netloads>' + doNetLoads( netLoad ) + '</netloads>\n'
-    txt += '<loads>' + doLoads( all, up ) + '</loads>\n'
     cpuTxt, cpuData = cpuBar( all )
     txt += '<cpuBar>' + cpuTxt + '</cpuBar>\n'
 
@@ -1631,7 +1611,11 @@ def doAll():
     #print 'pbsAllNodes', pbsAllNodes, 'len', len(pbsAllNodes)
     txt += '<pbsnodes>' + doPbsNodes( pbsnodes ) + '</pbsnodes>\n'
 
-    running, suspended, free = whosUsingItAll( jobs, pbsnodes, pbsAllNodes )
+    pbsAllMap = pbsMap(pbsAllNodes)
+
+    txt += '<loads>' + doLoads( all, up, pbsAllMap ) + '</loads>\n'
+
+    running, suspended, free = whosUsingItAll( jobs, pbsnodes, pbsAllMap )
     #print 'running', running,'suspended', suspended
     freeCpus, freeNodes, availCpus, availNodes = free
     #print 'free', free
