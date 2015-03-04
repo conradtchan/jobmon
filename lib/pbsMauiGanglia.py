@@ -1042,8 +1042,16 @@ class maui:
         else:
             f = os.popen( config.mauiPath + '/showres -n', 'r' )
 
-        # format:
+        # maui/moab format:
         #   eh21.mckenzie       User             tom.27        N/A    1 -1:23:24:43    INFINITE  Sat Mar 11 14:54:33
+        # or
+        #   gstar058             User idle_core_for_mom.19587        N/A    1     -46days    INFINITE  Sat Jan 17 00:16:53
+        #   sstar204             User           l2.19594        N/A    1 -5:05:42:04 14:00:00:00  Fri Feb 27 18:16:19
+        #   sstar203             User           l2.19594        N/A    1 -5:05:42:04 14:00:00:00  Fri Feb 27 18:16:19
+        #   sstar029              Job            2021642    Running    1   -00:35:08 14:00:00:00  Wed Mar  4 23:23:15
+        #                        User           s1.19595        N/A    1 -1:02:46:44 28:00:00:00  Tue Mar  3 21:11:39
+        #                         Job            2021643    Running    1   -00:35:08 14:00:00:00  Wed Mar  4 23:23:15
+        #                         Job            2021644    Running    1   -00:35:08 14:00:00:00  Wed Mar  4 23:23:15
 
         try:
             lines = f.readlines()
@@ -1054,6 +1062,7 @@ class maui:
         self.res = {}
 
         # first 4 lines are headers, last one is footer
+        hn = None
         for i in range(4,len(lines)-1):
             l = lines[i]
 
@@ -1061,26 +1070,35 @@ class maui:
                 continue
 
             l = string.split(l)
-            if len(l) != 11:  # 11 fields
+            if len(l) != 11 and len(l) != 10:  # 10 or 11 fields
                 continue
 
             # cute, but not needed:
             #l = map( string.strip, l )
 
-            # only look at user reservations
-            if l[1] != 'User':
+            hostLine = 0
+            if len(l) == 11:
+                hostLine = 1
+                hn = l[0]
+
+            # only look at user reservations. field 1 on hostname lines, 0 otherwise
+            if l[hostLine] != 'User':
                 continue
 
             # if the time field doesn't start with a negative number then it's
             # a future reservation, so don't count it here...
-            if l[5][0] != '-':
+            if l[4+hostLine][0] != '-':
                 continue
 
-            res = l[2]
+            res = l[1+hostLine]
             if res not in self.res.keys():
                 self.res[res] = []
 
-            self.res[res].append( l[0] )
+            if hn == None:
+                print 'mistake in res parsing'
+                continue
+
+            self.res[res].append( hn )
 
     def dump( self ):
         if self.data == None:
