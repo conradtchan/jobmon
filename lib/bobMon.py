@@ -38,6 +38,9 @@ config = bobMonConf.config()
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
 haveMaui = 1
+mauiFailCnt = 0
+mauiFailCountLimit = 100  # if maui/moab fail this many times in a row then leave it disabled
+
 configHashVal = None
 
 # store stats for all the currently running jobs
@@ -1680,12 +1683,18 @@ def doAll():
     #print 'free', free
 
     global haveMaui
+    global mauiFailCnt
+    m = None
     if haveMaui:
         m = maui()
         if not m.mauiOk():
-            haveMaui = 0
-    else:
-        m = None
+            m = None
+            mauiFailCnt += 1
+            if mauiFailCnt >= mauiFailCountLimit:
+                # maui has failed too many times in a row. disable it
+                haveMaui = 0
+        else:
+            mauiFailCnt = 0
 
     queued = tagAsBlocked( m, queued )
     hashes = doHash( jobs, queued, availCpus )  # gen hashes of job state
@@ -1703,7 +1712,7 @@ def doAll():
     # can do things in there whilst waiting for pies to cook ...
 
     txt += '<text>' + doText( jobs, queued, running, m, free ) + '</text>\n'
-    if haveMaui:
+    if m != None:
         txt += '<reservations>' + doReservations( m ) + '</reservations>\n'
     else:
         txt += '<reservations>[]</reservations>\n'
