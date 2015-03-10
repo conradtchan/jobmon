@@ -2163,9 +2163,21 @@ function jobInfoWindow( evt, jobId, thisNode ) {
     if ( toolTip.jobHasGpus )
 	tw += 140; // 2 columns of ~70 each
 
-    // tooltip width (height is below, as that's variable)
-    if ((mouseX+offX+tw)>winWd)
-	toolTip.style.left = mouseX-(tw+offX)+"px";
+    // set tooltip x location - preferably just below and to the right of the hover/click,
+    // but screen zooms complicate this a lot...
+    if ((mouseX+offX+tw)>winWd) { // right side of the tooltip is off the viewport
+        var l = winWd - tw;  // shift it left only as much as required to fit in the viewport
+        if (l < window.pageXOffset+offX) { // tooltip is wider than the viewport - can happen on zoomed mobile
+           l = window.pageXOffset+offX;    // we prefer to see the left hand of the tooltip
+           var w = document.getElementById('wholeTable').clientWidth;
+           if (l + tw > w) {  // stop it falling off the right of the nodes table
+              l = w-tw-offX;
+           }
+        }
+        if (l < 0) l = 0; // stop it ever falling off the left edge
+        //console.log('tw ' + tw + ' winWd ' + winWd + ' mouseX ' + mouseX + ' innerWidth ' + window.innerWidth + ' pageXOffset ' + window.pageXOffset + ' l ' + l);
+	toolTip.style.left = l+"px";
+    }
     else
 	toolTip.style.left = mouseX+offX+"px";
 
