@@ -4081,7 +4081,7 @@ function processJobs( nextFn ) {
 		    }
 
 		    // write the username
-		    html += '<span style="color: ' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();">' + user;
+		    html += '<span style="color: ' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();" onclick="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );">' + user;
 		    if ( multiJobCnt != 1 )
 			html += '&nbsp;x' + multiJobCnt;
 
@@ -4108,7 +4108,7 @@ function processJobs( nextFn ) {
 
 		    // write the username and link it to the 1st job by this user
 		    jobId = newIds[user][0];
-		    html += '<span style="color: ' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();">' + user + '</span>';
+		    html += '<span style="color: ' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();" onclick="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );">' + user + '</span>';
 		    html += '</td>';
 
 		    html += '<td><table border=0 cellpadding=0 cellspacing=0><tr>'
@@ -4155,9 +4155,9 @@ function processJobs( nextFn ) {
 			    // multiJobCnt is # cpus for this job
 			    //html += '<div style="position:relative; float:left;clear:left; font-size: 0px; line-height: 0%; width:' + (5*multiJobCnt) + 'px; height:5px; background-color:' + bgColour + '; color:' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();">' + cpusSoFar + '</div>'
 			if ( state == 'S' ) // triangle
-			    html += '<div style="position:relative; font-size: 0px; line-height: 0%; width: 0px; border-top: ' + (4*w) + 'px solid ' + bgColour + '; border-right: ' + (4*w) + 'px solid white;" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();"></div>'; // ' + cpusSoFar + '</div>'
+			    html += '<div style="position:relative; font-size: 0px; line-height: 0%; width: 0px; border-top: ' + (4*w) + 'px solid ' + bgColour + '; border-right: ' + (4*w) + 'px solid white;" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();" onclick="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );"></div>'; // ' + cpusSoFar + '</div>'
 			else
-			    html += '<div style="position:relative; width:' + (4*w) + 'px; height:' + (4*h) + 'px; background-color:' + bgColour + '; color:' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();"></div>'; // ' + cpusSoFar + '</div>'
+			    html += '<div style="position:relative; width:' + (4*w) + 'px; height:' + (4*h) + 'px; background-color:' + bgColour + '; color:' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();" onclick="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );"></div>'; // ' + cpusSoFar + '</div>'
 
 			    cpusSoFar += multiJobCnt;
 			    if ( cpusSoFar > 1 ) {
