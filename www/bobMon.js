@@ -4160,7 +4160,8 @@ function processJobs( nextFn ) {
 			    html += '<div style="position:relative; width:' + (4*w) + 'px; height:' + (4*h) + 'px; background-color:' + bgColour + '; color:' + fgColour + ';" onmouseover="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );" onmouseout="closeJobInfoWindow();" onclick="jobInfoWindow( event, \'' + jobId + '\', \'' + n + '\' );"></div>'; // ' + cpusSoFar + '</div>'
 
 			    cpusSoFar += multiJobCnt;
-			    if ( cpusSoFar > 1 ) {
+			    if ( cpusSoFar > 3 ) {  // when to go to the next column ~= how many rows of jobs to display.
+                                                    // eg. a user with 16 1-core jobs with >3 will display as a 4x4 grid. if >1 then it'll be a 8x2 grid
 				cpusSoFar = 0;
 				html += '</td><td>';
 			 //   }
