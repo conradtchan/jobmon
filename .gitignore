@@ -1,2 +1,4 @@
  
 .idea/*
+frontend/build/*
+\.DS_Store
