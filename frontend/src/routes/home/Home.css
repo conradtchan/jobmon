@@ -37,3 +37,7 @@
 .newsDesc {
   display: block;
 }
+
+.text {
+  font-size: 5.0em;
+}
