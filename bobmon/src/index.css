@@ -1,0 +1,142 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+#node-pies{
+    width: 100%;
+    margin: 0 auto;
+}
+
+.pie-row {
+    display: flex;
+    flex-direction: row;
+    height: auto;
+    min-height: 60px;
+    /*justify-content: space-between;*/
+}
+
+.pie-row.headings {
+    background: #AAAAAA;
+    height:100%;
+}
+
+.pie-row.items:nth-child(odd) {
+    background-color: #DDDDDD;
+}
+
+.node-pie {
+    width: 8%;
+    height: auto;
+    /*border: 1px black solid;*/
+    display: flex;
+    align-items: center;
+}
+
+.node-pie.heading {
+    align-items: flex-end;
+    font-weight:bold;
+}
+
+.node-name {
+    width: 18%;
+    /*border: 1px black solid;*/
+    display: flex;
+    align-items: center;
+}
+
+.node-name.heading {
+    align-items: flex-end;
+    font-weight:bold;
+}
+
+.job-names {
+    width: 25%;
+    /*border: 1px black solid;*/
+    text-align: left;
+}
+
+.job-names.heading {
+    align-items: flex-end;
+    font-weight:bold;
+    display: flex;
+}
+
+.job-name {
+    width: 100%;
+    /*border: 1px black solid;*/
+    text-align: left;
+}
+
+.job-name.link {
+    width: 100%;
+    /*border: 1px black solid;*/
+    text-align: left;
+    color: red;
+}
+
+#main-box{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 90%;
+    margin: 0 auto;
+    /*border: 1px black solid;*/
+    align-items: top;
+    background-color: #EEEEEE;
+
+}
+
+.main-item{
+    height: 100%;
+    /*border: 1px black solid;*/
+    padding: 1%;
+}
+
+.main-item.left{
+    width: 30%;
+}
+
+.main-item.right{
+    width: 65%;
+}
+
+.user-string {
+    display: flex;
+    text-align: left;
+    cursor: pointer;
+}
+.user-string.hovered {
+    background: #AAAAAA;
+}
+
+.user-string-username{
+    flex: 0 0 30%;
+    text-align: right;
+    padding-right: 5px;
+    font-weight:bold;
+}
+
+.user-string-percent{
+    flex: 0 0 10%;
+    padding-right: 5px;
+}
+
+.user-string-jobs{
+    flex: 0 0 40%;
+}
+
+#user-strings {
+    display: flex;
+    flex-direction: row;
+}
+
+#user-strings-col {
+    flex: 1 1 50%;
+}
+
+#username-title {
+    font-size: x-large;
+}
