@@ -7,7 +7,13 @@ import os
 import sys
 import string
 import time
+import pwd, grp
 from xml.dom import minidom
+try:
+    import pyslurm
+    haveSlurm=1
+except:
+    haveSlurm=0
 
 import bobMonConf
 config = bobMonConf.config()
@@ -378,7 +384,6 @@ class gangliaStats:
             if gCnt:
                 self.gpu_util[name] = float(gUtil/gCnt)
 
-
 class pbsNodes:
     def __init__( self ):
         # "interesting nodes"
@@ -392,18 +397,63 @@ class pbsNodes:
         elif config.batchType == 'torque':
             pbsNodesCommand = 'pbsnodes -x'  # used to be -l
             parse = self.parseTorqueXml
+        elif config.batchType == 'slurm':
+            pbsNodesCommand = None
+            parse = self.slurmNodes
         else:
             print 'unknown batch system in pbsNodes:', config.batchType
             sys.exit(1)
 
-        if dummyRun:
-            f = open( 'yo-pbsnodes', 'r' )
-        else:
-            f = os.popen( config.pbsPath + '/' + pbsNodesCommand, 'r' )
-        l = f.readlines()
-        f.close()
+        l = None
+        if pbsNodesCommand != None:
+            if dummyRun:
+                f = open( 'yo-pbsnodes', 'r' )
+            else:
+                f = os.popen( config.pbsPath + '/' + pbsNodesCommand, 'r' )
+            l = f.readlines()
+            f.close()
 
         parse(l)
+
+    def slurmNodes(self, ll):
+        n = pyslurm.node()
+        nd = n.get()
+
+        #print nd.keys(), n.ids()
+        #n.print_node_info_msg()
+        p = []
+        pa = []
+        for f in n.ids():
+            #print f,
+            #for j in [ 'cpus', 'reason', 'state', 'gres' ]:
+            #    print nd[f][j],
+            #print
+            cpus = nd[f]['cpus']
+            gpus = 0
+            for g in nd[f]['gres']:
+                # not quite sure how to parse this. gres=gpu:2,gpu:kepler:1,mic,bandwidth:lustre:4g or is an array?
+                for gg in g.split(','):
+                    for ggg in gg.split(':'):
+                        if ggg[0] == 'gpu':
+                            if ggg[-1].isdigit():
+                                gpus += int(ggg[-1])
+
+            s = nd[f]['state']
+            r = nd[f]['reason']
+            # state can also be eg. 'MIXED+COMPLETING' or 'IDLE+COMPLETING' or 'ALLOCATED*'
+            if s not in [ 'ALLOCATED', 'IDLE', 'MIXED' ] or r != None:
+                rr = ''
+                if r != None:
+                   rr = r
+                p.append( (f, [s, rr], cpus, gpus) )
+            state = []
+            state.append(s)
+            if r != None:
+                state.append(r)
+            pa.append( (f, state, cpus, gpus) )
+
+            self.pbsNodesList = p
+            self.pbsFullNodesList = pa
 
     def parseAnuPbs(self, ll):
         for l in ll:
@@ -520,6 +570,111 @@ class pbsNodes:
 
 class pbsJobs:
     def __init__( self, cmd=None, saveDict=0 ):
+        """decide if slurm or torque"""
+        self.jobs = []  # a list of jobs, each job is a dict of the fields
+        self.queued = []
+        self.tagId = -1
+
+        if haveSlurm:
+            self.readSlurm()
+        else:
+            self.readPbs(cmd, saveDict)
+
+    def readSlurm(self):
+        a = pyslurm.job()
+        jobs = a.get()
+        self.error = None # @@@
+
+        time_fields = ['time_limit']
+        date_fields = ['start_time', 'submit_time', 'end_time', 'eligible_time', 'resize_time']
+
+        # queued etc.
+#        if state in ( 'Q', 'H', 'W', 'T' ):  # bale here and return minimal info...
+#            return ( int(reqNodes), cpus, numGpus, state, username, dict[ 'Job Id' ], dict[ 'Job_Name' ], wallLimit, pbsInfo['comment'] )
+# queued eg.
+# (1, 2, 2, 'Q', 'ebarr', '4107225.pbs.hpc.swin.edu.au', 'superb_T_pipeline', 21600, '')
+
+        for k in jobs.keys():
+            j = jobs[k]
+
+            wallLimit_str = j['time_limit_str']  # 1-00:00:00 or 00:10:00
+            w = wallLimit_str.split('-')
+            if len(w) == 2:
+                wallLimit = 3600*24*int(w[0]) + timeToInt(w[1])
+            elif len(w) == 1:
+                wallLimit = timeToInt(wallLimit_str)
+            else:
+                print 'ERROR: unknown time_limit_str format', wallLimit_str
+                wallLimit = 0
+
+            wallTime = 0 # @@@
+            wallTime_str = '' # @@@
+
+            ram = None
+            if j['mem_per_cpu']:
+                ram = j['num_cpus']*j['min_memory_cpu']
+            elif j['mem_per_node']:
+                ram = j['num_nodes']*j['min_memory_node']
+            j['_ram'] = ram
+
+            numGpus = 0  # @@@
+            j['_username'] = pwd.getpwuid(j['user_id'])[0]
+            j['_group'] = grp.getgrgid(j['group_id'])[0]
+
+            if j['job_state'] != 'RUNNING':  # bale here and return minimal info...
+                comment = ''
+                self.queued.append( ( j['num_nodes'], j['num_cpus'], numGpus, j['job_state'], j['_username'], str(k), j['name'], wallLimit, comment ) )
+                continue
+
+            # running
+            nodes = []
+            ns = j['cpus_allocated'].keys()
+            ns.sort()
+            for n in ns:
+                c = j['cpus_allocated'][n]
+                for i in range(c):
+                    nodes.append(n)
+            gpus = []
+            timeToGo = j['end_time'] - j['run_time']
+            line = [ str(k), j['name'], 'R', 'nodes %d' % j['num_nodes'], 'cores %d' % j['num_cpus'], 'mem %d' % j['_ram'], 'Wall time ' + wallTime_str, 'Remaining ' + intToTime(timeToGo) ]
+            cpuTime = 0 # @@@
+            vmem = j['_ram'] # @@@
+            eff = 0 # @@@
+            info = { 'username':j['_username'], 'comment': '', 'wallLimit': wallLimit,
+                     'numNodes':j['num_nodes'], 'mem':j['_ram'], 'numGpus':numGpus,
+                     'cpuTime':cpuTime, 'jobName':j['name'], 'vmem':vmem, 'state':'R',
+                     'eff':eff, 'group':j['_group'], 'nodes':j['tres_alloc_str'], 'jobId':str(k),
+                     'timeToGo':timeToGo, 'numCpus':j['num_cpus'], 'wallTime':wallTime }
+
+            self.tagId += 1
+
+            # running jobs ->
+            #return ( username, nodes, gpus, line, self.tagId, timeToGo, dict[ 'Job Id' ], dict[ 'Job_Name' ], pbsInfo )
+            self.jobs.append( ( j['_username'], nodes, gpus, line, self.tagId, timeToGo, str(k), j['name'], info ) )
+
+# jobs eg.
+# (
+#'sjoudaki',
+# ['sstar133', 'sstar133',  'sstar133', 'sstar133', 'sstar133',  ... , 'sstar019', 'sstar019', 'sstar019', 'sstar019'],
+# [],
+# ['Job 4089867.pbs.hpc.swin.edu.au', 'cosmomc', 'R', 'Nodes 8', 'Cpus 112', 'Mem/VM per node 176M/2G', 'Wall Time 106:26:43', 'Remaining 61:33:17'],
+# 0, 221597, '4089867.pbs.hpc.swin.edu.au', 'cosmomc',
+# {'username': 'sjoudaki', 'comment': '', 'wallLimit': 604800, 'numNodes': 8, 'mem': 1481015296, 'numGpus': 0, 'cpuTime': 3350667, 'jobName': 'cosmomc', 'vmem': 18522472448, 'state': 'R', 'eff': 7.8070029834988608, 'group': 'p078_astro', 'nodes': '8:ppn=14', 'jobId': '4089867.pbs.hpc.swin.edu.au', 'timeToGo': 221597, 'numCpus': 112, 'wallTime': 383203}
+# )
+
+# or
+
+# (
+# 'ebarr',
+# ['sstar126', 'sstar126'],
+# ['sstar126', 'sstar126'],
+# ['Job 4105662.pbs.hpc.swin.edu.au', 'superb_T_pipeline', 'R', 'Nodes 1', 'Cpus 2', 'Gpus 2', 'Mem/VM 14G/107G', 'Wall Time 00:41:12', 'Remaining 05:18:48'],
+# 171, 19128, '4105662.pbs.hpc.swin.edu.au', 'superb_T_pipeline',
+# {'username': 'ebarr', 'comment': '', 'wallLimit': 21600, 'numNodes': 1, 'mem': 15393300480, 'numGpus': 2, 'cpuTime': 4926, 'jobName': 'superb_T_pipeline', 'vmem': 115384840192, 'state': 'R', 'eff': 99.635922330097088, 'group': 'p002_swin', 'nodes': '1:ppn=2:gpus=2', 'jobId': '4105662.pbs.hpc.swin.edu.au', 'timeToGo': 19128, 'numCpus': 2, 'wallTime': 2472}
+# )
+
+
+    def readPbs( self, cmd=None, saveDict=0 ):
         """read and parse qstat -f, or (if given args) one job's worth of qstat -f output"""
 
         if dummyRun:
@@ -533,10 +688,6 @@ class pbsJobs:
 
         ll = f.readlines()
         self.error = f.close()
-
-        self.jobs = []  # a list of jobs, each job is a dict of the fields
-        self.queued = []
-        self.tagId = -1
 
         lines = []
         for i in range(len(ll)):

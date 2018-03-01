@@ -74,6 +74,8 @@ def uniq( list ):
 
 def queuedJobState( job ):
     nodes, cpus, gpus, state, username, jobId, jobName, walltime, comment = job
+    if config.batchType == 'slurm':
+        return 'q'
     if state in ( 'H', 'B', 'W', 'T' ):
         return 'b'
     elif state in ( 'Q' ):

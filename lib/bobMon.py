@@ -37,7 +37,10 @@ config = bobMonConf.config()
 
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
-haveMaui = 1
+if config.batchType == 'slurm':
+    haveMaui = 0
+else:
+    haveMaui = 1
 mauiFailCnt = 0
 mauiFailCountLimit = 100  # if maui/moab fail this many times in a row then leave it disabled
 
@@ -497,6 +500,15 @@ def doPbsInfo( pbsnodes ):
     for n, info, cores, gpus in pbsnodes:
         n = string.split( n, '.' )[0]
 
+        #print 'n', n, 'info', info
+        # eg n h25 info ['MIXED+COMPLETING', None]
+        #    n h33 info ['IDLE+COMPLETING', None]
+        #    n john5 info [u'IDLE+DRAIN', u'ipmi busted']
+        #    n john99 info [u'DOWN+DRAIN', u'build node']
+        #    n john33 info [u'IDLE+COMPLETING', ''] hw []
+        #    n john5 info [u'DOWN*+DRAIN', u'ipmi busted'] hw []
+        #    n john52 info [u'MIXED*', ''] hw []
+
         hw = []
         for s in info:
            if s[:3] == 'HW_' or s[:3] == 'SW_':
@@ -520,7 +532,16 @@ def doPbsInfo( pbsnodes ):
         else:
             # need to process the drainng*'s in the order they appear 'cos PBS treats them that way:
             for s in info:
-                if s == 'draining':
+                if 'DOWN' in s or 'DOWN*' in s:
+                    i = 'down'
+                    break
+                elif 'COMPLETING' in s:
+                    i = 'completing'
+                    break
+                elif 'IDLE+DRAIN' in s:
+                    i = 'drained'
+                    break
+                elif s == 'draining' or 'DRAIN' in s:
                     i = 'draining'
                     break
                 elif s == 'draining-fill':
@@ -542,7 +563,8 @@ def doPbsInfo( pbsnodes ):
                     break
 
         #print 'n', n, 'info', info, 'hw', hw, 'i', i
-        infoHw.append( (n, i, hw) )
+        if i != '':
+            infoHw.append( (n, i, hw) )
 
     return infoHw
 
@@ -1592,7 +1614,7 @@ def configHash( doPrint = 0):
         item = getattr(config, f)
         d[f] = item
 
-       if doPrint:
+        if doPrint:
            if type(item) == types.StringType:
                print prefix + f + ' = \'' + str(item) + '\';'
            else:
