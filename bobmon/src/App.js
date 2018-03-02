@@ -447,7 +447,23 @@ class App extends React.Component {
         console.log('opening');
         xhr.open("GET", "../cgi-bin/catBobData", true);
         xhr.send();
+    }
 
+    fetchAPI() {
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const jsonData = JSON.parse(xhr.responseText);
+                console.log(jsonData);
+                this.setState({
+                    data: jsonData,
+                    gotData: true,
+                })
+            }
+        };
+        console.log('opening');
+        xhr.open("GET", "api/bobData", true);
+        xhr.send();
     }
 
     parseJobArray(jobArray) {
@@ -762,6 +778,9 @@ class App extends React.Component {
                     </button>
                     <button onClick={() =>this.fetchData()}>
                         Fetch data
+                    </button>
+                    <button onClick={() =>this.fetchAPI()}>
+                        New API
                     </button>
                 </div>
 
