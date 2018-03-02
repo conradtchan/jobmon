@@ -894,13 +894,13 @@ class pbsJobs:
         numGpus = 0
         # some really odd queued jobs might have 'select' instead of 'nodes'
         nodes_k = 'Resource_List.nodes'
-	if nodes_k not in dict.keys():
-            if dict['job_state'] == 'Q' and 'Resource_List.select' in dict.keys():
-                nodes_k = 'Resource_List.select'
-                #print 'using select'
-            elif 'Resource_List.procs' in dict.keys():
-                nodes_k = 'Resource_List.procs'
-                #print 'using procs'
+    if nodes_k not in dict.keys():
+        if dict['job_state'] == 'Q' and 'Resource_List.select' in dict.keys():
+            nodes_k = 'Resource_List.select'
+            #print 'using select'
+        elif 'Resource_List.procs' in dict.keys():
+            nodes_k = 'Resource_List.procs'
+            #print 'using procs'
 
         if nodes_k not in dict.keys():  # default
             #print 'default cpu req assumed'
