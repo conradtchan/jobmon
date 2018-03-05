@@ -11,6 +11,8 @@ import json
 import time
 import bobmon_config as config
 import bobmon_ganglia as ganglia
+import pyslurm
+import pwd
 
 # Get 644 for chmod
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
@@ -152,11 +154,30 @@ def nodes():
     return nodes
 
 
+def jobs():
+    slurm_jobs = pyslurm.job().get()
+
+    j = {}
+
+    for job_id in slurm_jobs:
+        j[job_id] = {
+            'username': pwd.getpwuid(slurm_jobs[job_id]['user_id'])[0],
+            'ncpus':    slurm_jobs[job_id]['num_cpus'],
+            'state':    slurm_jobs[job_id]['job_state'],
+            'layout':   slurm_jobs[job_id]['cpus_alloc_layout'],
+        }
+        # if j[job_id]['state'] == 'RUNNING':
+        #     j['layout'] = slurm_jobs[job_id]['cpus_alloc_layout']
+
+    return j
+
+
 def do_all():
     data = {}
     data['api'] = API_VERSION
     data['timestamp'] = timestamp()
     data['nodes'] = nodes()
+    data['jobs'] = jobs()
 
     return data
 
@@ -179,7 +200,6 @@ def write_data(data, filename):
         unlink(tmp_filename)
 
 if __name__ == '__main__':
-
     while True:
         data = do_all()
 

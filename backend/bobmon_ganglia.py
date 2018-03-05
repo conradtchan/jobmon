@@ -55,18 +55,21 @@ class Stats:
             return None
 
         xml = ''
-        data = 1
         while True:
             data = sock.recv(102400)
             if not data:
                 break
-            xml += str(data)
+            xml += data.decode("utf-8")
         sock.shutdown(2)
-
+        # xml = xml.decode("utf-8")
         xml = xml.replace('\n', ' ').replace('\\n', ' ').split(' ')
 
         if len(xml) == 0:
             xml = None
+
+        with open('ganglia_stats.xml', 'w') as f:
+            for line in xml:
+                f.write(line)
 
         return xml
 

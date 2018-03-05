@@ -102,11 +102,30 @@ class NodePieRows extends React.Component {
     }
     render () {
         let nodePies = [];
-        for (let nodeName in this.props.cpuUsage) {
+        for (let nodeName in this.props.nodeData) {
             if (
                 (this.props.userList.hasOwnProperty(this.props.username)) &&
                 (this.props.userList[this.props.username].includes(nodeName))
             ) {
+                let memPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].mem === null)) {
+                    memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
+                }
+                let diskPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].disk === null)) {
+                    diskPercent = 100 * (1.0 - this.props.nodeData[nodeName].disk.free / this.props.nodeData[nodeName].disk.total);
+                    console.log('diskpercent',diskPercent)
+                }
+                let gpuPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].gpus === null)) {
+                    let nGpus = 0;
+                    for (let gpu in this.props.nodeData[nodeName].gpus) {
+                        nGpus += 1;
+                        gpuPercent += this.props.nodeData[nodeName].gpus[gpu]
+                    }
+                    gpuPercent /= nGpus;
+                }
+
                 nodePies.push(
                     <NodePieRow
                         key={nodeName}
@@ -115,13 +134,13 @@ class NodePieRows extends React.Component {
                         nodeName={nodeName}
                         multiNodeJobLink={this.state.jobIdLink}
                         jobMouseEnter={(jobId) => this.setState({jobIdLink: jobId})}
-                        cpuUser={this.props.cpuUsage[nodeName]['user']}
-                        cpuSystem={this.props.cpuUsage[nodeName]['system']}
-                        cpuWait={this.props.cpuUsage[nodeName]['wait']}
-                        cpuIdle={this.props.cpuUsage[nodeName]['idle']}
-                        mem={this.props.mem[nodeName]['mem']}
-                        disk={(this.props.disk[nodeName] == null) ? 0 : this.props.disk[nodeName]['disk']}
-                        gpu={(this.props.gpu[nodeName] == null) ? 0 : this.props.gpu[nodeName]['gpu']}
+                        cpuUser={this.props.nodeData[nodeName].cpu.user}
+                        cpuSystem={this.props.nodeData[nodeName].cpu.system}
+                        cpuWait={this.props.nodeData[nodeName].cpu.wait}
+                        cpuIdle={this.props.nodeData[nodeName].cpu.idle}
+                        mem={memPercent}
+                        disk={diskPercent}
+                        gpu={gpuPercent}
                     />
                 )
             }
@@ -434,7 +453,6 @@ class App extends React.Component {
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 const jsonData = xmlToJSON.parseString(xhr.responseText);
-                console.log(jsonData);
                 this.setState({
                     data: jsonData,
                     gotData: true,
@@ -444,6 +462,8 @@ class App extends React.Component {
         console.log('opening');
         xhr.open("GET", "../cgi-bin/catBobData", true);
         xhr.send();
+
+        this.fetchAPI()
     }
 
     fetchAPI() {
@@ -452,7 +472,8 @@ class App extends React.Component {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 const jsonData = JSON.parse(xhr.responseText);
                 this.setState({
-                    data: jsonData,
+                    apiData: jsonData,
+                    // data: jsonData,
                     gotData: true,
                 })
             }
@@ -495,10 +516,10 @@ class App extends React.Component {
     }
 
     getNodeOverview() {
-        const cpuUsage = this.getCpuUsage();
-        const mem = this.getMem();
-        const disk = this.getDisk();
-        const gpu = this.getGPU();
+        // const cpuUsage = this.getCpuUsage();
+        // const mem = this.getMem();
+        // const disk = this.getDisk();
+        // const gpu = this.getGPU();
 
         const jobData = this.parseJobArray(
             JSON.parse(
@@ -540,12 +561,9 @@ class App extends React.Component {
             return (
                 <NodePieRows
                     username={this.state.username}
-                    cpuUsage={cpuUsage}
+                    nodeData={this.state.apiData.nodes}
                     userList={userList}
                     jobList={jobList}
-                    mem={mem}
-                    disk={disk}
-                    gpu={gpu}
                 />
             )
         }
@@ -600,78 +618,78 @@ class App extends React.Component {
         )
     }
 
-    getCpuUsage() {
-        const cpuData = JSON.parse(
-            this.state.data.bobMonData[0].cpuBar[0]._text
-        );
-        let cpuUsage = {};
-
-        for (let i=0; i<cpuData.length; i++) {
-            const [nodeName, measure] = cpuData[i][0].split('_');
-            if (!(cpuUsage.hasOwnProperty(nodeName))) {
-                cpuUsage[nodeName] = {}
-            }
-            if (measure === 'i') {
-                cpuUsage[nodeName]['idle'] = cpuData[i][1]
-            } else if (measure === 's') {
-                cpuUsage[nodeName]['system'] = cpuData[i][1]
-            } else if (measure === 'u') {
-                cpuUsage[nodeName]['user'] = cpuData[i][1]
-            } else if (measure === 'w') {
-                cpuUsage[nodeName]['wait'] = cpuData[i][1]
-            }
-        }
-        return cpuUsage
-
-    }
-
-    getMem() {
-        const memData = JSON.parse(
-            this.state.data.bobMonData[0].cpuBar[0]._text
-        );
-        let mem = {};
-
-        for (let i=0; i<memData.length; i++) {
-            const [nodeName] = memData[i][0].split('_');
-            if (!(mem.hasOwnProperty(nodeName))) {
-                mem[nodeName] = {}
-            }
-            mem[nodeName]['mem'] = memData[i][1]
-        }
-        return mem
-    }
-
-    getDisk() {
-        const diskData = JSON.parse(
-            this.state.data.bobMonData[0].disk[0]._text
-        );
-        let disk = {};
-
-        for (let i=0; i<diskData.length; i++) {
-            const [nodeName] = diskData[i][0].split('_');
-            if (!(disk.hasOwnProperty(nodeName))) {
-                disk[nodeName] = {}
-            }
-            disk[nodeName]['disk'] = diskData[i][1]
-        }
-        return disk
-    }
-
-    getGPU() {
-        const gpuData = JSON.parse(
-            this.state.data.bobMonData[0].gpuloads[0]._text
-        );
-        let gpu = {};
-
-        for (let i=0; i<gpuData.length; i++) {
-            const [nodeName] = gpuData[i][0].split('_');
-            if (!(gpu.hasOwnProperty(nodeName))) {
-                gpu[nodeName] = {}
-            }
-            gpu[nodeName]['gpu'] = gpuData[i][1]
-        }
-        return gpu
-    }
+    // getCpuUsage() {
+    //     const cpuData = JSON.parse(
+    //         this.state.data.bobMonData[0].cpuBar[0]._text
+    //     );
+    //     let cpuUsage = {};
+    //
+    //     for (let i=0; i<cpuData.length; i++) {
+    //         const [nodeName, measure] = cpuData[i][0].split('_');
+    //         if (!(cpuUsage.hasOwnProperty(nodeName))) {
+    //             cpuUsage[nodeName] = {}
+    //         }
+    //         if (measure === 'i') {
+    //             cpuUsage[nodeName]['idle'] = cpuData[i][1]
+    //         } else if (measure === 's') {
+    //             cpuUsage[nodeName]['system'] = cpuData[i][1]
+    //         } else if (measure === 'u') {
+    //             cpuUsage[nodeName]['user'] = cpuData[i][1]
+    //         } else if (measure === 'w') {
+    //             cpuUsage[nodeName]['wait'] = cpuData[i][1]
+    //         }
+    //     }
+    //     return cpuUsage
+    //
+    // }
+    //
+    // getMem() {
+    //     const memData = JSON.parse(
+    //         this.state.data.bobMonData[0].cpuBar[0]._text
+    //     );
+    //     let mem = {};
+    //
+    //     for (let i=0; i<memData.length; i++) {
+    //         const [nodeName] = memData[i][0].split('_');
+    //         if (!(mem.hasOwnProperty(nodeName))) {
+    //             mem[nodeName] = {}
+    //         }
+    //         mem[nodeName]['mem'] = memData[i][1]
+    //     }
+    //     return mem
+    // }
+    //
+    // getDisk() {
+    //     const diskData = JSON.parse(
+    //         this.state.data.bobMonData[0].disk[0]._text
+    //     );
+    //     let disk = {};
+    //
+    //     for (let i=0; i<diskData.length; i++) {
+    //         const [nodeName] = diskData[i][0].split('_');
+    //         if (!(disk.hasOwnProperty(nodeName))) {
+    //             disk[nodeName] = {}
+    //         }
+    //         disk[nodeName]['disk'] = diskData[i][1]
+    //     }
+    //     return disk
+    // }
+    //
+    // getGPU() {
+    //     const gpuData = JSON.parse(
+    //         this.state.data.bobMonData[0].gpuloads[0]._text
+    //     );
+    //     let gpu = {};
+    //
+    //     for (let i=0; i<gpuData.length; i++) {
+    //         const [nodeName] = gpuData[i][0].split('_');
+    //         if (!(gpu.hasOwnProperty(nodeName))) {
+    //             gpu[nodeName] = {}
+    //         }
+    //         gpu[nodeName]['gpu'] = gpuData[i][1]
+    //     }
+    //     return gpu
+    // }
 
     getUserUsage() {
         const jobData = this.parseJobArray(
@@ -756,9 +774,7 @@ class App extends React.Component {
 
     render() {
 
-        // const pieData = [{name: 'Group A', value: 400}, {name: 'Group B', value: 300},
-        //               {name: 'Group C', value: 300}, {name: 'Group D', value: 200}];
-
+        console.log(this.state.apiData)
         return (
 
             <div className="App">
