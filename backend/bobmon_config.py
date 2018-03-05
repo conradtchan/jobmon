@@ -1,5 +1,5 @@
 # Location to output JSON
-DATA_PATH = '/home/cchan/'
+DATA_PATH = '/var/spool/bobMon2/'
 
 # Time between updating API
 UPDATE_INTERVAL = 10

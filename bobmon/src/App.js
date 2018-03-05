@@ -57,7 +57,8 @@ class UserPiePlot extends React.Component {
                 />
             )
         }
-        userStrings.sort((a, b) => (a.username < b.username ) ? -1 : (a.username  > b.username) ? 1 : 0);
+
+        userStrings.sort((a, b) => (a.props.username < b.props.username ) ? -1 : (a.props.username  > b.props.username) ? 1 : 0);
 
         let userStringsLeft = [];
         let userStringsRight = [];
@@ -311,10 +312,6 @@ class UserString extends React.Component {
 }
 
 class UsagePie extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
     renderActiveShape(props) {
         const { cx, cy, innerRadius, outerRadius, startAngle, endAngle,
             fill } = props;
@@ -454,15 +451,13 @@ class App extends React.Component {
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 const jsonData = JSON.parse(xhr.responseText);
-                console.log(jsonData);
                 this.setState({
                     data: jsonData,
                     gotData: true,
                 })
             }
         };
-        console.log('opening');
-        xhr.open("GET", "api/bobData", true);
+        xhr.open("GET", "../cgi-bin/catBobData2", true);
         xhr.send();
     }
 
@@ -718,11 +713,8 @@ class App extends React.Component {
         const systemUsage = this.getSystemUsage();
         let usagePieData = [];
 
-        let i = 0;
         for (let username in usageCount) {
-            i++;
             usagePieData.push({
-                index:    i,
                 username: username,
                 cpus:     usageCount[username].cpus,
                 jobs:     usageCount[username].jobs,
@@ -730,6 +722,9 @@ class App extends React.Component {
             })
         }
         usagePieData.sort((a, b) => a.cpus - b.cpus);
+        for (let i=0; i<usagePieData.length; i++) {
+            usagePieData[i]['index'] = i
+        }
 
         const idleCount = systemUsage.pbs_avail_cores - systemUsage.pbs_running_cores;
         const idleFraction = idleCount / systemUsage.pbs_avail_cores;

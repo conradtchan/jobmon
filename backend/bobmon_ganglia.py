@@ -63,14 +63,14 @@ class Stats:
             xml += str(data)
         sock.shutdown(2)
 
-        xml = xml.replace('\\n', ' ').split(' ')
+        xml = xml.replace('\n', ' ').replace('\\n', ' ').split(' ')
 
         if len(xml) == 0:
             xml = None
 
         return xml
 
-    def parse_xml(selfself, xml, metrics, report_time_only):
+    def parse_xml(self, xml, metrics, report_time_only):
         all = {}
         host = None
         i = 0
@@ -125,7 +125,7 @@ class Stats:
             data[k]['gmondGroup'] = count
 
     def merge(self, data):
-        if self.all == None:
+        if self.all is None:
             self.all = data
             return
 
