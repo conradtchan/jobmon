@@ -132,6 +132,8 @@ def nodes():
 
     now = time.time()  # seconds since 1970
 
+    pyslurm_nodes = pyslurm.node().get()
+
     nodes = {}
     for host in all.keys():
         nodes[host] = {}
@@ -151,6 +153,17 @@ def nodes():
         nodes[host]['fans']     = fans(all[host])
         nodes[host]['gpus']     = gpus(all[host])
 
+        if host in pyslurm_nodes.keys():
+            nodes[host]['inSlurm'] = True
+            nodes[host]['nCpus'] = pyslurm_nodes[host]['cpus']
+            nodes[host]['nGpus'] = 0
+            for gres in pyslurm_nodes[host]['gres']:
+                g = gres.split(':')
+                if (g[0] == 'gpu'):
+                    nodes[host]['nGpus'] += int(g[-1])
+        else:
+            nodes[host]['inSlurm'] = False
+
     return nodes
 
 
@@ -161,8 +174,9 @@ def jobs():
 
     for job_id in slurm_jobs:
         j[job_id] = {
+            'name':     slurm_jobs[job_id]['name'],
             'username': pwd.getpwuid(slurm_jobs[job_id]['user_id'])[0],
-            'ncpus':    slurm_jobs[job_id]['num_cpus'],
+            'nCpus':    slurm_jobs[job_id]['num_cpus'],
             'state':    slurm_jobs[job_id]['job_state'],
             'layout':   slurm_jobs[job_id]['cpus_alloc_layout'],
         }
@@ -178,6 +192,7 @@ def do_all():
     data['timestamp'] = timestamp()
     data['nodes'] = nodes()
     data['jobs'] = jobs()
+    data['gangliaURL'] = config.GMONDS[0][2]
 
     return data
 

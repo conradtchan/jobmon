@@ -12,9 +12,6 @@ import {
     Label,
 } from 'recharts';
 
-
-const xmlToJSON = require('xmltojson');
-
 class UserPiePlot extends React.Component {
     constructor(props) {
         super(props);
@@ -62,20 +59,23 @@ class UserPiePlot extends React.Component {
 
         let userStringsLeft = [];
         let userStringsRight = [];
-        for (let i=0; i<userStrings.length/2; i++) {
-            userStringsLeft.push(userStrings[i])
-        }
-        for (let i=userStrings.length/2; i<userStrings.length; i++) {
-            userStringsRight.push(userStrings[i])
+        for (let i = 0; i < userStrings.length; i++) {
+            if (i < userStrings.length / 2) {
+                userStringsLeft.push(userStrings[i])
+            } else {
+                userStringsRight.push(userStrings[i])
+            }
         }
 
         return (
             <div className='main-item left'>
                 Select a user to view detailed system usage.
+
+                X jobs queued for X cpu/h (X machine/h)
                 <UsagePie
                     usagePieData={this.props.usagePieData}
-                    usedFraction={this.props.usedFraction}
-                    idleFraction={this.props.idleFraction}
+                    runningCores={this.props.runningCores}
+                    availCores={this.props.availCores}
                     onPieClick={(data,index) => this.updateUsername(index,data.name)}
                     onMouseEnter={(data,index) => this.updateActive(index)}
                     onMouseLeave={(data,index) => this.restoreSelected()}
@@ -102,10 +102,31 @@ class NodePieRows extends React.Component {
     }
     render () {
         let nodePies = [];
-        for (let nodeName in this.props.nodeData) {
+
+        let nodeNames = Object.keys(this.props.nodeData);
+        let nameSorted = [];
+
+        // Sort node names in a sensible way
+        let maxNumLen = 0;
+        for (let name of nodeNames) {
+            const numbers = name.match(/\d/g);
+            let index = 0
+            if (!(numbers === null)) {
+                if (numbers.length > maxNumLen) maxNumLen = numbers.length;
+                index += parseInt(numbers.join(""), 10)
+            }
+            nameSorted.push({
+                name:       name,
+                sortIndex:  name.replace(/\d/g, '') + index.toString().padStart(maxNumLen, "0")
+            })
+        }
+        nameSorted.sort((a, b) => (a.sortIndex < b.sortIndex ) ? -1 : (a.sortIndex  > b.sortIndex) ? 1 : 0);
+
+        for (let ns of nameSorted) {
+            const nodeName = ns.name;
             if (
-                (this.props.userList.hasOwnProperty(this.props.username)) &&
-                (this.props.userList[this.props.username].includes(nodeName))
+                (this.props.userOnNode.hasOwnProperty(this.props.username)) &&
+                (this.props.userOnNode[this.props.username].includes(nodeName))
             ) {
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
@@ -114,7 +135,6 @@ class NodePieRows extends React.Component {
                 let diskPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].disk === null)) {
                     diskPercent = 100 * (1.0 - this.props.nodeData[nodeName].disk.free / this.props.nodeData[nodeName].disk.total);
-                    console.log('diskpercent',diskPercent)
                 }
                 let gpuPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].gpus === null)) {
@@ -125,12 +145,11 @@ class NodePieRows extends React.Component {
                     }
                     gpuPercent /= nGpus;
                 }
-
                 nodePies.push(
                     <NodePieRow
                         key={nodeName}
                         selectedUser={this.props.username}
-                        jobNames={this.props.jobList[nodeName]}
+                        jobs={this.props.nodeHasJob[nodeName]}
                         nodeName={nodeName}
                         multiNodeJobLink={this.state.jobIdLink}
                         jobMouseEnter={(jobId) => this.setState({jobIdLink: jobId})}
@@ -141,6 +160,7 @@ class NodePieRows extends React.Component {
                         mem={memPercent}
                         disk={diskPercent}
                         gpu={gpuPercent}
+                        gangliaURL={this.props.gangliaURL}
                     />
                 )
             }
@@ -176,22 +196,23 @@ class NodePieRow extends React.Component {
         let userJobList = [];
         let otherJobList = [];
         let index = 0;
-        for (let jobName in this.props.jobNames) {
+        for (let job of this.props.jobs) {
             // Highlight jobs that span multiple nodes
             let link = '';
-            if (this.props.jobNames[jobName].jobId === this.props.multiNodeJobLink) {
+            if (job.jobId === this.props.multiNodeJobLink) {
                 link = 'job-name link'
             } else {
                 link = 'job-name'
             }
-            if (this.props.jobNames[jobName].user === this.props.selectedUser) {
+
+            if (job.username === this.props.selectedUser) {
                 userJobList.push(
                     <div
                         key={index}
                         className={link}
-                        onMouseOver={() => this.props.jobMouseEnter(this.props.jobNames[jobName].jobId)}
+                        onMouseOver={() => this.props.jobMouseEnter(job.jobId)}
                     >
-                        ({this.props.jobNames[jobName].count}) {jobName}
+                        ({job.count}) {job.jobName}
                     </div>
                 );
             } else {
@@ -199,19 +220,23 @@ class NodePieRow extends React.Component {
                     <div
                         key={index}
                         className={link}
-                        onMouseOver={() => this.props.jobMouseEnter(this.props.jobNames[jobName].jobId)}
+                        onMouseOver={() => this.props.jobMouseEnter(job.jobId)}
                     >
-                        ({this.props.jobNames[jobName].count}) {jobName}
+                        ({job.count}) {job.jobName}
                     </div>
                 );
             }
             index++
         }
 
+        const gangliaLink = this.props.gangliaURL.replace('%h', this.props.nodeName)
+
         return (
             <div className='pie-row items'>
                 <div className="node-name">
-                    {this.props.nodeName}
+                    <a href={gangliaLink}>
+                        {this.props.nodeName}
+                    </a>
                 </div>
                 <NodePie
                     type='cpu'
@@ -372,19 +397,20 @@ class UsagePie extends React.Component {
         //
         // }
 
-        function PieLabel({viewBox, value1, value2}) {
+        function PieLabel({viewBox, value1, value2, value3}) {
             const {cx, cy} = viewBox;
             return (
                 <text x={cx} y={cy} fill="#3d405c" className="recharts-text recharts-label" textAnchor="middle" dominantBaseline="central">
                     <tspan alignmentBaseline="middle" x={cx} fontSize="48">{value1}</tspan>
-                    <tspan alignmentBaseline="middle" x={cx} dy="1.5em" fontSize="22">{value2}</tspan>
+                    <tspan alignmentBaseline="middle" x={cx} dy="1.5em" fontSize="18">{value2}</tspan>
+                    <tspan alignmentBaseline="middle" x={cx} dy="1.0em" fontSize="22">{value3}</tspan>
                 </text>
             )
         }
 
         return (
             <div>
-            <ResponsiveContainer width='100%' minWidth={400} minHeight={400}>
+            <ResponsiveContainer width='100%' minWidth={0} minHeight={400}>
                 <PieChart>
                     <Pie
                         activeIndex={this.props.activeIndex}
@@ -400,7 +426,7 @@ class UsagePie extends React.Component {
                         outerRadius="70%"
                         fill="#8884d8"
                         paddingAngle={2}
-                        startAngle={90 + (360 * this.props.idleFraction)}
+                        startAngle={90 + (360 * (1.0 - (this.props.runningCores / this.props.availCores)))}
                         endAngle={450}
                         onClick={(data,index) => this.props.onPieClick(data,index)}
                         onMouseEnter={(data,index) => this.pieMouseEnter(data,index)}
@@ -418,8 +444,9 @@ class UsagePie extends React.Component {
                             // width="50%"
                             position="center"
                             content={<PieLabel
-                                value1={`${(this.props.usedFraction * 100).toFixed(0)}%`}
-                                value2='core utilization'
+                                value1={`${(this.props.runningCores / this.props.availCores * 100).toFixed(0)}%`}
+                                value2={`(${this.props.runningCores} / ${this.props.availCores})`}
+                                value3='core utilization'
                             />}>
                         </Label>
                     </Pie>
@@ -441,30 +468,28 @@ class App extends React.Component {
     }
 
     sampleData() {
-        const jsonData = xmlToJSON.parseString(testData)
         this.setState({
-            data: jsonData,
+            apiData: testData,
             gotData: true,
         })
     }
 
-    fetchData() {
-        let xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                const jsonData = xmlToJSON.parseString(xhr.responseText);
-                this.setState({
-                    data: jsonData,
-                    gotData: true,
-                })
-            }
-        };
-        console.log('opening');
-        xhr.open("GET", "../cgi-bin/catBobData", true);
-        xhr.send();
-
-        this.fetchAPI()
-    }
+    // fetchData() {
+    //     let xhr = new XMLHttpRequest();
+    //     xhr.onreadystatechange = () => {
+    //         if (xhr.readyState === 4 && xhr.status === 200) {
+    //             const jsonData = xmlToJSON.parseString(xhr.responseText);
+    //             this.setState({
+    //                 data: jsonData,
+    //                 // gotData: true,
+    //             })
+    //         }
+    //     };
+    //     xhr.open("GET", "../cgi-bin/catBobData", true);
+    //     xhr.send();
+    //
+    //     this.fetchAPI()
+    // }
 
     fetchAPI() {
         let xhr = new XMLHttpRequest();
@@ -516,211 +541,113 @@ class App extends React.Component {
     }
 
     getNodeOverview() {
-        // const cpuUsage = this.getCpuUsage();
-        // const mem = this.getMem();
-        // const disk = this.getDisk();
-        // const gpu = this.getGPU();
+        const jobs = this.state.apiData.jobs;
 
-        const jobData = this.parseJobArray(
-            JSON.parse(
-                this.state.data.bobMonData[0].jobs[0]._text
-            )
-        );
-
-        let userList = {};
-        let jobList = {};
-        for (let i in jobData) {
-            if (!(jobData[i].username in userList)) {
-                userList[jobData[i].username] = []
-            }
-            for (let j in jobData[i].nodeList) {
-                // If user is using node
-                if (!(jobData[i].nodeList[j] in userList[jobData[i].username])) {
-                    userList[jobData[i].username].push(jobData[i].nodeList[j])
-                }
-                // If job is on node
-                if (!(jobData[i].nodeList[j] in jobList)) {
-                    jobList[jobData[i].nodeList[j]] = {}
-                }
-                // Count cores
-                if (!(jobList[jobData[i].nodeList[j]].hasOwnProperty(jobData[i].jobLine[1]))) {
-                    jobList[jobData[i].nodeList[j]][jobData[i].jobLine[1]] = {
-                        count: 0,
-                        jobId: jobData[i].jobId,
-                        user: jobData[i].username,
+        let userOnNode = {};
+        let nodeHasJob = {};
+        // For each job
+        for (let jobId in jobs) {
+            // If job is running
+            if (jobs[jobId].state === 'RUNNING') {
+                // For each host that the job is running on
+                for (let host in jobs[jobId].layout) {
+                    // Add this node to the list of nodes used by user
+                    const username = jobs[jobId].username;
+                    if (!(userOnNode.hasOwnProperty(username))) {
+                        userOnNode[username] = [];
+                        // If this node hasn't been added already
+                    }
+                    if (!(host in userOnNode[username])) {
+                        userOnNode[username].push(host)
                     }
 
+                    // Add this job to the node
+                    if (!(nodeHasJob.hasOwnProperty(host))) {
+                        nodeHasJob[host] = []
+                    }
+                    nodeHasJob[host].push({
+                        jobId: jobId,
+                        username: username,
+                        count: jobs[jobId].layout[host].length,
+                        jobName: jobs[jobId].name,
+                    })
                 }
-                jobList[jobData[i].nodeList[j]][jobData[i].jobLine[1]].count++
             }
         }
 
         if (this.state.username === null) {
-            return (<div className="main-item right" />)
+            return (<div className="main-item right"/>)
         } else {
             return (
                 <NodePieRows
                     username={this.state.username}
                     nodeData={this.state.apiData.nodes}
-                    userList={userList}
-                    jobList={jobList}
+                    userOnNode={userOnNode}
+                    nodeHasJob={nodeHasJob}
+                    gangliaURL={this.state.apiData.gangliaURL}
                 />
             )
         }
     }
 
-    printSystemUsage() {
-        if (this.state.gotData) {
-            const usageData = this.getSystemUsage()
-            const percentCpu = 100 * usageData.pbs_running_cores / usageData.pbs_avail_cores
-            const percentGpu = 100 * usageData.pbs_running_gpus  / usageData.pbs_avail_gpus
-            return (
-                <div>
-                    <div>
-                        CPU usage: {percentCpu.toFixed(0)}% ({usageData.pbs_running_cores}/{usageData.pbs_avail_cores})
-                    </div>
-                    <div>
-                        GPU usage: {percentGpu.toFixed(0)}% ({usageData.pbs_running_gpus}/{usageData.pbs_avail_gpus})
-                    </div>
-                </div>
-            )
-        }
-    }
 
     getSystemUsage() {
-        const usageArray = JSON.parse(
-            this.state.data.bobMonData[0].usage[0]._text
-        );
-        let usageData = {};
-        for (let i = 0; i < usageArray.length; i += 2) {
-            usageData[usageArray[i]] = usageArray[i + 1]
+        let usage = {
+            availCores: 0,
+            runningCores: 0,
+            availNodes: 0,
+            runningNodes: 0,
+
+        };
+
+
+        const nodes = this.state.apiData.nodes;
+        for (let host in nodes) {
+            if (nodes[host].inSlurm) {
+                // Available cores
+                usage.availCores += nodes[host].nCpus;
+
+                // Available nodes
+                usage.availNodes += 1
+            }
         }
-        return usageData
-    }
 
-    printTextStats() {
-        const textStats = JSON.parse(
-            this.state.data.bobMonData[0].text[0].stats[0]._text
-        )
-            .split('_br_');
-
-        return (
-            <div>
-                {
-                    textStats.map(
-                        (line, index) =>
-                            <div key={index}>
-                                {line}
-                            </div>
-                    )
+        const jobs = this.state.apiData.jobs;
+        let runningNodeList = [];
+        for (let jobId in jobs) {
+            if (jobs[jobId].state === 'RUNNING') {
+                // Running cores
+                usage.runningCores += jobs[jobId].nCpus;
+                // Running nodes
+                for (let host in jobs[jobId].layout) {
+                    if (!(runningNodeList.includes(host))) {
+                        runningNodeList.push(host)
+                    }
                 }
-            </div>
-        )
-    }
+            }
+        }
 
-    // getCpuUsage() {
-    //     const cpuData = JSON.parse(
-    //         this.state.data.bobMonData[0].cpuBar[0]._text
-    //     );
-    //     let cpuUsage = {};
-    //
-    //     for (let i=0; i<cpuData.length; i++) {
-    //         const [nodeName, measure] = cpuData[i][0].split('_');
-    //         if (!(cpuUsage.hasOwnProperty(nodeName))) {
-    //             cpuUsage[nodeName] = {}
-    //         }
-    //         if (measure === 'i') {
-    //             cpuUsage[nodeName]['idle'] = cpuData[i][1]
-    //         } else if (measure === 's') {
-    //             cpuUsage[nodeName]['system'] = cpuData[i][1]
-    //         } else if (measure === 'u') {
-    //             cpuUsage[nodeName]['user'] = cpuData[i][1]
-    //         } else if (measure === 'w') {
-    //             cpuUsage[nodeName]['wait'] = cpuData[i][1]
-    //         }
-    //     }
-    //     return cpuUsage
-    //
-    // }
-    //
-    // getMem() {
-    //     const memData = JSON.parse(
-    //         this.state.data.bobMonData[0].cpuBar[0]._text
-    //     );
-    //     let mem = {};
-    //
-    //     for (let i=0; i<memData.length; i++) {
-    //         const [nodeName] = memData[i][0].split('_');
-    //         if (!(mem.hasOwnProperty(nodeName))) {
-    //             mem[nodeName] = {}
-    //         }
-    //         mem[nodeName]['mem'] = memData[i][1]
-    //     }
-    //     return mem
-    // }
-    //
-    // getDisk() {
-    //     const diskData = JSON.parse(
-    //         this.state.data.bobMonData[0].disk[0]._text
-    //     );
-    //     let disk = {};
-    //
-    //     for (let i=0; i<diskData.length; i++) {
-    //         const [nodeName] = diskData[i][0].split('_');
-    //         if (!(disk.hasOwnProperty(nodeName))) {
-    //             disk[nodeName] = {}
-    //         }
-    //         disk[nodeName]['disk'] = diskData[i][1]
-    //     }
-    //     return disk
-    // }
-    //
-    // getGPU() {
-    //     const gpuData = JSON.parse(
-    //         this.state.data.bobMonData[0].gpuloads[0]._text
-    //     );
-    //     let gpu = {};
-    //
-    //     for (let i=0; i<gpuData.length; i++) {
-    //         const [nodeName] = gpuData[i][0].split('_');
-    //         if (!(gpu.hasOwnProperty(nodeName))) {
-    //             gpu[nodeName] = {}
-    //         }
-    //         gpu[nodeName]['gpu'] = gpuData[i][1]
-    //     }
-    //     return gpu
-    // }
+        usage.runningNodes = runningNodeList.length;
+
+        return usage
+    }
 
     getUserUsage() {
-        const jobData = this.parseJobArray(
-            JSON.parse(
-                this.state.data.bobMonData[0].jobs[0]._text
-            )
-        );
-
         let usageCount = {};
-        for (let i=0; i<jobData.length; i++) {
-            const username = jobData[i].username
+        const jobs = this.state.apiData.jobs;
+
+        for (let jobId in jobs) {
+            const username = jobs[jobId].username;
             if (!(usageCount.hasOwnProperty(username))) {
                 usageCount[username] = {
                     cpus: 0,
-                    jobs: [],
+                    jobs: 0,
                 }
             }
-            usageCount[username].cpus += jobData[i].nCpus
-            if (!(usageCount[username].jobs.includes(jobData[i].jobId))) {
-                usageCount[username].jobs += jobData[i].jobId
+            if (jobs[jobId].state === 'RUNNING') {
+                usageCount[username].cpus += jobs[jobId].nCpus;
+                usageCount[username].jobs += 1
             }
-        }
-
-        let totalRunning = 0
-        for (let username in usageCount) {
-            totalRunning += usageCount[username].cpus
-            usageCount[username].jobs = usageCount[username].jobs.length
-        }
-
-        if (totalRunning !== this.getSystemUsage().pbs_running_cores) {
-            console.log('Mismatch in number of used cores')
         }
 
         return usageCount
@@ -736,23 +663,20 @@ class App extends React.Component {
                 username: username,
                 cpus:     usageCount[username].cpus,
                 jobs:     usageCount[username].jobs,
-                percent:  (100 * usageCount[username].cpus / systemUsage.pbs_avail_cores).toFixed(0),
+                percent:  (100 * usageCount[username].cpus / systemUsage.availCores).toFixed(0),
             })
         }
+
         usagePieData.sort((a, b) => a.cpus - b.cpus);
         for (let i=0; i<usagePieData.length; i++) {
             usagePieData[i]['index'] = i
         }
 
-        const idleCount = systemUsage.pbs_avail_cores - systemUsage.pbs_running_cores;
-        const idleFraction = idleCount / systemUsage.pbs_avail_cores;
-        const usedFraction = systemUsage.pbs_running_cores / systemUsage.pbs_avail_cores;
-
         return (
             <UserPiePlot
                 usagePieData={usagePieData}
-                usedFraction={usedFraction}
-                idleFraction={idleFraction}
+                runningCores = {systemUsage.runningCores}
+                availCores = {systemUsage.availCores}
                 updateUsername={(name) => this.setState({username: name})}
             />
         )
@@ -762,10 +686,11 @@ class App extends React.Component {
 
     showData() {
         if (this.state.gotData) {
+            console.log(this.state.apiData)
             return (
                 <div>
                     {/*{this.printSystemUsage()}*/}
-                    {this.printTextStats()}
+                    {/*{this.printTextStats()}*/}
                     {this.renderPlots()}
                 </div>
             )
@@ -773,8 +698,6 @@ class App extends React.Component {
     }
 
     render() {
-
-        console.log(this.state.apiData)
         return (
 
             <div className="App">
@@ -787,11 +710,8 @@ class App extends React.Component {
                     <button onClick={() => this.sampleData()}>
                         Use sample data
                     </button>
-                    <button onClick={() =>this.fetchData()}>
-                        Fetch data
-                    </button>
                     <button onClick={() =>this.fetchAPI()}>
-                        New API
+                        Fetch data
                     </button>
                 </div>
 
