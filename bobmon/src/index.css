@@ -1,7 +1,16 @@
+:root{
+    --bad-job-color: red;
+}
+
 body {
     margin: 0;
     padding: 0;
     font-family: sans-serif;
+}
+
+
+.bad-job {
+    color: var(--bad-job-color);
 }
 
 #node-pies{
@@ -22,12 +31,22 @@ body {
     height:100%;
 }
 
+.pie-row.items {
+    cursor: pointer;
+}
+
+.pie-row.items:hover {
+    border-width: 1px;
+    border-color: #555555;
+    border-style: solid;
+}
+
 .pie-row.items:nth-child(odd) {
     background-color: #DDDDDD;
 }
 
 .node-pie {
-    width: 8%;
+    width: 15%;
     height: auto;
     /*border: 1px black solid;*/
     display: flex;
@@ -40,10 +59,14 @@ body {
 }
 
 .node-name {
-    width: 18%;
+    width: 30%;
     /*border: 1px black solid;*/
     display: flex;
     align-items: center;
+}
+
+.node-name.warn{
+    color: var(--bad-job-color);
 }
 
 .node-name.heading {
@@ -52,8 +75,6 @@ body {
 }
 
 .job-names {
-    width: 25%;
-    /*border: 1px black solid;*/
     text-align: left;
 }
 
@@ -67,13 +88,23 @@ body {
     width: 100%;
     /*border: 1px black solid;*/
     text-align: left;
+    /*cursor: pointer;*/
+    /*text-decoration: underline;*/
 }
 
-.job-name.link {
-    width: 100%;
-    /*border: 1px black solid;*/
+.job-name.warn {
+    color: var(--bad-job-color)
+}
+
+/*.job-name.link {*/
+    /*width: 100%;*/
+    /*!*border: 1px black solid;*!*/
+    /*text-align: left;*/
+    /*color: red;*/
+/*}*/
+
+#node-description {
     text-align: left;
-    color: red;
 }
 
 #main-box{
@@ -93,14 +124,25 @@ body {
     height: 100%;
     /*border: 1px black solid;*/
     padding: 1%;
+    text-align: left
 }
 
 .main-item.left{
     width: 35%;
+    top: 0;
+    position: -webkit-sticky;
+    position: sticky;
+}
+
+.main-item.center{
+    width: 25%;
 }
 
 .main-item.right{
-    width: 60%;
+    width: 25%;
+    top: 0;
+    position: -webkit-sticky;
+    position: sticky;
 }
 
 .user-string {
@@ -110,6 +152,10 @@ body {
 }
 .user-string.hovered {
     background: #AAAAAA;
+}
+
+.user-string.warn {
+    color: var(--bad-job-color);
 }
 
 .user-string-username{
@@ -128,15 +174,70 @@ body {
     flex: 0 0 40%;
 }
 
-#user-strings {
+.user-strings {
     display: flex;
     flex-direction: row;
 }
 
-#user-strings-col {
+.user-strings-col {
     flex: 1 1 50%;
+}
+
+.queue-strings {
+    align: left;
+    width: 100%;
+}
+
+.queue-string {
+    display: flex;
+    text-align: left;
+}
+
+.queue-string-username{
+    flex: 0 0 15%;
+    text-align: right;
+    padding-right: 5px;
+    font-weight:bold;
+    /*border: 1px black solid;*/
+}
+
+.queue-string-hours {
+    flex: 0 0 35%;
+    padding-right: 5px;
+    /*border: 1px black solid;*/
+}
+
+.queue-string-jobs{
+    flex: 0 0 35%;
+    text-align: left;
+    /*border: 1px black solid;*/
 }
 
 #username-title {
     font-size: x-large;
+    text-align: center;
+}
+
+#nodename-title {
+    font-size: x-large;
+    text-align: center;
+}
+
+#core-grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.core-pie {
+    width: 11.111%;
+    min-height: 40px;
+}
+
+.instruction {
+    font-style: italic;
+}
+
+.heading{
+    font-weight: bold;
 }

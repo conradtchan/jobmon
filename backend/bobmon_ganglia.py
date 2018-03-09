@@ -26,6 +26,7 @@ class Stats:
         if do_cpus:
             metrics.extend(['load_one', 'cpu_user', 'cpu_nice', 'cpu_system', 'cpu_idle', 'cpu_wio', 'cpu_num'])
 
+
         # extra metrics defined in config
         metrics.extend(config.EXTRA_GANGLIA_METRICS)
 
@@ -37,7 +38,17 @@ class Stats:
                 print('No data from [host, port]', host, port)
                 continue
 
-            data = self.parse_xml(xml, metrics, report_time_only)
+            # cpu_num = self.parse_xml(xml, ncpus_only = True)
+            cpu_num = config.MULTICPU_MAX
+            multicpu_metrics = []
+            for i in range(cpu_num):
+                multicpu_metrics += ['multicpu_user{:}'.format(i)]
+                multicpu_metrics += ['multicpu_nice{:}'.format(i)]
+                multicpu_metrics += ['multicpu_system{:}'.format(i)]
+                multicpu_metrics += ['multicpu_idle{:}'.format(i)]
+                multicpu_metrics += ['multicpu_wio{:}'.format(i)]
+
+            data = self.parse_xml(xml, metrics + multicpu_metrics, report_time_only)
 
             # tag this set of hosts with which gmond group they came from
             # so that later on the web stuff can reference the correct url
@@ -73,7 +84,7 @@ class Stats:
 
         return xml
 
-    def parse_xml(self, xml, metrics, report_time_only):
+    def parse_xml(self, xml, metrics = None, report_time_only = False, ncpus_only = False):
         all = {}
         host = None
         i = 0
@@ -95,6 +106,16 @@ class Stats:
                 i += 1
 
             return all
+
+        if ncpus_only:
+            while i < len(xml):
+                if xml[i] == '<METRIC':
+                    i += 1
+                    metric = xml[i].split('"')[1]
+                    i += 1
+                    if metric == 'cpu_num':
+                        val = xml[i].split('"')[1]
+                        return int(val)
 
         while i < len(xml):
             if xml[i] == '<METRIC':

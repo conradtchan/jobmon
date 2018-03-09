@@ -26,3 +26,6 @@ GMONDS = [ ['transom1', 8649, '/ganglia/?c=farnarkle&h=%h'] ]
 
 # Time-out for a dead node
 NODE_DEAD_TIMEOUT = 60
+
+# Max number for multicpu metric (set to maximum number of cores on system)
+MULTICPU_MAX = 36

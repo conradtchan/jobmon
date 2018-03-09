@@ -24,13 +24,29 @@ def timestamp():
 
 def cpu_usage(data, name):
     try:
-        return {
+        total = {
             'user':     float(data['cpu_user']),
             'nice':     float(data['cpu_nice']),
             'system':   float(data['cpu_system']),
             'wait':     float(data['cpu_wio']),
             'idle':     float(data['cpu_idle']),
         }
+
+        core = []
+        for i in range(config.MULTICPU_MAX):
+            try:
+                vals = {
+                    'user':     float(data['multicpu_user{:}'.format(i)]),
+                    'nice':     float(data['multicpu_nice{:}'.format(i)]),
+                    'system':   float(data['multicpu_system{:}'.format(i)]),
+                    'wait':     float(data['multicpu_wio{:}'.format(i)]),
+                    'idle':     float(data['multicpu_idle{:}'.format(i)]),
+                }
+                core += [vals]
+            except:
+                continue
+
+        return {'total': total, 'core': core}
     except KeyError:
         print(name, 'cpu user/nice/system/wio/idle not in ganglia')
 
@@ -174,11 +190,12 @@ def jobs():
 
     for job_id in slurm_jobs:
         j[job_id] = {
-            'name':     slurm_jobs[job_id]['name'],
-            'username': pwd.getpwuid(slurm_jobs[job_id]['user_id'])[0],
-            'nCpus':    slurm_jobs[job_id]['num_cpus'],
-            'state':    slurm_jobs[job_id]['job_state'],
-            'layout':   slurm_jobs[job_id]['cpus_alloc_layout'],
+            'name':      slurm_jobs[job_id]['name'],
+            'username':  pwd.getpwuid(slurm_jobs[job_id]['user_id'])[0],
+            'nCpus':     slurm_jobs[job_id]['num_cpus'],
+            'state':     slurm_jobs[job_id]['job_state'],
+            'layout':    slurm_jobs[job_id]['cpus_alloc_layout'],
+            'timeLimit': slurm_jobs[job_id]['time_limit'], # minutes
         }
         # if j[job_id]['state'] == 'RUNNING':
         #     j['layout'] = slurm_jobs[job_id]['cpus_alloc_layout']

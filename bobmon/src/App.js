@@ -12,6 +12,154 @@ import {
     Label,
 } from 'recharts';
 
+class NodeDetails extends React.Component {
+    render () {
+        // Cores belonging to selected job
+        let jobCores = [];
+        if (!(this.props.selectedJobId === null)) {
+            jobCores = this.props.jobs[this.props.selectedJobId].layout[this.props.name]
+        }
+        let corePies = [];
+        for (let i = 0; i < this.props.node.cpu.core.length; i++) {
+            const core = this.props.node.cpu.core[i];
+            let coreSelected = false;
+            if (!(jobCores === null)) {
+                coreSelected = jobCores.includes(i);
+            }
+
+            const coreTotal = core.user + core.wait + core.system + core.idle;
+            let user = core.user
+            // Measurement for user is missing - reconstruct value
+            if (coreTotal < 99.0) {
+                user = 100.0 - core.wait - core.system - core.idle
+            }
+
+            corePies.push(
+                <CorePie
+                    key = {i}
+                    type = 'cpu'
+                    data = {[
+                        {name: 'user', data: user},
+                        {name: 'wait', data: core.wait},
+                        {name: 'system', data: core.system},
+                        {name: 'idle', data: core.idle}
+                    ]}
+                    selected = {coreSelected}
+                />
+            )
+        }
+
+        let userJobList = [];
+        let otherJobList = [];
+
+        for (let jobId in this.props.jobs) {
+            if (this.props.jobs[jobId].layout.hasOwnProperty(this.props.name)) {
+                if (this.props.jobs[jobId].username === this.props.username) {
+                    userJobList.push(
+                        <JobText
+                            key={jobId}
+                            job={this.props.jobs[jobId]}
+                            warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
+                            onClick={() => this.props.onJobClick(jobId)}
+                        />
+                    )
+                } else {
+                    otherJobList.push(
+                        <JobText
+                            key={jobId}
+                            job={this.props.jobs[jobId]}
+                            warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
+                            onClick={() => this.props.onJobClick(jobId)}
+                        />
+                    )
+                }
+
+            }
+        }
+
+        let warningText = [];
+        if (this.props.warnings[this.props.name].node.cpuWait) {
+            warningText.push('- Significant CPU time spent waiting for IO')
+        }
+        if (this.props.warnings[this.props.name].node.swapUse) {
+            warningText.push('- Heavy use of disk swap')
+        }
+        for (let jobId in this.props.warnings[this.props.name].jobs) {
+            const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
+            if (jobWarns['cpuUtil']) {
+                warningText.push('- Job under-utilizes requested CPUs')
+            }
+        }
+
+        let warningList = [];
+        if (warningText.length > 0) {
+            for (let w of warningText) {
+                warningList.push(
+                    <div key={w} className='bad-job'>
+                        {w}
+                    </div>
+                )
+            }
+        }
+
+        const gangliaLink = this.props.gangliaURL.replace('%h', this.props.name);
+
+        return (
+            <div className="main-item right">
+                <div id='nodename-title'>
+                    {this.props.name}
+                </div>
+                <div id='core-grid'>
+                    {corePies}
+                </div>
+                <div id='node-description'>
+                    Core affinity is not configured in Slurm. Usage for individual jobs cannot be shown.
+                </div>
+                {warningList}
+                <div id='job-names'>
+                    <div className='job-names heading'>
+                        User jobs:
+                    </div>
+                    <div>
+                        {userJobList}
+                    </div>
+                </div>
+                <br />
+                <div>
+                    <div className='job-names heading'>
+                        Cohabitant jobs:
+                    </div>
+                    <div>
+                        {otherJobList}
+                    </div>
+                </div>
+                <br />
+                <div>
+                    <a href = {gangliaLink}>
+                        Ganglia report
+                    </a>
+                </div>
+            </div>
+        )
+    }
+
+}
+
+class JobText extends React.Component {
+    render () {
+        let nameClass = 'job-name';
+        // if (this.props.warn) nameClass += ' warn';
+        return (
+            <div
+                className={nameClass}
+                onClick={() => this.props.onClick()}
+            >
+                ({this.props.job.nCpus}) {this.props.job.name} ({this.props.job.state})
+            </div>
+        )
+    }
+}
+
 class UserPiePlot extends React.Component {
     constructor(props) {
         super(props);
@@ -33,24 +181,32 @@ class UserPiePlot extends React.Component {
     }
 
     updateUsername(index,name) {
-        this.props.updateUsername(name)
+        this.props.updateUsername(name);
         this.setState({usagePieSelectedIndex: index})
     }
 
     render() {
         let userStrings = [];
-        for (let user of this.props.usagePieData) {
+        for (let user of this.props.usageData.running) {
             userStrings.push(
                 <UserString
-                    key={user.index}
-                    index={user.index}
+                    key={user.username}
+                    user={user}
                     hoveredIndex={this.state.usagePieActiveIndex}
-                    username={user.username}
-                    percent={user.percent}
-                    jobs={user.jobs}
                     mouseEnter={() => this.updateActive(user.index)}
                     mouseLeave={() => this.restoreSelected()}
                     onClick={() => this.updateUsername(user.index, user.username)}
+                    warning={this.props.warnedUsers.includes(user.username)}
+                />
+            )
+        }
+
+        let queueStrings = [];
+        for (let user of this.props.usageData.queued) {
+            queueStrings.push(
+                <QueueString
+                    key={user.username}
+                    user={user}
                 />
             )
         }
@@ -69,11 +225,11 @@ class UserPiePlot extends React.Component {
 
         return (
             <div className='main-item left'>
-                Select a user to view detailed system usage.
-
-                X jobs queued for X cpu/h (X machine/h)
+                <div className='instruction'>
+                    Select a user to view detailed system usage.
+                </div>
                 <UsagePie
-                    usagePieData={this.props.usagePieData}
+                    runningData={this.props.usageData.running}
                     runningCores={this.props.runningCores}
                     availCores={this.props.availCores}
                     onPieClick={(data,index) => this.updateUsername(index,data.name)}
@@ -82,13 +238,27 @@ class UserPiePlot extends React.Component {
                     activeIndex={this.state.usagePieActiveIndex}
                     activeSectorSize={this.state.activeSectorSize}
                 />
-                <div id="user-strings">
-                    <div id="user-strings-col">
+                <div className='bad-job'>
+                    Users and nodes with bad jobs are highlighted.
+                </div>
+                <br />
+                <div className="heading">
+                    Running:
+                </div>
+                <div className="user-strings">
+                    <div className="user-strings-col">
                         {userStringsLeft}
                     </div>
-                    <div id="user-strings-col">
+                    <div className="user-strings-col">
                         {userStringsRight}
                     </div>
+                </div>
+                <br />
+                <div className="heading">
+                    Queue: {this.props.queue.size} jobs queued for {this.props.queue.cpuHours} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
+                </div>
+                <div className="queue-strings">
+                    {queueStrings}
                 </div>
             </div>
         )
@@ -136,6 +306,10 @@ class NodePieRows extends React.Component {
                 if (!(this.props.nodeData[nodeName].disk === null)) {
                     diskPercent = 100 * (1.0 - this.props.nodeData[nodeName].disk.free / this.props.nodeData[nodeName].disk.total);
                 }
+                let swapPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].swap === null)) {
+                    swapPercent = 100 * (1.0 - this.props.nodeData[nodeName].swap.free / this.props.nodeData[nodeName].swap.total);
+                }
                 let gpuPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].gpus === null)) {
                     let nGpus = 0;
@@ -145,6 +319,7 @@ class NodePieRows extends React.Component {
                     }
                     gpuPercent /= nGpus;
                 }
+
                 nodePies.push(
                     <NodePieRow
                         key={nodeName}
@@ -153,26 +328,26 @@ class NodePieRows extends React.Component {
                         nodeName={nodeName}
                         multiNodeJobLink={this.state.jobIdLink}
                         jobMouseEnter={(jobId) => this.setState({jobIdLink: jobId})}
-                        cpuUser={this.props.nodeData[nodeName].cpu.user}
-                        cpuSystem={this.props.nodeData[nodeName].cpu.system}
-                        cpuWait={this.props.nodeData[nodeName].cpu.wait}
-                        cpuIdle={this.props.nodeData[nodeName].cpu.idle}
+                        cpuUser={this.props.nodeData[nodeName].cpu.total.user}
+                        cpuSystem={this.props.nodeData[nodeName].cpu.total.system}
+                        cpuWait={this.props.nodeData[nodeName].cpu.total.wait}
+                        cpuIdle={this.props.nodeData[nodeName].cpu.total.idle}
                         mem={memPercent}
                         disk={diskPercent}
                         gpu={gpuPercent}
+                        swap={swapPercent}
                         gangliaURL={this.props.gangliaURL}
+                        onRowClick={(node) => this.props.onRowClick(node)}
+                        nodeWarn={this.props.warnings[nodeName]}
                     />
                 )
             }
         }
 
         return (
-            <div className="main-item right">
+            <div className="main-item center">
                 <div id='username-title'>
                     {this.props.username}
-                </div>
-                <div>
-                    Mouseover jobs to highlight multi-node jobs (if any)
                 </div>
                 <div id='node-pies'>
                     <div className='pie-row headings'>
@@ -181,8 +356,6 @@ class NodePieRows extends React.Component {
                         <div className='node-pie heading'>Mem</div>
                         <div className='node-pie heading'>Disk</div>
                         <div className='node-pie heading'>GPU</div>
-                        <div className='job-names heading'>User Jobs</div>
-                        <div className='job-names heading'>Cohabitant Jobs</div>
                     </div>
                     {nodePies}
                 </div>
@@ -193,50 +366,29 @@ class NodePieRows extends React.Component {
 
 class NodePieRow extends React.Component {
     render() {
-        let userJobList = [];
-        let otherJobList = [];
-        let index = 0;
-        for (let job of this.props.jobs) {
-            // Highlight jobs that span multiple nodes
-            let link = '';
-            if (job.jobId === this.props.multiNodeJobLink) {
-                link = 'job-name link'
-            } else {
-                link = 'job-name'
+        let nameClass = 'node-name';
+        let doWarn = false;
+        for (let w in this.props.nodeWarn.node) {
+            if (this.props.nodeWarn.node[w]) {
+                doWarn = true;
+                break
             }
-
-            if (job.username === this.props.selectedUser) {
-                userJobList.push(
-                    <div
-                        key={index}
-                        className={link}
-                        onMouseOver={() => this.props.jobMouseEnter(job.jobId)}
-                    >
-                        ({job.count}) {job.jobName}
-                    </div>
-                );
-            } else {
-                otherJobList.push(
-                    <div
-                        key={index}
-                        className={link}
-                        onMouseOver={() => this.props.jobMouseEnter(job.jobId)}
-                    >
-                        ({job.count}) {job.jobName}
-                    </div>
-                );
-            }
-            index++
         }
+        for (let jobId in this.props.nodeWarn.jobs) {
+            for (let w in this.props.nodeWarn.jobs[jobId]) {
+                if (this.props.nodeWarn.jobs[jobId][w]) {
+                    doWarn = true;
+                    break
+                }
+            }
+        }
+        if (doWarn) nameClass += ' warn';
 
-        const gangliaLink = this.props.gangliaURL.replace('%h', this.props.nodeName)
 
         return (
-            <div className='pie-row items'>
-                <div className="node-name">
-                    <a href={gangliaLink}>
-                        {this.props.nodeName}
-                    </a>
+            <div className='pie-row items' onClick={() => this.props.onRowClick(this.props.nodeName)}>
+                <div className={nameClass}>
+                    {this.props.nodeName}
                 </div>
                 <NodePie
                     type='cpu'
@@ -246,6 +398,7 @@ class NodePieRow extends React.Component {
                         {name: 'system', data: this.props.cpuSystem},
                         {name: 'idle', data: this.props.cpuIdle},
                     ]}
+                    warn={this.props.nodeWarn.cpuWait}
                 />
                 <NodePie
                     type='mem'
@@ -253,6 +406,7 @@ class NodePieRow extends React.Component {
                         {name: 'mem', data: this.props.mem},
                         {name: 'free', data: 100 - this.props.mem},
                     ]}
+                    warn={this.props.nodeWarn.swapUse}
                 />
                 <NodePie
                     type='disk'
@@ -260,6 +414,7 @@ class NodePieRow extends React.Component {
                         {name: 'disk', data: this.props.disk},
                         {name: 'free', data: 100 - this.props.disk},
                     ]}
+                    warn={false}
                 />
                 <NodePie
                     type='gpu'
@@ -267,13 +422,8 @@ class NodePieRow extends React.Component {
                         {name: 'gpu', data: this.props.gpu},
                         {name: 'free', data: 100 - this.props.gpu},
                     ]}
+                    warn={false}
                 />
-                <div className="job-names">
-                    {userJobList}
-                </div>
-                <div className="job-names">
-                    {otherJobList}
-                </div>
             </div>
         )
     }
@@ -293,6 +443,11 @@ class NodePie extends React.Component {
             pieColors.push('#3A2CC2');
         } else if (this.props.type === 'gpu') {
             pieColors.push('#9A3FC2')
+        }
+
+        let ring = 0;
+        if (this.props.warn) {
+            ring = 100
         }
 
         return (
@@ -318,6 +473,18 @@ class NodePie extends React.Component {
                                 )
                             }
                         </Pie>
+                        <Pie
+                            data={[{name: 'ring', ring: ring}]}
+                            nameKey='name'
+                            dataKey='ring'
+                            innerRadius='100%'
+                            outerRadius='120%'
+                            startAngle={90}
+                            endAngle={450}
+                            fill="#FF0000"
+                            paddingAngle={0}
+                            isAnimationActive={false}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
             </div>
@@ -325,35 +492,127 @@ class NodePie extends React.Component {
     }
 }
 
+class CorePie extends React.Component {
+    render() {
+        let pieColors = [];
+        pieColors.push('#DDDDDD');
+        if (this.props.type === 'cpu') {
+            pieColors.push('#637AFF'); // system
+            pieColors.push('#BF2B1A'); // wait
+            pieColors.push('#17852D'); // user
+        } else if (this.props.type === 'mem') {
+            pieColors.push('#E5B81F');
+        } else if (this.props.type === 'disk') {
+            pieColors.push('#3A2CC2');
+        } else if (this.props.type === 'gpu') {
+            pieColors.push('#9A3FC2')
+        }
+
+        let ring;
+        if (this.props.selected) {
+            ring = 100;
+        } else {
+            ring = 0;
+        }
+
+
+        return (
+            <div className='core-pie'>
+                <ResponsiveContainer>
+                    <PieChart>
+                        <Pie
+                            data={this.props.data}
+                            nameKey='name'
+                            dataKey='data'
+                            innerRadius='30%'
+                            outerRadius='60%'
+                            startAngle={90}
+                            endAngle={450}
+                            isAnimationActive={false}
+                        >
+                            {
+                                this.props.data.reverse().map(
+                                    (entry, index) => <Cell
+                                        key={index}
+                                        fill={pieColors[index]}
+                                    />
+                                )
+                            }
+                        </Pie>
+                        {/*Selector ring*/}
+                        <Pie
+                            data={[{name: 'ring', ring: ring}]}
+                            nameKey='name'
+                            dataKey='ring'
+                            innerRadius='60%'
+                            outerRadius='100%'
+                            startAngle={90}
+                            endAngle={450}
+                            fill="#222222"
+                            paddingAngle={0}
+                            isAnimationActive={false}
+                        />
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+        )
+    }
+}
+
+
 class UserString extends React.Component {
     render() {
-        let nameHovered = '';
-        if (this.props.index === this.props.hoveredIndex) {
-            nameHovered += 'user-string hovered'
-        } else {
-            nameHovered += 'user-string'
+        let nameClass= 'user-string';
+        if (this.props.user.index === this.props.hoveredIndex) {
+            nameClass += ' hovered'
+        }
+        if (this.props.warning) {
+            nameClass += ' warn'
         }
         return (
             <div
-                className={nameHovered}
+                className={nameClass}
                 onMouseEnter={this.props.mouseEnter}
                 onMouseLeave={this.props.mouseLeave}
                 onClick={this.props.onClick}
             >
                 <div className="user-string-username">
-                    {this.props.username}
+                    {this.props.user.username}
                 </div>
                 <div className="user-string-percent">
-                    {this.props.percent}%
+                    {this.props.user.percent}%
                 </div>
                 <div className="user-string-jobs">
-                    ({this.props.jobs} jobs)
+                    ({this.props.user.jobs} jobs)
                 </div>
             </div>
         )
     }
 
 }
+
+
+class QueueString extends React.Component {
+    render() {
+        return (
+            <div
+                className='queue-string'
+            >
+                <div className="queue-string-username">
+                    {this.props.user.username}
+                </div>
+                <div className="queue-string-hours">
+                    {this.props.user.hours.toFixed(0)} cpu-h
+                </div>
+                <div className="queue-string-jobs">
+                    ({this.props.user.jobs} jobs)
+                </div>
+            </div>
+        )
+    }
+
+}
+
 
 class UsagePie extends React.Component {
     renderActiveShape(props) {
@@ -393,10 +652,6 @@ class UsagePie extends React.Component {
     render() {
         const pieColors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-        // function pieMouseLeave() {
-        //
-        // }
-
         function PieLabel({viewBox, value1, value2, value3}) {
             const {cx, cy} = viewBox;
             return (
@@ -408,6 +663,14 @@ class UsagePie extends React.Component {
             )
         }
 
+        let pieData = [];
+        for (let user of this.props.runningData) {
+            pieData.push({
+                username: user.username,
+                cpus: user.cpus,
+            })
+        }
+
         return (
             <div>
             <ResponsiveContainer width='100%' minWidth={0} minHeight={400}>
@@ -415,7 +678,7 @@ class UsagePie extends React.Component {
                     <Pie
                         activeIndex={this.props.activeIndex}
                         activeShape={(props) => this.renderActiveShape(props)}
-                        data={this.props.usagePieData}
+                        data={pieData}
                         nameKey='username'
                         dataKey='cpus'
                         // label={({username, percent, jobs})=>`${username} ${percent}% (${jobs} jobs)`}
@@ -433,7 +696,7 @@ class UsagePie extends React.Component {
                         onMouseLeave={(data,index) => this.pieMouseLeave(data,index)}
                     >
                         {
-                            this.props.usagePieData.map(
+                            this.props.runningData.map(
                                 (entry, index) => <Cell
                                     key={index}
                                     fill={pieColors[index % pieColors.length]}
@@ -464,6 +727,10 @@ class App extends React.Component {
             data: null,
             gotData: false,
             username: null,
+            nodeName: null,
+            job: null,
+            warnings: null,
+            lastUpdate: null,
         };
     }
 
@@ -474,73 +741,75 @@ class App extends React.Component {
         })
     }
 
-    // fetchData() {
-    //     let xhr = new XMLHttpRequest();
-    //     xhr.onreadystatechange = () => {
-    //         if (xhr.readyState === 4 && xhr.status === 200) {
-    //             const jsonData = xmlToJSON.parseString(xhr.responseText);
-    //             this.setState({
-    //                 data: jsonData,
-    //                 // gotData: true,
-    //             })
-    //         }
-    //     };
-    //     xhr.open("GET", "../cgi-bin/catBobData", true);
-    //     xhr.send();
-    //
-    //     this.fetchAPI()
-    // }
-
     fetchAPI() {
         let xhr = new XMLHttpRequest();
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 const jsonData = JSON.parse(xhr.responseText);
+                this.cleanState(jsonData);
                 this.setState({
                     apiData: jsonData,
-                    // data: jsonData,
+                    lastUpdate: new Date(),
                     gotData: true,
-                })
+                });
+                setTimeout(() => {this.fetchAPI()}, 10000)
             }
         };
         xhr.open("GET", "../cgi-bin/catBobData2", true);
         xhr.send();
     }
 
-    parseJobArray(jobArray) {
-        let jobData = [];
-        for (let i=0; i < jobArray.length; i++) {
-            jobData.push({
-                jobId:        jobArray[i][0],
-                username:     jobArray[i][1],
-                group:        jobArray[i][2],
-                nodeList:     jobArray[i][3],
-                jobLine:      jobArray[i][4],
-                mem:          jobArray[i][5][0],
-                vmem:         jobArray[i][5][1],
-                nCpus:        jobArray[i][5][2],
-                nNodes:       jobArray[i][5][3],
-                cpuTime:      jobArray[i][5][4],
-                wallTime:     jobArray[i][5][5],
-                wallLimit:    jobArray[i][5][6],
-                parallelEff:  jobArray[i][5][7],
-                jobState:     jobArray[i][5][8],
-                nodeReqLine:  jobArray[i][5][9],
-            })
+    cleanState(newData) {
+        // If a job is gone
+        if (!(newData.jobs.hasOwnProperty(this.state.job))) {
+            this.setState({job: null})
         }
-        return jobData
+
+        // If a node is gone (unlikely)
+        if (!(newData.nodes.hasOwnProperty(this.state.nodeName))) {
+            this.setState({nodeName: null})
+        }
+
+        // If a user is gone
+        let hasUser = false;
+        for (let jobId in newData.jobs) {
+            if (newData.jobs[jobId].username === this.state.username) {
+                hasUser = true
+            }
+        }
+        if (!(hasUser)) this.setState({nodeName: null})
     }
 
-    renderPlots() {
-        return (
-            <div id='main-box'>
-                {this.getUserPiePlot()}
-                {this.getNodeOverview()}
-            </div>
-        )
+    // parseJobArray(jobArray) {
+    //     let jobData = [];
+    //     for (let i=0; i < jobArray.length; i++) {
+    //         jobData.push({
+    //             jobId:        jobArray[i][0],
+    //             username:     jobArray[i][1],
+    //             group:        jobArray[i][2],
+    //             nodeList:     jobArray[i][3],
+    //             jobLine:      jobArray[i][4],
+    //             mem:          jobArray[i][5][0],
+    //             vmem:         jobArray[i][5][1],
+    //             nCpus:        jobArray[i][5][2],
+    //             nNodes:       jobArray[i][5][3],
+    //             cpuTime:      jobArray[i][5][4],
+    //             wallTime:     jobArray[i][5][5],
+    //             wallLimit:    jobArray[i][5][6],
+    //             parallelEff:  jobArray[i][5][7],
+    //             jobState:     jobArray[i][5][8],
+    //             nodeReqLine:  jobArray[i][5][9],
+    //         })
+    //     }
+    //     return jobData
+    // }
+
+
+    selectNode(node) {
+        this.setState({nodeName: node, job: null})
     }
 
-    getNodeOverview() {
+    getNodeOverview(warnings) {
         const jobs = this.state.apiData.jobs;
 
         let userOnNode = {};
@@ -576,7 +845,7 @@ class App extends React.Component {
         }
 
         if (this.state.username === null) {
-            return (<div className="main-item right"/>)
+            return (<div className="main-item center"/>)
         } else {
             return (
                 <NodePieRows
@@ -584,10 +853,51 @@ class App extends React.Component {
                     nodeData={this.state.apiData.nodes}
                     userOnNode={userOnNode}
                     nodeHasJob={nodeHasJob}
-                    gangliaURL={this.state.apiData.gangliaURL}
+                    onRowClick={(node) => this.selectNode(node)}
+                    warnings={warnings}
                 />
             )
         }
+    }
+
+    selectJob(jobId) {
+        this.setState({job: jobId})
+    }
+
+    getNodeDetails(warnings) {
+        if (this.state.nodeName === null) {
+            return (<div className="main-item right"/>)
+        } else {
+            return (
+                <NodeDetails
+                    name={this.state.nodeName}
+                    node={this.state.apiData.nodes[this.state.nodeName]}
+                    gangliaURL={this.state.apiData.gangliaURL}
+                    jobs={this.state.apiData.jobs}
+                    username={this.state.username}
+                    selectedJobId={this.state.job}
+                    onJobClick={(jobId) => this.selectJob(jobId)}
+                    warnings={warnings}
+                />
+            )
+        }
+    }
+
+    getQueue() {
+        let queue = {
+            size: 0,
+            cpuHours: 0,
+        };
+        for (let jobId in this.state.apiData.jobs) {
+            const job = this.state.apiData.jobs[jobId]
+            if (job.state === 'PENDING') {
+                queue.size++;
+                // Time limit is given in minutes
+                queue.cpuHours += job.timeLimit * job.nCpus / 60
+
+            }
+        }
+        return queue
     }
 
 
@@ -632,52 +942,112 @@ class App extends React.Component {
         return usage
     }
 
-    getUserUsage() {
-        let usageCount = {};
-        const jobs = this.state.apiData.jobs;
-
-        for (let jobId in jobs) {
-            const username = jobs[jobId].username;
-            if (!(usageCount.hasOwnProperty(username))) {
-                usageCount[username] = {
-                    cpus: 0,
-                    jobs: 0,
-                }
-            }
-            if (jobs[jobId].state === 'RUNNING') {
-                usageCount[username].cpus += jobs[jobId].nCpus;
-                usageCount[username].jobs += 1
-            }
-        }
-
-        return usageCount
+    updateUsername(name) {
+        this.setState({username: name, nodeName: null, job: null})
     }
 
-    getUserPiePlot() {
-        let usageCount = this.getUserUsage();
-        const systemUsage = this.getSystemUsage();
-        let usagePieData = [];
+    getWarnedUsers(warnings) {
+        let warnedUsers = [];
+        const jobs = this.state.apiData.jobs;
+        for (let nodeName in warnings) {
+            over_jobs:
+            for (let jobId in warnings[nodeName].jobs) {
+                const username = jobs[jobId].username;
+                if (warnedUsers.includes(username)) continue; // over_jobs
 
-        for (let username in usageCount) {
-            usagePieData.push({
-                username: username,
-                cpus:     usageCount[username].cpus,
-                jobs:     usageCount[username].jobs,
-                percent:  (100 * usageCount[username].cpus / systemUsage.availCores).toFixed(0),
-            })
+                // Node type warnings
+                for (let warning in warnings[nodeName].node) {
+                    if (!(warnedUsers.includes(username))) {
+                        if (warnings[nodeName].node[warning]) {
+                            warnedUsers.push(username);
+                            continue over_jobs
+                        }
+                    }
+                }
+
+                // Job type warnings
+                for (let warning in warnings[nodeName].jobs[jobId]) {
+                    if (warnings[nodeName].jobs[jobId][warning]) {
+                        if (!(warnedUsers.includes(username))) {
+                            warnedUsers.push(username);
+                            continue over_jobs
+                        }
+
+                    }
+                }
+            }
+        }
+        return warnedUsers
+    }
+
+    getUserPiePlot(warnings) {
+        const systemUsage = this.getSystemUsage();
+        let usageData = {running: {}, queued: {}};
+
+        // Sum usage
+        for (let jobId in this.state.apiData.jobs) {
+            const job = this.state.apiData.jobs[jobId];
+            const username = job.username;
+            if (job.state === 'RUNNING') {
+                if (!(usageData.running.hasOwnProperty(username))) {
+                    usageData.running[username] = {
+                        cpus: 0,
+                        jobs: 0,
+                    }
+                }
+                usageData.running[username].cpus += job.nCpus;
+                usageData.running[username].jobs++
+            } else if (job.state === 'PENDING') {
+                if (!(usageData.queued.hasOwnProperty(username))) {
+                    usageData.queued[username] = {
+                        jobs: 0,
+                        hours: 0,
+                    }
+                }
+                usageData.queued[username].hours += job.nCpus * job.timeLimit / 60;
+                usageData.queued[username].jobs++
+            }
         }
 
-        usagePieData.sort((a, b) => a.cpus - b.cpus);
-        for (let i=0; i<usagePieData.length; i++) {
-            usagePieData[i]['index'] = i
+        // Get usage percentage
+        for (let username in usageData.running) {
+            usageData.running[username]['percent'] = 100 * usageData.running[username]['cpus'] / systemUsage.availCores.toFixed(0)
+        }
+
+        // Convert to array
+        let usageDataArray = [];
+        for (let username in usageData.running) {
+            usageDataArray.push({
+                username: username,
+                cpus: usageData.running[username].cpus,
+                jobs: usageData.running[username].jobs,
+            })
+        }
+        usageData.running = usageDataArray;
+        let queueDataArray = [];
+        for (let username in usageData.queued) {
+            queueDataArray.push({
+                username: username,
+                jobs: usageData.queued[username].jobs,
+                hours: usageData.queued[username].hours,
+            })
+        }
+        usageData.queued = queueDataArray;
+
+        // Sort by usage
+        usageData.running.sort((a, b) => a.cpus - b.cpus);
+        for (let i=0; i<usageData.running.length; i++) {
+            usageData.running[i]['index'] = i
         }
 
         return (
             <UserPiePlot
-                usagePieData={usagePieData}
+                usageData = {usageData}
                 runningCores = {systemUsage.runningCores}
                 availCores = {systemUsage.availCores}
-                updateUsername={(name) => this.setState({username: name})}
+                updateUsername = {(name) => this.updateUsername(name)}
+                warnedUsers = {this.getWarnedUsers(warnings)}
+                queue = {this.getQueue()}
             />
         )
 
@@ -686,20 +1056,62 @@ class App extends React.Component {
 
     showData() {
         if (this.state.gotData) {
-            console.log(this.state.apiData)
+            console.log(this.state.apiData);
+            const warnings = this.generateWarnings();
             return (
-                <div>
-                    {/*{this.printSystemUsage()}*/}
-                    {/*{this.printTextStats()}*/}
-                    {this.renderPlots()}
+                <div id='main-box'>
+                    {this.getUserPiePlot(warnings)}
+                    {this.getNodeOverview(warnings)}
+                    {this.getNodeDetails(warnings)}
                 </div>
             )
         }
     }
 
-    render() {
-        return (
+    generateWarnings() {
+        const warnSwap = 10; // If swap greater than
+        const warnWait = 10; // If waiting more than
+        const warnUtil = 90; // If CPU utilisation below
 
+        let warnings = {};
+
+        for (let nodeName in this.state.apiData.nodes) {
+            const node = this.state.apiData.nodes[nodeName];
+            warnings[nodeName] = {node: {}, jobs: {}};
+
+            warnings[nodeName].node['cpuWait'] = (node.cpu.total.wait > warnWait);
+            warnings[nodeName].node['swapUse'] = (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap);
+        }
+
+        for (let jobId in this.state.apiData.jobs) {
+            const job = this.state.apiData.jobs[jobId];
+            if (job.state === 'RUNNING') {
+                for (let nodeName in job.layout) {
+                    const node = this.state.apiData.nodes[nodeName];
+                    warnings[nodeName].jobs[jobId] = {}
+                    // Crude check to see if underutilized - doesn't work if other jobs are on node
+                    if (node.cpu.total.user * node.nCpus / job.layout[nodeName].length < warnUtil) {
+                        warnings[nodeName].jobs[jobId]['cpuUtil'] = true
+                    }
+
+                }
+            }
+        }
+        return warnings
+    }
+
+    render() {
+
+        let updateTime;
+        if (!(this.state.lastUpdate === null)) {
+            updateTime = (
+                <div>
+                    Last updated {this.state.lastUpdate.toTimeString()}
+                </div>
+            )
+        }
+
+        return (
             <div className="App">
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="logo" />
@@ -714,6 +1126,8 @@ class App extends React.Component {
                         Fetch data
                     </button>
                 </div>
+
+                {updateTime}
 
                 {this.showData()}
 
