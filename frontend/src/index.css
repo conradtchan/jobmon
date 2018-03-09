@@ -1,9 +1,29 @@
 :root{
     --bad-job-color: red;
+
+    /*Box colors*/
     --light-shade: #EEEEEE;
     --medium-shade: #DDDDDD;
     --dark-shade: #AAAAAA;
-    --hover-color: #555555;
+
+    /*Hover-over colors*/
+    --hover-outline-color: #555555;
+
+    /*Pie colors*/
+    --piecolor-blank: #DDDDDD;
+    --piecolor-user: #17852D;
+    --piecolor-system: #637AFF;
+    --piecolor-wait: #BF2B1A;
+    --piecolor-mem: #E5B81F;
+    --piecolor-disk: #3A2CC2;
+    --piecolor-gpu: #9A3FC2;
+
+    /*Pie cycle colors*/
+    --piecycle-1: #0088FE;
+    --piecycle-2: #00C49F;
+    --piecycle-3: #FFBB28;
+    --piecycle-4: #FF8042;
+
 }
 
 body {
@@ -41,9 +61,9 @@ body {
 }
 
 .pie-row.items:hover {
-    border-width: 1px;
-    border-color: var(--hover-color);
-    border-style: solid;
+    outline-width: 1px;
+    outline-color: var(--hover-outline-color);
+    outline-style: solid;
 }
 
 .pie-row.items:nth-child(odd) {
@@ -98,7 +118,7 @@ body {
 }
 
 .job-name.warn {
-    color: var(--bad-job-color)
+    color: var(--bad-job-color);
 }
 
 /*.job-name.link {*/
@@ -128,7 +148,7 @@ body {
 .main-item{
     height: 100%;
     /*border: 1px black solid;*/
-    padding: 1%;
+    padding: 2%;
     text-align: left
 }
 
@@ -148,6 +168,7 @@ body {
     top: 0;
     position: -webkit-sticky;
     position: sticky;
+    /*border: 1px black solid;*/
 }
 
 .user-string {
@@ -233,6 +254,8 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     background: var(--medium-shade);
+    margin-top: 5%;
+    margin-bottom: 5%;
 }
 
 .core-pie {

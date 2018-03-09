@@ -183,7 +183,13 @@ class UsagePie extends React.Component {
     }
 
     render() {
-        const pieColors = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+        const style = getComputedStyle(document.documentElement);
+        const pieColors = [
+            style.getPropertyValue('--piecycle-1'),
+            style.getPropertyValue('--piecycle-2'),
+            style.getPropertyValue('--piecycle-3'),
+            style.getPropertyValue('--piecycle-4'),
+        ];
 
         function PieLabel({viewBox, value1, value2, value3}) {
             const {cx, cy} = viewBox;

@@ -176,24 +176,23 @@ class NodePieRow extends React.Component {
 
 class NodePie extends React.Component {
     render() {
+        const style = getComputedStyle(document.documentElement);
         let pieColors = [];
-        pieColors.push('#DDDDDD');
+        pieColors.push(style.getPropertyValue('--piecolor-blank'));
         if (this.props.type === 'cpu') {
-            pieColors.push('#637AFF'); // system
-            pieColors.push('#BF2B1A'); // wait
-            pieColors.push('#17852D'); // user
+            pieColors.push(style.getPropertyValue('--piecolor-system'));
+            pieColors.push(style.getPropertyValue('--piecolor-wait'));
+            pieColors.push(style.getPropertyValue('--piecolor-user')); // user
         } else if (this.props.type === 'mem') {
-            pieColors.push('#E5B81F');
+            pieColors.push(style.getPropertyValue('--piecolor-mem'));
         } else if (this.props.type === 'disk') {
-            pieColors.push('#3A2CC2');
+            pieColors.push(style.getPropertyValue('--piecolor-disk'));
         } else if (this.props.type === 'gpu') {
-            pieColors.push('#9A3FC2')
+            pieColors.push(style.getPropertyValue('--piecolor-gpu'));
         }
 
         let ring = 0;
-        if (this.props.warn) {
-            ring = 100
-        }
+        if (this.props.warn) ring = 100;
 
         return (
             <div className='node-pie'>
@@ -226,7 +225,7 @@ class NodePie extends React.Component {
                             outerRadius='120%'
                             startAngle={90}
                             endAngle={450}
-                            fill="#FF0000"
+                            fill={style.getPropertyValue('--bad-job-color')}
                             paddingAngle={0}
                             isAnimationActive={false}
                         />

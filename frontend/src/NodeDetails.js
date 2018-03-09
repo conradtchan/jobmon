@@ -125,7 +125,6 @@ export default class NodeDetails extends React.Component {
                 <div className='core-grid'>
                     {corePiesLeft}
                 </div>
-                <br />
                 <div className='core-grid'>
                     {corePiesRight}
                 </div>
@@ -180,27 +179,15 @@ class JobText extends React.Component {
 
 class CorePie extends React.Component {
     render() {
+        const style = getComputedStyle(document.documentElement);
         let pieColors = [];
-        pieColors.push('#DDDDDD');
-        if (this.props.type === 'cpu') {
-            pieColors.push('#637AFF'); // system
-            pieColors.push('#BF2B1A'); // wait
-            pieColors.push('#17852D'); // user
-        } else if (this.props.type === 'mem') {
-            pieColors.push('#E5B81F');
-        } else if (this.props.type === 'disk') {
-            pieColors.push('#3A2CC2');
-        } else if (this.props.type === 'gpu') {
-            pieColors.push('#9A3FC2')
-        }
+        pieColors.push(style.getPropertyValue('--piecolor-blank'));
+        pieColors.push(style.getPropertyValue('--piecolor-system'));
+        pieColors.push(style.getPropertyValue('--piecolor-wait'));
+        pieColors.push(style.getPropertyValue('--piecolor-user'));
 
-        let ring;
-        if (this.props.selected) {
-            ring = 100;
-        } else {
-            ring = 0;
-        }
-
+        let ring = 0;
+        if (this.props.selected) ring = 100;
 
         return (
             <div className='core-pie'>
@@ -230,8 +217,8 @@ class CorePie extends React.Component {
                             data={[{name: 'ring', ring: ring}]}
                             nameKey='name'
                             dataKey='ring'
-                            innerRadius='90%'
-                            outerRadius='110%'
+                            innerRadius='100%'
+                            outerRadius='130%'
                             startAngle={90}
                             endAngle={450}
                             fill="#222222"
