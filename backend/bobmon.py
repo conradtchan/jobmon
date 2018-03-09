@@ -21,7 +21,6 @@ mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 def timestamp():
     return time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
 
-
 def cpu_usage(data, name):
     try:
         total = {
@@ -45,6 +44,17 @@ def cpu_usage(data, name):
                 core += [vals]
             except:
                 continue
+
+        # Slurm reports cores with a different numbering, so we map to that
+        # Could generalize for n sockets
+        core_left = []
+        core_right = []
+        for i, x in enumerate(core):
+            if (i % 2 == 0):
+                core_left += [x]
+            else:
+                core_right += [x]
+        core = core_left + core_right
 
         return {'total': total, 'core': core}
     except KeyError:
