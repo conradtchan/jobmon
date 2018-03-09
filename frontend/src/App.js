@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from './logo.svg';
+import logo from './logo.png';
 import './App.css';
 
 import {testData} from "./data";
@@ -19,7 +19,8 @@ class NodeDetails extends React.Component {
         if (!(this.props.selectedJobId === null)) {
             jobCores = this.props.jobs[this.props.selectedJobId].layout[this.props.name]
         }
-        let corePies = [];
+        let corePiesLeft = [];
+        let corePiesRight = [];
         for (let i = 0; i < this.props.node.cpu.core.length; i++) {
             const core = this.props.node.cpu.core[i];
             let coreSelected = false;
@@ -34,19 +35,36 @@ class NodeDetails extends React.Component {
                 user = 100.0 - core.wait - core.system - core.idle
             }
 
-            corePies.push(
-                <CorePie
-                    key = {i}
-                    type = 'cpu'
-                    data = {[
-                        {name: 'user', data: user},
-                        {name: 'wait', data: core.wait},
-                        {name: 'system', data: core.system},
-                        {name: 'idle', data: core.idle}
-                    ]}
-                    selected = {coreSelected}
-                />
-            )
+            if (i < this.props.node.cpu.core.length / 2){
+                corePiesLeft.push(
+                    <CorePie
+                        key = {i}
+                        type = 'cpu'
+                        data = {[
+                            {name: 'user', data: user},
+                            {name: 'wait', data: core.wait},
+                            {name: 'system', data: core.system},
+                            {name: 'idle', data: core.idle}
+                        ]}
+                        selected = {coreSelected}
+                    />
+                )
+            } else {
+                corePiesRight.push(
+                    <CorePie
+                        key = {i}
+                        type = 'cpu'
+                        data = {[
+                            {name: 'user', data: user},
+                            {name: 'wait', data: core.wait},
+                            {name: 'system', data: core.system},
+                            {name: 'idle', data: core.idle}
+                        ]}
+                        selected = {coreSelected}
+                    />
+                )
+            }
+
         }
 
         let userJobList = [];
@@ -109,11 +127,14 @@ class NodeDetails extends React.Component {
                 <div id='nodename-title'>
                     {this.props.name}
                 </div>
-                <div id='core-grid'>
-                    {corePies}
+                <div className='core-grid'>
+                    {corePiesLeft}
+                </div>
+                <br />
+                <div className='core-grid'>
+                    {corePiesRight}
                 </div>
                 <div id='node-description'>
-                    Core affinity is not configured in Slurm. Usage for individual jobs cannot be shown.
                 </div>
                 {warningList}
                 <div id='job-names'>
@@ -525,7 +546,7 @@ class CorePie extends React.Component {
                             nameKey='name'
                             dataKey='data'
                             innerRadius='30%'
-                            outerRadius='60%'
+                            outerRadius='100%'
                             startAngle={90}
                             endAngle={450}
                             isAnimationActive={false}
@@ -544,8 +565,8 @@ class CorePie extends React.Component {
                             data={[{name: 'ring', ring: ring}]}
                             nameKey='name'
                             dataKey='ring'
-                            innerRadius='60%'
-                            outerRadius='100%'
+                            innerRadius='90%'
+                            outerRadius='110%'
                             startAngle={90}
                             endAngle={450}
                             fill="#222222"
@@ -1115,7 +1136,7 @@ class App extends React.Component {
             <div className="App">
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="logo" />
-                    <h1 className="App-title">OzSTAR bobMonitor</h1>
+                    <h1 className="App-title">System monitor</h1>
                 </header>
 
                 <div>
