@@ -1,5 +1,9 @@
 :root{
     --bad-job-color: red;
+    --light-shade: #EEEEEE;
+    --medium-shade: #DDDDDD;
+    --dark-shade: #AAAAAA;
+    --hover-color: #555555;
 }
 
 body {
@@ -27,7 +31,8 @@ body {
 }
 
 .pie-row.headings {
-    background: #AAAAAA;
+    background: var(--dark-shade);
+    min-height: 0px;
     height:100%;
 }
 
@@ -37,12 +42,12 @@ body {
 
 .pie-row.items:hover {
     border-width: 1px;
-    border-color: #555555;
+    border-color: var(--hover-color);
     border-style: solid;
 }
 
 .pie-row.items:nth-child(odd) {
-    background-color: #DDDDDD;
+    background-color: var(--medium-shade);
 }
 
 .node-pie {
@@ -88,8 +93,8 @@ body {
     width: 100%;
     /*border: 1px black solid;*/
     text-align: left;
-    /*cursor: pointer;*/
-    /*text-decoration: underline;*/
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .job-name.warn {
@@ -116,7 +121,7 @@ body {
     margin: 0 auto;
     /*border: 1px black solid;*/
     align-items: top;
-    background-color: #EEEEEE;
+    background-color: var(--light-shade);
 
 }
 
@@ -151,7 +156,7 @@ body {
     cursor: pointer;
 }
 .user-string.hovered {
-    background: #AAAAAA;
+    background: var(--dark-shade);
 }
 
 .user-string.warn {
@@ -223,10 +228,11 @@ body {
     text-align: center;
 }
 
-#core-grid {
+.core-grid {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
+    background: var(--medium-shade);
 }
 
 .core-pie {
