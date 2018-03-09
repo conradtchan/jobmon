@@ -152,10 +152,12 @@ def gpus(data):
             api_name = 'gpu{:d}'.format(i)
             g[api_name] = float(data[metric_name])
 
+    return g
+
 
 def nodes():
     all = ganglia.Stats(do_cpus=True).all
-
+    # print(all)
     now = time.time()  # seconds since 1970
 
     pyslurm_nodes = pyslurm.node().get()
@@ -207,8 +209,6 @@ def jobs():
             'layout':    slurm_jobs[job_id]['cpus_alloc_layout'],
             'timeLimit': slurm_jobs[job_id]['time_limit'], # minutes
         }
-        # if j[job_id]['state'] == 'RUNNING':
-        #     j['layout'] = slurm_jobs[job_id]['cpus_alloc_layout']
 
     return j
 
