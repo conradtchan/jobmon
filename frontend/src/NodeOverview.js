@@ -91,6 +91,38 @@ export default class NodePieRows extends React.Component {
                 <div id='username-title'>
                     {this.props.username}
                 </div>
+                <div className='heading'>
+                    CPU usage legend:
+                </div>
+                <div id='cpu-legend'>
+                    <div className='cpu-legend-item'>
+                        <div className='circle user'>
+                            &nbsp;
+                        </div>
+                        <div className='cpu-legend-label'>
+                            user
+                        </div>
+                    </div>
+                    <div className='cpu-legend-item'>
+                        <div className='circle system'>
+                            &nbsp;
+                        </div>
+                        <div className='cpu-legend-label'>
+                            system
+                        </div>
+                    </div>
+                    <div className='cpu-legend-item'>
+                        <div className='circle wait'>
+                            &nbsp;
+                        </div>
+                        <div className='cpu-legend-label'>
+                            wait
+                        </div>
+                    </div>
+                </div>
+                <div className='instruction'>
+                    Select a node to view detailed system usage.
+                </div>
                 <div id='node-pies'>
                     <div className='pie-row headings'>
                         <div className='node-name heading'>Node</div>
@@ -202,7 +234,7 @@ class NodePie extends React.Component {
                             data={this.props.data}
                             nameKey='name'
                             dataKey='data'
-                            innerRadius='60%'
+                            innerRadius='50%'
                             outerRadius='100%'
                             startAngle={90}
                             endAngle={450}

@@ -90,7 +90,6 @@ export default class UserPiePlot extends React.Component {
                 <div className='bad-job'>
                     Users and nodes with bad jobs are highlighted.
                 </div>
-                <br />
                 <div className="heading">
                     Running:
                 </div>
@@ -102,9 +101,8 @@ export default class UserPiePlot extends React.Component {
                         {userStringsRight}
                     </div>
                 </div>
-                <br />
                 <div className="heading">
-                    Queue: {this.props.queue.size} jobs queued for {this.props.queue.cpuHours} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
+                    Queue: {this.props.queue.size} jobs for {this.props.queue.cpuHours} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
                 </div>
                 <div className="queue-strings">
                     {queueStrings}

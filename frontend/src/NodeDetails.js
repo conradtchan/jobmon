@@ -5,6 +5,7 @@ import {
     PieChart,
     Pie,
     Cell,
+    Label,
 } from 'recharts';
 
 export default class NodeDetails extends React.Component {
@@ -23,20 +24,14 @@ export default class NodeDetails extends React.Component {
                 coreSelected = jobCores.includes(i);
             }
 
-            const coreTotal = core.user + core.wait + core.system + core.idle;
-            let user = core.user
-            // Measurement for user is missing - reconstruct value
-            if (coreTotal < 99.0) {
-                user = 100.0 - core.wait - core.system - core.idle
-            }
-
+            // const coreTotal = core.user + core.wait + core.system + core.idle;
             if (i < this.props.node.cpu.core.length / 2){
                 corePiesLeft.push(
                     <CorePie
                         key = {i}
                         type = 'cpu'
                         data = {[
-                            {name: 'user', data: user},
+                            {name: 'user', data: core.user},
                             {name: 'wait', data: core.wait},
                             {name: 'system', data: core.system},
                             {name: 'idle', data: core.idle}
@@ -50,7 +45,7 @@ export default class NodeDetails extends React.Component {
                         key = {i}
                         type = 'cpu'
                         data = {[
-                            {name: 'user', data: user},
+                            {name: 'user', data: core.user},
                             {name: 'wait', data: core.wait},
                             {name: 'system', data: core.system},
                             {name: 'idle', data: core.idle}
@@ -61,6 +56,50 @@ export default class NodeDetails extends React.Component {
             }
 
         }
+
+        let propPies = [];
+        propPies.push(
+            <PropPie
+                key = 'mem'
+                type = 'mem'
+                textDescription='mem'
+                textValue={(this.props.node.mem.used / 1024).toFixed(0) + 'GB'} // mb->gb
+                data = {[
+                    {name: 'used', data: this.props.node.mem.used},
+                    {name: 'total', data: this.props.node.mem.total - this.props.node.mem.used},
+                ]}
+            />
+        );
+        propPies.push(
+            <PropPie
+                key = 'swap'
+                type = 'swap'
+                textDescription='swap'
+                textValue={((this.props.node.swap.total - this.props.node.swap.free) / 1048576).toFixed(0) + 'GB'} // kb->gb
+                data = {[
+                    {name: 'used', data: this.props.node.swap.total - this.props.node.swap.free},
+                    {name: 'total', data: this.props.node.swap.total},
+                ]}
+            />
+        );
+        for (let i = 0; i < this.props.node.nGpus; i++) {
+            const gpu = 'gpu' + i.toString();
+            console.log(gpu);
+            const gpuPercent = this.props.node.gpus[gpu];
+            propPies.push(
+                <PropPie
+                    key = {gpu}
+                    type = 'gpu'
+                    textDescription={gpu}
+                    textValue={gpuPercent + '%'} // kb->gb
+                    data = {[
+                        {name: 'used', data: gpuPercent},
+                        {name: 'total', data: 100 - gpuPercent},
+                    ]}
+            />
+            )
+        }
+
 
         let userJobList = [];
         let otherJobList = [];
@@ -115,6 +154,7 @@ export default class NodeDetails extends React.Component {
             }
         }
 
+
         const gangliaLink = this.props.gangliaURL.replace('%h', this.props.name);
 
         return (
@@ -122,11 +162,17 @@ export default class NodeDetails extends React.Component {
                 <div id='nodename-title'>
                     {this.props.name}
                 </div>
+                <div className="heading">
+                    CPU cores
+                </div>
                 <div className='core-grid'>
                     {corePiesLeft}
                 </div>
                 <div className='core-grid'>
                     {corePiesRight}
+                </div>
+                <div className='prop-pies'>
+                    {propPies}
                 </div>
                 <div id='node-description'>
                 </div>
@@ -197,7 +243,7 @@ class CorePie extends React.Component {
                             data={this.props.data}
                             nameKey='name'
                             dataKey='data'
-                            innerRadius='30%'
+                            innerRadius='0%'
                             outerRadius='100%'
                             startAngle={90}
                             endAngle={450}
@@ -218,13 +264,74 @@ class CorePie extends React.Component {
                             nameKey='name'
                             dataKey='ring'
                             innerRadius='100%'
-                            outerRadius='130%'
+                            outerRadius='120%'
                             startAngle={90}
                             endAngle={450}
                             fill="#222222"
                             paddingAngle={0}
                             isAnimationActive={false}
                         />
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+        )
+    }
+}
+
+class PropPie extends React.Component {
+    render() {
+        const style = getComputedStyle(document.documentElement);
+        let pieColors = [];
+        pieColors.push(style.getPropertyValue('--piecolor-blank'));
+        if (this.props.type === 'mem') {
+            pieColors.push(style.getPropertyValue('--piecolor-mem'));
+        } else if (this.props.type === 'swap') {
+            pieColors.push(style.getPropertyValue('--piecolor-wait'));
+        } else if (this.props.type === 'gpu') {
+            pieColors.push(style.getPropertyValue('--piecolor-gpu'));
+        }
+
+        function PieLabel({viewBox, value1, value2, value3}) {
+            const {cx, cy} = viewBox;
+            return (
+                <text x={cx} y={cy} fill="#3d405c" className="recharts-text recharts-label" textAnchor="middle" dominantBaseline="central">
+                    <tspan alignmentBaseline="middle" x={cx} dy="-0.5em" fontSize="1.0em">{value1}</tspan>
+                    <tspan alignmentBaseline="middle" x={cx} dy="1.2em" fontSize="0.8em">{value2}</tspan>
+                </text>
+            )
+        }
+
+        return (
+            <div className="prop-pie">
+                <ResponsiveContainer>
+                    <PieChart>
+                        <Pie
+                            data = {this.props.data}
+                            nameKey = 'name'
+                            dataKey = 'data'
+                            innerRadius = '70%'
+                            outerRadius = '100%'
+                            startAngle={90}
+                            endAngle={450}
+                            isAnimationActive={false}
+                        >
+                            {
+                                this.props.data.reverse().map(
+                                    (entry, index) => <Cell
+                                        key={index}
+                                        fill={pieColors[index]}
+                                    />
+                                )
+                            }
+                            <Label
+                                position="center"
+                                content={<PieLabel
+                                    value1={this.props.textDescription}
+                                    value2={this.props.textValue}
+                                />}
+                            >
+                        </Label>
+                        </Pie>
                     </PieChart>
                 </ResponsiveContainer>
             </div>

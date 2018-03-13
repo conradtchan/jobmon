@@ -20,6 +20,8 @@ class App extends React.Component {
             warnings: null,
             lastUpdate: null,
         };
+
+        this.fetchAPI();
     }
 
     sampleData() {
@@ -33,7 +35,11 @@ class App extends React.Component {
         let xhr = new XMLHttpRequest();
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                const jsonData = JSON.parse(xhr.responseText);
+                if (xhr.responseText[0] === '<') {
+                    console.log('Using sample data')
+                    this.sampleData()
+                } else {
+                    const jsonData = JSON.parse(xhr.responseText);
                 this.cleanState(jsonData);
                 this.setState({
                     apiData: jsonData,
@@ -41,6 +47,7 @@ class App extends React.Component {
                     gotData: true,
                 });
                 setTimeout(() => {this.fetchAPI()}, 10000)
+                }
             }
         };
         xhr.open("GET", "../cgi-bin/catBobData2", true);
@@ -67,31 +74,6 @@ class App extends React.Component {
         }
         if (!(hasUser)) this.setState({nodeName: null})
     }
-
-    // parseJobArray(jobArray) {
-    //     let jobData = [];
-    //     for (let i=0; i < jobArray.length; i++) {
-    //         jobData.push({
-    //             jobId:        jobArray[i][0],
-    //             username:     jobArray[i][1],
-    //             group:        jobArray[i][2],
-    //             nodeList:     jobArray[i][3],
-    //             jobLine:      jobArray[i][4],
-    //             mem:          jobArray[i][5][0],
-    //             vmem:         jobArray[i][5][1],
-    //             nCpus:        jobArray[i][5][2],
-    //             nNodes:       jobArray[i][5][3],
-    //             cpuTime:      jobArray[i][5][4],
-    //             wallTime:     jobArray[i][5][5],
-    //             wallLimit:    jobArray[i][5][6],
-    //             parallelEff:  jobArray[i][5][7],
-    //             jobState:     jobArray[i][5][8],
-    //             nodeReqLine:  jobArray[i][5][9],
-    //         })
-    //     }
-    //     return jobData
-    // }
-
 
     selectNode(node) {
         this.setState({nodeName: node, job: null})
@@ -357,7 +339,7 @@ class App extends React.Component {
     }
 
     generateWarnings() {
-        const warnSwap = 10; // If swap greater than
+        const warnSwap = 20; // If swap greater than
         const warnWait = 10; // If waiting more than
         const warnUtil = 90; // If CPU utilisation below
 
@@ -406,14 +388,14 @@ class App extends React.Component {
                     {/*<h1 className="App-title">System monitor</h1>*/}
                 </header>
 
-                <div>
-                    <button onClick={() => this.sampleData()}>
-                        Use sample data
-                    </button>
-                    <button onClick={() =>this.fetchAPI()}>
-                        Fetch data
-                    </button>
-                </div>
+                {/*<div>*/}
+                    {/*<button onClick={() => this.sampleData()}>*/}
+                        {/*Use sample data*/}
+                    {/*</button>*/}
+                    {/*<button onClick={() =>this.fetchAPI()}>*/}
+                        {/*Fetch data*/}
+                    {/*</button>*/}
+                {/*</div>*/}
 
                 {updateTime}
 

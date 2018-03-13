@@ -29,7 +29,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: sans-serif;
+    font-family: 'Rubik', sans-serif;
 }
 
 
@@ -46,7 +46,7 @@ body {
     display: flex;
     flex-direction: row;
     height: auto;
-    min-height: 60px;
+    min-height: 50px;
     /*justify-content: space-between;*/
 }
 
@@ -177,7 +177,10 @@ body {
     cursor: pointer;
 }
 .user-string.hovered {
-    background: var(--dark-shade);
+    /*background: var(--dark-shade);*/
+    outline-width: 1px;
+    outline-color: var(--hover-outline-color);
+    outline-style: solid;
 }
 
 .user-string.warn {
@@ -254,8 +257,8 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     background: var(--medium-shade);
-    margin-top: 5%;
-    margin-bottom: 5%;
+    /*margin-top: 5%;*/
+    margin-bottom: 5%   ;
 }
 
 .core-pie {
@@ -263,10 +266,64 @@ body {
     min-height: 40px;
 }
 
+.prop-pies {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.prop-pie {
+    width: 25%;
+    height: 80px;
+}
+
 .instruction {
     font-style: italic;
 }
 
-.heading{
+.heading {
+    margin-top: 5%;
     font-weight: bold;
+}
+
+#cpu-legend {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    background: var(--medium-shade);
+    margin-bottom: 5%;
+
+}
+
+.cpu-legend-item {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 33%;
+}
+
+.cpu-legend-label{
+
+}
+
+.circle {
+    width: 1.0em;
+    height: 1.0em;
+    -webkit-border-radius: 50%;
+    -moz-border-radius: 50%;
+    border-radius: 50%;
+    margin-right: 0.3em;
+}
+
+.circle.user {
+    background: var(--piecolor-user)
+}
+
+.circle.system {
+    background: var(--piecolor-system)
+}
+
+.circle.wait {
+    background: var(--piecolor-wait)
 }
