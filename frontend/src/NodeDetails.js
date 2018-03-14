@@ -123,6 +123,7 @@ export default class NodeDetails extends React.Component {
                     userJobList.push(
                         <JobText
                             key={jobId}
+                            id={jobId}
                             job={this.props.jobs[jobId]}
                             warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
                             onClick={() => this.props.onJobClick(jobId)}
@@ -132,6 +133,7 @@ export default class NodeDetails extends React.Component {
                     otherJobList.push(
                         <JobText
                             key={jobId}
+                            id={jobId}
                             job={this.props.jobs[jobId]}
                             warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
                             onClick={() => this.props.onJobClick(jobId)}
@@ -233,6 +235,9 @@ export default class NodeDetails extends React.Component {
                     <div className='job-names heading'>
                         User jobs:
                     </div>
+                    <div className='instruction'>
+                        Select a job to highlight allocated CPU cores.
+                    </div>
                     <div>
                         {userJobList}
                     </div>
@@ -268,7 +273,7 @@ class JobText extends React.Component {
                 className={nameClass}
                 onClick={() => this.props.onClick()}
             >
-                ({this.props.job.nCpus}) {this.props.job.name} ({this.props.job.state})
+                {this.props.id}: {this.props.job.name} [{this.props.job.state}, {this.props.job.nCpus} cores]
             </div>
         )
     }
