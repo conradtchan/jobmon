@@ -50,7 +50,7 @@ class App extends React.Component {
                 }
             }
         };
-        xhr.open("GET", "../cgi-bin/catBobData2", true);
+        xhr.open("GET", "../cgi-bin/bobdata", true);
         xhr.send();
     }
 

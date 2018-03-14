@@ -41,6 +41,7 @@ export default class UserPiePlot extends React.Component {
                 <UserString
                     key={user.username}
                     user={user}
+                    availCores={this.props.availCores}
                     hoveredIndex={this.state.usagePieActiveIndex}
                     mouseEnter={() => this.updateActive(user.index)}
                     mouseLeave={() => this.restoreSelected()}
@@ -133,7 +134,7 @@ class UserString extends React.Component {
                     {this.props.user.username}
                 </div>
                 <div className="user-string-percent">
-                    {this.props.user.percent}%
+                    {(100 * this.props.user.cpus / this.props.availCores).toFixed(1)}%
                 </div>
                 <div className="user-string-jobs">
                     ({this.props.user.jobs} jobs)

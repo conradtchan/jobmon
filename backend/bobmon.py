@@ -2,10 +2,13 @@
 
 API_VERSION = 11
 
+import gzip
 from os import path
 from os import rename
 from os import chmod
 from os import unlink
+from shutil import copyfile
+from datetime import datetime
 import stat
 import json
 import time
@@ -271,14 +274,19 @@ def do_all():
     return data
 
 
-def write_data(data, filename):
+def write_data(data, filename, history_filename):
     # Write to a temporary file, because it takes time
     tmp_filename = filename + '.new'
-    with open(tmp_filename, 'w') as f:
-        json.dump(data, f)
+    json_str = json.dumps(data)
+    json_bytes = json_str.encode('utf-8')
+    with gzip.open(tmp_filename, 'wb') as f:
+        f.write(json_bytes)
     chmod(tmp_filename, mode644)
 
-    # Copy temporary file to live file
+    # Copy historical file for the time machine
+    copyfile(tmp_filename, history_filename)
+
+    # Rename temporary file to live file
     try:
         rename(tmp_filename, filename)
     except (OSError, error):
@@ -286,13 +294,16 @@ def write_data(data, filename):
         print('write_data: renamed failed. OsError', error)
         if err_num == 13: # Permission denied
             print('Permission denied (probably running as a user)')
+
+        # Unlink temp file
         unlink(tmp_filename)
 
 if __name__ == '__main__':
     while True:
         data = do_all()
 
-        output_file = path.join(config.DATA_PATH, 'bobData.json')
-        write_data(data, output_file)
+        output_file = path.join(config.DATA_PATH, 'bobData.json.gz')
+        history_file = path.join(config.DATA_PATH, 'bobData_{:}.json.gz'.format(str(datetime.now()).replace(' ', '_')))
+        write_data(data, output_file, history_file)
         print('Done!')
         time.sleep(config.UPDATE_INTERVAL)

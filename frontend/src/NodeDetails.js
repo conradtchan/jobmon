@@ -17,7 +17,7 @@ export default class NodeDetails extends React.Component {
         } else if (num > thresh * 1048576) {
             return (num / 1048576).toFixed(places).toString() + ' M'
         } else if (num > thresh * 1024) {
-            return (num / 1024).toFixed(places).toString() + ' G'
+            return (num / 1024).toFixed(places).toString() + ' K'
         } else {
             return num.toFixed(places).toString() + ' '
         }
