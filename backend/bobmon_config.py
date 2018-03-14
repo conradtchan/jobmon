@@ -9,10 +9,11 @@ UPDATE_INTERVAL = 10
 #       and client side code in bobMon.js to display them.
 #       so this line isn't all that is required to enable these features
 EXTRA_GANGLIA_METRICS = [
-    'bytes_in', 'bytes_out', 'pkts_in', 'pkts_out',
+    'ib_bytes_in', 'ib_bytes_out', 'ib_pkts_in', 'ib_pkts_out',
     'gpu0_util', 'gpu1_util', 'gpu2_util', 'gpu3_util', 'gpu4_util', 'gpu5_util', 'gpu6_util',
     'cpu1_temp', 'cpu2_temp', 'ambient_temp', 'chassis_temp', 'rear_temp', 'front_temp',  # temperatures
-    'node_power', 'cmm_power_in', 'fan_rms'   # node and cmm input kw, cmm fans
+    'node_power', 'cmm_power_in', 'fan_rms',   # node and cmm input kw, cmm fans
+    'diskstat_sda_read_bytes_per_sec', 'diskstat_sda_write_bytes_per_sec',  # lustre
 ]
 
 # Ganglia config

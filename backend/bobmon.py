@@ -154,6 +154,34 @@ def gpus(data):
 
     return g
 
+def infiniband(data):
+    n = {}
+    if 'ib_bytes_in' in data.keys():
+        n['bytes_in'] = float(data['ib_bytes_in'])
+
+    if 'ib_bytes_out' in data.keys():
+        n['bytes_out'] = float(data['ib_bytes_out'])
+
+    if 'ib_pkts_in' in data.keys():
+        n['pkts_in'] = float(data['ib_pkts_in'])
+
+    if 'ib_pkts_out' in data.keys():
+        n['pkts_out'] = float(data['ib_pkts_out'])
+
+
+    if len(n.keys()) > 0:
+        return n
+
+def lustre(data):
+    l = {}
+    if 'diskstat_sda_read_bytes_per_sec' in data.keys():
+        l['read'] = float(data['diskstat_sda_read_bytes_per_sec'])
+
+    if 'diskstat_sda_write_bytes_per_sec' in data.keys():
+        l['write'] = float(data['diskstat_sda_write_bytes_per_sec'])
+
+    if len(l.keys()) > 0:
+        return l
 
 def nodes():
     all = ganglia.Stats(do_cpus=True).all
@@ -172,14 +200,16 @@ def nodes():
         else:
             nodes[host]['up'] = False
 
-        nodes[host]['cpu']      = cpu_usage(all[host], host)
-        nodes[host]['mem']      = mem(all[host], host)
-        nodes[host]['swap']     = swap(all[host], host)
-        nodes[host]['disk']     = disk(all[host], host)
-        nodes[host]['temps']    = temps(all[host])
-        nodes[host]['power']    = power(all[host])
-        nodes[host]['fans']     = fans(all[host])
-        nodes[host]['gpus']     = gpus(all[host])
+        nodes[host]['cpu']          = cpu_usage(all[host], host)
+        nodes[host]['mem']          = mem(all[host], host)
+        nodes[host]['swap']         = swap(all[host], host)
+        nodes[host]['disk']         = disk(all[host], host)
+        nodes[host]['temps']        = temps(all[host])
+        nodes[host]['power']        = power(all[host])
+        nodes[host]['fans']         = fans(all[host])
+        nodes[host]['gpus']         = gpus(all[host])
+        nodes[host]['infiniband']   = infiniband(all[host])
+        nodes[host]['lustre']       = lustre(all[host])
 
         if host in pyslurm_nodes.keys():
             nodes[host]['inSlurm'] = True

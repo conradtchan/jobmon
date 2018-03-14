@@ -9,6 +9,20 @@ import {
 } from 'recharts';
 
 export default class NodeDetails extends React.Component {
+    printBytes(num, places) {
+        const thresh = 2;
+
+        if (num > thresh * 107374124) {
+            return (num / 107374124).toFixed(places).toString() + ' G'
+        } else if (num > thresh * 1048576) {
+            return (num / 1048576).toFixed(places).toString() + ' M'
+        } else if (num > thresh * 1024) {
+            return (num / 1024).toFixed(places).toString() + ' G'
+        } else {
+            return num.toFixed(places).toString() + ' '
+        }
+    }
+
     render () {
         // Cores belonging to selected job
         let jobCores = [];
@@ -84,7 +98,6 @@ export default class NodeDetails extends React.Component {
         );
         for (let i = 0; i < this.props.node.nGpus; i++) {
             const gpu = 'gpu' + i.toString();
-            console.log(gpu);
             const gpuPercent = this.props.node.gpus[gpu];
             propPies.push(
                 <PropPie
@@ -154,6 +167,33 @@ export default class NodeDetails extends React.Component {
             }
         }
 
+        let infiniband = [];
+        if (!(this.props.node.infiniband === null)){
+            infiniband.push(
+                <div key = 'in'>
+                    In: {this.printBytes(this.props.node.infiniband.bytes_in, 2)}B/s ({this.printBytes(this.props.node.infiniband.pkts_in, 1)}pkt/s)
+                </div>
+            );
+            infiniband.push(
+                <div key = 'out'>
+                    Out: {this.printBytes(this.props.node.infiniband.bytes_out, 2)}B/s ({this.printBytes(this.props.node.infiniband.pkts_out, 1)}pkt/s)
+                </div>
+            );
+        }
+
+        let lustre = [];
+        if (!(this.props.node.lustre === null)){
+            lustre.push(
+                <div key = 'read'>
+                    Read: {this.printBytes(this.props.node.lustre.read, 2)}B/s
+                </div>
+            );
+            lustre.push(
+                <div key = 'write'>
+                    Write: {this.printBytes(this.props.node.lustre.write, 2)}B/s
+                </div>
+            );
+        }
 
         const gangliaLink = this.props.gangliaURL.replace('%h', this.props.name);
 
@@ -171,9 +211,21 @@ export default class NodeDetails extends React.Component {
                 <div className='core-grid'>
                     {corePiesRight}
                 </div>
+                <div className="heading">
+                    Resources
+                </div>
                 <div className='prop-pies'>
                     {propPies}
                 </div>
+                <div className="heading">
+                    Infiniband traffic
+                </div>
+                {infiniband}
+                <div className="heading">
+                    Lustre access
+                </div>
+                {lustre}
+                <br />
                 <div id='node-description'>
                 </div>
                 {warningList}

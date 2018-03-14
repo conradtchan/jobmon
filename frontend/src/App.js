@@ -107,7 +107,7 @@ class App extends React.Component {
                     nodeHasJob[host].push({
                         jobId: jobId,
                         username: username,
-                        count: jobs[jobId].layout[host].length,
+                        nodeLayout: jobs[jobId].layout[host],
                         jobName: jobs[jobId].name,
                     })
                 }

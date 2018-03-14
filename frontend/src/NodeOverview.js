@@ -40,6 +40,30 @@ export default class NodePieRows extends React.Component {
                 (this.props.userOnNode.hasOwnProperty(this.props.username)) &&
                 (this.props.userOnNode[this.props.username].includes(nodeName))
             ) {
+                // CPU percent is only out of the requested cores
+                let userCores = [];
+                for (let job of this.props.nodeHasJob[nodeName]) {
+                    if (job.username === this.props.username) {
+                        for (let core of job.nodeLayout) {
+                            if (!(userCores.includes(core))) {
+                                userCores.push(core)
+                            }
+                        }
+                    }
+                }
+                let cpuUsage = {user: 0, system: 0, wait: 0, idle: 0};
+                for (let i of userCores) {
+                    cpuUsage.user   += this.props.nodeData[nodeName].cpu.core[i].user;
+                    cpuUsage.system += this.props.nodeData[nodeName].cpu.core[i].system;
+                    cpuUsage.wait   += this.props.nodeData[nodeName].cpu.core[i].wait;
+                    cpuUsage.idle   += this.props.nodeData[nodeName].cpu.core[i].idle;
+
+                }
+                cpuUsage.user   /= userCores.length;
+                cpuUsage.system /= userCores.length;
+                cpuUsage.wait   /= userCores.length;
+                cpuUsage.idle   /= userCores.length;
+
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
                     memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
@@ -66,14 +90,10 @@ export default class NodePieRows extends React.Component {
                     <NodePieRow
                         key={nodeName}
                         selectedUser={this.props.username}
-                        jobs={this.props.nodeHasJob[nodeName]}
                         nodeName={nodeName}
                         multiNodeJobLink={this.state.jobIdLink}
                         jobMouseEnter={(jobId) => this.setState({jobIdLink: jobId})}
-                        cpuUser={this.props.nodeData[nodeName].cpu.total.user}
-                        cpuSystem={this.props.nodeData[nodeName].cpu.total.system}
-                        cpuWait={this.props.nodeData[nodeName].cpu.total.wait}
-                        cpuIdle={this.props.nodeData[nodeName].cpu.total.idle}
+                        cpuUsage={cpuUsage}
                         mem={memPercent}
                         disk={diskPercent}
                         gpu={gpuPercent}
@@ -128,7 +148,7 @@ export default class NodePieRows extends React.Component {
                         <div className='node-name heading'>Node</div>
                         <div className='node-pie heading'>CPU</div>
                         <div className='node-pie heading'>Mem</div>
-                        <div className='node-pie heading'>Disk</div>
+                        {/*<div className='node-pie heading'>Disk</div>*/}
                         <div className='node-pie heading'>GPU</div>
                     </div>
                     {nodePies}
@@ -168,10 +188,10 @@ class NodePieRow extends React.Component {
                 <NodePie
                     type='cpu'
                     data={[
-                        {name: 'user', data: this.props.cpuUser},
-                        {name: 'wait', data: this.props.cpuWait},
-                        {name: 'system', data: this.props.cpuSystem},
-                        {name: 'idle', data: this.props.cpuIdle},
+                        {name: 'user', data: this.props.cpuUsage.user},
+                        {name: 'wait', data: this.props.cpuUsage.wait},
+                        {name: 'system', data: this.props.cpuUsage.system},
+                        {name: 'idle', data: this.props.cpuUsage.idle},
                     ]}
                     warn={this.props.nodeWarn.cpuWait}
                 />
@@ -183,14 +203,14 @@ class NodePieRow extends React.Component {
                     ]}
                     warn={this.props.nodeWarn.swapUse}
                 />
-                <NodePie
-                    type='disk'
-                    data={[
-                        {name: 'disk', data: this.props.disk},
-                        {name: 'free', data: 100 - this.props.disk},
-                    ]}
-                    warn={false}
-                />
+                {/*<NodePie*/}
+                    {/*type='disk'*/}
+                    {/*data={[*/}
+                        {/*{name: 'disk', data: this.props.disk},*/}
+                        {/*{name: 'free', data: 100 - this.props.disk},*/}
+                    {/*]}*/}
+                    {/*warn={false}*/}
+                {/*/>*/}
                 <NodePie
                     type='gpu'
                     data={[
