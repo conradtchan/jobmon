@@ -225,6 +225,23 @@ def nodes():
     return nodes
 
 
+# Dict of username mappings
+usernames = {}
+
+
+def hide_username(name):
+    if name not in usernames.keys():
+        new_name = name[:3]
+        add_letters = 0
+        for long_name, short_name in usernames.items():
+            if short_name == new_name:
+                add_letters += 1
+                new_name = name[:3 + add_letters]
+        usernames[name] = new_name
+
+    return usernames[name]
+
+
 def jobs():
     slurm_jobs = pyslurm.job().get()
 
@@ -233,7 +250,7 @@ def jobs():
     for job_id in slurm_jobs:
         j[job_id] = {
             'name':      slurm_jobs[job_id]['name'],
-            'username':  pwd.getpwuid(slurm_jobs[job_id]['user_id'])[0],
+            'username':  hide_username(pwd.getpwuid(slurm_jobs[job_id]['user_id'])[0]),
             'nCpus':     slurm_jobs[job_id]['num_cpus'],
             'state':     slurm_jobs[job_id]['job_state'],
             'layout':    slurm_jobs[job_id]['cpus_alloc_layout'],
