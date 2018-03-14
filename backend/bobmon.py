@@ -9,9 +9,9 @@ from os import chmod
 from os import unlink
 from shutil import copyfile
 from datetime import datetime
+import time
 import stat
 import json
-import time
 import bobmon_config as config
 import bobmon_ganglia as ganglia
 import pyslurm
@@ -22,7 +22,9 @@ mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
 
 def timestamp():
-    return time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
+    # Seconds since epoch
+    d = datetime.now()
+    return int(time.mktime(d.timetuple()))
 
 def cpu_usage(data, name):
     try:

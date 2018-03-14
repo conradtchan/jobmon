@@ -18,7 +18,7 @@ class App extends React.Component {
             nodeName: null,
             job: null,
             warnings: null,
-            lastUpdate: null,
+            snapshotTime: null,
         };
 
         this.fetchAPI();
@@ -43,14 +43,14 @@ class App extends React.Component {
                 this.cleanState(jsonData);
                 this.setState({
                     apiData: jsonData,
-                    lastUpdate: new Date(),
+                    snapshotTime: new Date(jsonData.timestamp * 1000),
                     gotData: true,
                 });
                 setTimeout(() => {this.fetchAPI()}, 10000)
                 }
             }
         };
-        xhr.open("GET", "../cgi-bin/bobdata", true);
+        xhr.open("GET", "../cgi-bin/bobdata.py", true);
         xhr.send();
     }
 
@@ -373,10 +373,11 @@ class App extends React.Component {
     render() {
 
         let updateTime;
-        if (!(this.state.lastUpdate === null)) {
+        if (!(this.state.snapshotTime === null)) {
+            const timeAgo = ((new Date() - this.state.snapshotTime) / 1000).toFixed(0);
             updateTime = (
                 <div>
-                    Last updated {this.state.lastUpdate.toTimeString()}
+                    Last updated {this.state.snapshotTime.toTimeString()} ({timeAgo} seconds ago)
                 </div>
             )
         }

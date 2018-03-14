@@ -15,4 +15,4 @@ FILE_NAME = 'bobData.json.gz'
 filename = path.join(FILE_PATH, FILE_NAME)
 
 with gzip.open(filename, 'r') as f:
-    print(f.read())
+    print(f.read().decode('utf-8'))
