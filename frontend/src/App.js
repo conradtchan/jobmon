@@ -388,16 +388,14 @@ class App extends React.Component {
                     {/*<h1 className="App-title">System monitor</h1>*/}
                 </header>
 
-                {/*<div>*/}
-                    {/*<button onClick={() => this.sampleData()}>*/}
-                        {/*Use sample data*/}
-                    {/*</button>*/}
-                    {/*<button onClick={() =>this.fetchAPI()}>*/}
-                        {/*Fetch data*/}
-                    {/*</button>*/}
-                {/*</div>*/}
+                <div id="time-machine">
+                    <div id="time-machine-title">
+                        Time machine
+                    </div>
+                    The time machine isn't working yet. Come back at another time.
+                    {updateTime}
+                </div>
 
-                {updateTime}
 
                 {this.show()}
 

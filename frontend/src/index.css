@@ -32,6 +32,18 @@ body {
     font-family: 'Rubik', sans-serif;
 }
 
+#time-machine {
+    background-color: var(--light-shade);
+    width: 90%;
+    max-width: 1280px;
+    margin: 15px auto;
+    justify-content: space-between;
+}
+
+#time-machine-title {
+    font-size: x-large;
+    text-align: center;
+}
 
 .bad-job {
     color: var(--bad-job-color);
