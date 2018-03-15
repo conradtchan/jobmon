@@ -299,6 +299,19 @@ def write_data(data, filename):
         unlink(tmp_filename)
 
 
+def get_core_usage(data):
+    usage = {'avail': 0, 'running': 0}
+    for hostname, node in data['nodes'].items():
+        if node['inSlurm']:
+            usage['avail'] += node['nCpus']
+
+    for id, job in data['jobs'].items():
+        if job['state'] == 'RUNNING':
+            usage['running'] += job['nCpus']
+
+    return usage
+
+
 def history():
     filenames = config.FILE_NAME_PATTERN.format('*')
     filepaths = path.join(config.DATA_PATH, filenames)
@@ -310,13 +323,17 @@ def history():
         if match is not None:
             times += [match.group(1)]
 
+    now = timestamp()
+
     h = {'history': {}}
     for t in times:
-        # filename = config.FILE_NAME_PATTERN.format(t)
-        # with gzip.open(filename, 'r') as f:
-        #     json_text = f.read().decode('utf-8')
-        #     data = json.loads(json_text)
-        h['history'][int(t)] = int(t) % 100
+        if now - int(t) < 86400:
+            filename = config.FILE_NAME_PATTERN.format(t)
+            filepath = path.join(config.DATA_PATH, filename)
+            with gzip.open(filepath, 'r') as f:
+                json_text = f.read().decode('utf-8')
+                data = json.loads(json_text)
+                h['history'][int(t)] = get_core_usage(data)
 
     return h
 

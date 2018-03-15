@@ -44,7 +44,12 @@ class App extends React.Component {
                 if (xhr.responseText[0] === '<') {
                     console.log('Using sample history');
                     this.setState({
-                        history: {0: 0, 100: 12, 200: 8, 300: 30}
+                        history: {
+                            0: {avail: 10, running: 6},
+                            100: {avail: 15, running: 3},
+                            200: {avail: 15, running: 11},
+                            300: {avail: 15, running: 8}
+                        }
                     });
                 } else {
                     const jsonData = JSON.parse(xhr.responseText);
@@ -86,6 +91,7 @@ class App extends React.Component {
 
     fetchTime(time) {
         this.setState({holdSnap: true});
+        console.log('Fetching time', time)
         let xhr = new XMLHttpRequest();
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4 && xhr.status === 200) {
@@ -374,7 +380,7 @@ class App extends React.Component {
 
     show() {
         if (this.state.gotData) {
-            console.log(this.state.apiData);
+            // console.log(this.state.apiData);
             const warnings = this.generateWarnings();
             return (
                 <div id='main-box'>
@@ -420,7 +426,10 @@ class App extends React.Component {
 
     getTimeMachine() {
         return(
-            <TimeMachine history = {this.state.history} />
+            <TimeMachine
+                history = {this.state.history}
+                clickLoadTime = {(time) => this.fetchTime(time)}
+            />
         )
     }
 
@@ -439,6 +448,19 @@ class App extends React.Component {
             this.setState({timeAgo: ((new Date() - this.state.snapshotTime) / 1000).toFixed(0)});
             setTimeout(() => {this.getTimeAgo()}, 1000);
         }
+    }
+
+    timeString(time) {
+        if (time < 60) {
+            return time.toFixed(0) + ' seconds'
+        } else if (time < 3600) {
+            return (time / 60).toFixed(0) + ' minutes'
+        } else if (time < 86400) {
+            return (time / 3600).toFixed(0) + ' hours'
+        } else {
+            return (time / 86400).toFixed(0) + ' days'
+        }
+
     }
 
     render() {
@@ -467,7 +489,7 @@ class App extends React.Component {
                             {this.state.snapshotTime.toTimeString()}
                         </div>
                         <div>
-                            ({this.state.timeAgo} seconds ago)
+                            ({this.timeString(parseInt(this.state.timeAgo))} ago)
                         </div>
                     </div>
                 </div>
