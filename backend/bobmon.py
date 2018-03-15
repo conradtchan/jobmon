@@ -7,8 +7,8 @@ from os import path
 from os import rename
 from os import chmod
 from os import unlink
-from shutil import copyfile
 from datetime import datetime
+from glob import glob
 import time
 import stat
 import json
@@ -16,6 +16,7 @@ import bobmon_config as config
 import bobmon_ganglia as ganglia
 import pyslurm
 import pwd
+import re
 
 # Get 644 for chmod
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
@@ -276,7 +277,7 @@ def do_all():
     return data
 
 
-def write_data(data, filename, history_filename):
+def write_data(data, filename):
     # Write to a temporary file, because it takes time
     tmp_filename = filename + '.new'
     json_str = json.dumps(data)
@@ -284,9 +285,6 @@ def write_data(data, filename, history_filename):
     with gzip.open(tmp_filename, 'wb') as f:
         f.write(json_bytes)
     chmod(tmp_filename, mode644)
-
-    # Copy historical file for the time machine
-    copyfile(tmp_filename, history_filename)
 
     # Rename temporary file to live file
     try:
@@ -300,12 +298,40 @@ def write_data(data, filename, history_filename):
         # Unlink temp file
         unlink(tmp_filename)
 
+
+def history():
+    filenames = config.FILE_NAME_PATTERN.format('*')
+    filepaths = path.join(config.DATA_PATH, filenames)
+    data_files = glob(filepaths)
+    times = []
+    for x in data_files:
+        filename = path.basename(x)
+        match = re.search(config.FILE_NAME_PATTERN.format('(\d+)'), filename)
+        if match is not None:
+            times += [match.group(1)]
+
+    h = {'history': {}}
+    for t in times:
+        # filename = config.FILE_NAME_PATTERN.format(t)
+        # with gzip.open(filename, 'r') as f:
+        #     json_text = f.read().decode('utf-8')
+        #     data = json.loads(json_text)
+        h['history'][int(t)] = int(t) % 100
+
+    return h
+
+
 if __name__ == '__main__':
     while True:
         data = do_all()
 
-        output_file = path.join(config.DATA_PATH, 'bobData.json.gz')
-        history_file = path.join(config.DATA_PATH, 'bobData_{:}.json.gz'.format(str(datetime.now()).replace(' ', '_')))
-        write_data(data, output_file, history_file)
+        output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(''))
+        record_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(data['timestamp']))
+        write_data(data, output_file)
+        write_data(data, record_file)
+
+        history_file = path.join(config.DATA_PATH, 'history.json.gz')
+        write_data(history(), history_file)
+
         print('Done!')
         time.sleep(config.UPDATE_INTERVAL)

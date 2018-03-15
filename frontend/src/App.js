@@ -18,10 +18,13 @@ class App extends React.Component {
             nodeName: null,
             job: null,
             warnings: null,
-            snapshotTime: null,
+            snapshotTime: new Date(0),
+            holdSnap: false,
+            timeAgo: 0,
         };
 
-        this.fetchAPI();
+        this.fetchLatest();
+        this.getTimeAgo();
     }
 
     sampleData() {
@@ -31,27 +34,48 @@ class App extends React.Component {
         })
     }
 
-    fetchAPI() {
-        let xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = () => {
-            if (xhr.readyState === 4 && xhr.status === 200) {
-                if (xhr.responseText[0] === '<') {
-                    console.log('Using sample data')
-                    this.sampleData()
-                } else {
-                    const jsonData = JSON.parse(xhr.responseText);
-                this.cleanState(jsonData);
-                this.setState({
-                    apiData: jsonData,
-                    snapshotTime: new Date(jsonData.timestamp * 1000),
-                    gotData: true,
-                });
-                setTimeout(() => {this.fetchAPI()}, 10000)
+    fetchLatest() {
+        // Only update if the user doesn't want to hold onto a snap
+        if (!(this.state.holdSnap)) {
+            let xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    if (xhr.responseText[0] === '<') {
+                        console.log('Using sample data')
+                        this.sampleData()
+                    } else {
+                        const jsonData = JSON.parse(xhr.responseText);
+                    this.cleanState(jsonData);
+                    this.setState({
+                        apiData: jsonData,
+                        snapshotTime: new Date(jsonData.timestamp * 1000),
+                        gotData: true,
+                    });
+                    setTimeout(() => {this.fetchLatest()}, 10000)
+                    }
                 }
-            }
-        };
-        xhr.open("GET", "../cgi-bin/bobdata.py", true);
-        xhr.send();
+            };
+            xhr.open("GET", "../cgi-bin/bobdata.py", true);
+            xhr.send();
+        }
+    }
+
+    fetchTime(time) {
+        this.setState({holdSnap: true});
+        let xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = () => {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                        const jsonData = JSON.parse(xhr.responseText);
+                    this.cleanState(jsonData);
+                    this.setState({
+                        apiData: jsonData,
+                        snapshotTime: new Date(jsonData.timestamp * 1000),
+                        gotData: true,
+                    });
+                }
+            };
+            xhr.open("GET", "../cgi-bin/bobdata.py?time=" + time.toString(), true);
+            xhr.send();
     }
 
     cleanState(newData) {
@@ -370,18 +394,24 @@ class App extends React.Component {
         return warnings
     }
 
-    render() {
+    freeze() {
+        this.setState({holdSnap: true});
+    }
 
-        let updateTime;
+    unfreezeLatest() {
+        this.setState({holdSnap: false},
+            () => this.fetchLatest()
+        );
+    }
+
+    getTimeAgo() {
         if (!(this.state.snapshotTime === null)) {
-            const timeAgo = ((new Date() - this.state.snapshotTime) / 1000).toFixed(0);
-            updateTime = (
-                <div>
-                    Last updated {this.state.snapshotTime.toTimeString()} ({timeAgo} seconds ago)
-                </div>
-            )
+            this.setState({timeAgo: ((new Date() - this.state.snapshotTime) / 1000).toFixed(0)});
+            setTimeout(() => {this.getTimeAgo()}, 1000);
         }
+    }
 
+    render() {
         return (
             <div className="App">
                 <header className="App-header">
@@ -393,10 +423,23 @@ class App extends React.Component {
                     <div id="time-machine-title">
                         Time machine
                     </div>
-                    The time machine isn't working yet. Come back at another time.
-                    {updateTime}
+                    <div>
+                        <button onClick={() => this.freeze()}>Freeze</button>
+                        <button onClick={() => this.unfreezeLatest()}>Load latest</button>
+                        <button onClick={() => this.fetchTime(0)}>Load ages ago</button>
+                    </div>
+                    <div>
+                        <div>
+                        Showing data from
+                        </div>
+                        <div id='clock'>
+                            {this.state.snapshotTime.toTimeString()}
+                        </div>
+                        <div>
+                            ({this.state.timeAgo} seconds ago)
+                        </div>
+                    </div>
                 </div>
-
 
                 {this.show()}
 

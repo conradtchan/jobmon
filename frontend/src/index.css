@@ -45,6 +45,10 @@ body {
     text-align: center;
 }
 
+#clock {
+    font-size: x-large;
+}
+
 .bad-job {
     color: var(--bad-job-color);
 }
