@@ -211,48 +211,48 @@ class UsagePie extends React.Component {
 
         return (
             <div>
-            <ResponsiveContainer width='100%' minWidth={0} minHeight={400}>
-                <PieChart>
-                    <Pie
-                        activeIndex={this.props.activeIndex}
-                        activeShape={(props) => this.renderActiveShape(props)}
-                        data={pieData}
-                        nameKey='username'
-                        dataKey='cpus'
-                        // label={({username, percent, jobs})=>`${username} ${percent}% (${jobs} jobs)`}
-                        labelLine={false}
-                        // cx={400}
-                        // cy={400}
-                        innerRadius="60%"
-                        outerRadius="70%"
-                        fill="#8884d8"
-                        paddingAngle={2}
-                        startAngle={90 + (360 * (1.0 - (this.props.runningCores / this.props.availCores)))}
-                        endAngle={450}
-                        onClick={(data,index) => this.props.onPieClick(data,index)}
-                        onMouseEnter={(data,index) => this.pieMouseEnter(data,index)}
-                        onMouseLeave={(data,index) => this.pieMouseLeave(data,index)}
-                    >
-                        {
-                            this.props.runningData.map(
-                                (entry, index) => <Cell
-                                    key={index}
-                                    fill={pieColors[index % pieColors.length]}
-                                />
-                            )
-                        }
-                        <Label
-                            // width="50%"
-                            position="center"
-                            content={<PieLabel
-                                value1={`${(this.props.runningCores / this.props.availCores * 100).toFixed(0)}%`}
-                                value2={`(${this.props.runningCores} / ${this.props.availCores})`}
-                                value3='core utilization'
-                            />}>
-                        </Label>
-                    </Pie>
-                </PieChart>
-            </ResponsiveContainer>
+                <ResponsiveContainer width='100%' minWidth={0} minHeight={400}>
+                    <PieChart>
+                        <Pie
+                            activeIndex={this.props.activeIndex}
+                            activeShape={(props) => this.renderActiveShape(props)}
+                            data={pieData}
+                            nameKey='username'
+                            dataKey='cpus'
+                            // label={({username, percent, jobs})=>`${username} ${percent}% (${jobs} jobs)`}
+                            labelLine={false}
+                            // cx={400}
+                            // cy={400}
+                            innerRadius="60%"
+                            outerRadius="70%"
+                            fill="#8884d8"
+                            paddingAngle={2}
+                            startAngle={90 + (360 * (1.0 - (this.props.runningCores / this.props.availCores)))}
+                            endAngle={450}
+                            onClick={(data,index) => this.props.onPieClick(data,index)}
+                            onMouseEnter={(data,index) => this.pieMouseEnter(data,index)}
+                            onMouseLeave={(data,index) => this.pieMouseLeave(data,index)}
+                        >
+                            {
+                                this.props.runningData.map(
+                                    (entry, index) => <Cell
+                                        key={index}
+                                        fill={pieColors[index % pieColors.length]}
+                                    />
+                                )
+                            }
+                            <Label
+                                // width="50%"
+                                position="center"
+                                content={<PieLabel
+                                    value1={`${(this.props.runningCores / this.props.availCores * 100).toFixed(0)}%`}
+                                    value2={`(${this.props.runningCores} / ${this.props.availCores})`}
+                                    value3='core utilization'
+                                />}>
+                            </Label>
+                        </Pie>
+                    </PieChart>
+                </ResponsiveContainer>
             </div>
         )
     }

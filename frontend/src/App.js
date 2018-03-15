@@ -7,6 +7,7 @@ import {testData} from "./data";
 import NodeDetails from "./NodeDetails"
 import NodePieRows from "./NodeOverview"
 import UserPiePlot from "./UserPiePlot"
+import TimeMachine from "./TimeMachine"
 
 class App extends React.Component {
     constructor(props) {
@@ -21,8 +22,10 @@ class App extends React.Component {
             snapshotTime: new Date(0),
             holdSnap: false,
             timeAgo: 0,
+            history: null,
         };
 
+        this.fetchHistory();
         this.fetchLatest();
         this.getTimeAgo();
     }
@@ -32,6 +35,27 @@ class App extends React.Component {
             apiData: testData,
             gotData: true,
         })
+    }
+
+    fetchHistory() {
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                if (xhr.responseText[0] === '<') {
+                    console.log('Using sample history');
+                    this.setState({
+                        history: {0: 0, 100: 12, 200: 8, 300: 30}
+                    });
+                } else {
+                    const jsonData = JSON.parse(xhr.responseText);
+                    this.setState({
+                        history: jsonData.history
+                    });
+                }
+            }
+        };
+        xhr.open("GET", "../cgi-bin/bobhistory.py", true);
+        xhr.send();
     }
 
     fetchLatest() {
@@ -45,13 +69,13 @@ class App extends React.Component {
                         this.sampleData()
                     } else {
                         const jsonData = JSON.parse(xhr.responseText);
-                    this.cleanState(jsonData);
-                    this.setState({
-                        apiData: jsonData,
-                        snapshotTime: new Date(jsonData.timestamp * 1000),
-                        gotData: true,
-                    });
-                    setTimeout(() => {this.fetchLatest()}, 10000)
+                        this.cleanState(jsonData);
+                        this.setState({
+                            apiData: jsonData,
+                            snapshotTime: new Date(jsonData.timestamp * 1000),
+                            gotData: true,
+                        });
+                        setTimeout(() => {this.fetchLatest()}, 10000)
                     }
                 }
             };
@@ -394,6 +418,12 @@ class App extends React.Component {
         return warnings
     }
 
+    getTimeMachine() {
+        return(
+            <TimeMachine history = {this.state.history} />
+        )
+    }
+
     freeze() {
         this.setState({holdSnap: true});
     }
@@ -423,6 +453,7 @@ class App extends React.Component {
                     <div id="time-machine-title">
                         Time machine
                     </div>
+                    {this.getTimeMachine()}
                     <div>
                         <button onClick={() => this.freeze()}>Freeze</button>
                         <button onClick={() => this.unfreezeLatest()}>Load latest</button>
