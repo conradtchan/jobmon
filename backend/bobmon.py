@@ -327,7 +327,7 @@ def history():
 
     h = {'history': {}}
     for t in times:
-        if now - int(t) < 86400:
+        if now - int(t) < 43200:
             filename = config.FILE_NAME_PATTERN.format(t)
             filepath = path.join(config.DATA_PATH, filename)
             with gzip.open(filepath, 'r') as f:

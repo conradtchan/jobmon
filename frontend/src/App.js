@@ -13,7 +13,7 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            data: null,
+            apiData: null,
             gotData: false,
             username: null,
             nodeName: null,
@@ -23,6 +23,8 @@ class App extends React.Component {
             holdSnap: false,
             timeAgo: 0,
             history: null,
+            briefHistory: [],
+            briefHistoryWindow: 600 // seconds
         };
 
         this.fetchHistory();
@@ -30,11 +32,47 @@ class App extends React.Component {
         this.getTimeAgo();
     }
 
-    sampleData() {
-        this.setState({
-            apiData: testData,
-            gotData: true,
-        })
+    initBriefHistory() {
+        const observerNow = this.state.snapshotTime / 1000;
+
+        // Add a bunch of values
+        for (let time in this.state.history) {
+            if (observerNow - time < this.state.briefHistoryWindow) {
+                // Make request for snapshot, then push to list
+                let xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        const jsonData = JSON.parse(xhr.responseText);
+                        this.state.briefHistory.push(jsonData)
+                    }
+                };
+                xhr.open("GET", "../cgi-bin/bobdata.py?time=" + time.toString(), true);
+                xhr.send();
+            }
+        }
+    }
+
+    updateBriefHistory() {
+        // If there are only a few values, then it may be due to time travel
+        if (this.state.briefHistory.length < 3) this.initBriefHistory();
+
+        const observerNow = this.state.snapshotTime / 1000;
+
+        let newBriefHistory = [];
+        let times = [];
+        for (let data of this.state.briefHistory) {
+            if (observerNow - data.timestamp < this.state.briefHistoryWindow) {
+                newBriefHistory.push(data);
+                times.push(data.timestamp)
+            }
+        }
+
+        // Add newest snapshot
+        if ( !(times.includes(this.state.apiData.timestamp)) && !(this.state.apiData === null) ) {
+            newBriefHistory.push(this.state.apiData)
+        }
+
+        this.setState({briefHistory: newBriefHistory})
     }
 
     fetchHistory() {
@@ -53,9 +91,10 @@ class App extends React.Component {
                     });
                 } else {
                     const jsonData = JSON.parse(xhr.responseText);
-                    this.setState({
-                        history: jsonData.history
-                    });
+                    this.setState(
+                        {history: jsonData.history},
+                        () => this.initBriefHistory()
+                    );
                 }
             }
         };
@@ -70,8 +109,11 @@ class App extends React.Component {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     if (xhr.responseText[0] === '<') {
-                        console.log('Using sample data')
-                        this.sampleData()
+                        console.log('Using sample data');
+                        this.setState({
+                            apiData: testData,
+                            gotData: true,
+                        })
                     } else {
                         const jsonData = JSON.parse(xhr.responseText);
                         this.cleanState(jsonData);
@@ -79,7 +121,7 @@ class App extends React.Component {
                             apiData: jsonData,
                             snapshotTime: new Date(jsonData.timestamp * 1000),
                             gotData: true,
-                        });
+                        }, () => this.updateBriefHistory());
                         setTimeout(() => {this.fetchLatest()}, 10000)
                     }
                 }
@@ -91,7 +133,6 @@ class App extends React.Component {
 
     fetchTime(time) {
         this.setState({holdSnap: true});
-        console.log('Fetching time', time)
         let xhr = new XMLHttpRequest();
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4 && xhr.status === 200) {
@@ -101,7 +142,7 @@ class App extends React.Component {
                         apiData: jsonData,
                         snapshotTime: new Date(jsonData.timestamp * 1000),
                         gotData: true,
-                    });
+                    }, () => this.updateBriefHistory());
                 }
             };
             xhr.open("GET", "../cgi-bin/bobdata.py?time=" + time.toString(), true);
@@ -380,7 +421,6 @@ class App extends React.Component {
 
     show() {
         if (this.state.gotData) {
-            // console.log(this.state.apiData);
             const warnings = this.generateWarnings();
             return (
                 <div id='main-box'>
@@ -472,15 +512,6 @@ class App extends React.Component {
                 </header>
 
                 <div id="time-machine">
-                    <div id="time-machine-title">
-                        Time machine
-                    </div>
-                    {this.getTimeMachine()}
-                    <div>
-                        <button onClick={() => this.freeze()}>Freeze</button>
-                        <button onClick={() => this.unfreezeLatest()}>Load latest</button>
-                        <button onClick={() => this.fetchTime(0)}>Load ages ago</button>
-                    </div>
                     <div>
                         <div>
                         Showing data from
@@ -489,8 +520,13 @@ class App extends React.Component {
                             {this.state.snapshotTime.toTimeString()}
                         </div>
                         <div>
-                            ({this.timeString(parseInt(this.state.timeAgo))} ago)
+                            ({this.timeString(parseInt(this.state.timeAgo, 10))} ago)
                         </div>
+                    </div>
+                    {this.getTimeMachine()}
+                    <div>
+                        <button onClick={() => this.freeze()}>Freeze</button>
+                        <button onClick={() => this.unfreezeLatest()}>Load latest</button>
                     </div>
                 </div>
 

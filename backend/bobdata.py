@@ -2,7 +2,7 @@
 
 import cgi
 import cgitb; cgitb.enable()
-import gzip
+from sys import stdout
 from os import path
 from glob import glob
 import re
@@ -50,11 +50,13 @@ def get_closest_file():
         return FILE_NAME_PATTERN.format('')
 
 
-# Return JSON object
-print('Content-Type: application/json')
-print('')
+# Return compressed JSON object
+stdout.write('Content-Encoding: gzip\n')
+stdout.write('Content-Type: application/json\n\n')
 
 filename = get_closest_file()
 filepath = path.join(DATA_PATH, filename)
-with gzip.open(filepath, 'r') as f:
-    print(f.read().decode('utf-8'))
+
+stdout.flush()
+with open(filepath, 'rb') as f:
+    stdout.buffer.write(f.read())

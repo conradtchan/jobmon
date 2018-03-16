@@ -2,14 +2,11 @@ import React from "react";
 
 import {
     ResponsiveContainer,
-    AreaChart,
-    Area,
     ComposedChart,
     Bar,
-    LineChart,
     Line,
     XAxis,
-    YAxis,
+    // Area,
     Tooltip,
 } from 'recharts';
 
@@ -21,41 +18,43 @@ export default class TimeMachine extends React.Component {
         let data = [];
         let i = 0;
         for (let time in this.props.history) {
-            if (i % 3 === 0) {
+            if (i % 6 === 0) {
                 const d = new Date(time * 1000);
                 data.push({
                     time: time,
-                    timeString: d.toLocaleTimeString('en-AU', {timeZone: 'australia/Melbourne'}),
+                    timeString: d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') ,
                     running: this.props.history[time].running,
-                    avail: this.props.history[time].avail
+                    free: this.props.history[time].avail - this.props.history[time].running
                 })
             }
             i++
         }
 
         return (
-            <div>
-                <div className='instruction'>
-                    Click on a point in time.
-                </div>
+            <div id='timeline'>
                 <ResponsiveContainer width='100%' height={100}>
                     <ComposedChart
                         data={data}
                         barCategoryGap={0}
+                        barGap={0}
                     >
                         <XAxis dataKey="timeString"/>
-                        <YAxis/>
-                        {/*<Tooltip/>*/}
-                        <Line type='monotone' dataKey='avail' stroke='#82ca9d' fill='#EEEEEE' />
-                        {/*<Line type='monotone' dataKey='running' stroke='#8884d8' fill='#8884d8'*/}
-                            {/*onClick={() => console.log('clicked')}*/}
-                        {/*/>*/}
+                        {/*<Line type='monotone' dataKey='avail' stroke='#82ca9d' fill='#EEEEEE' />*/}
                         <Bar
                             dataKey='running'
                             fill='#8884d8'
+                            stackId="a"
+                            // fillOpacity={0}
                             onClick={(obj, index) => this.props.clickLoadTime(data[index].time)}
                         />
-
+                        <Bar
+                            dataKey='free'
+                            fill='#82ca9d'
+                            stackId="a"
+                            // fillOpacity={0}
+                            onClick={(obj, index) => this.props.clickLoadTime(data[index].time)}
+                        />
+                        <Tooltip/>
                     </ComposedChart>
                 </ResponsiveContainer>
             </div>
