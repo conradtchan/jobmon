@@ -7,6 +7,7 @@ from os import path
 from os import rename
 from os import chmod
 from os import unlink
+from os import remove
 from datetime import datetime
 from glob import glob
 import time
@@ -327,14 +328,17 @@ def history():
 
     h = {'history': {}}
     for t in times:
-        if now - int(t) < 43200:
+        if now - int(t) < config.HISTORY_LENGTH:
             filename = config.FILE_NAME_PATTERN.format(t)
             filepath = path.join(config.DATA_PATH, filename)
             with gzip.open(filepath, 'r') as f:
                 json_text = f.read().decode('utf-8')
                 data = json.loads(json_text)
                 h['history'][int(t)] = get_core_usage(data)
-
+        elif now - int(t) > config.HISTORY_DELETE_AGE:
+            filename = config.FILE_NAME_PATTERN.format(t)
+            filepath = path.join(config.DATA_PATH, filename)
+            remove(filepath)
     return h
 
 

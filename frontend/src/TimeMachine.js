@@ -48,8 +48,10 @@ export default class TimeMachine extends React.Component {
 
         let data = [];
         let i = 0;
+        const nBars = 100;
+        const nSkip = parseInt((Object.keys(this.props.history).length / nBars).toFixed(0), 10);
         for (let time in this.props.history) {
-            if (i % 6 === 0) {
+            if (i % nSkip === 0) {
                 const d = new Date(time * 1000);
                 data.push({
                     time: time,

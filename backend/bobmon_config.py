@@ -31,3 +31,9 @@ NODE_DEAD_TIMEOUT = 60
 
 # Max number for multicpu metric (set to maximum number of cores on system)
 MULTICPU_MAX = 72
+
+# How much history to return in a list (in seconds)
+HISTORY_LENGTH = 86400
+
+# When to delete old history (seconds old)
+HISTORY_DELETE_AGE = 86400 * 2

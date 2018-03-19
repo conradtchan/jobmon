@@ -2,8 +2,6 @@ import React from 'react';
 import logo from './logo.png';
 import './App.css';
 
-import {testData} from "./data";
-
 import NodeDetails from "./NodeDetails"
 import NodePieRows from "./NodeOverview"
 import UserPiePlot from "./UserPiePlot"
