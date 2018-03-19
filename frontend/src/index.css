@@ -369,3 +369,7 @@ body {
 .circle.wait {
     background: var(--piecolor-wait)
 }
+
+#ganglia-link {
+    margin-top: 5%;
+}

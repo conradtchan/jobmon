@@ -42,7 +42,9 @@ export default class TimeMachine extends React.Component {
 
         if (this.props.history === null) {
             return(
-                <div className="loader"></div>
+                <div id="time-machine">
+                    <div className="loader"></div>
+                </div>
             )
         }
 

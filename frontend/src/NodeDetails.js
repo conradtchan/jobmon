@@ -5,7 +5,7 @@ import {
     PieChart,
     Pie,
     Cell,
-    Label,
+    Tooltip,
     AreaChart,
     Area,
     XAxis,
@@ -129,8 +129,10 @@ export default class NodeDetails extends React.Component {
 
         for (let data of this.props.briefHistory) {
             const nodeData = data.nodes[this.props.name];
+            const d = new Date(data.timestamp * 1000);
             let x = {
                 time: data.timestamp,
+                timeString: d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'),
                 user: nodeData.cpu.total.user,
                 system: nodeData.cpu.total.system,
                 wait: nodeData.cpu.total.wait,
@@ -278,6 +280,18 @@ export default class NodeDetails extends React.Component {
                 <div id='nodename-title'>
                     {this.props.name}
                 </div>
+                <div id='job-names'>
+                    <div className='job-names heading'>
+                        User jobs:
+                    </div>
+                    {warningList}
+                    <div className='instruction'>
+                        Select a job to highlight allocated CPU cores.
+                    </div>
+                    <div>
+                        {jobLists.user}
+                    </div>
+                </div>
                 <div className="heading">
                     CPU cores
                 </div>
@@ -291,21 +305,7 @@ export default class NodeDetails extends React.Component {
                     Resource usage (past hour)
                 </div>
                 {this.getPropCharts(historyChart, gpuNames)}
-                <div id='node-description'>
-                </div>
-                <div id='job-names'>
-                    <div className='job-names heading'>
-                        User jobs:
-                    </div>
-                    {warningList}
-                    <div className='instruction'>
-                        Select a job to highlight allocated CPU cores.
-                    </div>
-                    <div>
-                        {jobLists.user}
-                    </div>
-                </div>
-                <br />
+                {(jobLists.other.length > 0) &&
                 <div>
                     <div className='job-names heading'>
                         Cohabitant jobs:
@@ -314,8 +314,8 @@ export default class NodeDetails extends React.Component {
                         {jobLists.other}
                     </div>
                 </div>
-                <br />
-                <div>
+                }
+                <div id='ganglia-link'>
                     <a href = {gangliaLink}>
                         Ganglia report
                     </a>
@@ -440,6 +440,9 @@ class PropChart extends React.Component {
             for (let key of this.props.dataKeys) {
                 scaledData[i][key] = (this.props.data[i][key] / factor).toFixed(0)
             }
+            // Time for X Axis
+            scaledData[i]['time'] = this.props.data[i].time;
+            scaledData[i]['timeString'] = this.props.data[i].timeString;
         }
         // Scale max too
         if ((dataMax === parseInt(dataMax, 10)) && !(this.props.unit === '%')) {
@@ -471,6 +474,11 @@ class PropChart extends React.Component {
                         <AreaChart
                             data={scaledData}
                         >
+                            <XAxis
+                                hide = {true}
+                                label = 'time'
+                                dataKey = 'timeString'
+                            />
                             <YAxis
                                 width={80}
                                 orientation='right'
@@ -482,6 +490,7 @@ class PropChart extends React.Component {
                                 interval={0}
                             />
                             {areas}
+                            <Tooltip/>
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
