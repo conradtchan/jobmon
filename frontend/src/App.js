@@ -77,22 +77,11 @@ class App extends React.Component {
         let xhr = new XMLHttpRequest();
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
-                if (xhr.responseText[0] === '<') {
-                    console.log('Using sample history');
-                    this.setState({
-                        history: {
-                            0: {avail: 10, running: 6},
-                            100: {avail: 15, running: 3},
-                            200: {avail: 15, running: 11},
-                            300: {avail: 15, running: 8}
-                        }
-                    });
-                } else {
-                    const jsonData = JSON.parse(xhr.responseText);
-                    this.setState(
-                        {history: jsonData.history}
-                    );
-                }
+                const jsonData = JSON.parse(xhr.responseText);
+                this.setState(
+                    {history: jsonData.history}
+                );
+                setTimeout(() => {this.fetchHistory()}, 100000) // 100 seconds
             }
         };
         xhr.open("GET", "../cgi-bin/bobhistory.py", true);
@@ -105,23 +94,14 @@ class App extends React.Component {
             let xhr = new XMLHttpRequest();
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4 && xhr.status === 200) {
-                    if (xhr.responseText[0] === '<') {
-                        console.log('Using sample data');
-                        this.setState({
-                            apiData: testData,
-                            gotData: true,
-                        })
-                    } else {
-                        const jsonData = JSON.parse(xhr.responseText);
-                        this.cleanState(jsonData);
-                        this.setState({
-                            apiData: jsonData,
-                            snapshotTime: new Date(jsonData.timestamp * 1000),
-                            gotData: true,
-                        }, () => this.updateBriefHistory());
-                        console.log(jsonData)
-                        setTimeout(() => {this.fetchLatest()}, 10000)
-                    }
+                    const jsonData = JSON.parse(xhr.responseText);
+                    this.cleanState(jsonData);
+                    this.setState({
+                        apiData: jsonData,
+                        snapshotTime: new Date(jsonData.timestamp * 1000),
+                        gotData: true,
+                    }, () => this.updateBriefHistory());
+                    setTimeout(() => {this.fetchLatest()}, 10000) // 10 seconds
                 }
             };
             xhr.open("GET", "../cgi-bin/bobdata.py", true);
@@ -470,6 +450,8 @@ class App extends React.Component {
                 history = {this.state.history}
                 clickLoadTime = {(time) => this.fetchTime(time)}
                 snapshotTime = {this.state.snapshotTime}
+                freeze = {() => this.freeze()}
+                unfreeze = {() => this.unfreeze()}
             />
         )
     }
@@ -478,7 +460,7 @@ class App extends React.Component {
         this.setState({holdSnap: true});
     }
 
-    unfreezeLatest() {
+    unfreeze() {
         this.setState({holdSnap: false},
             () => this.fetchLatest()
         );

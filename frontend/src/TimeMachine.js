@@ -4,9 +4,7 @@ import {
     ResponsiveContainer,
     ComposedChart,
     Bar,
-    Line,
     XAxis,
-    // Area,
     Tooltip,
 } from 'recharts';
 
@@ -104,8 +102,8 @@ export default class TimeMachine extends React.Component {
                     </ResponsiveContainer>
                 </div>
                 <div>
-                    <button onClick={() => this.freeze()}>Freeze</button>
-                    <button onClick={() => this.unfreezeLatest()}>Load latest</button>
+                    <button onClick={() => this.props.freeze()}>Freeze</button>
+                    <button onClick={() => this.props.unfreeze()}>Load latest</button>
                 </div>
             </div>
         )
