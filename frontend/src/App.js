@@ -21,15 +21,13 @@ class App extends React.Component {
             warnings: null,
             snapshotTime: new Date(0),
             holdSnap: false,
-            timeAgo: 0,
             history: null,
             briefHistory: [],
-            briefHistoryWindow: 600 // seconds
+            briefHistoryWindow: 3600 // seconds
         };
 
         this.fetchHistory();
         this.fetchLatest();
-        this.getTimeAgo();
     }
 
     initBriefHistory() {
@@ -121,6 +119,7 @@ class App extends React.Component {
                             snapshotTime: new Date(jsonData.timestamp * 1000),
                             gotData: true,
                         }, () => this.updateBriefHistory());
+                        console.log(jsonData)
                         setTimeout(() => {this.fetchLatest()}, 10000)
                     }
                 }
@@ -242,6 +241,7 @@ class App extends React.Component {
                     selectedJobId={this.state.job}
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     warnings={warnings}
+                    data={this.state.apiData}
                     briefHistory={this.state.briefHistory}
                 />
             )
@@ -469,6 +469,7 @@ class App extends React.Component {
             <TimeMachine
                 history = {this.state.history}
                 clickLoadTime = {(time) => this.fetchTime(time)}
+                snapshotTime = {this.state.snapshotTime}
             />
         )
     }
@@ -483,26 +484,6 @@ class App extends React.Component {
         );
     }
 
-    getTimeAgo() {
-        if (!(this.state.snapshotTime === null)) {
-            this.setState({timeAgo: ((new Date() - this.state.snapshotTime) / 1000).toFixed(0)});
-            setTimeout(() => {this.getTimeAgo()}, 1000);
-        }
-    }
-
-    timeString(time) {
-        if (time < 60) {
-            return time.toFixed(0) + ' seconds'
-        } else if (time < 3600) {
-            return (time / 60).toFixed(0) + ' minutes'
-        } else if (time < 86400) {
-            return (time / 3600).toFixed(0) + ' hours'
-        } else {
-            return (time / 86400).toFixed(0) + ' days'
-        }
-
-    }
-
     render() {
         return (
             <div className="App">
@@ -510,26 +491,7 @@ class App extends React.Component {
                     <img src={logo} className="App-logo" alt="logo" />
                     {/*<h1 className="App-title">System monitor</h1>*/}
                 </header>
-
-                <div id="time-machine">
-                    <div>
-                        <div>
-                        Showing data from
-                        </div>
-                        <div id='clock'>
-                            {this.state.snapshotTime.toTimeString()}
-                        </div>
-                        <div>
-                            ({this.timeString(parseInt(this.state.timeAgo, 10))} ago)
-                        </div>
-                    </div>
-                    {this.getTimeMachine()}
-                    <div>
-                        <button onClick={() => this.freeze()}>Freeze</button>
-                        <button onClick={() => this.unfreezeLatest()}>Load latest</button>
-                    </div>
-                </div>
-
+                {this.getTimeMachine()}
                 {this.show()}
 
             </div>

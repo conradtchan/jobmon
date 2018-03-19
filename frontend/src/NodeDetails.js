@@ -134,8 +134,8 @@ export default class NodeDetails extends React.Component {
                 user: nodeData.cpu.total.user,
                 system: nodeData.cpu.total.system,
                 wait: nodeData.cpu.total.wait,
-                mem: nodeData.mem.used,
-                swap: nodeData.swap.total - nodeData.swap.free,
+                mem: nodeData.mem.used * 1048576, // mb
+                swap: (nodeData.swap.total - nodeData.swap.free) * 1024, // kb
                 infiniband_in: nodeData.infiniband.bytes_in,
                 infiniband_out: nodeData.infiniband.bytes_out,
                 infiniband_pkts_in: nodeData.infiniband.pkts_in,
@@ -153,8 +153,7 @@ export default class NodeDetails extends React.Component {
     }
 
     getGpuNames() {
-        const data = this.props.briefHistory[0]; // use the first snapshot, assume all the same
-        const nodeData = data.nodes[this.props.name];
+        const nodeData = this.props.data.nodes[this.props.name];
         let gpuNames = [];
         for (let i = 0; i < nodeData.nGpus; i++) {
                 const gpuName = 'gpu' + i.toString();
@@ -163,9 +162,105 @@ export default class NodeDetails extends React.Component {
         return gpuNames
     }
 
-    render () {
+    getPropCharts(historyChart, gpuNames) {
+        // This may take a while to load, so show a loading spinner
+        if (historyChart.length < 3) {
+            return(
+                <div className="loader"></div>
+            )
+        }
+
         const style = getComputedStyle(document.documentElement);
 
+        return(
+            <div className='prop-charts'>
+                <PropChart
+                    name = 'CPU total'
+                    data = {historyChart}
+                    dataKeys = {['user', 'system', 'wait']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-user'),
+                        style.getPropertyValue('--piecolor-system'),
+                        style.getPropertyValue('--piecolor-wait')
+                    ]}
+                    unit = '%'
+                    dataMax = {100}
+                    stacked = {true}
+                />
+                <PropChart
+                    name = 'Memory'
+                    data = {historyChart}
+                    dataKeys = {['mem']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-mem'),
+                    ]}
+                    unit = 'B'
+                    dataMax = {this.props.data.nodes[this.props.name].mem.total * 1048576}
+                    stacked = {false}
+                />
+                <PropChart
+                    name = 'Swap'
+                    data = {historyChart}
+                    dataKeys = {['swap']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-wait'),
+                    ]}
+                    unit = 'B'
+                    dataMax = {this.props.data.nodes[this.props.name].swap.total * 1024}
+                    stacked = {false}
+                />
+                <PropChart
+                    name = 'GPU'
+                    data = {historyChart}
+                    dataKeys = {gpuNames}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-gpu'),
+                    ]}
+                    unit = '%'
+                    dataMax = {100}
+                    stacked = {false}
+                />
+                <PropChart
+                    name = 'Infiniband traffic'
+                    data = {historyChart}
+                    dataKeys = {['infiniband_in', 'infiniband_out']}
+                    colors = {[
+                        style.getPropertyValue('--piecycle-1'),
+                        style.getPropertyValue('--piecycle-2'),
+                    ]}
+                    unit = 'B/s'
+                    dataMax = 'dataMax'
+                    stacked = {false}
+                />
+                <PropChart
+                    name = 'Infiniband packet rate'
+                    data = {historyChart}
+                    dataKeys = {['infiniband_pkts_in', 'infiniband_pkts_out']}
+                    colors = {[
+                        style.getPropertyValue('--piecycle-3'),
+                        style.getPropertyValue('--piecycle-4'),
+                    ]}
+                    unit = '/s'
+                    dataMax = 'dataMax'
+                    stacked = {false}
+                />
+                <PropChart
+                    name = 'Lustre access'
+                    data = {historyChart}
+                    dataKeys = {['lustre_read', 'lustre_write']}
+                    colors = {[
+                        style.getPropertyValue('--piecycle-1'),
+                        style.getPropertyValue('--piecycle-2'),
+                    ]}
+                    unit = 'B/s'
+                    dataMax = 'dataMax'
+                    stacked = {false}
+                />
+            </div>
+        )
+    }
+
+    render () {
         const corePies = this.getCorePies();
         const corePiesLeft = corePies[0];
         const corePiesRight = corePies[1];
@@ -193,86 +288,9 @@ export default class NodeDetails extends React.Component {
                     {corePiesRight}
                 </div>
                 <div className="heading">
-                    Resources
+                    Resource usage (past hour)
                 </div>
-                <div className='prop-charts'>
-                    <PropChart
-                        name = 'CPU'
-                        data = {historyChart}
-                        dataKeys = {['user', 'system', 'wait']}
-                        colors = {[
-                            style.getPropertyValue('--piecolor-user'),
-                            style.getPropertyValue('--piecolor-system'),
-                            style.getPropertyValue('--piecolor-wait')
-                        ]}
-                        dataMax = {100}
-                        stacked = {true}
-                    />
-                    <PropChart
-                        name = 'Memory'
-                        data = {historyChart}
-                        dataKeys = {['mem']}
-                        colors = {[
-                            style.getPropertyValue('--piecolor-mem'),
-                        ]}
-                        dataMax = 'dataMax'
-                        stacked = {false}
-                    />
-                    <PropChart
-                        name = 'Swap'
-                        data = {historyChart}
-                        dataKeys = {['swap']}
-                        colors = {[
-                            style.getPropertyValue('--piecolor-wait'),
-                        ]}
-                        dataMax = 'dataMax'
-                        stacked = {false}
-                    />
-                    <PropChart
-                        name = 'GPU'
-                        data = {historyChart}
-                        dataKeys = {gpuNames}
-                        colors = {[
-                            style.getPropertyValue('--piecolor-gpu'),
-                        ]}
-                        dataMax = {100}
-                        stacked = {false}
-                    />
-                    <PropChart
-                        name = 'Infiniband traffic'
-                        data = {historyChart}
-                        dataKeys = {['infiniband_in', 'infiniband_out']}
-                        colors = {[
-                            style.getPropertyValue('--piecycle-1'),
-                            style.getPropertyValue('--piecycle-2'),
-                        ]}
-                        dataMax = 'dataMax'
-                        stacked = {false}
-                    />
-                    <PropChart
-                        name = 'Infiniband packet rate'
-                        data = {historyChart}
-                        dataKeys = {['infiniband_pkts_in', 'infiniband_pkts_out']}
-                        colors = {[
-                            style.getPropertyValue('--piecycle-3'),
-                            style.getPropertyValue('--piecycle-4'),
-                        ]}
-                        dataMax = 'dataMax'
-                        stacked = {false}
-                    />
-                    <PropChart
-                        name = 'Lustre access'
-                        data = {historyChart}
-                        dataKeys = {['lustre_read', 'lustre_write']}
-                        colors = {[
-                            style.getPropertyValue('--piecycle-1'),
-                            style.getPropertyValue('--piecycle-2'),
-                        ]}
-                        dataMax = 'dataMax'
-                        stacked = {false}
-                    />
-
-                </div>
+                {this.getPropCharts(historyChart, gpuNames)}
                 <div id='node-description'>
                 </div>
                 <div id='job-names'>
@@ -381,29 +399,54 @@ class CorePie extends React.Component {
 }
 
 class PropChart extends React.Component {
-    unitConvert(num) {
-        const thresh = 2;
-        let val;
-        let unit;
-        if (num > thresh * 107374124) {
-            val = (num / 107374124);
-            unit = 'G';
-        } else if (num > thresh * 1048576) {
-            val = (num / 1048576);
-            unit = 'M'
-        } else if (num > thresh * 1024) {
-            val = (num / 1024);
-            unit = 'K';
-        } else {
-            val = num;
-            unit = '';
-        }
-        return {val: val, unit: unit}
-    }
-
     render () {
         let areas = [];
 
+        // Determine unit scaling
+        let maxVal = 0;
+        let dataMax = this.props.dataMax;
+
+        if (dataMax === parseInt(dataMax, 10)) {
+            maxVal = parseInt(dataMax, 10)
+        } else {
+            for (let i = 0; i < this.props.data.length; i++) {
+                for (let key of this.props.dataKeys) {
+                    if (this.props.data[i][key] > maxVal) {
+                        maxVal = this.props.data[i][key]
+                    }
+                }
+            }
+        }
+        let factor;
+        let scale;
+        const thresh = 1;
+        if (maxVal > thresh * 107374124) {
+            factor =  107374124;
+            scale = 'G';
+        } else if (maxVal > thresh * 1048576) {
+            factor = 1048576;
+            scale = 'M'
+        } else if (maxVal > thresh * 1024) {
+            factor = 1024;
+            scale = 'K';
+        } else {
+            factor = 1;
+            scale = '';
+        }
+        // Scale all data
+        let scaledData = [];
+        for (let i = 0; i < this.props.data.length; i++) {
+            scaledData.push({});
+            for (let key of this.props.dataKeys) {
+                scaledData[i][key] = (this.props.data[i][key] / factor).toFixed(0)
+            }
+        }
+        // Scale max too
+        if ((dataMax === parseInt(dataMax, 10)) && !(this.props.unit === '%')) {
+            dataMax = parseInt((parseInt(dataMax, 10) / factor).toFixed(0), 10)
+        }
+
+        // Make areas
         for (let i = 0; i < this.props.dataKeys.length; i++) {
             areas.push(
                 <Area
@@ -418,7 +461,6 @@ class PropChart extends React.Component {
             )
         }
 
-
         return (
             <div>
                 <div>
@@ -427,12 +469,17 @@ class PropChart extends React.Component {
                 <div className="prop-chart">
                     <ResponsiveContainer>
                         <AreaChart
-                            data={this.props.data}
+                            data={scaledData}
                         >
                             <YAxis
+                                width={80}
+                                orientation='right'
+                                padding={{ top: 5, bottom: 5 }}
                                 type="number"
-                                domain={[0, this.props.dataMax]}
-                                // unit={unit}
+                                domain={[0, dataMax]}
+                                unit={scale + this.props.unit}
+                                // mirror={true}
+                                interval={0}
                             />
                             {areas}
                         </AreaChart>
