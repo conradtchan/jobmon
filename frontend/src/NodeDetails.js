@@ -223,7 +223,7 @@ export default class NodeDetails extends React.Component {
                     stacked = {false}
                 />
                 <PropChart
-                    name = 'Infiniband traffic'
+                    name = 'InfiniBand traffic'
                     data = {historyChart}
                     dataKeys = {['infiniband_in', 'infiniband_out']}
                     colors = {[
@@ -235,7 +235,7 @@ export default class NodeDetails extends React.Component {
                     stacked = {false}
                 />
                 <PropChart
-                    name = 'Infiniband packet rate'
+                    name = 'InfiniBand packet rate'
                     data = {historyChart}
                     dataKeys = {['infiniband_pkts_in', 'infiniband_pkts_out']}
                     colors = {[
@@ -336,7 +336,7 @@ class JobText extends React.Component {
                 className={nameClass}
                 onClick={() => this.props.onClick()}
             >
-                {this.props.id}: {this.props.job.name} [{this.props.job.state}, {this.props.job.nCpus} cores]
+                {this.props.id}: {this.props.job.name} [{this.props.job.state}, {this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''}]
             </div>
         )
     }

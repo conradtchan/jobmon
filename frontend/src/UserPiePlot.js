@@ -103,7 +103,7 @@ export default class UserPiePlot extends React.Component {
                     </div>
                 </div>
                 <div className="heading">
-                    Queue: {this.props.queue.size} jobs for {this.props.queue.cpuHours.toFixed(0)} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
+                    Queue: {this.props.queue.size} job{(this.props.queue.size > 1) ? 's' : ''} for {this.props.queue.cpuHours.toFixed(0)} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
                 </div>
                 <div className="queue-strings">
                     {queueStrings}
@@ -137,7 +137,7 @@ class UserString extends React.Component {
                     {(100 * this.props.user.cpus / this.props.availCores).toFixed(1)}%
                 </div>
                 <div className="user-string-jobs">
-                    ({this.props.user.jobs} jobs)
+                    ({this.props.user.jobs} job{(this.props.user.jobs > 1) ? 's' : ''})
                 </div>
             </div>
         )
@@ -219,10 +219,7 @@ class UsagePie extends React.Component {
                             data={pieData}
                             nameKey='username'
                             dataKey='cpus'
-                            // label={({username, percent, jobs})=>`${username} ${percent}% (${jobs} jobs)`}
                             labelLine={false}
-                            // cx={400}
-                            // cy={400}
                             innerRadius="60%"
                             outerRadius="70%"
                             fill="#8884d8"
@@ -232,7 +229,7 @@ class UsagePie extends React.Component {
                             onClick={(data,index) => this.props.onPieClick(data,index)}
                             onMouseEnter={(data,index) => this.pieMouseEnter(data,index)}
                             onMouseLeave={(data,index) => this.pieMouseLeave(data,index)}
-                            isionActive={false}
+                            isAnimationActive={false}
                         >
                             {
                                 this.props.runningData.map(
@@ -274,7 +271,7 @@ class QueueString extends React.Component {
                     {this.props.user.hours.toFixed(0)} cpu-h
                 </div>
                 <div className="queue-string-jobs">
-                    ({this.props.user.jobs} jobs)
+                    ({this.props.user.jobs} job{(this.props.user.jobs > 1) ? 's' : ''})
                 </div>
             </div>
         )
