@@ -232,6 +232,7 @@ class UsagePie extends React.Component {
                             onClick={(data,index) => this.props.onPieClick(data,index)}
                             onMouseEnter={(data,index) => this.pieMouseEnter(data,index)}
                             onMouseLeave={(data,index) => this.pieMouseLeave(data,index)}
+                            isionActive={false}
                         >
                             {
                                 this.props.runningData.map(

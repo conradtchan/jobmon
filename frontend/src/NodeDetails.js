@@ -413,6 +413,7 @@ class PropChart extends React.Component {
                     stroke={this.props.colors[i]}
                     fill={this.props.colors[i]}
                     stackId= {this.props.stacked ? "1" : i}
+                    isAnimationActive={false}
                 />
             )
         }
