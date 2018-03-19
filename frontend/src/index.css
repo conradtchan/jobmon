@@ -299,6 +299,11 @@ body {
     height: 80px;
 }
 
+.prop-chart {
+    width: 100%;
+    height: 80px;
+}
+
 .instruction {
     font-style: italic;
 }

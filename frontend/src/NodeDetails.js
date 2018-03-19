@@ -6,24 +6,14 @@ import {
     Pie,
     Cell,
     Label,
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
 } from 'recharts';
 
 export default class NodeDetails extends React.Component {
-    printBytes(num, places) {
-        const thresh = 2;
-
-        if (num > thresh * 107374124) {
-            return (num / 107374124).toFixed(places).toString() + ' G'
-        } else if (num > thresh * 1048576) {
-            return (num / 1048576).toFixed(places).toString() + ' M'
-        } else if (num > thresh * 1024) {
-            return (num / 1024).toFixed(places).toString() + ' K'
-        } else {
-            return num.toFixed(places).toString() + ' '
-        }
-    }
-
-    render () {
+    getCorePies () {
         // Cores belonging to selected job
         let jobCores = [];
         if (!(this.props.selectedJobId === null)) {
@@ -70,50 +60,38 @@ export default class NodeDetails extends React.Component {
             }
 
         }
+        return [corePiesLeft, corePiesRight]
+    }
 
-        let propPies = [];
-        propPies.push(
-            <PropPie
-                key = 'mem'
-                type = 'mem'
-                textDescription='mem'
-                textValue={(this.props.node.mem.used / 1024).toFixed(0) + 'GB'} // mb->gb
-                data = {[
-                    {name: 'used', data: this.props.node.mem.used},
-                    {name: 'total', data: this.props.node.mem.total - this.props.node.mem.used},
-                ]}
-            />
-        );
-        propPies.push(
-            <PropPie
-                key = 'swap'
-                type = 'swap'
-                textDescription='swap'
-                textValue={((this.props.node.swap.total - this.props.node.swap.free) / 1048576).toFixed(0) + 'GB'} // kb->gb
-                data = {[
-                    {name: 'used', data: this.props.node.swap.total - this.props.node.swap.free},
-                    {name: 'total', data: this.props.node.swap.total},
-                ]}
-            />
-        );
-        for (let i = 0; i < this.props.node.nGpus; i++) {
-            const gpu = 'gpu' + i.toString();
-            const gpuPercent = this.props.node.gpus[gpu];
-            propPies.push(
-                <PropPie
-                    key = {gpu}
-                    type = 'gpu'
-                    textDescription={gpu}
-                    textValue={gpuPercent + '%'} // kb->gb
-                    data = {[
-                        {name: 'used', data: gpuPercent},
-                        {name: 'total', data: 100 - gpuPercent},
-                    ]}
-            />
-            )
+    getWarnings() {
+        let warningText = [];
+        if (this.props.warnings[this.props.name].node.cpuWait) {
+            warningText.push('- Significant CPU time spent waiting for IO')
+        }
+        if (this.props.warnings[this.props.name].node.swapUse) {
+            warningText.push('- Heavy use of disk swap')
+        }
+        for (let jobId in this.props.warnings[this.props.name].jobs) {
+            const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
+            if (jobWarns['cpuUtil']) {
+                warningText.push('- Job under-utilizes requested CPUs')
+            }
         }
 
+        let warningList = [];
+        if (warningText.length > 0) {
+            for (let w of warningText) {
+                warningList.push(
+                    <div key={w} className='bad-job'>
+                        {w}
+                    </div>
+                )
+            }
+        }
+        return warningList
+    }
 
+    getJobLists() {
         let userJobList = [];
         let otherJobList = [];
 
@@ -143,59 +121,60 @@ export default class NodeDetails extends React.Component {
 
             }
         }
+        return {user: userJobList, other: otherJobList}
+    }
 
-        let warningText = [];
-        if (this.props.warnings[this.props.name].node.cpuWait) {
-            warningText.push('- Significant CPU time spent waiting for IO')
-        }
-        if (this.props.warnings[this.props.name].node.swapUse) {
-            warningText.push('- Heavy use of disk swap')
-        }
-        for (let jobId in this.props.warnings[this.props.name].jobs) {
-            const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
-            if (jobWarns['cpuUtil']) {
-                warningText.push('- Job under-utilizes requested CPUs')
+    getHistoryChart() {
+        let historyChart = [];
+
+        for (let data of this.props.briefHistory) {
+            const nodeData = data.nodes[this.props.name];
+            let x = {
+                time: data.timestamp,
+                user: nodeData.cpu.total.user,
+                system: nodeData.cpu.total.system,
+                wait: nodeData.cpu.total.wait,
+                mem: nodeData.mem.used,
+                swap: nodeData.swap.total - nodeData.swap.free,
+                infiniband_in: nodeData.infiniband.bytes_in,
+                infiniband_out: nodeData.infiniband.bytes_out,
+                infiniband_pkts_in: nodeData.infiniband.pkts_in,
+                infiniband_pkts_out: nodeData.infiniband.pkts_out,
+                lustre_read: nodeData.lustre.read,
+                lustre_write: nodeData.lustre.write,
+            };
+            for (let i = 0; i < nodeData.nGpus; i++) {
+                const gpuName = 'gpu' + i.toString();
+                x[gpuName] = nodeData.gpus[gpuName]
             }
+            historyChart.push(x);
         }
+        return historyChart
+    }
 
-        let warningList = [];
-        if (warningText.length > 0) {
-            for (let w of warningText) {
-                warningList.push(
-                    <div key={w} className='bad-job'>
-                        {w}
-                    </div>
-                )
+    getGpuNames() {
+        const data = this.props.briefHistory[0]; // use the first snapshot, assume all the same
+        const nodeData = data.nodes[this.props.name];
+        let gpuNames = [];
+        for (let i = 0; i < nodeData.nGpus; i++) {
+                const gpuName = 'gpu' + i.toString();
+                gpuNames.push(gpuName);
             }
-        }
+        return gpuNames
+    }
 
-        let infiniband = [];
-        if (!(this.props.node.infiniband === null)){
-            infiniband.push(
-                <div key = 'in'>
-                    In: {this.printBytes(this.props.node.infiniband.bytes_in, 2)}B/s ({this.printBytes(this.props.node.infiniband.pkts_in, 1)}pkt/s)
-                </div>
-            );
-            infiniband.push(
-                <div key = 'out'>
-                    Out: {this.printBytes(this.props.node.infiniband.bytes_out, 2)}B/s ({this.printBytes(this.props.node.infiniband.pkts_out, 1)}pkt/s)
-                </div>
-            );
-        }
+    render () {
+        const style = getComputedStyle(document.documentElement);
 
-        let lustre = [];
-        if (!(this.props.node.lustre === null)){
-            lustre.push(
-                <div key = 'read'>
-                    Read: {this.printBytes(this.props.node.lustre.read, 2)}B/s
-                </div>
-            );
-            lustre.push(
-                <div key = 'write'>
-                    Write: {this.printBytes(this.props.node.lustre.write, 2)}B/s
-                </div>
-            );
-        }
+        const corePies = this.getCorePies();
+        const corePiesLeft = corePies[0];
+        const corePiesRight = corePies[1];
+
+        const historyChart = this.getHistoryChart();
+        const gpuNames = this.getGpuNames();
+
+        const warningList = this.getWarnings();
+        const jobLists = this.getJobLists();
 
         const gangliaLink = this.props.gangliaURL.replace('%h', this.props.name);
 
@@ -216,30 +195,96 @@ export default class NodeDetails extends React.Component {
                 <div className="heading">
                     Resources
                 </div>
-                <div className='prop-pies'>
-                    {propPies}
+                <div className='prop-charts'>
+                    <PropChart
+                        name = 'CPU'
+                        data = {historyChart}
+                        dataKeys = {['user', 'system', 'wait']}
+                        colors = {[
+                            style.getPropertyValue('--piecolor-user'),
+                            style.getPropertyValue('--piecolor-system'),
+                            style.getPropertyValue('--piecolor-wait')
+                        ]}
+                        dataMax = {100}
+                        stacked = {true}
+                    />
+                    <PropChart
+                        name = 'Memory'
+                        data = {historyChart}
+                        dataKeys = {['mem']}
+                        colors = {[
+                            style.getPropertyValue('--piecolor-mem'),
+                        ]}
+                        dataMax = 'dataMax'
+                        stacked = {false}
+                    />
+                    <PropChart
+                        name = 'Swap'
+                        data = {historyChart}
+                        dataKeys = {['swap']}
+                        colors = {[
+                            style.getPropertyValue('--piecolor-wait'),
+                        ]}
+                        dataMax = 'dataMax'
+                        stacked = {false}
+                    />
+                    <PropChart
+                        name = 'GPU'
+                        data = {historyChart}
+                        dataKeys = {gpuNames}
+                        colors = {[
+                            style.getPropertyValue('--piecolor-gpu'),
+                        ]}
+                        dataMax = {100}
+                        stacked = {false}
+                    />
+                    <PropChart
+                        name = 'Infiniband traffic'
+                        data = {historyChart}
+                        dataKeys = {['infiniband_in', 'infiniband_out']}
+                        colors = {[
+                            style.getPropertyValue('--piecycle-1'),
+                            style.getPropertyValue('--piecycle-2'),
+                        ]}
+                        dataMax = 'dataMax'
+                        stacked = {false}
+                    />
+                    <PropChart
+                        name = 'Infiniband packet rate'
+                        data = {historyChart}
+                        dataKeys = {['infiniband_pkts_in', 'infiniband_pkts_out']}
+                        colors = {[
+                            style.getPropertyValue('--piecycle-3'),
+                            style.getPropertyValue('--piecycle-4'),
+                        ]}
+                        dataMax = 'dataMax'
+                        stacked = {false}
+                    />
+                    <PropChart
+                        name = 'Lustre access'
+                        data = {historyChart}
+                        dataKeys = {['lustre_read', 'lustre_write']}
+                        colors = {[
+                            style.getPropertyValue('--piecycle-1'),
+                            style.getPropertyValue('--piecycle-2'),
+                        ]}
+                        dataMax = 'dataMax'
+                        stacked = {false}
+                    />
+
                 </div>
-                <div className="heading">
-                    Infiniband traffic
-                </div>
-                {infiniband}
-                <div className="heading">
-                    Lustre access
-                </div>
-                {lustre}
-                <br />
                 <div id='node-description'>
                 </div>
-                {warningList}
                 <div id='job-names'>
                     <div className='job-names heading'>
                         User jobs:
                     </div>
+                    {warningList}
                     <div className='instruction'>
                         Select a job to highlight allocated CPU cores.
                     </div>
                     <div>
-                        {userJobList}
+                        {jobLists.user}
                     </div>
                 </div>
                 <br />
@@ -248,7 +293,7 @@ export default class NodeDetails extends React.Component {
                         Cohabitant jobs:
                     </div>
                     <div>
-                        {otherJobList}
+                        {jobLists.other}
                     </div>
                 </div>
                 <br />
@@ -335,62 +380,63 @@ class CorePie extends React.Component {
     }
 }
 
-class PropPie extends React.Component {
-    render() {
-        const style = getComputedStyle(document.documentElement);
-        let pieColors = [];
-        pieColors.push(style.getPropertyValue('--piecolor-blank'));
-        if (this.props.type === 'mem') {
-            pieColors.push(style.getPropertyValue('--piecolor-mem'));
-        } else if (this.props.type === 'swap') {
-            pieColors.push(style.getPropertyValue('--piecolor-wait'));
-        } else if (this.props.type === 'gpu') {
-            pieColors.push(style.getPropertyValue('--piecolor-gpu'));
+class PropChart extends React.Component {
+    unitConvert(num) {
+        const thresh = 2;
+        let val;
+        let unit;
+        if (num > thresh * 107374124) {
+            val = (num / 107374124);
+            unit = 'G';
+        } else if (num > thresh * 1048576) {
+            val = (num / 1048576);
+            unit = 'M'
+        } else if (num > thresh * 1024) {
+            val = (num / 1024);
+            unit = 'K';
+        } else {
+            val = num;
+            unit = '';
         }
+        return {val: val, unit: unit}
+    }
 
-        function PieLabel({viewBox, value1, value2, value3}) {
-            const {cx, cy} = viewBox;
-            return (
-                <text x={cx} y={cy} fill="#3d405c" className="recharts-text recharts-label" textAnchor="middle" dominantBaseline="central">
-                    <tspan alignmentBaseline="middle" x={cx} dy="-0.5em" fontSize="1.0em">{value1}</tspan>
-                    <tspan alignmentBaseline="middle" x={cx} dy="1.2em" fontSize="0.8em">{value2}</tspan>
-                </text>
+    render () {
+        let areas = [];
+
+        for (let i = 0; i < this.props.dataKeys.length; i++) {
+            areas.push(
+                <Area
+                    type='monotone'
+                    nameKey='time'
+                    dataKey={this.props.dataKeys[i]}
+                    stroke={this.props.colors[i]}
+                    fill={this.props.colors[i]}
+                    stackId= {this.props.stacked ? "1" : i}
+                />
             )
         }
 
+
         return (
-            <div className="prop-pie">
-                <ResponsiveContainer>
-                    <PieChart>
-                        <Pie
-                            data = {this.props.data}
-                            nameKey = 'name'
-                            dataKey = 'data'
-                            innerRadius = '70%'
-                            outerRadius = '100%'
-                            startAngle={90}
-                            endAngle={450}
-                            isAnimationActive={false}
+            <div>
+                <div>
+                    {this.props.name}
+                </div>
+                <div className="prop-chart">
+                    <ResponsiveContainer>
+                        <AreaChart
+                            data={this.props.data}
                         >
-                            {
-                                this.props.data.reverse().map(
-                                    (entry, index) => <Cell
-                                        key={index}
-                                        fill={pieColors[index]}
-                                    />
-                                )
-                            }
-                            <Label
-                                position="center"
-                                content={<PieLabel
-                                    value1={this.props.textDescription}
-                                    value2={this.props.textValue}
-                                />}
-                            >
-                        </Label>
-                        </Pie>
-                    </PieChart>
-                </ResponsiveContainer>
+                            <YAxis
+                                type="number"
+                                domain={[0, this.props.dataMax]}
+                                // unit={unit}
+                            />
+                            {areas}
+                        </AreaChart>
+                    </ResponsiveContainer>
+                </div>
             </div>
         )
     }

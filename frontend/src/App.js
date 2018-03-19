@@ -33,29 +33,28 @@ class App extends React.Component {
     }
 
     initBriefHistory() {
-        const observerNow = this.state.snapshotTime / 1000;
+        if (this.state.briefHistory.length < 3) {
+            const observerNow = this.state.snapshotTime / 1000;
 
-        // Add a bunch of values
-        for (let time in this.state.history) {
-            if (observerNow - time < this.state.briefHistoryWindow) {
-                // Make request for snapshot, then push to list
-                let xhr = new XMLHttpRequest();
-                xhr.onreadystatechange = () => {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        const jsonData = JSON.parse(xhr.responseText);
-                        this.state.briefHistory.push(jsonData)
-                    }
-                };
-                xhr.open("GET", "../cgi-bin/bobdata.py?time=" + time.toString(), true);
-                xhr.send();
+            // Add a bunch of values
+            for (let time in this.state.history) {
+                if (observerNow - time < this.state.briefHistoryWindow) {
+                    // Make request for snapshot, then push to list
+                    let xhr = new XMLHttpRequest();
+                    xhr.onreadystatechange = () => {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            const jsonData = JSON.parse(xhr.responseText);
+                            this.state.briefHistory.push(jsonData)
+                        }
+                    };
+                    xhr.open("GET", "../cgi-bin/bobdata.py?time=" + time.toString(), true);
+                    xhr.send();
+                }
             }
         }
     }
 
     updateBriefHistory() {
-        // If there are only a few values, then it may be due to time travel
-        if (this.state.briefHistory.length < 3) this.initBriefHistory();
-
         const observerNow = this.state.snapshotTime / 1000;
 
         let newBriefHistory = [];
@@ -72,7 +71,8 @@ class App extends React.Component {
             newBriefHistory.push(this.state.apiData)
         }
 
-        this.setState({briefHistory: newBriefHistory})
+        // Update, before putting past values in (if history is too short)
+        this.setState({briefHistory: newBriefHistory}, () => this.initBriefHistory())
     }
 
     fetchHistory() {
@@ -92,8 +92,7 @@ class App extends React.Component {
                 } else {
                     const jsonData = JSON.parse(xhr.responseText);
                     this.setState(
-                        {history: jsonData.history},
-                        () => this.initBriefHistory()
+                        {history: jsonData.history}
                     );
                 }
             }
@@ -243,6 +242,7 @@ class App extends React.Component {
                     selectedJobId={this.state.job}
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     warnings={warnings}
+                    briefHistory={this.state.briefHistory}
                 />
             )
         }
