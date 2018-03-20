@@ -21,7 +21,8 @@ class App extends React.Component {
             holdSnap: false,
             history: null,
             briefHistory: [],
-            briefHistoryWindow: 3600 // seconds
+            briefHistoryWindow: 3600, // seconds
+            address: '../cgi-bin/',
         };
 
         this.fetchHistory();
@@ -43,7 +44,7 @@ class App extends React.Component {
                             this.state.briefHistory.push(jsonData)
                         }
                     };
-                    xhr.open("GET", "../cgi-bin/bobdata.py?time=" + time.toString(), true);
+                    xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);
                     xhr.send();
                 }
             }
@@ -82,7 +83,7 @@ class App extends React.Component {
                 setTimeout(() => {this.fetchHistory()}, 100000) // 100 seconds
             }
         };
-        xhr.open("GET", "../cgi-bin/bobhistory.py", true);
+        xhr.open("GET", this.state.address + "bobhistory.py", true);
         xhr.send();
     }
 
@@ -102,7 +103,7 @@ class App extends React.Component {
                     setTimeout(() => {this.fetchLatest()}, 10000) // 10 seconds
                 }
             };
-            xhr.open("GET", "../cgi-bin/bobdata.py", true);
+            xhr.open("GET", this.state.address + "bobdata.py", true);
             xhr.send();
         }
     }
@@ -121,7 +122,7 @@ class App extends React.Component {
                     }, () => this.updateBriefHistory());
                 }
             };
-            xhr.open("GET", "../cgi-bin/bobdata.py?time=" + time.toString(), true);
+            xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);
             xhr.send();
     }
 

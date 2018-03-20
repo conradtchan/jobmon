@@ -5,6 +5,7 @@ import {
     PieChart,
     Pie,
     Cell,
+    Label,
 } from 'recharts';
 
 export default class NodePieRows extends React.Component {
@@ -143,15 +144,18 @@ export default class NodePieRows extends React.Component {
                 <div className='instruction'>
                     Select a node to view detailed system usage.
                 </div>
-                <div id='node-pies'>
-                    <div className='pie-row headings'>
-                        <div className='node-name heading'>Node</div>
-                        <div className='node-pie heading'>CPU</div>
-                        <div className='node-pie heading'>Mem</div>
-                        {/*<div className='node-pie heading'>Disk</div>*/}
-                        <div className='node-pie heading'>GPU</div>
+                <div className='overview-pies'>
+                    <div className='overview-header'>
+                        <div className='overview-row'>
+                            <div className='overview-cell'>Node</div>
+                            <div className='overview-cell'>CPU</div>
+                            <div className='overview-cell'>Mem</div>
+                            <div className='overview-cell'>GPU</div>
+                        </div>
                     </div>
-                    {nodePies}
+                    <div className='overview-body'>
+                        {nodePies}
+                    </div>
                 </div>
             </div>
         )
@@ -161,7 +165,7 @@ export default class NodePieRows extends React.Component {
 
 class NodePieRow extends React.Component {
     render() {
-        let nameClass = 'node-name';
+        let nameClass = 'overview-cell';
         let doWarn = false;
         for (let w in this.props.nodeWarn.node) {
             if (this.props.nodeWarn.node[w]) {
@@ -181,44 +185,42 @@ class NodePieRow extends React.Component {
 
 
         return (
-            <div className='pie-row items' onClick={() => this.props.onRowClick(this.props.nodeName)}>
+            <div className='overview-row items' onClick={() => this.props.onRowClick(this.props.nodeName)}>
                 <div className={nameClass}>
                     {this.props.nodeName}
                 </div>
-                <NodePie
-                    type='cpu'
-                    data={[
-                        {name: 'user', data: this.props.cpuUsage.user},
-                        {name: 'wait', data: this.props.cpuUsage.wait},
-                        {name: 'system', data: this.props.cpuUsage.system},
-                        {name: 'idle', data: this.props.cpuUsage.idle},
-                    ]}
-                    warn={this.props.nodeWarn.cpuWait}
-                />
-                <NodePie
-                    type='mem'
-                    data={[
-                        {name: 'mem', data: this.props.mem},
-                        {name: 'free', data: 100 - this.props.mem},
-                    ]}
-                    warn={this.props.nodeWarn.swapUse}
-                />
-                {/*<NodePie*/}
-                    {/*type='disk'*/}
-                    {/*data={[*/}
-                        {/*{name: 'disk', data: this.props.disk},*/}
-                        {/*{name: 'free', data: 100 - this.props.disk},*/}
-                    {/*]}*/}
-                    {/*warn={false}*/}
-                {/*/>*/}
-                <NodePie
-                    type='gpu'
-                    data={[
-                        {name: 'gpu', data: this.props.gpu},
-                        {name: 'free', data: 100 - this.props.gpu},
-                    ]}
-                    warn={false}
-                />
+                <div className='overview-cell'>
+                    <NodePie
+                        type='cpu'
+                        data={[
+                            {name: 'user', data: this.props.cpuUsage.user},
+                            {name: 'wait', data: this.props.cpuUsage.wait},
+                            {name: 'system', data: this.props.cpuUsage.system},
+                            {name: 'idle', data: this.props.cpuUsage.idle},
+                        ]}
+                        warn={this.props.nodeWarn.cpuWait}
+                    />
+                </div>
+                <div className='overview-cell'>
+                    <NodePie
+                        type='mem'
+                        data={[
+                            {name: 'mem', data: this.props.mem},
+                            {name: 'free', data: 100 - this.props.mem},
+                        ]}
+                        warn={this.props.nodeWarn.swapUse}
+                    />
+                </div>
+                <div className='overview-cell'>
+                    <NodePie
+                        type='gpu'
+                        data={[
+                            {name: 'gpu', data: this.props.gpu},
+                            {name: 'free', data: 100 - this.props.gpu},
+                        ]}
+                        warn={false}
+                    />
+                </div>
             </div>
         )
     }
@@ -246,15 +248,27 @@ class NodePie extends React.Component {
         let ring = 0;
         if (this.props.warn) ring = 100;
 
+
+        function PieLabel({viewBox, value1}) {
+            const {cx, cy} = viewBox;
+            return (
+                <text x={cx} y={cy} fill="#3d405c" className="recharts-text recharts-label" textAnchor="middle" dominantBaseline="central">
+                    <tspan alignmentBaseline="middle" x={cx} dy="0.0em" fontSize="12">{value1}</tspan>
+                </text>
+            )
+        }
+
+        const pieText = (100 - this.props.data[this.props.data.length - 1]['data']).toFixed(0) + '%'; // 100 minus idle
+
         return (
-            <div className='node-pie'>
+            <div className='overview-pie'>
                 <ResponsiveContainer>
                     <PieChart>
                         <Pie
                             data={this.props.data}
                             nameKey='name'
                             dataKey='data'
-                            innerRadius='50%'
+                            innerRadius='75%'
                             outerRadius='100%'
                             startAngle={90}
                             endAngle={450}
@@ -268,6 +282,12 @@ class NodePie extends React.Component {
                                     />
                                 )
                             }
+                            <Label
+                                position="center"
+                                content={<PieLabel
+                                    value1={pieText}
+                                />}>
+                            </Label>
                         </Pie>
                         <Pie
                             data={[{name: 'ring', ring: ring}]}

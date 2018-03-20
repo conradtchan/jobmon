@@ -117,11 +117,11 @@ export default class UserPiePlot extends React.Component {
 class UserString extends React.Component {
     render() {
         let nameClass= 'user-string';
-        if (this.props.user.index === this.props.hoveredIndex) {
-            nameClass += ' hovered'
-        }
         if (this.props.warning) {
             nameClass += ' warn'
+        }
+        if (this.props.user.index === this.props.hoveredIndex) {
+            nameClass += ' hovered'
         }
         return (
             <div

@@ -8,6 +8,7 @@
 
     /*Hover-over colors*/
     --hover-outline-color: #555555;
+    --hover-shade: #FFFFFF;
 
     /*Pie colors*/
     --piecolor-blank: #DDDDDD;
@@ -73,50 +74,57 @@ body {
     color: var(--bad-job-color);
 }
 
-#node-pies{
+.overview-pies{
+    display: table;
     width: 100%;
-    margin: 0 auto;
+    /*border: 1px black solid;*/
 }
 
-.pie-row {
-    display: flex;
-    flex-direction: row;
-    height: auto;
-    min-height: 50px;
-    /*justify-content: space-between;*/
+.overview-header {
+    display: table-header-group;
+    font-weight: bold;
+    background-color: var(--dark-shade);
 }
 
-.pie-row.headings {
-    background: var(--dark-shade);
-    min-height: 0px;
-    height:100%;
+.overview-body {
+    display: table-row-group;
 }
 
-.pie-row.items {
+.overview-row {
+    display: table-row;
+}
+
+.overview-row.items {
     cursor: pointer;
+    -o-transition:.5s;
+    -ms-transition:.5s;
+    -moz-transition:.5s;
+    -webkit-transition:.5s;
+    /* ...and now for the proper property */
+    transition:.5s;
 }
 
-.pie-row.items:hover {
-    outline-width: 1px;
-    outline-color: var(--hover-outline-color);
-    outline-style: solid;
-}
-
-.pie-row.items:nth-child(odd) {
+.overview-row.items:nth-child(odd) {
     background-color: var(--medium-shade);
 }
 
-.node-pie {
-    width: 23%;
-    height: auto;
-    /*border: 1px black solid;*/
-    display: flex;
-    align-items: center;
+.overview-row.items:hover {
+    background: var(--hover-shade);
 }
 
-.node-pie.heading {
-    align-items: flex-end;
-    font-weight:bold;
+.overview-cell {
+    display: table-cell;
+    /*border: 1px black solid;*/
+    text-align: center;
+    vertical-align: middle;
+}
+
+.overview-pie {
+    cursor: pointer;
+    width: 64px;
+    height: 64px;
+    /*border: 1px black solid;*/
+    margin: 0 auto;
 }
 
 .node-name {
@@ -131,8 +139,6 @@ body {
 }
 
 .node-name.heading {
-    align-items: flex-end;
-    font-weight:bold;
 }
 
 .job-names {
@@ -157,12 +163,6 @@ body {
     color: var(--bad-job-color);
 }
 
-/*.job-name.link {*/
-    /*width: 100%;*/
-    /*!*border: 1px black solid;*!*/
-    /*text-align: left;*/
-    /*color: red;*/
-/*}*/
 
 #node-description {
     text-align: left;
@@ -190,14 +190,14 @@ body {
 }
 
 .main-item.left{
-    width: 28%;
+    width: 30%;
     top: 0;
     position: -webkit-sticky;
     position: sticky;
 }
 
 .main-item.center{
-    width: 24%;
+    width: 22%;
 }
 
 .main-item.right{
@@ -212,12 +212,18 @@ body {
     display: flex;
     text-align: left;
     cursor: pointer;
+    -o-transition:.5s;
+    -ms-transition:.5s;
+    -moz-transition:.5s;
+    -webkit-transition:.5s;
+    /* ...and now for the proper property */
+    transition:.5s;
 }
 .user-string.hovered {
-    /*background: var(--dark-shade);*/
-    outline-width: 1px;
-    outline-color: var(--hover-outline-color);
-    outline-style: solid;
+    background: var(--hover-shade);
+    /*outline-width: 1px;*/
+    /*outline-color: var(--hover-outline-color);*/
+    /*outline-style: solid;*/
 }
 
 .user-string.warn {
