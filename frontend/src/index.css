@@ -51,7 +51,7 @@ body {
 #time-machine {
     background-color: var(--light-shade);
     width: 90%;
-    max-width: 1280px;
+    max-width: 1600px;
     margin: 15px auto;
     justify-content: space-between;
 }
@@ -119,6 +119,10 @@ body {
     vertical-align: middle;
 }
 
+.overview-cell.warn {
+    color: var(--bad-job-color);
+}
+
 .overview-pie {
     cursor: pointer;
     width: 64px;
@@ -174,7 +178,7 @@ body {
     flex-wrap: wrap;
     justify-content: space-between;
     width: 90%;
-    max-width: 1280px;
+    max-width: 1600px;
     margin: 0 auto;
     /*border: 1px black solid;*/
     align-items: top;
@@ -190,18 +194,18 @@ body {
 }
 
 .main-item.left{
-    width: 30%;
+    width: 26%;
     top: 0;
     position: -webkit-sticky;
     position: sticky;
 }
 
 .main-item.center{
-    width: 22%;
+    width: 20%;
 }
 
 .main-item.right{
-    width: 35%;
+    width: 41%;
     top: 0;
     position: -webkit-sticky;
     position: sticky;
@@ -300,29 +304,30 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     background: var(--medium-shade);
-    /*margin-top: 5%;*/
-    margin-bottom: 2%   ;
+    margin-bottom: 1.0em;
 }
 
 .core-pie {
-    width: 11.111%;
+    width: 5.55%;
     min-height: 40px;
 }
 
-.prop-pies {
+.prop-charts {
+    width: 100%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
 }
 
-.prop-pie {
-    width: 25%;
-    height: 80px;
+.prop-chart-group {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 45%;
 }
 
 .prop-chart {
     width: 100%;
-    height: 80px;
+    height: 100px;
 }
 
 .instruction {
@@ -330,7 +335,7 @@ body {
 }
 
 .heading {
-    margin-top: 5%;
+    margin-top: 1.0em;
     font-weight: bold;
 }
 
@@ -340,7 +345,7 @@ body {
     flex-direction: row;
     flex-wrap: wrap;
     background: var(--medium-shade);
-    margin-bottom: 5%;
+    margin-bottom: 1.0em;
 
 }
 
@@ -377,5 +382,5 @@ body {
 }
 
 #ganglia-link {
-    margin-top: 5%;
+    margin-top: 1.0em;
 }

@@ -22,7 +22,8 @@ class App extends React.Component {
             history: null,
             briefHistory: [],
             briefHistoryWindow: 3600, // seconds
-            address: '../cgi-bin/',
+            // address: '../cgi-bin/',
+            address: 'http://localhost:3467/cgi-bin/',
         };
 
         this.fetchHistory();

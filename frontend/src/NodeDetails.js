@@ -466,7 +466,7 @@ class PropChart extends React.Component {
         }
 
         return (
-            <div>
+            <div className="prop-chart-group">
                 <div>
                     {this.props.name}
                 </div>
