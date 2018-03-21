@@ -3,7 +3,7 @@ import logo from './logo.png';
 import './App.css';
 
 import NodeDetails from "./NodeDetails"
-import NodePieRows from "./NodeOverview"
+import NodeOverview from "./NodeOverview"
 import UserPiePlot from "./UserPiePlot"
 import TimeMachine from "./TimeMachine"
 
@@ -193,13 +193,15 @@ class App extends React.Component {
             return (<div className="main-item center"/>)
         } else {
             return (
-                <NodePieRows
+                <NodeOverview
                     username={this.state.username}
                     nodeData={this.state.apiData.nodes}
+                    jobs={this.state.apiData.jobs}
                     userOnNode={userOnNode}
                     nodeHasJob={nodeHasJob}
                     onRowClick={(node) => this.selectNode(node)}
                     warnings={warnings}
+                    onJobClick={(jobId) => this.selectJob(jobId)}
                 />
             )
         }

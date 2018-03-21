@@ -1,4 +1,5 @@
 import React from "react";
+import JobText from "./JobText"
 
 import {
     ResponsiveContainer,
@@ -8,14 +9,14 @@ import {
     Label,
 } from 'recharts';
 
-export default class NodePieRows extends React.Component {
+export default class NodeOverview extends React.Component {
     constructor(props) {
         super(props);
         this.state = {jobIdLink: null}
     }
-    render () {
-        let nodePies = [];
 
+    getNodePieRows() {
+        let nodePies = [];
         let nodeNames = Object.keys(this.props.nodeData);
         let nameSorted = [];
 
@@ -106,11 +107,61 @@ export default class NodePieRows extends React.Component {
                 )
             }
         }
+        return nodePies
+    }
+
+    getWarnedJobs() {
+        let warnedJobs = [];
+        for (let host in this.props.warnings) {
+            const warnings = this.props.warnings[host];
+            over_jobs:
+            for (let jobId in warnings.jobs) {
+                if (!(warnedJobs.includes(jobId))) {
+                    for (let warning in warnings.jobs[jobId]) {
+                        if (warnings.jobs[jobId][warning]) {
+                            warnedJobs.push(jobId);
+                            continue over_jobs
+                        }
+                    }
+
+                }
+            }
+        }
+        return warnedJobs
+    }
+
+    getUserJobList() {
+        const warnedJobs = this.getWarnedJobs();
+
+        let jobList = [];
+        for (let jobId in this.props.jobs) {
+            const job = this.props.jobs[jobId];
+            if (job.username === this.props.username) {
+                jobList.push(
+                    <JobText
+                        key={jobId}
+                        id={jobId}
+                        job={job}
+                        warn={warnedJobs.includes(jobId)}
+                        onClick={() => this.props.onJobClick(jobId)}
+                    />
+                )
+            }
+        }
+        return jobList
+    }
+
+    render () {
+        const nodePies = this.getNodePieRows();
+        const userJobList = this.getUserJobList();
 
         return (
             <div className="main-item center">
                 <div id='username-title'>
                     {this.props.username}
+                </div>
+                <div id='job-names'>
+                    {userJobList}
                 </div>
                 <div className='heading'>
                     CPU usage legend:

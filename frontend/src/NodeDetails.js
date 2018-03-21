@@ -1,4 +1,5 @@
 import React from "react";
+import JobText from "./JobText"
 
 import {
     ResponsiveContainer,
@@ -17,14 +18,17 @@ export default class NodeDetails extends React.Component {
         // Cores belonging to selected job
         let jobCores = [];
         if (!(this.props.selectedJobId === null)) {
-            jobCores = this.props.jobs[this.props.selectedJobId].layout[this.props.name]
+            const jobLayout = this.props.jobs[this.props.selectedJobId].layout;
+            if (jobLayout.hasOwnProperty(this.props.name)) {
+                jobCores = jobLayout[this.props.name];
+            }
         }
         let corePiesLeft = [];
         let corePiesRight = [];
         for (let i = 0; i < this.props.node.cpu.core.length; i++) {
             const core = this.props.node.cpu.core[i];
             let coreSelected = false;
-            if (!(jobCores === null)) {
+            if (!(jobCores === null) ) {
                 coreSelected = jobCores.includes(i);
             }
 
@@ -66,15 +70,15 @@ export default class NodeDetails extends React.Component {
     getWarnings() {
         let warningText = [];
         if (this.props.warnings[this.props.name].node.cpuWait) {
-            warningText.push('- Significant CPU time spent waiting for IO')
+            warningText.push('Significant CPU time spent waiting for IO')
         }
         if (this.props.warnings[this.props.name].node.swapUse) {
-            warningText.push('- Heavy use of disk swap')
+            warningText.push('Heavy use of disk swap')
         }
         for (let jobId in this.props.warnings[this.props.name].jobs) {
             const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
             if (jobWarns['cpuUtil']) {
-                warningText.push('- Job under-utilizes requested CPUs')
+                warningText.push('Job under-utilizes requested CPUs')
             }
         }
 
@@ -83,7 +87,7 @@ export default class NodeDetails extends React.Component {
             for (let w of warningText) {
                 warningList.push(
                     <div key={w} className='bad-job'>
-                        {w}
+                        Warning: {w}
                     </div>
                 )
             }
@@ -91,23 +95,12 @@ export default class NodeDetails extends React.Component {
         return warningList
     }
 
-    getJobLists() {
-        let userJobList = [];
+    getOtherJobList() {
         let otherJobList = [];
 
         for (let jobId in this.props.jobs) {
             if (this.props.jobs[jobId].layout.hasOwnProperty(this.props.name)) {
-                if (this.props.jobs[jobId].username === this.props.username) {
-                    userJobList.push(
-                        <JobText
-                            key={jobId}
-                            id={jobId}
-                            job={this.props.jobs[jobId]}
-                            warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
-                            onClick={() => this.props.onJobClick(jobId)}
-                        />
-                    )
-                } else {
+                if (!(this.props.jobs[jobId].username === this.props.username)) {
                     otherJobList.push(
                         <JobText
                             key={jobId}
@@ -121,7 +114,7 @@ export default class NodeDetails extends React.Component {
 
             }
         }
-        return {user: userJobList, other: otherJobList}
+        return otherJobList
     }
 
     getHistoryChart() {
@@ -273,7 +266,7 @@ export default class NodeDetails extends React.Component {
         const gpuNames = this.getGpuNames();
 
         const warningList = this.getWarnings();
-        const jobLists = this.getJobLists();
+        const otherJobList = this.getOtherJobList();
 
         const gangliaLink = this.props.gangliaURL.replace('%h', this.props.name);
 
@@ -282,18 +275,7 @@ export default class NodeDetails extends React.Component {
                 <div id='nodename-title'>
                     {this.props.name}
                 </div>
-                <div id='job-names'>
-                    <div className='job-names heading'>
-                        User jobs:
-                    </div>
-                    {warningList}
-                    <div className='instruction'>
-                        Select a job to highlight allocated CPU cores.
-                    </div>
-                    <div>
-                        {jobLists.user}
-                    </div>
-                </div>
+                {warningList}
                 <div className="heading">
                     CPU cores
                 </div>
@@ -307,13 +289,13 @@ export default class NodeDetails extends React.Component {
                     Resource usage (past hour)
                 </div>
                 {this.getPropCharts(historyChart, gpuNames)}
-                {(jobLists.other.length > 0) &&
+                {(otherJobList > 0) &&
                 <div>
                     <div className='job-names heading'>
                         Cohabitant jobs:
                     </div>
                     <div>
-                        {jobLists.other}
+                        {otherJobList}
                     </div>
                 </div>
                 }
@@ -327,23 +309,6 @@ export default class NodeDetails extends React.Component {
     }
 
 }
-
-
-class JobText extends React.Component {
-    render () {
-        let nameClass = 'job-name';
-        // if (this.props.warn) nameClass += ' warn';
-        return (
-            <div
-                className={nameClass}
-                onClick={() => this.props.onClick()}
-            >
-                {this.props.id}: {this.props.job.name} [{this.props.job.state}, {this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''}]
-            </div>
-        )
-    }
-}
-
 
 class CorePie extends React.Component {
     render() {
