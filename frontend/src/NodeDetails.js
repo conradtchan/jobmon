@@ -127,7 +127,10 @@ export default class NodeDetails extends React.Component {
     getHistoryChart() {
         let historyChart = [];
 
-        for (let data of this.props.briefHistory) {
+        let sortedHistory = this.props.briefHistory;
+        sortedHistory.sort((a, b) => (a.timestamp < b.timestamp ) ? -1 : (a.timestamp  > b.timestamp) ? 1 : 0);
+
+        for (let data of sortedHistory) {
             const nodeData = data.nodes[this.props.name];
             const d = new Date(data.timestamp * 1000);
             let x = {
@@ -155,9 +158,8 @@ export default class NodeDetails extends React.Component {
     }
 
     getGpuNames() {
-        const nodeData = this.props.data.nodes[this.props.name];
         let gpuNames = [];
-        for (let i = 0; i < nodeData.nGpus; i++) {
+        for (let i = 0; i < this.props.node.nGpus; i++) {
                 const gpuName = 'gpu' + i.toString();
                 gpuNames.push(gpuName);
             }
@@ -197,7 +199,7 @@ export default class NodeDetails extends React.Component {
                         style.getPropertyValue('--piecolor-mem'),
                     ]}
                     unit = 'B'
-                    dataMax = {this.props.data.nodes[this.props.name].mem.total * 1048576}
+                    dataMax = {this.props.node.mem.total * 1048576}
                     stacked = {false}
                 />
                 <PropChart
@@ -208,7 +210,7 @@ export default class NodeDetails extends React.Component {
                         style.getPropertyValue('--piecolor-wait'),
                     ]}
                     unit = 'B'
-                    dataMax = {this.props.data.nodes[this.props.name].swap.total * 1024}
+                    dataMax = {this.props.node.swap.total * 1024}
                     stacked = {false}
                 />
                 <PropChart
@@ -420,8 +422,8 @@ class PropChart extends React.Component {
         let factor;
         let scale;
         const thresh = 1;
-        if (maxVal > thresh * 107374124) {
-            factor =  107374124;
+        if (maxVal > thresh * 1073741824) {
+            factor =  1073741824;
             scale = 'G';
         } else if (maxVal > thresh * 1048576) {
             factor = 1048576;
@@ -438,7 +440,7 @@ class PropChart extends React.Component {
         for (let i = 0; i < this.props.data.length; i++) {
             scaledData.push({});
             for (let key of this.props.dataKeys) {
-                scaledData[i][key] = (this.props.data[i][key] / factor).toFixed(0)
+                scaledData[i][key] = (this.props.data[i][key] / factor).toFixed(1)
             }
             // Time for X Axis
             scaledData[i]['time'] = this.props.data[i].time;
@@ -453,6 +455,7 @@ class PropChart extends React.Component {
         for (let i = 0; i < this.props.dataKeys.length; i++) {
             areas.push(
                 <Area
+                    key={this.props.dataKeys[i]}
                     type='monotone'
                     nameKey='time'
                     dataKey={this.props.dataKeys[i]}

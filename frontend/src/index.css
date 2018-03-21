@@ -88,10 +88,12 @@ body {
 
 .overview-body {
     display: table-row-group;
+    width: 100%;
 }
 
 .overview-row {
     display: table-row;
+    width: 100%;
 }
 
 .overview-row.items {
@@ -114,7 +116,7 @@ body {
 
 .overview-cell {
     display: table-cell;
-    /*border: 1px black solid;*/
+    width: 25%;
     text-align: center;
     vertical-align: middle;
 }
@@ -125,9 +127,8 @@ body {
 
 .overview-pie {
     cursor: pointer;
-    width: 64px;
     height: 64px;
-    /*border: 1px black solid;*/
+    width: 100%;
     margin: 0 auto;
 }
 
@@ -182,7 +183,6 @@ body {
     margin: 0 auto;
     /*border: 1px black solid;*/
     align-items: top;
-    background-color: var(--light-shade);
 
 }
 
@@ -190,7 +190,8 @@ body {
     height: 100%;
     /*border: 1px black solid;*/
     padding: 2%;
-    text-align: left
+    text-align: left;
+    background-color: var(--light-shade);
 }
 
 .main-item.left{

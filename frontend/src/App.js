@@ -31,11 +31,12 @@ class App extends React.Component {
     }
 
     initBriefHistory() {
-        if (this.state.briefHistory.length < 3) {
+        if ((this.state.briefHistory.length < 3) && !(this.state.history === null)) {
             const observerNow = this.state.snapshotTime / 1000;
 
             // Add a bunch of values
-            for (let time in this.state.history) {
+            const times = Object.keys(this.state.history);
+            for (let time of times) {
                 if (observerNow - time < this.state.briefHistoryWindow) {
                     // Make request for snapshot, then push to list
                     let xhr = new XMLHttpRequest();
@@ -102,6 +103,7 @@ class App extends React.Component {
                         gotData: true,
                     }, () => this.updateBriefHistory());
                     setTimeout(() => {this.fetchLatest()}, 10000) // 10 seconds
+                    console.log(jsonData)
                 }
             };
             xhr.open("GET", this.state.address + "bobdata.py", true);
@@ -221,7 +223,6 @@ class App extends React.Component {
                     selectedJobId={this.state.job}
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     warnings={warnings}
-                    data={this.state.apiData}
                     briefHistory={this.state.briefHistory}
                 />
             )

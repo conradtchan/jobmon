@@ -23,7 +23,7 @@ export default class NodePieRows extends React.Component {
         let maxNumLen = 0;
         for (let name of nodeNames) {
             const numbers = name.match(/\d/g);
-            let index = 0
+            let index = 0;
             if (!(numbers === null)) {
                 if (numbers.length > maxNumLen) maxNumLen = numbers.length;
                 index += parseInt(numbers.join(""), 10)
