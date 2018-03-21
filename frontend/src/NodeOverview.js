@@ -17,7 +17,9 @@ export default class NodeOverview extends React.Component {
 
     getNodePieRows() {
         let nodePies = [];
-        let nodeNames = Object.keys(this.props.nodeData);
+
+        // Only these node names have jobs on them
+        let nodeNames = Object.keys(this.props.nodeHasJob);
         let nameSorted = [];
 
         // Sort node names in a sensible way
@@ -38,10 +40,16 @@ export default class NodeOverview extends React.Component {
 
         for (let ns of nameSorted) {
             const nodeName = ns.name;
-            if (
-                (this.props.userOnNode.hasOwnProperty(this.props.username)) &&
-                (this.props.userOnNode[this.props.username].includes(nodeName))
-            ) {
+
+            let jobs = [];
+
+            if (this.props.nodeHasJob.hasOwnProperty(nodeName)) {
+                for (let job of this.props.nodeHasJob[nodeName]) {
+                    jobs.push(job.jobId)
+                }
+            }
+
+            if (jobs.includes(this.props.jobId)) {
                 // CPU percent is only out of the requested cores
                 let userCores = [];
                 for (let job of this.props.nodeHasJob[nodeName]) {
@@ -133,19 +141,36 @@ export default class NodeOverview extends React.Component {
     getUserJobList() {
         const warnedJobs = this.getWarnedJobs();
 
-        let jobList = [];
+        let jobList = {
+            running: [],
+            pending: [],
+            completed: [],
+            cancelled: [],
+            failed: []
+        };
+
         for (let jobId in this.props.jobs) {
             const job = this.props.jobs[jobId];
             if (job.username === this.props.username) {
-                jobList.push(
-                    <JobText
-                        key={jobId}
-                        id={jobId}
-                        job={job}
-                        warn={warnedJobs.includes(jobId)}
-                        onClick={() => this.props.onJobClick(jobId)}
-                    />
-                )
+                const jobText = (<JobText
+                    key={jobId}
+                    id={jobId}
+                    job={job}
+                    warn={warnedJobs.includes(jobId)}
+                    onClick={() => this.props.onJobClick(jobId)}
+                />);
+                if (job.state === 'RUNNING') {
+                    jobList.running.push(jobText)
+                } else if (job.state === 'PENDING') {
+                    jobList.pending.push(jobText)
+                } else if (job.state === 'COMPLETED') {
+                    jobList.completed.push(jobText)
+                } else if (job.state === 'CANCELLED') {
+                    jobList.cancelled.push(jobText)
+                } else if (job.state === 'FAILED') {
+                    jobList.failed.push(jobText)
+                }
+
             }
         }
         return jobList
@@ -153,19 +178,19 @@ export default class NodeOverview extends React.Component {
 
     render () {
         const nodePies = this.getNodePieRows();
-        const userJobList = this.getUserJobList();
+        const jobList = this.getUserJobList();
 
         return (
             <div className="main-item center">
                 <div id='username-title'>
                     {this.props.username}
                 </div>
-                <div id='job-names'>
-                    {userJobList}
+                <div className='instruction'>
+                    Select a running job to view nodes.
                 </div>
-                <div className='heading'>
-                    CPU usage legend:
-                </div>
+                {/*<div className='heading'>*/}
+                    {/*CPU usage legend:*/}
+                {/*</div>*/}
                 <div id='cpu-legend'>
                     <div className='cpu-legend-item'>
                         <div className='circle user'>
@@ -192,22 +217,82 @@ export default class NodeOverview extends React.Component {
                         </div>
                     </div>
                 </div>
-                <div className='instruction'>
-                    Select a node to view detailed system usage.
+                <div id='job-names'>
+                    {(jobList.running.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Running:
+                            </div>
+                            <div>
+                            {jobList.running}
+                            </div>
+                        </div>
+                    }
+                    {(jobList.pending.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Pending:
+                            </div>
+                            <div>
+                                {jobList.pending}
+                            </div>
+                        </div>
+                    }
+                    {(jobList.completed.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Completed:
+                            </div>
+                            <div>
+                                {jobList.completed}
+                            </div>
+                        </div>
+                    }
+                    {(jobList.cancelled.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Cancelled:
+                            </div>
+                            <div>
+                                {jobList.cancelled}
+                            </div>
+                        </div>
+                    }
+                    {(jobList.failed.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Failed:
+                            </div>
+                            <div>
+                                {jobList.failed}
+                            </div>
+                        </div>
+                    }
                 </div>
-                <div className='overview-pies'>
-                    <div className='overview-header'>
-                        <div className='overview-row'>
-                            <div className='overview-cell'>Node</div>
-                            <div className='overview-cell'>CPU</div>
-                            <div className='overview-cell'>Mem</div>
-                            <div className='overview-cell'>GPU</div>
+                {(!(this.props.jobId === null)) &&
+                    <div>
+                        <br />
+                        <div id='job-title'>
+                            {this.props.jobId}
+                        </div>
+                        <div className='instruction'>
+                            Select a node to view detailed system usage.
+                        </div>
+                        <div className='overview-pies'>
+                            <div className='overview-header'>
+                                <div className='overview-row'>
+                                    <div className='overview-cell'>Node</div>
+                                    <div className='overview-cell'>CPU</div>
+                                    <div className='overview-cell'>Mem</div>
+                                    <div className='overview-cell'>GPU</div>
+                                </div>
+                            </div>
+                            <div className='overview-body'>
+                                {nodePies}
+                            </div>
                         </div>
                     </div>
-                    <div className='overview-body'>
-                        {nodePies}
-                    </div>
-                </div>
+                }
             </div>
         )
     }

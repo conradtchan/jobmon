@@ -158,16 +158,17 @@ body {
 
 .job-name {
     width: 100%;
-    /*border: 1px black solid;*/
     text-align: left;
-    cursor: pointer;
-    text-decoration: underline;
 }
 
 .job-name.warn {
     color: var(--bad-job-color);
 }
 
+.job-name.clickable {
+    cursor: pointer;
+    text-decoration: underline;
+}
 
 #node-description {
     text-align: left;
@@ -296,6 +297,11 @@ body {
 }
 
 #nodename-title {
+    font-size: x-large;
+    text-align: center;
+}
+
+#job-title {
     font-size: x-large;
     text-align: center;
 }

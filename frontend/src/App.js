@@ -151,13 +151,12 @@ class App extends React.Component {
     }
 
     selectNode(node) {
-        this.setState({nodeName: node, job: null})
+        this.setState({nodeName: node})
     }
 
     getNodeOverview(warnings) {
         const jobs = this.state.apiData.jobs;
 
-        let userOnNode = {};
         let nodeHasJob = {};
         // For each job
         for (let jobId in jobs) {
@@ -167,13 +166,6 @@ class App extends React.Component {
                 for (let host in jobs[jobId].layout) {
                     // Add this node to the list of nodes used by user
                     const username = jobs[jobId].username;
-                    if (!(userOnNode.hasOwnProperty(username))) {
-                        userOnNode[username] = [];
-                        // If this node hasn't been added already
-                    }
-                    if (!(host in userOnNode[username])) {
-                        userOnNode[username].push(host)
-                    }
 
                     // Add this job to the node
                     if (!(nodeHasJob.hasOwnProperty(host))) {
@@ -195,9 +187,9 @@ class App extends React.Component {
             return (
                 <NodeOverview
                     username={this.state.username}
+                    jobId={this.state.job}
                     nodeData={this.state.apiData.nodes}
                     jobs={this.state.apiData.jobs}
-                    userOnNode={userOnNode}
                     nodeHasJob={nodeHasJob}
                     onRowClick={(node) => this.selectNode(node)}
                     warnings={warnings}
