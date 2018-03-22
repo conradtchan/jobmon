@@ -25,6 +25,8 @@
     --piecycle-3: #FFBB28;
     --piecycle-4: #FF8042;
 
+    --transition-time: 0.2s;
+    
 }
 
 body {
@@ -98,16 +100,20 @@ body {
 
 .overview-row.items {
     cursor: pointer;
-    -o-transition:.5s;
-    -ms-transition:.5s;
-    -moz-transition:.5s;
-    -webkit-transition:.5s;
+    -o-transition: var(--transition-time);
+    -ms-transition:var(--transition-time);
+    -moz-transition:var(--transition-time);
+    -webkit-transition:var(--transition-time);
     /* ...and now for the proper property */
-    transition:.5s;
+    transition:var(--transition-time);
 }
 
 .overview-row.items:nth-child(odd) {
     background-color: var(--medium-shade);
+}
+
+.overview-row.items:nth-child(even) {
+    background-color: var(--light-shade);
 }
 
 .overview-row.items:hover {
@@ -146,14 +152,45 @@ body {
 .node-name.heading {
 }
 
+.running-job-row {
+    width: 100%;
+    cursor: pointer;
+    -o-transition:var(--transition-time);
+    -ms-transition:var(--transition-time);
+    -moz-transition:var(--transition-time);
+    -webkit-transition:var(--transition-time);
+    /* ...and now for the proper property */
+    transition:var(--transition-time);
+}
+
+.running-job-row:nth-child(odd) {
+    background-color: var(--medium-shade);
+}
+
+.running-job-row:hover {
+    background: var(--hover-shade);
+}
+
+.running-job-text {
+    width: 100%;
+}
+
+.running-job-chart {
+    width: 100%;
+}
+
 .job-names {
     text-align: left;
+    width: 100%;
+}
+
+.job-block {
+    width: 100%;
 }
 
 .job-names.heading {
-    align-items: flex-end;
     font-weight:bold;
-    display: flex;
+    margin: 0;
 }
 
 .job-name {
@@ -163,11 +200,6 @@ body {
 
 .job-name.warn {
     color: var(--bad-job-color);
-}
-
-.job-name.clickable {
-    cursor: pointer;
-    text-decoration: underline;
 }
 
 #node-description {
@@ -189,7 +221,6 @@ body {
 
 .main-item{
     height: 100%;
-    /*border: 1px black solid;*/
     padding: 2%;
     text-align: left;
     background-color: var(--light-shade);
@@ -218,18 +249,15 @@ body {
     display: flex;
     text-align: left;
     cursor: pointer;
-    -o-transition:.5s;
-    -ms-transition:.5s;
-    -moz-transition:.5s;
-    -webkit-transition:.5s;
+    -o-transition:var(--transition-time);
+    -ms-transition:var(--transition-time);
+    -moz-transition:var(--transition-time);
+    -webkit-transition:var(--transition-time);
     /* ...and now for the proper property */
-    transition:.5s;
+    transition:var(--transition-time);
 }
 .user-string.hovered {
     background: var(--hover-shade);
-    /*outline-width: 1px;*/
-    /*outline-color: var(--hover-outline-color);*/
-    /*outline-style: solid;*/
 }
 
 .user-string.warn {
@@ -301,11 +329,6 @@ body {
     text-align: center;
 }
 
-#job-title {
-    font-size: x-large;
-    text-align: center;
-}
-
 .core-grid {
     display: flex;
     flex-direction: row;
@@ -335,6 +358,12 @@ body {
 .prop-chart {
     width: 100%;
     height: 100px;
+}
+
+.prop-chart-mini {
+    width: 95%;
+    height: 20px;
+    margin: 0 auto;
 }
 
 .instruction {

@@ -10,9 +10,7 @@ import {
 } from 'recharts';
 
 export default class PropChart extends React.Component {
-    render () {
-        let areas = [];
-
+    scaledData () {
         // Determine unit scaling
         let maxVal = 0;
         let dataMax = this.props.dataMax;
@@ -60,6 +58,12 @@ export default class PropChart extends React.Component {
             dataMax = parseInt((parseInt(dataMax, 10) / factor).toFixed(0), 10)
         }
 
+        return {scaledData: scaledData, dataMax: dataMax, scale: scale}
+    }
+
+    getAreas (scale) {
+        let areas = [];
+
         // Make areas
         for (let i = 0; i < this.props.dataKeys.length; i++) {
             areas.push(
@@ -77,6 +81,14 @@ export default class PropChart extends React.Component {
             )
         }
 
+        return areas
+    }
+
+    render () {
+
+        const d = this.scaledData();
+        const areas = this.getAreas(d.scale);
+
         return (
             <div className="prop-chart-group">
                 <div>
@@ -85,7 +97,7 @@ export default class PropChart extends React.Component {
                 <div className="prop-chart">
                     <ResponsiveContainer>
                         <AreaChart
-                            data={scaledData}
+                            data={d.scaledData}
                         >
                             <XAxis
                                 hide = {true}
@@ -97,8 +109,8 @@ export default class PropChart extends React.Component {
                                 orientation='right'
                                 padding={{ top: 5, bottom: 5 }}
                                 type="number"
-                                domain={[0, dataMax]}
-                                unit={scale + this.props.unit}
+                                domain={[0, d.dataMax]}
+                                unit={d.scale + this.props.unit}
                                 // mirror={true}
                                 interval={0}
                             />
@@ -107,6 +119,26 @@ export default class PropChart extends React.Component {
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
+            </div>
+        )
+    }
+}
+
+export class PropChartMini extends PropChart {
+    render () {
+
+        const d = this.scaledData();
+        const areas = this.getAreas(d.scale);
+
+        return (
+            <div className="prop-chart-mini">
+                <ResponsiveContainer>
+                    <AreaChart
+                        data={d.scaledData}
+                    >
+                        {areas}
+                    </AreaChart>
+                </ResponsiveContainer>
             </div>
         )
     }

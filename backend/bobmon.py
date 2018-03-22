@@ -313,7 +313,7 @@ def get_core_usage(data):
     return usage
 
 
-def history():
+def usage_from_disk():
     filenames = config.FILE_NAME_PATTERN.format('*')
     filepaths = path.join(config.DATA_PATH, filenames)
     data_files = glob(filepaths)
@@ -324,35 +324,69 @@ def history():
         if match is not None:
             times += [match.group(1)]
 
+    cache = {'history': {}}
+    for t in times:
+        filename = config.FILE_NAME_PATTERN.format(t)
+        filepath = path.join(config.DATA_PATH, filename)
+        with gzip.open(filepath, 'r') as f:
+            json_text = f.read().decode('utf-8')
+            data = json.loads(json_text)
+            cache['history'][int(t)] = get_core_usage(data)
+
+    return cache
+
+
+def history(usage_cache):
     now = timestamp()
 
     h = {'history': {}}
-    for t in times:
-        if now - int(t) < config.HISTORY_LENGTH:
+    for t in sorted(list(usage_cache['history'].keys())):
+        if now - t < config.HISTORY_LENGTH:
+            h['history'][t] = usage_cache['history'][t]
+        elif now - t > config.HISTORY_DELETE_AGE:
             filename = config.FILE_NAME_PATTERN.format(t)
             filepath = path.join(config.DATA_PATH, filename)
-            with gzip.open(filepath, 'r') as f:
-                json_text = f.read().decode('utf-8')
-                data = json.loads(json_text)
-                h['history'][int(t)] = get_core_usage(data)
-        elif now - int(t) > config.HISTORY_DELETE_AGE:
-            filename = config.FILE_NAME_PATTERN.format(t)
-            filepath = path.join(config.DATA_PATH, filename)
-            remove(filepath)
+            try:
+                removed_data = usage_cache['history'].pop(t)
+                remove(filepath)
+            except:
+                print('Tried to remove {:}, but already deleted'.format(filename))
+
     return h
 
 
 if __name__ == '__main__':
+    print('Starting bobMon2 backend')
+
+    # Initially, get the usage from disk
+    print('Reading previous snapshots from disk')
+    usage_cache = usage_from_disk()
+
     while True:
+        time_start = timestamp()
+
+        # Get all data
+        print('Gathering data')
         data = do_all()
 
+        # Write to file and history file
+        print('Writing data')
         output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(''))
         record_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(data['timestamp']))
         write_data(data, output_file)
         write_data(data, record_file)
 
-        history_file = path.join(config.DATA_PATH, 'history.json.gz')
-        write_data(history(), history_file)
+        # Get core usage for new data
+        print('Updating history')
+        usage_cache['history'][data['timestamp']] = get_core_usage(data)
 
-        print('Done!')
+        # Write history file
+        history_file = path.join(config.DATA_PATH, 'history.json.gz')
+        write_data(history(usage_cache), history_file)
+
+        time_finish = timestamp()
+        time_taken = time_finish - time_start
+        print('Done! Took {:} seconds'.format(time_taken))
+        sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
+        print('Sleeping for {:} seconds'.format(sleep_time))
         time.sleep(config.UPDATE_INTERVAL)

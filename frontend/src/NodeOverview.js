@@ -1,5 +1,6 @@
 import React from "react";
 import JobText from "./JobText"
+import {PropChartMini} from "./PropChart"
 
 import {
     ResponsiveContainer,
@@ -12,7 +13,6 @@ import {
 export default class NodeOverview extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {jobIdLink: null}
     }
 
     getNodePieRows() {
@@ -41,39 +41,13 @@ export default class NodeOverview extends React.Component {
         for (let ns of nameSorted) {
             const nodeName = ns.name;
 
-            let jobs = [];
-
-            if (this.props.nodeHasJob.hasOwnProperty(nodeName)) {
-                for (let job of this.props.nodeHasJob[nodeName]) {
-                    jobs.push(job.jobId)
-                }
-            }
-
-            if (jobs.includes(this.props.jobId)) {
+            if (Object.keys(this.props.nodeHasJob[nodeName]).includes(this.props.jobId)) {
                 // CPU percent is only out of the requested cores
-                let userCores = [];
-                for (let job of this.props.nodeHasJob[nodeName]) {
-                    if (job.username === this.props.username) {
-                        for (let core of job.nodeLayout) {
-                            if (!(userCores.includes(core))) {
-                                userCores.push(core)
-                            }
-                        }
-                    }
-                }
-                let cpuUsage = {user: 0, system: 0, wait: 0, idle: 0};
-                for (let i of userCores) {
-                    cpuUsage.user   += this.props.nodeData[nodeName].cpu.core[i].user;
-                    cpuUsage.system += this.props.nodeData[nodeName].cpu.core[i].system;
-                    cpuUsage.wait   += this.props.nodeData[nodeName].cpu.core[i].wait;
-                    cpuUsage.idle   += this.props.nodeData[nodeName].cpu.core[i].idle;
-
-                }
-                cpuUsage.user   /= userCores.length;
-                cpuUsage.system /= userCores.length;
-                cpuUsage.wait   /= userCores.length;
-                cpuUsage.idle   /= userCores.length;
-
+                const cpuUsage = this.getNodeCpuUsage(
+                    this.props.jobs[this.props.jobId],
+                    this.props.nodeData[nodeName],
+                    nodeName
+                );
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
                     memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
@@ -101,8 +75,6 @@ export default class NodeOverview extends React.Component {
                         key={nodeName}
                         selectedUser={this.props.username}
                         nodeName={nodeName}
-                        multiNodeJobLink={this.state.jobIdLink}
-                        jobMouseEnter={(jobId) => this.setState({jobIdLink: jobId})}
                         cpuUsage={cpuUsage}
                         mem={memPercent}
                         disk={diskPercent}
@@ -152,23 +124,68 @@ export default class NodeOverview extends React.Component {
         for (let jobId in this.props.jobs) {
             const job = this.props.jobs[jobId];
             if (job.username === this.props.username) {
-                const jobText = (<JobText
-                    key={jobId}
-                    id={jobId}
-                    job={job}
-                    warn={warnedJobs.includes(jobId)}
-                    onClick={() => this.props.onJobClick(jobId)}
-                />);
                 if (job.state === 'RUNNING') {
+                    const jobText = (
+                    <div>
+                        <div
+                            key={jobId}
+                            className = 'running-job-row'
+                            onClick={() => this.props.onJobClick(jobId)}
+                        >
+                            <div className = 'running-job-text'>
+                                <JobText
+                                    id={jobId}
+                                    job={job}
+                                    warn={warnedJobs.includes(jobId)}
+                                />
+                            </div>
+                            <div className = 'running-job-chart'>
+                                {this.getRunningJobChart(job)}
+                            </div>
+                        </div>
+                        {(jobId === this.props.jobId) &&
+                            <div>
+                                <div className='instruction'>
+                                    Select a node to view detailed system usage.
+                                </div>
+                                <div className='overview-pies'>
+                                    <div className='overview-header'>
+                                        <div className='overview-row'>
+                                            <div className='overview-cell'>Node</div>
+                                            <div className='overview-cell'>CPU</div>
+                                            <div className='overview-cell'>Mem</div>
+                                            <div className='overview-cell'>GPU</div>
+                                        </div>
+                                    </div>
+                                    <div className='overview-body'>
+                                        {this.getNodePieRows()}
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                );
                     jobList.running.push(jobText)
-                } else if (job.state === 'PENDING') {
-                    jobList.pending.push(jobText)
-                } else if (job.state === 'COMPLETED') {
-                    jobList.completed.push(jobText)
-                } else if (job.state === 'CANCELLED') {
-                    jobList.cancelled.push(jobText)
-                } else if (job.state === 'FAILED') {
-                    jobList.failed.push(jobText)
+                } else {
+                    const jobText = (
+                    <div key={jobId}>
+                        <JobText
+                            id={jobId}
+                            job={job}
+                            warn={warnedJobs.includes(jobId)}
+                            onClick={() => this.props.onJobClick(jobId)}
+                        />
+                    </div>
+                );
+                    if (job.state === 'PENDING') {
+                        jobList.pending.push(jobText)
+                    } else if (job.state === 'COMPLETED') {
+                        jobList.completed.push(jobText)
+                    } else if (job.state === 'CANCELLED') {
+                        jobList.cancelled.push(jobText)
+                    } else if (job.state === 'FAILED') {
+                        jobList.failed.push(jobText)
+                    }
                 }
 
             }
@@ -176,7 +193,80 @@ export default class NodeOverview extends React.Component {
         return jobList
     }
 
-    render () {
+    getNodeCpuUsage(job, node, host) {
+        let cpuUsage = {user: 0, system: 0, wait: 0, idle: 0};
+        if (job.layout.hasOwnProperty(host)) {
+            const layout = job.layout[host];
+            for (let i of layout) {
+                cpuUsage.user   += node.cpu.core[i].user;
+                cpuUsage.system += node.cpu.core[i].system;
+                cpuUsage.wait   += node.cpu.core[i].wait;
+                cpuUsage.idle   += node.cpu.core[i].idle;
+            }
+            const nCores = layout.length;
+            cpuUsage.user   /= nCores;
+            cpuUsage.system /= nCores;
+            cpuUsage.wait   /= nCores;
+            cpuUsage.idle   /= nCores;
+        }
+
+        return cpuUsage
+    }
+
+    getJobCpuUsage(job, nodes) {
+        let cpuUsage = {user: 0, system: 0, wait: 0, idle: 0};
+        for (let host in job.layout) {
+            const nodeUsage = this.getNodeCpuUsage(job, nodes[host], host);
+            const nCores = job.layout[host].length;
+            cpuUsage.user += nodeUsage.user * nCores;
+            cpuUsage.system += nodeUsage.system * nCores;
+            cpuUsage.wait += nodeUsage.wait * nCores;
+            cpuUsage.idle += nodeUsage.idle * nCores;
+        }
+
+        cpuUsage.user   /= job.nCpus;
+        cpuUsage.system /= job.nCpus;
+        cpuUsage.wait   /= job.nCpus;
+        cpuUsage.idle   /= job.nCpus;
+
+        return cpuUsage
+    }
+
+    getRunningJobChart(job) {
+        const style = getComputedStyle(document.documentElement);
+        let historyChart = [];
+
+        let sortedHistory = this.props.briefHistory;
+        sortedHistory.sort((a, b) => (a.timestamp < b.timestamp ) ? -1 : (a.timestamp  > b.timestamp) ? 1 : 0);
+
+        for (let data of sortedHistory) {
+            const nodes = data.nodes;
+            const usage = this.getJobCpuUsage(job, nodes);
+            historyChart.push({
+                user: usage.user,
+                system: usage.system,
+                wait: usage.wait,
+            })
+        }
+
+        return (
+            <PropChartMini
+                name = 'Job CPU usage'
+                data = {historyChart}
+                dataKeys = {['user', 'system', 'wait']}
+                colors = {[
+                    style.getPropertyValue('--piecolor-user'),
+                    style.getPropertyValue('--piecolor-system'),
+                    style.getPropertyValue('--piecolor-wait')
+                ]}
+                unit = '%'
+                dataMax = {100}
+                stacked = {true}
+            />
+        )
+    }
+
+    render() {
         const nodePies = this.getNodePieRows();
         const jobList = this.getUserJobList();
 
@@ -188,9 +278,6 @@ export default class NodeOverview extends React.Component {
                 <div className='instruction'>
                     Select a running job to view nodes.
                 </div>
-                {/*<div className='heading'>*/}
-                    {/*CPU usage legend:*/}
-                {/*</div>*/}
                 <div id='cpu-legend'>
                     <div className='cpu-legend-item'>
                         <div className='circle user'>
@@ -217,17 +304,14 @@ export default class NodeOverview extends React.Component {
                         </div>
                     </div>
                 </div>
-                <div id='job-names'>
-                    {(jobList.running.length > 0) &&
-                        <div>
-                            <div className='job-names heading'>
-                                Running:
-                            </div>
-                            <div>
-                            {jobList.running}
-                            </div>
-                        </div>
-                    }
+
+                <div className='job-names heading'>
+                    Running:
+                </div>
+                    {jobList.running}
+                <br />
+
+                <div className='job-names'>
                     {(jobList.pending.length > 0) &&
                         <div>
                             <div className='job-names heading'>
@@ -269,30 +353,6 @@ export default class NodeOverview extends React.Component {
                         </div>
                     }
                 </div>
-                {(!(this.props.jobId === null)) &&
-                    <div>
-                        <br />
-                        <div id='job-title'>
-                            {this.props.jobId}
-                        </div>
-                        <div className='instruction'>
-                            Select a node to view detailed system usage.
-                        </div>
-                        <div className='overview-pies'>
-                            <div className='overview-header'>
-                                <div className='overview-row'>
-                                    <div className='overview-cell'>Node</div>
-                                    <div className='overview-cell'>CPU</div>
-                                    <div className='overview-cell'>Mem</div>
-                                    <div className='overview-cell'>GPU</div>
-                                </div>
-                            </div>
-                            <div className='overview-body'>
-                                {nodePies}
-                            </div>
-                        </div>
-                    </div>
-                }
             </div>
         )
     }

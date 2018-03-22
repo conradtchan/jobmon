@@ -31,7 +31,9 @@ export default class TimeMachine extends React.Component {
 
     getTimeAgo() {
         if (!(this.props.snapshotTime === null)) {
-            this.setState({timeAgo: ((new Date() - this.props.snapshotTime) / 1000).toFixed(0)});
+            this.setState({
+                timeAgo: ((new Date() - this.props.snapshotTime) / 1000).toFixed(0)
+            });
             setTimeout(() => {this.getTimeAgo()}, 1000);
         }
     }

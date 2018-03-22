@@ -59,7 +59,8 @@ class App extends React.Component {
         let newBriefHistory = [];
         let times = [];
         for (let data of this.state.briefHistory) {
-            if (observerNow - data.timestamp < this.state.briefHistoryWindow) {
+            const timeDiff = observerNow - data.timestamp;
+            if ((timeDiff < this.state.briefHistoryWindow) && (timeDiff > 0)) {
                 newBriefHistory.push(data);
                 times.push(data.timestamp)
             }
@@ -164,19 +165,11 @@ class App extends React.Component {
             if (jobs[jobId].state === 'RUNNING') {
                 // For each host that the job is running on
                 for (let host in jobs[jobId].layout) {
-                    // Add this node to the list of nodes used by user
-                    const username = jobs[jobId].username;
-
                     // Add this job to the node
                     if (!(nodeHasJob.hasOwnProperty(host))) {
-                        nodeHasJob[host] = []
+                        nodeHasJob[host] = {}
                     }
-                    nodeHasJob[host].push({
-                        jobId: jobId,
-                        username: username,
-                        nodeLayout: jobs[jobId].layout[host],
-                        jobName: jobs[jobId].name,
-                    })
+                    nodeHasJob[host][jobId] = jobs[jobId]
                 }
             }
         }
@@ -194,13 +187,19 @@ class App extends React.Component {
                     onRowClick={(node) => this.selectNode(node)}
                     warnings={warnings}
                     onJobClick={(jobId) => this.selectJob(jobId)}
+                    briefHistory={this.state.briefHistory}
                 />
             )
         }
     }
 
     selectJob(jobId) {
-        this.setState({job: jobId})
+        // Unselect job if it is alread
+        if (this.state.job === jobId) {
+            this.setState({job: null})
+        } else {
+            this.setState({job: jobId})
+        }
     }
 
     getNodeDetails(warnings) {
