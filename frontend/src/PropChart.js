@@ -28,7 +28,7 @@ export default class PropChart extends React.Component {
         }
         let factor;
         let scale;
-        const thresh = 1;
+        let thresh = 1;
         if (maxVal > thresh * 1073741824) {
             factor =  1073741824;
             scale = 'G';
@@ -42,20 +42,28 @@ export default class PropChart extends React.Component {
             factor = 1;
             scale = '';
         }
+
+        // Scale max
+        if ((dataMax === parseInt(dataMax, 10)) && !(this.props.unit === '%')) {
+            dataMax = parseInt((parseInt(dataMax, 10) / factor).toFixed(0), 10)
+        }
+
+        // Set number of digits
+        let digits = 1;
+        if (maxVal / factor < 10) {
+            digits = 2;
+        }
+
         // Scale all data
         let scaledData = [];
         for (let i = 0; i < this.props.data.length; i++) {
             scaledData.push({});
             for (let key of this.props.dataKeys) {
-                scaledData[i][key] = (this.props.data[i][key] / factor).toFixed(1)
+                scaledData[i][key] = (this.props.data[i][key] / factor).toFixed(digits)
             }
             // Time for X Axis
             scaledData[i]['time'] = this.props.data[i].time;
             scaledData[i]['timeString'] = this.props.data[i].timeString;
-        }
-        // Scale max too
-        if ((dataMax === parseInt(dataMax, 10)) && !(this.props.unit === '%')) {
-            dataMax = parseInt((parseInt(dataMax, 10) / factor).toFixed(0), 10)
         }
 
         return {scaledData: scaledData, dataMax: dataMax, scale: scale}

@@ -79,6 +79,7 @@ body {
 .overview-pies{
     display: table;
     width: 100%;
+    margin-bottom: 10px;
     /*border: 1px black solid;*/
 }
 
@@ -161,6 +162,7 @@ body {
     -webkit-transition:var(--transition-time);
     /* ...and now for the proper property */
     transition:var(--transition-time);
+    margin-bottom: 5px;
 }
 
 .running-job-row:nth-child(odd) {
@@ -352,7 +354,7 @@ body {
 .prop-chart-group {
     flex-grow: 0;
     flex-shrink: 0;
-    flex-basis: 45%;
+    flex-basis: 49%;
 }
 
 .prop-chart {

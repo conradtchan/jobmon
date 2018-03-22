@@ -267,7 +267,6 @@ export default class NodeOverview extends React.Component {
     }
 
     render() {
-        const nodePies = this.getNodePieRows();
         const jobList = this.getUserJobList();
 
         return (

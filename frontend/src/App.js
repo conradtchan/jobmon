@@ -104,7 +104,6 @@ class App extends React.Component {
                         gotData: true,
                     }, () => this.updateBriefHistory());
                     setTimeout(() => {this.fetchLatest()}, 10000) // 10 seconds
-                    console.log(jsonData)
                 }
             };
             xhr.open("GET", this.state.address + "bobdata.py", true);

@@ -156,12 +156,12 @@ export default class NodeDetails extends React.Component {
     }
 
     getPropCharts(historyChart, gpuNames) {
-        // This may take a while to load, so show a loading spinner
-        if (historyChart.length < 3) {
-            return(
-                <div className="loader"></div>
-            )
-        }
+        // // This may take a while to load, so show a loading spinner
+        // if (historyChart.length < 3) {
+        //     return(
+        //         <div className="loader"></div>
+        //     )
+        // }
 
         const style = getComputedStyle(document.documentElement);
 
@@ -282,7 +282,7 @@ export default class NodeDetails extends React.Component {
                     {corePiesRight}
                 </div>
                 <div className="heading">
-                    Resource usage (past hour)
+                    Node resource usage (past hour)
                 </div>
                 {this.getPropCharts(historyChart, gpuNames)}
                 {(otherJobList.length > 0) &&
