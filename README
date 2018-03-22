@@ -1,82 +1,37 @@
+# INSTALLATION
 
-bobMonitor (c) Robin Humble 2003-2012
-License: GPLv3+
-http://code.google.com/p/bob-monitor/
+## Backend
 
+Make the data directory where JSON output is written to
+```
+mkdir /var/spool/bobMon2
+```
 
-INTRODUCTION:
+Install the cgi-bin Python scripts
+```
+cp cgi-bin/* /var/www/cgi-bin/
+```
 
-bobMonitor is a cluster montoring tool that presents near real-time job and cluster
-information in a dynamic web page. it is aimed at both
-cluster administrators and users, and enables them to visually see how jobs
-and the cluster is performing.
+Configure the backend using `backend/bobmon_config.py`, then place `backend/`
 
-python is used on the server side to aggregate and collate information and
-generate an XML file of the cluster and job state.
-typically data is harvested from PBS and ganglia and instantaneous and historical data for each job is computed.
+Install the backend
+```
+cp backend/* /usr/lib/bobMon2
+```
 
-JavaScript is used on the client-side (in the browser) to frequently update the cluster display.
-historical data over the length of the job's run is visible.
+## Frontend
 
-bobMonitor has been developed since 2003 and should be portable to most ganglia enabled and PBS compatible cluster environments. it has been developed with HPC clusters and jobs in mind.
+Build the optimised production frontend
+```
+cd frontend
+yarn build
+```
 
+Install the frontend
+```
+cp build/* /var/www/html/bobMon2
+```
 
-CONFIGURATION:
+# RUNNING
 
-a single simple config file is used to setup preferences for both the server-side python code and the client-side JavaScript code.
-
-
-REQUIREMENTS:
-
-bobMonitor relies upon the following:
- - ganglia  http://ganglia.info/
- - a PBS variant such as OpenPBS or torque
- - python 2.4 or above (but not 3.*)
- - a web server with cgi-bin access
- - a JavaScript enabled web browser
-
-server-side pie charts of the queue require:
- - PyChart  http://home.gna.org/pychart/ 
- - netpbm tools (netpbm-progs) for pieChart image post-processing
-
-optional:
- - maui or moab scheduler
-
-bobMonitor gratefully uses and includes a copy of Erik Arvidsson's
-slider implementation:
-  http://webfx.eae.net/dhtml/slider/slider.html
-and a progress bar from:
-  http://www.dynamicdrive.com/dynamicindex11/dhtmlprogress2.htm
-  by Brian Gosselin of http://scriptasylum.com
-
-
-INSTALLATION:
-
-see the INSTALL file
-
-
-TESTING:
-
-RedHat 4/5 variants are the only tested server-side configuration.
-
-most client testing has been done with gecko based browsers (eg. firefox), but
-webkit (eg. safari, Android browser) has also been somewhat tested. IE is untested, but might work.
-
-
-OPTIMISATIONS:
-
-the bobMonitor client-side JavaScript code is optimised to lower the load on
-browsers by updating only those fields that have changed since the last update.
-it has been tested with clusters of 1500 nodes and it is expected to scale
-to 10000+ node clusters (if your monitor is big enough!).
-the ever improving JavaScript implementations in modern browsers will also help.
-
-bandwidth required by the compressed XML stream is relatively small, but if you
-have a large cluster probably shouldn't be attempted frequently over dial-up or
-mobile.
-
-the server-side load has been optimised by decoupling the state gathering and
-aggregation from the web requests. typically the XML state of
-the cluster is updated every 5 to 10 seconds or so, wheras the cgi-bin script
-may send this XML stream to many clients every second.
-
+Run `/usr/lib/bobMon2/bobmon.py`, which generates gzip'd JSON at `/var/spool/bobMon2`, which is read by the web app.
