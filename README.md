@@ -12,7 +12,7 @@ Install the cgi-bin Python scripts
 cp cgi-bin/* /var/www/cgi-bin/
 ```
 
-Configure the backend using `backend/bobmon_config.py`, then place `backend/`
+Configure the backend using `backend/bobmon_config.py`
 
 Install the backend
 ```
