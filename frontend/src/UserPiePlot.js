@@ -88,9 +88,11 @@ export default class UserPiePlot extends React.Component {
                     activeIndex={this.state.usagePieActiveIndex}
                     activeSectorSize={this.state.activeSectorSize}
                 />
-                <div className='bad-job'>
-                    Users and nodes with bad jobs are highlighted.
-                </div>
+                {(Object.keys(this.props.warnedUsers).length > 0) &&
+                    <div className='bad-job'>
+                        Users and nodes with bad jobs are highlighted.
+                    </div>
+                }
                 <div className="heading">
                     Running:
                 </div>
