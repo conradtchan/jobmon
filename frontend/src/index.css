@@ -26,6 +26,8 @@
     --piecycle-4: #FF8042;
 
     --transition-time: 0.2s;
+
+    --loading-percent: 0%;
     
 }
 
@@ -51,7 +53,14 @@ body {
 }
 
 #time-machine {
-    background-color: var(--light-shade);
+    transition-duration: 500ms;
+    background: linear-gradient(
+        to right,
+        var(--medium-shade) 0%,
+        var(--medium-shade) var(--loading-percent),
+        var(--light-shade) var(--loading-percent),
+        var(--light-shade) 100%
+    );
     width: 90%;
     max-width: 1600px;
     margin: 15px auto;

@@ -11,6 +11,8 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            // address: '../cgi-bin/',
+            address: 'http://localhost:3467/cgi-bin/',
             apiData: null,
             gotData: false,
             username: null,
@@ -21,36 +23,57 @@ class App extends React.Component {
             holdSnap: false,
             history: null,
             briefHistory: [],
+            briefHistoryTemp: [], // workaround to quickly updating data, need to find a better way to do this
             briefHistoryWindow: 3600, // seconds
-            // address: '../cgi-bin/',
-            address: 'http://localhost:3467/cgi-bin/',
+            briefHistoryCount: 0,
         };
 
         this.fetchHistory();
         this.fetchLatest();
+
+    }
+
+    updateLoadingBar() {
+        let percent = 100 * this.state.briefHistoryTemp.length / this.state.briefHistoryCount;
+        if ((percent < 0) || (percent >= 100)) percent = 0;
+        document.documentElement.style.setProperty('--loading-percent', percent + '%');
+    }
+
+    checkBriefHistoryDone() {
+        if (this.state.briefHistoryTemp.length === this.state.briefHistoryCount) {
+            this.setState({
+                briefHistory: this.state.briefHistoryTemp,
+                briefHistoryTemp: [],
+            })
+        }
     }
 
     initBriefHistory() {
         if ((this.state.briefHistory.length < 3) && !(this.state.history === null)) {
             const observerNow = this.state.snapshotTime / 1000;
 
+            let briefHistoryCount = 0;
             // Add a bunch of values
             const times = Object.keys(this.state.history);
             for (let time of times) {
                 const timeDiff = observerNow - time;
                 if ((timeDiff < this.state.briefHistoryWindow) && (timeDiff > 0)){
+                    briefHistoryCount++;
                     // Make request for snapshot, then push to list
                     let xhr = new XMLHttpRequest();
                     xhr.onreadystatechange = () => {
                         if (xhr.readyState === 4 && xhr.status === 200) {
                             const jsonData = JSON.parse(xhr.responseText);
-                            this.state.briefHistory.push(jsonData)
+                            this.state.briefHistoryTemp.push(jsonData); // this is illegal but fast
+                            this.checkBriefHistoryDone();
+                            this.updateLoadingBar();
                         }
                     };
                     xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);
                     xhr.send();
                 }
             }
+            this.setState({briefHistoryCount: briefHistoryCount})
         }
     }
 
@@ -465,7 +488,6 @@ class App extends React.Component {
             <div className="App">
                 <header className="App-header">
                     <img src={logo} className="App-logo" alt="logo" />
-                    {/*<h1 className="App-title">System monitor</h1>*/}
                 </header>
                 {this.getTimeMachine()}
                 {this.show()}
