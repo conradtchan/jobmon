@@ -8,6 +8,7 @@ import {
     Pie,
     Cell,
     Label,
+    Tooltip,
 } from 'recharts';
 
 export default class NodeOverview extends React.Component {
@@ -454,6 +455,7 @@ class NodePie extends React.Component {
                     <PieChart
                         onMouseEnter = {() => this.setState({expanded: true})}
                         onMouseLeave = {() => this.setState({expanded: false})}
+                        cursor="pointer"
                     >
                         <Pie
                             data = {data.cpu}

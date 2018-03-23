@@ -170,6 +170,7 @@ class UsagePie extends React.Component {
                     startAngle={startAngle}
                     endAngle={endAngle}
                     fill={fill}
+                    cursor="pointer"
                 />
             </g>
         )
@@ -238,6 +239,7 @@ class UsagePie extends React.Component {
                                     (entry, index) => <Cell
                                         key={index}
                                         fill={pieColors[index % pieColors.length]}
+                                        cursor="pointer"
                                     />
                                 )
                             }
