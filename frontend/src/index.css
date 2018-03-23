@@ -77,80 +77,21 @@ body {
 }
 
 .overview-pies{
-    display: table;
+    display: flex;
+    /*flex-direction: row;*/
+    flex-wrap: wrap;
+    justify-content: flex-end;
     width: 100%;
     margin-bottom: 10px;
     /*border: 1px black solid;*/
 }
 
-.overview-header {
-    display: table-header-group;
-    font-weight: bold;
-    background-color: var(--dark-shade);
-}
-
-.overview-body {
-    display: table-row-group;
-    width: 100%;
-}
-
-.overview-row {
-    display: table-row;
-    width: 100%;
-}
-
-.overview-row.items {
-    cursor: pointer;
-    -o-transition: var(--transition-time);
-    -ms-transition:var(--transition-time);
-    -moz-transition:var(--transition-time);
-    -webkit-transition:var(--transition-time);
-    /* ...and now for the proper property */
-    transition:var(--transition-time);
-}
-
-.overview-row.items:nth-child(odd) {
-    background-color: var(--medium-shade);
-}
-
-.overview-row.items:nth-child(even) {
-    background-color: var(--light-shade);
-}
-
-.overview-row.items:hover {
-    background: var(--hover-shade);
-}
-
-.overview-cell {
-    display: table-cell;
-    width: 25%;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.overview-cell.warn {
-    color: var(--bad-job-color);
-}
-
 .overview-pie {
     cursor: pointer;
-    height: 50px;
-    width: 100%;
+    height: 64px;
+    width: 64px;
     margin: 0 auto;
-}
-
-.node-name {
-    width: 31%;
     /*border: 1px black solid;*/
-    display: flex;
-    align-items: center;
-}
-
-.node-name.warn{
-    color: var(--bad-job-color);
-}
-
-.node-name.heading {
 }
 
 .running-job-row {
@@ -417,6 +358,14 @@ body {
 
 .circle.wait {
     background: var(--piecolor-wait)
+}
+
+.circle.mem {
+    background: var(--piecolor-mem)
+}
+
+.circle.gpu {
+    background: var(--piecolor-gpu)
 }
 
 #ganglia-link {

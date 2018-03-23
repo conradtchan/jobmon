@@ -15,7 +15,7 @@ export default class NodeOverview extends React.Component {
         super(props);
     }
 
-    getNodePieRows() {
+    getNodePies() {
         let nodePies = [];
 
         // Only these node names have jobs on them
@@ -71,7 +71,7 @@ export default class NodeOverview extends React.Component {
                 }
 
                 nodePies.push(
-                    <NodePieRow
+                    <NodePie
                         key={nodeName}
                         selectedUser={this.props.username}
                         nodeName={nodeName}
@@ -149,17 +149,7 @@ export default class NodeOverview extends React.Component {
                                     Select a node to view detailed system usage.
                                 </div>
                                 <div className='overview-pies'>
-                                    <div className='overview-header'>
-                                        <div className='overview-row'>
-                                            <div className='overview-cell'>Node</div>
-                                            <div className='overview-cell'>CPU</div>
-                                            <div className='overview-cell'>Mem</div>
-                                            <div className='overview-cell'>GPU</div>
-                                        </div>
-                                    </div>
-                                    <div className='overview-body'>
-                                        {this.getNodePieRows()}
-                                    </div>
+                                    {this.getNodePies()}
                                 </div>
                             </div>
                         }
@@ -302,6 +292,22 @@ export default class NodeOverview extends React.Component {
                             wait
                         </div>
                     </div>
+                    <div className='cpu-legend-item'>
+                        <div className='circle mem'>
+                            &nbsp;
+                        </div>
+                        <div className='cpu-legend-label'>
+                            mem
+                        </div>
+                    </div>
+                    <div className='cpu-legend-item'>
+                        <div className='circle gpu'>
+                            &nbsp;
+                        </div>
+                        <div className='cpu-legend-label'>
+                            gpu
+                        </div>
+                    </div>
                 </div>
 
                 <div className='job-names heading'>
@@ -358,9 +364,50 @@ export default class NodeOverview extends React.Component {
 }
 
 
-class NodePieRow extends React.Component {
+class NodePie extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {expanded: false}
+    }
+
     render() {
-        let nameClass = 'overview-cell';
+        const style = getComputedStyle(document.documentElement);
+
+        const cpuColors = [
+            style.getPropertyValue('--piecolor-blank'),
+            style.getPropertyValue('--piecolor-system'),
+            style.getPropertyValue('--piecolor-wait'),
+            style.getPropertyValue('--piecolor-user'),
+        ];
+
+        const memColors = [
+            style.getPropertyValue('--piecolor-blank'),
+            style.getPropertyValue('--piecolor-mem'),
+        ];
+
+        const gpuColors = [
+            style.getPropertyValue('--piecolor-blank'),
+            style.getPropertyValue('--piecolor-gpu'),
+        ];
+
+        const data = {
+            cpu: [
+                {name: 'user', data: this.props.cpuUsage.user},
+                {name: 'wait', data: this.props.cpuUsage.wait},
+                {name: 'system', data: this.props.cpuUsage.system},
+                {name: 'idle', data: this.props.cpuUsage.idle},
+            ],
+            mem: [
+                {name: 'mem', data: this.props.mem},
+                {name: 'free', data: 100 - this.props.mem},
+            ],
+            gpu: [
+                {name: 'gpu', data: this.props.gpu},
+                {name: 'free', data: 100 - this.props.gpu},
+            ],
+        };
+
+        // Make label red if warning
         let doWarn = false;
         for (let w in this.props.nodeWarn.node) {
             if (this.props.nodeWarn.node[w]) {
@@ -376,126 +423,102 @@ class NodePieRow extends React.Component {
                 }
             }
         }
-        if (doWarn) nameClass += ' warn';
+        let nameColor = '';
+        if (doWarn) nameColor = style.getPropertyValue('--bad-job-color');
 
-
-        return (
-            <div className='overview-row items' onClick={() => this.props.onRowClick(this.props.nodeName)}>
-                <div className={nameClass}>
-                    {this.props.nodeName}
-                </div>
-                <div className='overview-cell'>
-                    <NodePie
-                        type='cpu'
-                        data={[
-                            {name: 'user', data: this.props.cpuUsage.user},
-                            {name: 'wait', data: this.props.cpuUsage.wait},
-                            {name: 'system', data: this.props.cpuUsage.system},
-                            {name: 'idle', data: this.props.cpuUsage.idle},
-                        ]}
-                        warn={this.props.nodeWarn.cpuWait}
-                    />
-                </div>
-                <div className='overview-cell'>
-                    <NodePie
-                        type='mem'
-                        data={[
-                            {name: 'mem', data: this.props.mem},
-                            {name: 'free', data: 100 - this.props.mem},
-                        ]}
-                        warn={this.props.nodeWarn.swapUse}
-                    />
-                </div>
-                <div className='overview-cell'>
-                    <NodePie
-                        type='gpu'
-                        data={[
-                            {name: 'gpu', data: this.props.gpu},
-                            {name: 'free', data: 100 - this.props.gpu},
-                        ]}
-                        warn={false}
-                    />
-                </div>
-            </div>
-        )
-    }
-}
-
-
-
-class NodePie extends React.Component {
-    render() {
-        const style = getComputedStyle(document.documentElement);
-        let pieColors = [];
-        pieColors.push(style.getPropertyValue('--piecolor-blank'));
-        if (this.props.type === 'cpu') {
-            pieColors.push(style.getPropertyValue('--piecolor-system'));
-            pieColors.push(style.getPropertyValue('--piecolor-wait'));
-            pieColors.push(style.getPropertyValue('--piecolor-user')); // user
-        } else if (this.props.type === 'mem') {
-            pieColors.push(style.getPropertyValue('--piecolor-mem'));
-        } else if (this.props.type === 'disk') {
-            pieColors.push(style.getPropertyValue('--piecolor-disk'));
-        } else if (this.props.type === 'gpu') {
-            pieColors.push(style.getPropertyValue('--piecolor-gpu'));
-        }
-
-        let ring = 0;
-        if (this.props.warn) ring = 100;
-
-
-        function PieLabel({viewBox, value1}) {
+        function PieLabel({viewBox, value1, value2}) {
             const {cx, cy} = viewBox;
             return (
-                <text x={cx} y={cy} fill="#3d405c" className="recharts-text recharts-label" textAnchor="middle" dominantBaseline="central">
-                    <tspan alignmentBaseline="middle" x={cx} dy="0.0em" fontSize="12">{value1}</tspan>
-                </text>
+                    <text
+                        x={cx}
+                        y={cy}
+                        fill={nameColor}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                    >
+                        <tspan alignmentBaseline="middle" x={cx} dy="-0.4em" fontSize="12">{value1}</tspan>
+                        <tspan alignmentBaseline="middle" x={cx} dy="1.0em" fontSize="12">{value2}</tspan>
+                    </text>
             )
         }
 
-        const pieText = (100 - this.props.data[this.props.data.length - 1]['data']).toFixed(0) + '%'; // 100 minus idle
+        const nodeLetters = this.props.nodeName.replace(/\d+/g, '');
+        const nodeNumber = parseInt(this.props.nodeName.match(/\d+$/)[0], 10);
+
+        let dRing = 0;
+        if (this.state.expanded) dRing = 10;
 
         return (
-            <div className='overview-pie'>
+            <div className='overview-pie' onClick={() => this.props.onRowClick(this.props.nodeName)}>
                 <ResponsiveContainer>
-                    <PieChart>
+                    <PieChart
+                        onMouseEnter = {() => this.setState({expanded: true})}
+                        onMouseLeave = {() => this.setState({expanded: false})}
+                    >
                         <Pie
-                            data={this.props.data}
+                            data = {data.cpu}
                             nameKey='name'
                             dataKey='data'
-                            innerRadius='75%'
-                            outerRadius='100%'
+                            innerRadius={90 + dRing + '%'}
+                            outerRadius={110 + dRing + '%'}
+                            startAngle={90}
+                            endAngle={450}
+                            isAnimationActive={false}
+                        >
+                            <Label
+                                position="center"
+                                content={<PieLabel
+                                    value1={nodeLetters}
+                                    value2={nodeNumber}
+                                />}>
+                            </Label>
+                            {
+                                data.cpu.reverse().map(
+                                    (entry, index) => <Cell
+                                        key={index}
+                                        fill={cpuColors[index]}
+                                    />
+                                )
+                            }
+                        </Pie>
+                        <Pie
+                            data = {data.mem}
+                            nameKey='name'
+                            dataKey='data'
+                            innerRadius={75 + dRing + '%'}
+                            outerRadius={90 + dRing + '%'}
                             startAngle={90}
                             endAngle={450}
                             isAnimationActive={false}
                         >
                             {
-                                this.props.data.reverse().map(
+                                data.mem.reverse().map(
                                     (entry, index) => <Cell
                                         key={index}
-                                        fill={pieColors[index]}
+                                        fill={memColors[index]}
                                     />
                                 )
                             }
-                            <Label
-                                position="center"
-                                content={<PieLabel
-                                    value1={pieText}
-                                />}>
-                            </Label>
                         </Pie>
                         <Pie
-                            data={[{name: 'ring', ring: ring}]}
+                            data = {data.gpu}
                             nameKey='name'
-                            dataKey='ring'
-                            innerRadius='100%'
-                            outerRadius='120%'
+                            dataKey='data'
+                            innerRadius={60 + dRing + '%'}
+                            outerRadius={75 + dRing + '%'}
                             startAngle={90}
                             endAngle={450}
-                            fill={style.getPropertyValue('--bad-job-color')}
-                            paddingAngle={0}
                             isAnimationActive={false}
-                        />
+                        >
+                            {
+                                data.gpu.reverse().map(
+                                    (entry, index) => <Cell
+                                        key={index}
+                                        fill={gpuColors[index]}
+                                    />
+                                )
+                            }
+                        </Pie>
                     </PieChart>
                 </ResponsiveContainer>
             </div>
