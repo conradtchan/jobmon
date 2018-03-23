@@ -37,7 +37,8 @@ class App extends React.Component {
             // Add a bunch of values
             const times = Object.keys(this.state.history);
             for (let time of times) {
-                if (observerNow - time < this.state.briefHistoryWindow) {
+                const timeDiff = observerNow - time;
+                if ((timeDiff < this.state.briefHistoryWindow) && (timeDiff > 0)){
                     // Make request for snapshot, then push to list
                     let xhr = new XMLHttpRequest();
                     xhr.onreadystatechange = () => {
@@ -114,19 +115,19 @@ class App extends React.Component {
     fetchTime(time) {
         this.setState({holdSnap: true});
         let xhr = new XMLHttpRequest();
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                        const jsonData = JSON.parse(xhr.responseText);
-                    this.cleanState(jsonData);
-                    this.setState({
-                        apiData: jsonData,
-                        snapshotTime: new Date(jsonData.timestamp * 1000),
-                        gotData: true,
-                    }, () => this.updateBriefHistory());
-                }
-            };
-            xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);
-            xhr.send();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                    const jsonData = JSON.parse(xhr.responseText);
+                this.cleanState(jsonData);
+                this.setState({
+                    apiData: jsonData,
+                    snapshotTime: new Date(jsonData.timestamp * 1000),
+                    gotData: true,
+                }, () => this.updateBriefHistory());
+            }
+        };
+        xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);
+        xhr.send();
     }
 
     cleanState(newData) {

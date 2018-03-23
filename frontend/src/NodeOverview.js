@@ -8,14 +8,9 @@ import {
     Pie,
     Cell,
     Label,
-    Tooltip,
 } from 'recharts';
 
 export default class NodeOverview extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
     getNodePies() {
         let nodePies = [];
 
@@ -127,9 +122,8 @@ export default class NodeOverview extends React.Component {
             if (job.username === this.props.username) {
                 if (job.state === 'RUNNING') {
                     const jobText = (
-                    <div>
+                    <div key={jobId}>
                         <div
-                            key={jobId}
                             className = 'running-job-row'
                             onClick={() => this.props.onJobClick(jobId)}
                         >
