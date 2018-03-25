@@ -13,9 +13,38 @@ export default class TimeMachine extends React.Component {
         super(props);
         this.state = {
             timeAgo: 0,
+            showTime: new Date(0),
+            previousTime: new Date(0),
         };
         this.getTimeAgo();
+        this.updateSnapshotTime();
+
     }
+
+    updateSnapshotTime() {
+        const snapshotSeconds = this.props.snapshotTime / 1000;
+        const timeDiff = this.state.showTime / 1000 - snapshotSeconds;
+        let timeDiffAbs = timeDiff;
+        if (timeDiff < 0) timeDiffAbs *= -1;
+
+        let showTime;
+        if (timeDiffAbs > 86400) {
+            showTime = snapshotSeconds + 0.01 * timeDiff
+        } else if (timeDiffAbs > 30) {
+            showTime = snapshotSeconds + 0.1 * timeDiff
+        } else {
+            showTime = snapshotSeconds
+        }
+
+        this.setState({showTime: new Date(showTime * 1000)},
+            () => this.getTimeAgo()
+        );
+
+        if (timeDiffAbs > 0) {
+            setTimeout(() => this.updateSnapshotTime(), 10)
+        }
+    }
+
     timeString(time) {
         if (time < 60) {
             return time.toFixed(0) + ' seconds'
@@ -30,15 +59,19 @@ export default class TimeMachine extends React.Component {
     }
 
     getTimeAgo() {
-        if (!(this.props.snapshotTime === null)) {
-            this.setState({
-                timeAgo: ((new Date() - this.props.snapshotTime) / 1000).toFixed(0)
-            });
-            setTimeout(() => {this.getTimeAgo()}, 1000);
-        }
+        this.setState({
+            timeAgo: ((new Date() - this.state.showTime) / 1000).toFixed(0)
+        });
+        setTimeout(() => {this.getTimeAgo()}, 1000);
     }
 
     render () {
+
+        if (!(this.props.snapshotTime === this.state.previousTime)) {
+            this.setState({previousTime: this.props.snapshotTime},
+                () => this.updateSnapshotTime()
+            )
+        }
 
         if (this.props.history === null) {
             return(
@@ -72,7 +105,7 @@ export default class TimeMachine extends React.Component {
                     Showing data from
                     </div>
                     <div id='clock'>
-                        {this.props.snapshotTime.toTimeString()}
+                        {this.state.showTime.toTimeString()}
                     </div>
                     <div>
                         ({this.timeString(parseInt(this.state.timeAgo, 10))} ago)

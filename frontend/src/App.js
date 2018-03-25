@@ -11,8 +11,8 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            // address: '../cgi-bin/',
-            address: 'http://localhost:3467/cgi-bin/',
+            address: '../cgi-bin/',
+            // address: 'http://localhost:3467/cgi-bin/',
             apiData: null,
             gotData: false,
             username: null,
@@ -99,9 +99,7 @@ class App extends React.Component {
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 const jsonData = JSON.parse(xhr.responseText);
-                this.setState(
-                    {history: jsonData.history}
-                );
+                this.setState({history: jsonData.history})
                 setTimeout(() => {this.fetchHistory()}, 100000) // 100 seconds
             }
         };
@@ -212,7 +210,7 @@ class App extends React.Component {
     }
 
     selectJob(jobId) {
-        // Unselect job if it is alread
+        // Unselect job if it is already selected
         if (this.state.job === jobId) {
             this.setState({job: null})
         } else {
