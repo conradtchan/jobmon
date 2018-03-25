@@ -23,7 +23,6 @@ class App extends React.Component {
             holdSnap: false,
             history: null,
             briefHistory: [],
-            briefHistoryTemp: [], // workaround to quickly updating data, need to find a better way to do this
             briefHistoryWindow: 3600, // seconds
             briefHistoryCount: 0,
         };
@@ -33,23 +32,15 @@ class App extends React.Component {
 
     }
 
-    updateLoadingBar() {
-        let percent = 100 * this.state.briefHistoryTemp.length / this.state.briefHistoryCount;
+    updateLoadingBar(percent) {
+        // let percent = 100 * this.state.briefHistoryTemp.length / this.state.briefHistoryCount;
         if ((percent < 0) || (percent >= 100)) percent = 0;
         document.documentElement.style.setProperty('--loading-percent', percent + '%');
     }
 
-    checkBriefHistoryDone() {
-        if (this.state.briefHistoryTemp.length === this.state.briefHistoryCount) {
-            this.setState({
-                briefHistory: this.state.briefHistoryTemp,
-                briefHistoryTemp: [],
-            })
-        }
-    }
-
     initBriefHistory() {
         if ((this.state.briefHistory.length < 3) && !(this.state.history === null)) {
+            let briefHistoryTemp = [];
             const observerNow = this.state.snapshotTime / 1000;
 
             let briefHistoryCount = 0;
@@ -64,9 +55,13 @@ class App extends React.Component {
                     xhr.onreadystatechange = () => {
                         if (xhr.readyState === 4 && xhr.status === 200) {
                             const jsonData = JSON.parse(xhr.responseText);
-                            this.state.briefHistoryTemp.push(jsonData); // this is illegal but fast
-                            this.checkBriefHistoryDone();
-                            this.updateLoadingBar();
+                            briefHistoryTemp.push(jsonData);
+                            if (briefHistoryTemp.length === this.state.briefHistoryCount) {
+                                this.setState({
+                                    briefHistory: this.state.briefHistory.concat(briefHistoryTemp),
+                                })
+                            }
+                            this.updateLoadingBar(100 * briefHistoryTemp.length / this.state.briefHistoryCount);
                         }
                     };
                     xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);

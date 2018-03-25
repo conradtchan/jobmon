@@ -90,7 +90,7 @@ export default class UserPiePlot extends React.Component {
                 />
                 {(Object.keys(this.props.warnedUsers).length > 0) &&
                     <div className='bad-job'>
-                        Users and nodes with bad jobs are highlighted.
+                        Highlighted users and jobs may require attention.
                     </div>
                 }
                 <div className="heading">
