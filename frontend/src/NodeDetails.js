@@ -174,7 +174,7 @@ export default class NodeDetails extends React.Component {
                     colors = {[
                         style.getPropertyValue('--piecolor-user'),
                         style.getPropertyValue('--piecolor-system'),
-                        style.getPropertyValue('--piecolor-wait')
+                        style.getPropertyValue('--piecolor-wait'),
                     ]}
                     unit = '%'
                     dataMax = {100}

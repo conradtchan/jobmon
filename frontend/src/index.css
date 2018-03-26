@@ -313,9 +313,14 @@ body {
 }
 
 .prop-chart-mini {
-    width: 95%;
-    height: 20px;
+    width: 20%;
+    height: 30px;
     margin: 0 auto;
+}
+
+.mini-row {
+    display: flex;
+    flex-direction: row;
 }
 
 .instruction {

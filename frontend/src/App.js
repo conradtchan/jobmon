@@ -11,8 +11,8 @@ class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            address: '../cgi-bin/',
-            // address: 'http://localhost:3467/cgi-bin/',
+            // address: '../cgi-bin/',
+            address: 'http://localhost:3467/cgi-bin/',
             apiData: null,
             gotData: false,
             username: null,

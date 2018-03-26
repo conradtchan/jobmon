@@ -39,11 +39,11 @@ export default class NodeOverview extends React.Component {
 
             if (Object.keys(this.props.nodeHasJob[nodeName]).includes(this.props.jobId)) {
                 // CPU percent is only out of the requested cores
-                const cpuUsage = this.getNodeCpuUsage(
+                const cpuUsage = this.getNodeUsage(
                     this.props.jobs[this.props.jobId],
                     this.props.nodeData[nodeName],
                     nodeName
-                );
+                ).cpu;
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
                     memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
@@ -178,43 +178,75 @@ export default class NodeOverview extends React.Component {
         return jobList
     }
 
-    getNodeCpuUsage(job, node, host) {
-        let cpuUsage = {user: 0, system: 0, wait: 0, idle: 0};
+    getNodeUsage(job, node, host) {
+        let usage = {
+            cpu: {user: 0, system: 0, wait: 0, idle: 0},
+            mem: {used: 0, total: 0},
+            infiniband: {bytes_in: 0, bytes_out: 0},
+            lustre: {read: 0, write: 0},
+            gpu: {total: 0},
+        };
+
         if (job.layout.hasOwnProperty(host)) {
             const layout = job.layout[host];
             for (let i of layout) {
-                cpuUsage.user   += node.cpu.core[i].user;
-                cpuUsage.system += node.cpu.core[i].system;
-                cpuUsage.wait   += node.cpu.core[i].wait;
-                cpuUsage.idle   += node.cpu.core[i].idle;
+                usage.cpu.user += node.cpu.core[i].user;
+                usage.cpu.system += node.cpu.core[i].system;
+                usage.cpu.wait += node.cpu.core[i].wait;
+                usage.cpu.idle += node.cpu.core[i].idle;
             }
+            for (let gpuName in usage.gpus) {
+                usage.gpu.total += node.gpus[gpuName]
+            }
+            usage.mem.used          += node.mem.used;
+            usage.mem.total         += node.mem.total;
+            usage.infiniband.bytes_in     += node.infiniband.bytes_in;
+            usage.infiniband.bytes_out    += node.infiniband.bytes_out;
+            usage.lustre.read       += node.lustre.read;
+            usage.lustre.write      += node.lustre.write;
+
             const nCores = layout.length;
-            cpuUsage.user   /= nCores;
-            cpuUsage.system /= nCores;
-            cpuUsage.wait   /= nCores;
-            cpuUsage.idle   /= nCores;
+            usage.cpu.user   /= nCores;
+            usage.cpu.system /= nCores;
+            usage.cpu.wait   /= nCores;
+            usage.cpu.idle   /= nCores;
+            usage.gpu.total  /= node.nGpus;
         }
 
-        return cpuUsage
+        return usage
     }
 
-    getJobCpuUsage(job, nodes) {
-        let cpuUsage = {user: 0, system: 0, wait: 0, idle: 0};
+    getJobUsage(job, nodes) {
+        let usage = {
+            cpu: {user: 0, system: 0, wait: 0, idle: 0},
+            mem: {used: 0, total: 0},
+            infiniband: {bytes_in: 0, bytes_out: 0},
+            lustre: {read: 0, write: 0},
+            gpu: {total: 0},
+        };
         for (let host in job.layout) {
-            const nodeUsage = this.getNodeCpuUsage(job, nodes[host], host);
+            const nodeUsage = this.getNodeUsage(job, nodes[host], host);
             const nCores = job.layout[host].length;
-            cpuUsage.user += nodeUsage.user * nCores;
-            cpuUsage.system += nodeUsage.system * nCores;
-            cpuUsage.wait += nodeUsage.wait * nCores;
-            cpuUsage.idle += nodeUsage.idle * nCores;
+            usage.cpu.user              += nodeUsage.cpu.user * nCores;
+            usage.cpu.system            += nodeUsage.cpu.system * nCores;
+            usage.cpu.wait              += nodeUsage.cpu.wait * nCores;
+            usage.cpu.idle              += nodeUsage.cpu.idle * nCores;
+            usage.mem.used          += nodeUsage.mem.used;
+            usage.mem.total         += nodeUsage.mem.total;
+            usage.infiniband.bytes_in     += nodeUsage.infiniband.bytes_in;
+            usage.infiniband.bytes_out    += nodeUsage.infiniband.bytes_out;
+            usage.lustre.read       += nodeUsage.lustre.read;
+            usage.lustre.write      += nodeUsage.lustre.write;
+            usage.gpu.total         += nodeUsage.gpu.total;
         }
 
-        cpuUsage.user   /= job.nCpus;
-        cpuUsage.system /= job.nCpus;
-        cpuUsage.wait   /= job.nCpus;
-        cpuUsage.idle   /= job.nCpus;
+        usage.cpu.user   /= job.nCpus;
+        usage.cpu.system /= job.nCpus;
+        usage.cpu.wait   /= job.nCpus;
+        usage.cpu.idle   /= job.nCpus;
+        usage.gpu.total  /= Object.keys(job.layout).length;
 
-        return cpuUsage
+        return usage
     }
 
     getRunningJobChart(job) {
@@ -224,30 +256,88 @@ export default class NodeOverview extends React.Component {
         let sortedHistory = this.props.briefHistory;
         sortedHistory.sort((a, b) => (a.timestamp < b.timestamp ) ? -1 : (a.timestamp  > b.timestamp) ? 1 : 0);
 
+        let memTotal = 0;
         for (let data of sortedHistory) {
             const nodes = data.nodes;
-            const usage = this.getJobCpuUsage(job, nodes);
+            const usage = this.getJobUsage(job, nodes);
+            const d = new Date(data.timestamp * 1000);
             historyChart.push({
-                user: usage.user,
-                system: usage.system,
-                wait: usage.wait,
-            })
+                timeString: d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'),
+                user: usage.cpu.user,
+                system: usage.cpu.system,
+                wait: usage.cpu.wait,
+                mem: usage.mem.used * 1048576, // mb
+                infiniband_in: usage.infiniband.bytes_in,
+                infiniband_out: usage.infiniband.bytes_out,
+                lustre_read: usage.lustre.read,
+                lustre_write: usage.lustre.write,
+                gpu: usage.gpu.total,
+            });
+            if (usage.mem.total > memTotal) memTotal = usage.mem.total
         }
 
         return (
-            <PropChartMini
-                name = 'Job CPU usage'
-                data = {historyChart}
-                dataKeys = {['user', 'system', 'wait']}
-                colors = {[
-                    style.getPropertyValue('--piecolor-user'),
-                    style.getPropertyValue('--piecolor-system'),
-                    style.getPropertyValue('--piecolor-wait')
-                ]}
-                unit = '%'
-                dataMax = {100}
-                stacked = {true}
-            />
+            <div className = 'mini-row'>
+                <PropChartMini
+                    name = 'Job CPU usage'
+                    data = {historyChart}
+                    dataKeys = {['user', 'system', 'wait']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-user'),
+                        style.getPropertyValue('--piecolor-system'),
+                        style.getPropertyValue('--piecolor-wait'),
+                    ]}
+                    unit = '%'
+                    dataMax = {100}
+                    stacked = {true}
+                />
+                <PropChartMini
+                    name = 'Job Memory usage'
+                    data = {historyChart}
+                    dataKeys = {['mem']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-mem'),
+                    ]}
+                    unit = 'B'
+                    dataMax = {memTotal}
+                    stacked = {true}
+                />
+                <PropChartMini
+                    name = 'Job GPU usage'
+                    data = {historyChart}
+                    dataKeys = {['gpu']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-gpu')
+                    ]}
+                    unit = '%'
+                    dataMax = {100}
+                    stacked = {true}
+                />
+                <PropChartMini
+                    name = 'Job InfiniBand traffic'
+                    data = {historyChart}
+                    dataKeys = {['infiniband_in', 'infiniband_out']}
+                    colors = {[
+                        style.getPropertyValue('--piecycle-1'),
+                        style.getPropertyValue('--piecycle-2'),
+                    ]}
+                    unit = 'B/s'
+                    dataMax = 'dataMax'
+                    stacked = {true}
+                />
+                <PropChartMini
+                    name = 'Job Lustre access'
+                    data = {historyChart}
+                    dataKeys = {['lustre_read', 'lustre_write']}
+                    colors = {[
+                        style.getPropertyValue('--piecycle-1'),
+                        style.getPropertyValue('--piecycle-2'),
+                    ]}
+                    unit = 'B/s'
+                    dataMax = 'dataMax'
+                    stacked = {true}
+                />
+            </div>
         )
     }
 

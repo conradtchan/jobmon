@@ -145,6 +145,12 @@ export class PropChartMini extends PropChart {
                         data={d.scaledData}
                     >
                         {areas}
+                        <XAxis
+                            hide = {true}
+                            label = 'time'
+                            dataKey = 'timeString'
+                        />
+                        <Tooltip/>
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
