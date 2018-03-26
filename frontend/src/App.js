@@ -35,7 +35,7 @@ class App extends React.Component {
     updateLoadingBar(percent) {
         // let percent = 100 * this.state.briefHistoryTemp.length / this.state.briefHistoryCount;
         if ((percent < 0) || (percent >= 100)) percent = 0;
-        document.documentElement.style.setProperty('--loading-percent', percent + '%');
+        document.documentElement.style.setProperty('--loading-percent', (20 + 0.8 * percent) + '%');
     }
 
     initBriefHistory() {
