@@ -149,6 +149,18 @@ class UserString extends React.Component {
 
 
 class UsagePie extends React.Component {
+    componentDidMount() {
+        window.addEventListener('resize', this.handleResize);
+    }
+
+    componentWillUnmount(){
+        window.removeEventListener('resize', this.handleResize);
+    }
+
+    handleResize = () => {
+        this.forceUpdate();
+    };
+
     renderActiveShape(props) {
         const { cx, cy, innerRadius, outerRadius, startAngle, endAngle,
             fill } = props;
@@ -193,13 +205,22 @@ class UsagePie extends React.Component {
             style.getPropertyValue('--piecycle-4'),
         ];
 
+        const pieDiv = document.getElementById('usage-pie');
+        let pieWidth;
+        if (pieDiv) {
+            pieWidth = pieDiv.offsetWidth
+        } else {
+            pieWidth = 300
+        }
+
+
         function PieLabel({viewBox, value1, value2, value3}) {
             const {cx, cy} = viewBox;
             return (
                 <text x={cx} y={cy} fill="#3d405c" className="recharts-text recharts-label" textAnchor="middle" dominantBaseline="central">
-                    <tspan alignmentBaseline="middle" x={cx} fontSize="48">{value1}</tspan>
-                    <tspan alignmentBaseline="middle" x={cx} dy="1.5em" fontSize="18">{value2}</tspan>
-                    <tspan alignmentBaseline="middle" x={cx} dy="1.0em" fontSize="22">{value3}</tspan>
+                    <tspan alignmentBaseline="middle" x={cx} fontSize={pieWidth / 6}>{value1}</tspan>
+                    <tspan alignmentBaseline="middle" x={cx} dy="1.5em" fontSize={pieWidth / 18}>{value2}</tspan>
+                    <tspan alignmentBaseline="middle" x={cx} dy="1.0em" fontSize={pieWidth / 21}>{value3}</tspan>
                 </text>
             )
         }
@@ -213,7 +234,7 @@ class UsagePie extends React.Component {
         }
 
         return (
-            <div>
+            <div id='usage-pie'>
                 <ResponsiveContainer width='100%' minWidth={0} minHeight={400}>
                     <PieChart>
                         <Pie
