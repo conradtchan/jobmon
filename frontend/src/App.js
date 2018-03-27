@@ -57,10 +57,12 @@ class App extends React.Component {
                     // eslint-disable-next-line
                     xhr.onreadystatechange = () => {
                         if (xhr.readyState === 4 && xhr.status === 200) {
-                            const percent = 100 * briefHistoryTemp.length / this.state.briefHistoryCount;
-                            this.updateLoadingBar(percent);
                             const jsonData = JSON.parse(xhr.responseText);
                             briefHistoryTemp.push(jsonData);
+
+                            const percent = 100 * briefHistoryTemp.length / this.state.briefHistoryCount;
+                            this.updateLoadingBar(percent);
+
                             if (briefHistoryTemp.length === this.state.briefHistoryCount) {
                                 this.setState({
                                     briefHistory: briefHistoryTemp,
