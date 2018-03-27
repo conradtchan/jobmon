@@ -366,7 +366,7 @@ export default class NodeOverview extends React.Component {
                             &nbsp;
                         </div>
                         <div className='cpu-legend-label'>
-                            system
+                            sys
                         </div>
                     </div>
                     <div className='cpu-legend-item'>
