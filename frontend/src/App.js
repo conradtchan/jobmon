@@ -12,7 +12,7 @@ class App extends React.Component {
         super(props);
         this.state = {
             address: 'api/',
-            // address: 'https://supercomputing.swin.edu.au/ganglia/api/',
+            // address: 'https://supercomputing.swin.edu.au/monitor/api/',
             apiData: null,
             gotData: false,
             username: null,
