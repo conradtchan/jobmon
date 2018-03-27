@@ -45,7 +45,7 @@ export default class PropChart extends React.Component {
 
         // Scale max
         if ((dataMax === parseInt(dataMax, 10)) && !(this.props.unit === '%')) {
-            dataMax = parseInt((parseInt(dataMax, 10) / factor).toFixed(0), 10)
+            dataMax = Math.floor(dataMax / factor)
         }
 
         // Set number of digits

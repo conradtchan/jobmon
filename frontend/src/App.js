@@ -22,9 +22,8 @@ class App extends React.Component {
             snapshotTime: new Date(0),
             holdSnap: false,
             history: null,
-            briefHistory: [],
-            briefHistoryWindow: 3600, // seconds
-            briefHistoryCount: -1,
+            historyData: [],
+            historyDataWindow: 3600, // seconds
         };
 
         this.fetchHistory();
@@ -40,75 +39,87 @@ class App extends React.Component {
         document.documentElement.style.setProperty('--loading-percent', displayPercent + '%');
     }
 
-    initBriefHistory() {
-        if ((this.state.briefHistory.length < 3) && !(this.state.history === null)) {
-            let briefHistoryTemp = [];
+    initHistoryData(nVal) {
+        if (!(this.state.history === null)) {
             const observerNow = this.state.snapshotTime / 1000;
 
-            // Add a bunch of values
+            // Get the times to request
             const times = Object.keys(this.state.history);
-            let briefHistoryCount = 0;
+            let historyDataTimes = [];
             for (let time of times) {
                 const timeDiff = observerNow - time;
-                if ((timeDiff < this.state.briefHistoryWindow) && (timeDiff > 0)){
-                    briefHistoryCount++;
-                    // Make request for snapshot, then push to list
-                    let xhr = new XMLHttpRequest();
-                    // eslint-disable-next-line
-                    xhr.onreadystatechange = () => {
-                        if (xhr.readyState === 4 && xhr.status === 200) {
-                            const jsonData = JSON.parse(xhr.responseText);
-                            briefHistoryTemp.push(jsonData);
-
-                            const percent = 100 * briefHistoryTemp.length / this.state.briefHistoryCount;
-                            this.updateLoadingBar(percent);
-
-                            if (briefHistoryTemp.length === this.state.briefHistoryCount) {
-                                this.setState({
-                                    briefHistory: briefHistoryTemp,
-                                    briefHistoryCount: -1,
-                                });
-                                briefHistoryTemp = [];
-                            }
-                        }
-                    };
-                    xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);
-                    xhr.send();
+                if ((timeDiff < this.state.historyDataWindow) && (timeDiff > 0)) {
+                    historyDataTimes.push(time)
                 }
             }
-            this.setState({briefHistoryCount: briefHistoryCount})
+
+            // Calculate the data coarseness
+            let requestDataTimes = [];
+            if ((0 < nVal) && (nVal < historyDataTimes.length)) {
+                const nSkip = Math.floor(historyDataTimes.length / nVal);
+                for (let i = 0; i < historyDataTimes.length; i += nSkip) {
+                    requestDataTimes.push(historyDataTimes[i])
+                }
+            } else {
+                requestDataTimes = historyDataTimes
+            }
+
+            // Make requests, then push to list
+            let historyDataTemp = [];
+            for (let time of requestDataTimes) {
+                let xhr = new XMLHttpRequest();
+                // eslint-disable-next-line
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        const jsonData = JSON.parse(xhr.responseText);
+                        historyDataTemp.push(jsonData);
+                        if (historyDataTemp.length === requestDataTimes.length) {
+                            if (nVal > historyDataTimes.length) {
+                                this.setState({historyData: historyDataTemp});
+                            } else {
+                                this.setState({
+                                    historyData: historyDataTemp,
+                                }, () => this.initHistoryData(nVal * 10));
+                            }
+                        }
+                    }
+                };
+                xhr.open("GET", this.state.address + "bobdata.py?time=" + time.toString(), true);
+                xhr.send();
+            }
         }
     }
 
-    updateBriefHistory() {
-        if (this.state.briefHistory.length < 3) {
+    updateHistoryData() {
+        if (this.state.historyData.length < 3) {
             this.historyTimeJump()
         } else {
             const observerNow = this.state.snapshotTime / 1000;
 
-            let newBriefHistory = [];
+            let newHistoryData = [];
             let times = [];
-            for (let data of this.state.briefHistory) {
+            for (let data of this.state.historyData) {
                 const timeDiff = observerNow - data.timestamp;
-                if ((timeDiff < this.state.briefHistoryWindow) && (timeDiff > 0)) {
-                    newBriefHistory.push(data);
+                if ((timeDiff < this.state.historyDataWindow) && (timeDiff > 0)) {
+                    newHistoryData.push(data);
                     times.push(data.timestamp)
                 }
             }
 
             // Add newest snapshot
             if (!(times.includes(this.state.apiData.timestamp)) && !(this.state.apiData === null)) {
-                newBriefHistory.push(this.state.apiData)
+                newHistoryData.push(this.state.apiData)
             }
 
             // Update, before putting past values in (if history is too short)
-            this.setState({briefHistory: newBriefHistory})
+            this.setState({historyData: newHistoryData})
         }
     }
 
     historyTimeJump() {
-        this.setState({briefHistory: []},
-            () => this.initBriefHistory())
+        this.setState({historyData: []},
+            () => this.initHistoryData(10)
+        )
     }
 
     fetchHistory() {
@@ -136,7 +147,7 @@ class App extends React.Component {
                         apiData: jsonData,
                         snapshotTime: new Date(jsonData.timestamp * 1000),
                         gotData: true,
-                    }, () => this.updateBriefHistory());
+                    }, () => this.updateHistoryData());
                     setTimeout(() => {this.fetchLatest()}, 10000) // 10 seconds
                 }
             };
@@ -220,7 +231,7 @@ class App extends React.Component {
                     onRowClick={(node) => this.selectNode(node)}
                     warnings={warnings}
                     onJobClick={(jobId) => this.selectJob(jobId)}
-                    briefHistory={this.state.briefHistory}
+                    historyData={this.state.historyData}
                 />
             )
         }
@@ -249,7 +260,7 @@ class App extends React.Component {
                     selectedJobId={this.state.job}
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     warnings={warnings}
-                    briefHistory={this.state.briefHistory}
+                    historyData={this.state.historyData}
                 />
             )
         }

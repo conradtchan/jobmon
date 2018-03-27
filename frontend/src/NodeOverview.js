@@ -253,7 +253,7 @@ export default class NodeOverview extends React.Component {
         const style = getComputedStyle(document.documentElement);
         let historyChart = [];
 
-        let sortedHistory = this.props.briefHistory;
+        let sortedHistory = this.props.historyData;
         sortedHistory.sort((a, b) => (a.timestamp < b.timestamp ) ? -1 : (a.timestamp  > b.timestamp) ? 1 : 0);
 
         let memTotal = 0;

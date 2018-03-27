@@ -116,7 +116,7 @@ export default class NodeDetails extends React.Component {
     getHistoryChart() {
         let historyChart = [];
 
-        let sortedHistory = this.props.briefHistory;
+        let sortedHistory = this.props.historyData;
         sortedHistory.sort((a, b) => (a.timestamp < b.timestamp ) ? -1 : (a.timestamp  > b.timestamp) ? 1 : 0);
 
         for (let data of sortedHistory) {
