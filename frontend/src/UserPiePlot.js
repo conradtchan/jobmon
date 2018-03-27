@@ -105,7 +105,7 @@ export default class UserPiePlot extends React.Component {
                     </div>
                 </div>
                 <div className="heading">
-                    Queue: {this.props.queue.size} job{(this.props.queue.size > 1) ? 's' : ''} for {this.props.queue.cpuHours.toFixed(0)} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
+                    Queue: {this.props.queue.size} job{(this.props.queue.size !== 1) ? 's' : ''} for {this.props.queue.cpuHours.toFixed(0)} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
                 </div>
                 <div className="queue-strings">
                     {queueStrings}
