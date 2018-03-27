@@ -234,8 +234,8 @@ class UsagePie extends React.Component {
         }
 
         return (
-            <div id='usage-pie'>
-                <ResponsiveContainer width='100%' minWidth={0} minHeight={400}>
+            <div id='usage-pie' style={{"height": pieWidth}}>
+                <ResponsiveContainer width='100%' height='100%'>
                     <PieChart>
                         <Pie
                             activeIndex={this.props.activeIndex}

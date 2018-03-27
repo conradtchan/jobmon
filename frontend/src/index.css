@@ -197,6 +197,10 @@ body {
     /*border: 1px black solid;*/
 }
 
+#usage-pie {
+    width: 100%;
+}
+
 .user-string {
     display: flex;
     text-align: left;
