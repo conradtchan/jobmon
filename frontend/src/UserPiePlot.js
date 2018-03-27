@@ -76,7 +76,7 @@ export default class UserPiePlot extends React.Component {
         return (
             <div className='main-item left'>
                 <div className='instruction'>
-                    Select a user to view detailed system usage.
+                    Select a user to view detailed system usage:
                 </div>
                 <UsagePie
                     runningData={this.props.usageData.running}
