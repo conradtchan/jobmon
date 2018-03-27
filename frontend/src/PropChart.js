@@ -143,6 +143,7 @@ export class PropChartMini extends PropChart {
                 <ResponsiveContainer>
                     <AreaChart
                         data={d.scaledData}
+                        cursor="pointer"
                     >
                         {areas}
                         <XAxis
