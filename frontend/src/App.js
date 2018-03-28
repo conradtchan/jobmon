@@ -117,7 +117,7 @@ class App extends React.Component {
 
     historyTimeJump() {
         this.setState({historyData: []},
-            () => this.initHistoryData(10)
+            () => this.initHistoryData(20)
         )
     }
 
