@@ -92,6 +92,7 @@ export default class TimeMachine extends React.Component {
                                 stackId="a"
                                 // fillOpacity={0}
                                 onClick={(obj, index) => this.props.clickLoadTime(data[index].time)}
+                                isAnimationActive={false}
                             />
                             <Bar
                                 dataKey='free'
@@ -99,6 +100,7 @@ export default class TimeMachine extends React.Component {
                                 stackId="a"
                                 // fillOpacity={0}
                                 onClick={(obj, index) => this.props.clickLoadTime(data[index].time)}
+                                isAnimationActive={false}
                             />
                             <Tooltip/>
                         </ComposedChart>
