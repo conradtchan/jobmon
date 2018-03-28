@@ -19,6 +19,18 @@ export default class UserPiePlot extends React.Component {
         }
     }
 
+    componentDidMount() {
+        window.addEventListener('resize', this.handleResize);
+    }
+
+    componentWillUnmount(){
+        window.removeEventListener('resize', this.handleResize);
+    }
+
+    handleResize = () => {
+        this.forceUpdate();
+    };
+
     updateActive(index) {
         this.setState({usagePieActiveIndex: index})
         this.setState({activeSectorSize: 'big'})
@@ -63,15 +75,42 @@ export default class UserPiePlot extends React.Component {
 
         userStrings.sort((a, b) => (a.props.username < b.props.username ) ? -1 : (a.props.username  > b.props.username) ? 1 : 0);
 
-        let userStringsLeft = [];
-        let userStringsRight = [];
-        for (let i = 0; i < userStrings.length; i++) {
-            if (i < userStrings.length / 2) {
-                userStringsLeft.push(userStrings[i])
-            } else {
-                userStringsRight.push(userStrings[i])
+        const mainBox = document.getElementById('main-box');
+        let mainBoxWidth = 0;
+        if (mainBox) mainBoxWidth = mainBox.offsetWidth;
+
+        let userStringsBlock;
+        if (mainBoxWidth > 1024) {
+            let userStringsLeft = [];
+            let userStringsRight = [];
+            for (let i = 0; i < userStrings.length; i++) {
+                if (i < userStrings.length / 2) {
+                    userStringsLeft.push(userStrings[i])
+                } else {
+                    userStringsRight.push(userStrings[i])
+                }
             }
+
+            userStringsBlock = (
+                <div className="user-strings">
+                    <div className="user-strings-halfcol">
+                        {userStringsLeft}
+                    </div>
+                    <div className="user-strings-halfcol">
+                        {userStringsRight}
+                    </div>
+                </div>
+            );
+        } else {
+            userStringsBlock = (
+                <div className="user-strings">
+                    <div className="user-strings-col">
+                        {userStrings}
+                    </div>
+                </div>
+            );
         }
+
 
         return (
             <div className='main-item left'>
@@ -96,14 +135,7 @@ export default class UserPiePlot extends React.Component {
                 <div className="heading">
                     Running:
                 </div>
-                <div className="user-strings">
-                    <div className="user-strings-col">
-                        {userStringsLeft}
-                    </div>
-                    <div className="user-strings-col">
-                        {userStringsRight}
-                    </div>
-                </div>
+                {userStringsBlock}
                 <div className="heading">
                     Queue: {this.props.queue.size} job{(this.props.queue.size !== 1) ? 's' : ''} for {this.props.queue.cpuHours.toFixed(0)} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
                 </div>
@@ -245,7 +277,7 @@ class UsagePie extends React.Component {
                             dataKey='cpus'
                             labelLine={false}
                             innerRadius="60%"
-                            outerRadius="70%"
+                            outerRadius="80%"
                             fill="#8884d8"
                             paddingAngle={2}
                             startAngle={90 + (360 * (1.0 - (this.props.runningCores / this.props.availCores)))}

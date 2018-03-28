@@ -241,8 +241,12 @@ body {
     flex-direction: row;
 }
 
-.user-strings-col {
+.user-strings-halfcol {
     flex: 1 1 50%;
+}
+
+.user-strings-col {
+    flex: 1 1 100%;
 }
 
 .queue-strings {
