@@ -176,6 +176,10 @@ body {
     color: var(--bad-job-color);
 }
 
+.cohab-job {
+    cursor: pointer;
+}
+
 #node-description {
     text-align: left;
 }

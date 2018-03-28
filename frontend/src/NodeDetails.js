@@ -14,6 +14,8 @@ export default class NodeDetails extends React.Component {
         // Cores belonging to selected job
         let jobCores = [];
         if (!(this.props.selectedJobId === null)) {
+            console.log(this.props.jobs)
+            console.log(this.props.selectedJobId)
             const jobLayout = this.props.jobs[this.props.selectedJobId].layout;
             if (jobLayout.hasOwnProperty(this.props.name)) {
                 jobCores = jobLayout[this.props.name];
@@ -98,13 +100,14 @@ export default class NodeDetails extends React.Component {
             if (this.props.jobs[jobId].layout.hasOwnProperty(this.props.name)) {
                 if (!(this.props.jobs[jobId].username === this.props.username)) {
                     otherJobList.push(
-                        <JobText
-                            key={jobId}
-                            id={jobId}
-                            job={this.props.jobs[jobId]}
-                            warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
-                            onClick={() => this.props.onJobClick(jobId)}
-                        />
+                        <div className = "cohab-job" onClick={() => this.props.onJobClick(jobId)}>
+                            <JobText
+                                key={jobId}
+                                id={jobId}
+                                job={this.props.jobs[jobId]}
+                                warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
+                            />
+                        </div>
                     )
                 }
 
