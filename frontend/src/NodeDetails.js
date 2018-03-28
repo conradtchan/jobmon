@@ -14,8 +14,6 @@ export default class NodeDetails extends React.Component {
         // Cores belonging to selected job
         let jobCores = [];
         if (!(this.props.selectedJobId === null)) {
-            console.log(this.props.jobs)
-            console.log(this.props.selectedJobId)
             const jobLayout = this.props.jobs[this.props.selectedJobId].layout;
             if (jobLayout.hasOwnProperty(this.props.name)) {
                 jobCores = jobLayout[this.props.name];
@@ -67,16 +65,18 @@ export default class NodeDetails extends React.Component {
 
     getWarnings() {
         let warningText = [];
-        if (this.props.warnings[this.props.name].node.cpuWait) {
-            warningText.push('Significant CPU time spent waiting for IO')
-        }
-        if (this.props.warnings[this.props.name].node.swapUse) {
-            warningText.push('Heavy use of disk swap')
-        }
-        for (let jobId in this.props.warnings[this.props.name].jobs) {
-            const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
-            if (jobWarns['cpuUtil']) {
-                warningText.push('Job under-utilizes requested CPUs')
+        if (Object.keys(this.props.warnings).length > 0) {
+            if (this.props.warnings[this.props.name].node.cpuWait) {
+                warningText.push('Significant CPU time spent waiting for IO')
+            }
+            if (this.props.warnings[this.props.name].node.swapUse) {
+                warningText.push('Heavy use of disk swap')
+            }
+            for (let jobId in this.props.warnings[this.props.name].jobs) {
+                const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
+                if (jobWarns['cpuUtil']) {
+                    warningText.push('Job under-utilizes requested CPUs')
+                }
             }
         }
 
@@ -99,13 +99,17 @@ export default class NodeDetails extends React.Component {
         for (let jobId in this.props.jobs) {
             if (this.props.jobs[jobId].layout.hasOwnProperty(this.props.name)) {
                 if (!(this.props.jobs[jobId].username === this.props.username)) {
+                    let warnJob = false;
+                    if (Object.keys(this.props.warnings).length > 0) {
+                        warnJob = this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId);
+                    }
                     otherJobList.push(
                         <div className = "cohab-job" onClick={() => this.props.onJobClick(jobId)}>
                             <JobText
                                 key={jobId}
                                 id={jobId}
                                 job={this.props.jobs[jobId]}
-                                warn={this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId)}
+                                warn={warnJob}
                             />
                         </div>
                     )
