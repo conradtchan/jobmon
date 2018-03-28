@@ -30,14 +30,6 @@ class App extends React.Component {
 
     }
 
-    updateLoadingBar(percent) {
-        let displayPercent;
-        if (percent > 0) displayPercent = 15 + 0.85 * percent;
-        if ((percent <= 0) || (percent >= 100)) displayPercent = 0;
-
-        document.documentElement.style.setProperty('--loading-percent', displayPercent + '%');
-    }
-
     initHistoryData(nVal) {
         if (!(this.state.history === null)) {
             const observerNow = this.state.snapshotTime / 1000;
@@ -295,7 +287,7 @@ class App extends React.Component {
 
         const nodes = this.state.apiData.nodes;
         for (let host in nodes) {
-            if (nodes[host].inSlurm) {
+            if (nodes[host].isCounted) {
                 // Available cores
                 usage.availCores += nodes[host].nCpus;
 
@@ -318,6 +310,10 @@ class App extends React.Component {
                 }
             }
         }
+
+        // Some nodes are not counted because they are rarely used
+        // But if they are used, then bump up the avail count
+        // if (usage.runningCores > usage.availCores) usage.availCores = usage.runningCores;
 
         usage.runningNodes = runningNodeList.length;
 

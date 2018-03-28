@@ -218,16 +218,18 @@ def nodes():
         nodes[host]['infiniband']   = infiniband(all[host])
         nodes[host]['lustre']       = lustre(all[host])
 
+        nodes[host]['isCounted'] = False
         if host in pyslurm_nodes.keys():
-            nodes[host]['inSlurm'] = True
+            for prefix in config.CORE_COUNT_NODES:
+                if prefix in host:
+                    nodes[host]['isCounted'] = True
+                    break
             nodes[host]['nCpus'] = pyslurm_nodes[host]['cpus']
             nodes[host]['nGpus'] = 0
             for gres in pyslurm_nodes[host]['gres']:
                 g = gres.split(':')
                 if (g[0] == 'gpu'):
                     nodes[host]['nGpus'] += int(g[-1])
-        else:
-            nodes[host]['inSlurm'] = False
 
     return nodes
 
@@ -303,8 +305,13 @@ def write_data(data, filename):
 def get_core_usage(data):
     usage = {'avail': 0, 'running': 0}
     for hostname, node in data['nodes'].items():
-        if node['inSlurm']:
-            usage['avail'] += node['nCpus']
+        # This is for compatability with old snapshots - can delete 'isSlurm' after 2 days
+        try:
+            if node['isCounted']:
+                usage['avail'] += node['nCpus']
+        except:
+            if node['inSlurm']:
+                usage['avail'] += node['nCpus']
 
     for id, job in data['jobs'].items():
         if job['state'] == 'RUNNING':
