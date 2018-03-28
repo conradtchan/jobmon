@@ -75,7 +75,7 @@ export default class NodeDetails extends React.Component {
             for (let jobId in this.props.warnings[this.props.name].jobs) {
                 const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
                 if (jobWarns['cpuUtil']) {
-                    warningText.push('Job under-utilizes requested CPUs')
+                    warningText.push(`Job ${jobId} under-utilizes requested CPUs`)
                 }
             }
         }
