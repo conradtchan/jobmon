@@ -39,7 +39,7 @@ export default class TimeMachine extends React.Component {
 
     render () {
 
-        if (this.props.history === null) {
+        if (this.props.history === null || this.props.timeAgo === 0) {
             return(
                 <div id="time-machine">
                     <div className="loader"></div>
