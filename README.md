@@ -1,4 +1,4 @@
-# INSTALLATION
+# Installation
 
 ## Backend
 
@@ -32,6 +32,6 @@ Install the frontend
 cp build/* /var/www/html/bobMon2
 ```
 
-# RUNNING
+# Running
 
 Run `/usr/lib/bobMon2/bobmon.py`, which generates gzip'd JSON at `/var/spool/bobMon2`, which is read by the web app.
