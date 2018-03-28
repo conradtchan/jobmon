@@ -469,17 +469,14 @@ class App extends React.Component {
             if (job.state === 'RUNNING') {
                 for (let nodeName in job.layout) {
                     const node = data.nodes[nodeName];
-                    warnings[nodeName].jobs[jobId] = {}
+                    warnings[nodeName].jobs[jobId] = {};
 
                     let cpuUsage = 0;
                     for (let i of job.layout[nodeName]) {
                         cpuUsage += node.cpu.core[i].user
                     }
                     cpuUsage /= job.layout[nodeName].length;
-                    if (cpuUsage < warnUtil) {
-                        warnings[nodeName].jobs[jobId]['cpuUtil'] = true
-                    }
-
+                    warnings[nodeName].jobs[jobId]['cpuUtil'] = (cpuUsage < warnUtil);
                 }
             }
         }
