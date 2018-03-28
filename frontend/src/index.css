@@ -52,7 +52,7 @@ body {
     flex: 1;
     margin: auto;
     font-size: xx-large;
-    font-weight: bold;
+    font-weight: 300;
 }
 
 #header-right {
@@ -163,7 +163,7 @@ body {
 }
 
 .job-names.heading {
-    font-weight:bold;
+    font-weight: 500;
     margin: 0;
 }
 
@@ -246,7 +246,7 @@ body {
     flex: 0 0 25%;
     text-align: right;
     padding-right: 5px;
-    font-weight:bold;
+    font-weight: 500;
 }
 
 .user-string-percent{
@@ -285,7 +285,7 @@ body {
     flex: 0 0 15%;
     text-align: right;
     padding-right: 5px;
-    font-weight:bold;
+    font-weight: 500;
     /*border: 1px black solid;*/
 }
 
@@ -359,7 +359,7 @@ body {
 
 .heading {
     margin-top: 1.0em;
-    font-weight: bold;
+    font-weight: 500;
 }
 
 #cpu-legend {
