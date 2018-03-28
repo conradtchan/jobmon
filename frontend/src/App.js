@@ -449,26 +449,26 @@ class App extends React.Component {
         }
     }
 
-    generateWarnings() {
+    instantWarnings(data) {
         const warnSwap = 20; // If swap greater than
         const warnWait = 10; // If waiting more than
         const warnUtil = 90; // If CPU utilisation below
 
         let warnings = {};
 
-        for (let nodeName in this.state.apiData.nodes) {
-            const node = this.state.apiData.nodes[nodeName];
+        for (let nodeName in data.nodes) {
+            const node = data.nodes[nodeName];
             warnings[nodeName] = {node: {}, jobs: {}};
 
             warnings[nodeName].node['cpuWait'] = (node.cpu.total.wait > warnWait);
             warnings[nodeName].node['swapUse'] = (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap);
         }
 
-        for (let jobId in this.state.apiData.jobs) {
-            const job = this.state.apiData.jobs[jobId];
+        for (let jobId in data.jobs) {
+            const job = data.jobs[jobId];
             if (job.state === 'RUNNING') {
                 for (let nodeName in job.layout) {
-                    const node = this.state.apiData.nodes[nodeName];
+                    const node = data.nodes[nodeName];
                     warnings[nodeName].jobs[jobId] = {}
 
                     let cpuUsage = 0;
@@ -484,6 +484,69 @@ class App extends React.Component {
             }
         }
         return warnings
+    }
+
+    generateWarnings() {
+        const warningWindow = 60; // Time window to check for warnings
+        const warningFraction = 0.5; // If more than this fraction in the window is bad, then trigger warning
+
+        // Get the data snapshots that we check for warnings
+        const now = this.state.snapshotTime / 1000;
+        let warningDataIndex = [];
+        for (let i = 0; i < this.state.historyData.length; i++) {
+            const data = this.state.historyData[i];
+            if (now - data.timestamp < warningWindow) {
+                warningDataIndex.push(i)
+            }
+        }
+
+        // Threshold number of snapshots for triggering warning
+        const threshold = Math.floor(warningFraction * warningDataIndex.length);
+
+        // Collate all the instantaneous warnings
+        let warningSums = {};
+        // i is the index of the data, j is counting the snapshots
+        let j = 0;
+        for (let i of warningDataIndex) {
+            j++;
+            const data = this.state.historyData[i];
+            const warnings = this.instantWarnings(data);
+            for (let nodeName in warnings) {
+                if (!(warningSums.hasOwnProperty(nodeName))) {
+                    warningSums[nodeName] = {node: {}, jobs: {}};
+                }
+                for (let warningName in warnings[nodeName].node) {
+                    if (!(warningSums[nodeName].node.hasOwnProperty(warningName))) {
+                        warningSums[nodeName].node[warningName] = 0;
+                    }
+                    if (warnings[nodeName].node[warningName]) {
+                        warningSums[nodeName].node[warningName]++
+                    }
+                    // Convert count into boolean
+                    if (j === warningDataIndex.length) {
+                        warningSums[nodeName].node[warningName] = (warningSums[nodeName].node[warningName] > threshold)
+                    }
+                }
+                for (let jobId in warnings[nodeName].jobs) {
+                    if (!(warningSums[nodeName].jobs.hasOwnProperty(jobId))) {
+                        warningSums[nodeName].jobs[jobId] = {}
+                    }
+                    for (let warningName in warnings[nodeName].jobs[jobId]) {
+                        if (!(warningSums[nodeName].jobs[jobId].hasOwnProperty(warningName))) {
+                            warningSums[nodeName].jobs[jobId][warningName] = 0;
+                        }
+                        if (warnings[nodeName].jobs[jobId][warningName]) {
+                            warningSums[nodeName].jobs[jobId][warningName]++
+                        }
+                        // Convert count into boolean
+                        if (j === warningDataIndex.length) {
+                            warningSums[nodeName].jobs[jobId][warningName] = (warningSums[nodeName].jobs[jobId][warningName] > threshold)
+                        }
+                    }
+                }
+            }
+        }
+        return warningSums // Has been converted from counts into booleans
     }
 
     getTimeMachine() {
@@ -512,7 +575,18 @@ class App extends React.Component {
         return (
             <div className="App">
                 <header className="App-header">
-                    <img src={logo} className="App-logo" alt="logo" />
+                    <div id="header">
+                        <div id="logo">
+                            <a href="https://supercomputing.swin.edu.au/">
+                                <img src={logo} className="App-logo" alt="logo" />
+                            </a>
+                        </div>
+                        <div id="page-title">
+                            Job Monitor
+                        </div>
+                        <div id="header-right">
+                        </div>
+                    </div>
                 </header>
                 {this.getTimeMachine()}
                 {this.show()}
