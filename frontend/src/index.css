@@ -37,6 +37,28 @@ body {
     font-family: 'Rubik', sans-serif;
 }
 
+#header {
+    margin: auto;
+    width: 100%;
+    display: flex;
+}
+
+#logo {
+    text-align: left;
+    flex: 0 0 20%;
+}
+
+#page-title {
+    flex: 1;
+    margin: auto;
+    font-size: xx-large;
+    font-weight: bold;
+}
+
+#header-right {
+    flex: 0 0 20%
+}
+
 .loader {
     margin: auto;
     border: 16px solid var(--light-shade); /* Light grey */
@@ -63,7 +85,7 @@ body {
     );
     width: 90%;
     max-width: 1600px;
-    margin: 15px auto;
+    margin: 10px auto;
     justify-content: space-between;
 }
 

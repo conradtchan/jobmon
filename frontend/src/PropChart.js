@@ -49,9 +49,9 @@ export default class PropChart extends React.Component {
         }
 
         // Set number of digits
-        let digits = 1;
+        let digits = 0;
         if (maxVal / factor < 10) {
-            digits = 2;
+            digits = 1;
         }
 
         // Scale all data
