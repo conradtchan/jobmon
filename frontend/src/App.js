@@ -470,8 +470,13 @@ class App extends React.Component {
                 for (let nodeName in job.layout) {
                     const node = this.state.apiData.nodes[nodeName];
                     warnings[nodeName].jobs[jobId] = {}
-                    // Crude check to see if underutilized - doesn't work if other jobs are on node
-                    if (node.cpu.total.user * node.nCpus / job.layout[nodeName].length < warnUtil) {
+
+                    let cpuUsage = 0;
+                    for (let i of job.layout[nodeName]) {
+                        cpuUsage += node.cpu.core[i].user
+                    }
+                    cpuUsage /= job.layout[nodeName].length;
+                    if (cpuUsage < warnUtil) {
                         warnings[nodeName].jobs[jobId]['cpuUtil'] = true
                     }
 
