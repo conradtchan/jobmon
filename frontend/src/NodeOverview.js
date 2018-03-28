@@ -117,62 +117,71 @@ export default class NodeOverview extends React.Component {
             failed: []
         };
 
+        let userJobs = {};
+        let nRunningJobs = 0;
         for (let jobId in this.props.jobs) {
             const job = this.props.jobs[jobId];
             if (job.username === this.props.username) {
-                if (job.state === 'RUNNING') {
-                    const jobText = (
-                    <div key={jobId}>
-                        <div
-                            className = 'running-job-row'
-                            onClick={() => this.props.onJobClick(jobId)}
-                        >
-                            <div className = 'running-job-text'>
-                                <JobText
-                                    id={jobId}
-                                    job={job}
-                                    warn={warnedJobs.includes(jobId)}
-                                />
-                            </div>
-                            <div className = 'running-job-chart'>
-                                {this.getRunningJobChart(job)}
-                            </div>
+                userJobs[jobId] = job;
+                if (job.state === 'RUNNING') nRunningJobs++
+            }
+        }
+
+        for (let jobId in userJobs) {
+            const job = userJobs[jobId];
+            if (job.state === 'RUNNING') {
+                const jobText = (
+                <div key={jobId}>
+                    <div
+                        className = 'running-job-row'
+                        onClick={() => this.props.onJobClick(jobId)}
+                    >
+                        <div className = 'running-job-text'>
+                            <JobText
+                                id={jobId}
+                                job={job}
+                                warn={warnedJobs.includes(jobId)}
+                            />
                         </div>
-                        {(jobId === this.props.jobId) &&
-                            <div>
-                                <div className='instruction'>
-                                    Select a node to view detailed system usage:
-                                </div>
-                                <div className='overview-pies'>
-                                    {this.getNodePies()}
-                                </div>
+                        {((nRunningJobs <= 10) || (jobId === this.props.jobId)) &&
+                            <div className='running-job-chart'>
+                                {this.getRunningJobChart(job)}
                             </div>
                         }
                     </div>
-                );
-                    jobList.running.push(jobText)
-                } else {
-                    const jobText = (
-                    <div key={jobId}>
-                        <JobText
-                            id={jobId}
-                            job={job}
-                            warn={warnedJobs.includes(jobId)}
-                            onClick={() => this.props.onJobClick(jobId)}
-                        />
-                    </div>
-                );
-                    if (job.state === 'PENDING') {
-                        jobList.pending.push(jobText)
-                    } else if (job.state === 'COMPLETED') {
-                        jobList.completed.push(jobText)
-                    } else if (job.state === 'CANCELLED') {
-                        jobList.cancelled.push(jobText)
-                    } else if (job.state === 'FAILED') {
-                        jobList.failed.push(jobText)
+                    {(jobId === this.props.jobId) &&
+                        <div>
+                            <div className='instruction'>
+                                Select a node to view detailed system usage:
+                            </div>
+                            <div className='overview-pies'>
+                                {this.getNodePies()}
+                            </div>
+                        </div>
                     }
+                </div>
+            );
+                jobList.running.push(jobText)
+            } else {
+                const jobText = (
+                <div key={jobId}>
+                    <JobText
+                        id={jobId}
+                        job={job}
+                        warn={warnedJobs.includes(jobId)}
+                        onClick={() => this.props.onJobClick(jobId)}
+                    />
+                </div>
+            );
+                if (job.state === 'PENDING') {
+                    jobList.pending.push(jobText)
+                } else if (job.state === 'COMPLETED') {
+                    jobList.completed.push(jobText)
+                } else if (job.state === 'CANCELLED') {
+                    jobList.cancelled.push(jobText)
+                } else if (job.state === 'FAILED') {
+                    jobList.failed.push(jobText)
                 }
-
             }
         }
         return jobList
@@ -256,8 +265,18 @@ export default class NodeOverview extends React.Component {
         let sortedHistory = this.props.historyData;
         sortedHistory.sort((a, b) => (a.timestamp < b.timestamp ) ? -1 : (a.timestamp  > b.timestamp) ? 1 : 0);
 
+        const chartRes = 30;
+        let nSkip = 1;
+        if (chartRes < sortedHistory.length) {
+            nSkip = Math.floor(sortedHistory.length / chartRes);
+        }
+        let i = 0;
+
         let memTotal = 0;
         for (let data of sortedHistory) {
+            i++;
+            if (!(i % nSkip === 0)) continue;
+
             const nodes = data.nodes;
             const usage = this.getJobUsage(job, nodes);
             const d = new Date(data.timestamp * 1000);
