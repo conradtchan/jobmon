@@ -514,17 +514,19 @@ class NodePie extends React.Component {
 
         // Make label red if warning
         let doWarn = false;
-        for (let w in this.props.nodeWarn.node) {
-            if (this.props.nodeWarn.node[w]) {
-                doWarn = true;
-                break
-            }
-        }
-        for (let jobId in this.props.nodeWarn.jobs) {
-            for (let w in this.props.nodeWarn.jobs[jobId]) {
-                if (this.props.nodeWarn.jobs[jobId][w]) {
+        if (this.props.nodeWarn) {
+            for (let w in this.props.nodeWarn.node) {
+                if (this.props.nodeWarn.node[w]) {
                     doWarn = true;
                     break
+                }
+            }
+            for (let jobId in this.props.nodeWarn.jobs) {
+                for (let w in this.props.nodeWarn.jobs[jobId]) {
+                    if (this.props.nodeWarn.jobs[jobId][w]) {
+                        doWarn = true;
+                        break
+                    }
                 }
             }
         }
