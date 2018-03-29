@@ -104,7 +104,7 @@ export default class NodeDetails extends React.Component {
                         warnJob = this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId);
                     }
                     otherJobList.push(
-                        <div className = "cohab-job" onClick={() => this.props.onJobClick(jobId)}>
+                        <div key={jobId} className = "cohab-job" onClick={() => this.props.onJobClick(jobId)}>
                             <JobText
                                 key={jobId}
                                 id={jobId}
