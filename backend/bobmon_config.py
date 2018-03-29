@@ -36,7 +36,7 @@ MULTICPU_MAX = 72
 HISTORY_LENGTH = 86400
 
 # When to delete old history (seconds old)
-HISTORY_DELETE_AGE = 86400 * 2
+HISTORY_DELETE_AGE = 86400 * 1.1
 
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ['john', 'bryan']
