@@ -330,27 +330,29 @@ class App extends React.Component {
         for (let nodeName in warnings) {
             over_jobs:
             for (let jobId in warnings[nodeName].jobs) {
-                const username = jobs[jobId].username;
-                if (warnedUsers.includes(username)) continue; // over_jobs
+                if (jobs.hasOwnProperty(jobId)) {
+                    const username = jobs[jobId].username;
+                    if (warnedUsers.includes(username)) continue; // over_jobs
 
-                // Node type warnings
-                for (let warning in warnings[nodeName].node) {
-                    if (!(warnedUsers.includes(username))) {
-                        if (warnings[nodeName].node[warning]) {
-                            warnedUsers.push(username);
-                            continue over_jobs
+                    // Node type warnings
+                    for (let warning in warnings[nodeName].node) {
+                        if (!(warnedUsers.includes(username))) {
+                            if (warnings[nodeName].node[warning]) {
+                                warnedUsers.push(username);
+                                continue over_jobs
+                            }
                         }
                     }
-                }
 
-                // Job type warnings
-                for (let warning in warnings[nodeName].jobs[jobId]) {
-                    if (warnings[nodeName].jobs[jobId][warning]) {
-                        if (!(warnedUsers.includes(username))) {
-                            warnedUsers.push(username);
-                            continue over_jobs
+                    // Job type warnings
+                    for (let warning in warnings[nodeName].jobs[jobId]) {
+                        if (warnings[nodeName].jobs[jobId][warning]) {
+                            if (!(warnedUsers.includes(username))) {
+                                warnedUsers.push(username);
+                                continue over_jobs
+                            }
+
                         }
-
                     }
                 }
             }
