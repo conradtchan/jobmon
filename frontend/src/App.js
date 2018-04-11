@@ -474,7 +474,7 @@ class App extends React.Component {
                         cpuUsage += node.cpu.core[i].user
                     }
                     cpuUsage /= job.layout[nodeName].length;
-                    warnings[nodeName].jobs[jobId]['cpuUtil'] = (cpuUsage < warnUtil);
+                    warnings[nodeName].jobs[jobId]['cpuUtil'] = ((cpuUsage < warnUtil) && (job.layout[nodeName].length > 1));
                 }
             }
         }
