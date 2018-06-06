@@ -183,9 +183,13 @@ def lustre(data):
     l = {}
     if 'diskstat_sda_read_bytes_per_sec' in data.keys():
         l['read'] = float(data['diskstat_sda_read_bytes_per_sec'])
+    else:
+        l['read'] = 0.0
 
     if 'diskstat_sda_write_bytes_per_sec' in data.keys():
         l['write'] = float(data['diskstat_sda_write_bytes_per_sec'])
+    else:
+        l['write'] = 0.0
 
     if len(l.keys()) > 0:
         return l
@@ -396,7 +400,7 @@ if __name__ == '__main__':
             time_taken = time_finish - time_start
             print('Done! Took {:} seconds'.format(time_taken))
             sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
-            
+
         except:
             sleep_time = config.UPDATE_INTERVAL
 
