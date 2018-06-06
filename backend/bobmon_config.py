@@ -14,7 +14,7 @@ EXTRA_GANGLIA_METRICS = [
     'gpu0_util', 'gpu1_util', 'gpu2_util', 'gpu3_util', 'gpu4_util', 'gpu5_util', 'gpu6_util',
     'cpu1_temp', 'cpu2_temp', 'ambient_temp', 'chassis_temp', 'rear_temp', 'front_temp',  # temperatures
     'node_power', 'cmm_power_in', 'fan_rms',   # node and cmm input kw, cmm fans
-    'diskstat_sda_read_bytes_per_sec', 'diskstat_sda_write_bytes_per_sec',  # lustre
+    'farnarkle_fred_read_bytes', 'farnarkle_fred_write_bytes',  # lustre
 ]
 
 # Ganglia config

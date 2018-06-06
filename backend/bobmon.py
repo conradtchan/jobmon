@@ -181,15 +181,11 @@ def infiniband(data):
 
 def lustre(data):
     l = {}
-    if 'diskstat_sda_read_bytes_per_sec' in data.keys():
-        l['read'] = float(data['diskstat_sda_read_bytes_per_sec'])
-    else:
-        l['read'] = 0.0
+    if 'farnarkle_fred_read_bytes' in data.keys():
+        l['read'] = float(data['farnarkle_fred_read_bytes'])
 
-    if 'diskstat_sda_write_bytes_per_sec' in data.keys():
-        l['write'] = float(data['diskstat_sda_write_bytes_per_sec'])
-    else:
-        l['write'] = 0.0
+    if 'farnarkle_fred_write_bytes' in data.keys():
+        l['write'] = float(data['farnarkle_fred_write_bytes'])
 
     if len(l.keys()) > 0:
         return l
