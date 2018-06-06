@@ -192,7 +192,7 @@ def lustre(data):
 
 def nodes():
     all = ganglia.Stats(do_cpus=True).all
-    # print(all)
+
     now = time.time()  # seconds since 1970
 
     pyslurm_nodes = pyslurm.node().get()
@@ -374,26 +374,31 @@ if __name__ == '__main__':
 
         # Get all data
         print('Gathering data')
-        data = do_all()
+        try:
+            data = do_all()
 
-        # Write to file and history file
-        print('Writing data')
-        output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(''))
-        record_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(data['timestamp']))
-        write_data(data, output_file)
-        write_data(data, record_file)
+            # Write to file and history file
+            print('Writing data')
+            output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(''))
+            record_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(data['timestamp']))
+            write_data(data, output_file)
+            write_data(data, record_file)
 
-        # Get core usage for new data
-        print('Updating history')
-        usage_cache['history'][data['timestamp']] = get_core_usage(data)
+            # Get core usage for new data
+            print('Updating history')
+            usage_cache['history'][data['timestamp']] = get_core_usage(data)
 
-        # Write history file
-        history_file = path.join(config.DATA_PATH, 'history.json.gz')
-        write_data(history(usage_cache), history_file)
+            # Write history file
+            history_file = path.join(config.DATA_PATH, 'history.json.gz')
+            write_data(history(usage_cache), history_file)
 
-        time_finish = timestamp()
-        time_taken = time_finish - time_start
-        print('Done! Took {:} seconds'.format(time_taken))
-        sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
+            time_finish = timestamp()
+            time_taken = time_finish - time_start
+            print('Done! Took {:} seconds'.format(time_taken))
+            sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
+            
+        except:
+            sleep_time = config.UPDATE_INTERVAL
+
         print('Sleeping for {:} seconds'.format(sleep_time))
         time.sleep(config.UPDATE_INTERVAL)
