@@ -73,8 +73,8 @@ export default class UserPiePlot extends React.Component {
             )
         }
 
-        userStrings.sort((a, b) => (a.props.username < b.props.username ) ? -1 : (a.props.username  > b.props.username) ? 1 : 0);
-
+        userStrings.sort((a, b) => (a.props.user.username < b.props.user.username ) ? -1 : (a.props.user.username  > b.props.user.username) ? 1 : 0);
+        
         const mainBox = document.getElementById('main-box');
         let mainBoxWidth = 0;
         if (mainBox) mainBoxWidth = mainBox.offsetWidth;
