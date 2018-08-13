@@ -37,7 +37,47 @@ export default class NodeOverview extends React.Component {
         for (let ns of nameSorted) {
             const nodeName = ns.name;
 
-            if (Object.keys(this.props.nodeHasJob[nodeName]).includes(this.props.jobId)) {
+            if (this.props.username === 'allnodes') {
+                // CPU percent is only out of the requested cores
+                const cpuUsage = this.props.nodeData[nodeName].cpu.total
+                let memPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].mem === null)) {
+                    memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
+                }
+                let diskPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].disk === null)) {
+                    diskPercent = 100 * (1.0 - this.props.nodeData[nodeName].disk.free / this.props.nodeData[nodeName].disk.total);
+                }
+                let swapPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].swap === null)) {
+                    swapPercent = 100 * (1.0 - this.props.nodeData[nodeName].swap.free / this.props.nodeData[nodeName].swap.total);
+                }
+                let gpuPercent = 0.0;
+                if (!(this.props.nodeData[nodeName].gpus === null)) {
+                    let nGpus = 0;
+                    for (let gpu in this.props.nodeData[nodeName].gpus) {
+                        nGpus += 1;
+                        gpuPercent += this.props.nodeData[nodeName].gpus[gpu]
+                    }
+                    gpuPercent /= nGpus;
+                }
+                nodePies.push(
+                    <NodePie
+                        key={nodeName}
+                        nodeName={nodeName}
+                        cpuUsage={cpuUsage}
+                        mem={memPercent}
+                        disk={diskPercent}
+                        gpu={gpuPercent}
+                        swap={swapPercent}
+                        gangliaURL={this.props.gangliaURL}
+                        onRowClick={(node) => this.props.onRowClick(node)}
+                        nodeWarn={this.props.warnings[nodeName]}
+                    />
+                )
+            }
+
+            else if (Object.keys(this.props.nodeHasJob[nodeName]).includes(this.props.jobId)) {
                 // CPU percent is only out of the requested cores
                 const cpuUsage = this.getNodeUsage(
                     this.props.jobs[this.props.jobId],
@@ -69,7 +109,6 @@ export default class NodeOverview extends React.Component {
                 nodePies.push(
                     <NodePie
                         key={nodeName}
-                        selectedUser={this.props.username}
                         nodeName={nodeName}
                         cpuUsage={cpuUsage}
                         mem={memPercent}
@@ -363,108 +402,127 @@ export default class NodeOverview extends React.Component {
     render() {
         const jobList = this.getUserJobList();
 
-        return (
-            <div className="main-item center">
-                <div id='username-title'>
-                    {this.props.username}
+        const legend = <div id='cpu-legend'>
+            <div className='cpu-legend-item'>
+                <div className='circle user'>
+                    &nbsp;
                 </div>
-                <div id='cpu-legend'>
-                    <div className='cpu-legend-item'>
-                        <div className='circle user'>
-                            &nbsp;
-                        </div>
-                        <div className='cpu-legend-label'>
-                            user
-                        </div>
-                    </div>
-                    <div className='cpu-legend-item'>
-                        <div className='circle system'>
-                            &nbsp;
-                        </div>
-                        <div className='cpu-legend-label'>
-                            sys
-                        </div>
-                    </div>
-                    <div className='cpu-legend-item'>
-                        <div className='circle wait'>
-                            &nbsp;
-                        </div>
-                        <div className='cpu-legend-label'>
-                            wait
-                        </div>
-                    </div>
-                    <div className='cpu-legend-item'>
-                        <div className='circle mem'>
-                            &nbsp;
-                        </div>
-                        <div className='cpu-legend-label'>
-                            mem
-                        </div>
-                    </div>
-                    <div className='cpu-legend-item'>
-                        <div className='circle gpu'>
-                            &nbsp;
-                        </div>
-                        <div className='cpu-legend-label'>
-                            gpu
-                        </div>
-                    </div>
-                </div>
-
-                <div className='instruction'>
-                    Select a running job to view nodes:
-                </div>
-
-                <div className='job-names heading'>
-                    Running:
-                </div>
-                    {jobList.running}
-                <br />
-
-                <div className='job-names'>
-                    {(jobList.pending.length > 0) &&
-                        <div>
-                            <div className='job-names heading'>
-                                Pending:
-                            </div>
-                            <div>
-                                {jobList.pending}
-                            </div>
-                        </div>
-                    }
-                    {(jobList.completed.length > 0) &&
-                        <div>
-                            <div className='job-names heading'>
-                                Completed:
-                            </div>
-                            <div>
-                                {jobList.completed}
-                            </div>
-                        </div>
-                    }
-                    {(jobList.cancelled.length > 0) &&
-                        <div>
-                            <div className='job-names heading'>
-                                Cancelled:
-                            </div>
-                            <div>
-                                {jobList.cancelled}
-                            </div>
-                        </div>
-                    }
-                    {(jobList.failed.length > 0) &&
-                        <div>
-                            <div className='job-names heading'>
-                                Failed:
-                            </div>
-                            <div>
-                                {jobList.failed}
-                            </div>
-                        </div>
-                    }
+                <div className='cpu-legend-label'>
+                    user
                 </div>
             </div>
-        )
+            <div className='cpu-legend-item'>
+                <div className='circle system'>
+                    &nbsp;
+                </div>
+                <div className='cpu-legend-label'>
+                    sys
+                </div>
+            </div>
+            <div className='cpu-legend-item'>
+                <div className='circle wait'>
+                    &nbsp;
+                </div>
+                <div className='cpu-legend-label'>
+                    wait
+                </div>
+            </div>
+            <div className='cpu-legend-item'>
+                <div className='circle mem'>
+                    &nbsp;
+                </div>
+                <div className='cpu-legend-label'>
+                    mem
+                </div>
+            </div>
+            <div className='cpu-legend-item'>
+                <div className='circle gpu'>
+                    &nbsp;
+                </div>
+                <div className='cpu-legend-label'>
+                    gpu
+                </div>
+            </div>
+        </div>
+
+        if (this.props.username === 'allnodes') {
+            return (
+                <div className="main-item center">
+                    <div className="heading">
+                        All non-empty nodes:
+                    </div>
+                    {legend}
+                    <div className='instruction'>
+                        Select a node to view detailed system usage
+                    </div>
+                    <div className='overview-pies'>
+                        {this.getNodePies()}
+                    </div>
+                </div>
+            )
+        } else {
+            return (
+                <div className="main-item center">
+                    <div id='username-title'>
+                        {this.props.username}
+                    </div>
+                    {legend}
+
+                    <div className='instruction'>
+                        Select a running job to view nodes:
+                    </div>
+
+                    <div className='job-names heading'>
+                        Running:
+                    </div>
+                        {jobList.running}
+                    <br />
+
+                    <div className='job-names'>
+                        {(jobList.pending.length > 0) &&
+                            <div>
+                                <div className='job-names heading'>
+                                    Pending:
+                                </div>
+                                <div>
+                                    {jobList.pending}
+                                </div>
+                            </div>
+                        }
+                        {(jobList.completed.length > 0) &&
+                            <div>
+                                <div className='job-names heading'>
+                                    Completed:
+                                </div>
+                                <div>
+                                    {jobList.completed}
+                                </div>
+                            </div>
+                        }
+                        {(jobList.cancelled.length > 0) &&
+                            <div>
+                                <div className='job-names heading'>
+                                    Cancelled:
+                                </div>
+                                <div>
+                                    {jobList.cancelled}
+                                </div>
+                            </div>
+                        }
+                        {(jobList.failed.length > 0) &&
+                            <div>
+                                <div className='job-names heading'>
+                                    Failed:
+                                </div>
+                                <div>
+                                    {jobList.failed}
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            )
+        }
     }
 }
 

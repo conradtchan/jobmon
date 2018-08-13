@@ -282,20 +282,42 @@ body {
     text-align: right;
     padding-right: 5px;
     font-weight: 500;
-    /*border: 1px black solid;*/
 }
 
 .queue-string-hours {
     flex: 0 0 35%;
     padding-right: 5px;
-    /*border: 1px black solid;*/
 }
 
 .queue-string-jobs{
     flex: 0 0 35%;
     text-align: left;
-    /*border: 1px black solid;*/
 }
+
+.avail-string {
+    display: flex;
+    text-align: center;
+}
+
+.avail-string-word{
+    flex: 0 0 20%;
+    text-align: left;
+}
+
+.avail-string-cores{
+    flex: 0 0 10%;
+    text-align: right;
+    padding-right: 5px;
+    font-weight: 500;
+}
+
+.avail-string-nodes{
+    flex: 0 0 5%;
+    text-align: right;
+    padding-right: 5px;
+    font-weight: 500;
+}
+
 
 #username-title {
     font-size: x-large;

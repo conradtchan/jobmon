@@ -74,7 +74,7 @@ export default class UserPiePlot extends React.Component {
         }
 
         userStrings.sort((a, b) => (a.props.user.username < b.props.user.username ) ? -1 : (a.props.user.username  > b.props.user.username) ? 1 : 0);
-        
+
         const mainBox = document.getElementById('main-box');
         let mainBoxWidth = 0;
         if (mainBox) mainBoxWidth = mainBox.offsetWidth;
@@ -111,11 +111,33 @@ export default class UserPiePlot extends React.Component {
             );
         }
 
+        let availableResources = []
+        for (let count in this.props.freeCores) {
+            const usable = count - this.props.reservedCores
+            if (usable > 0) {
+                availableResources.push(
+                    <div className='avail-string' key={count}>
+                        <div className='avail-string-cores'>
+                            {usable}
+                        </div>
+                        <div className='avail-string-word'>
+                            core{(usable > 1) ? 's' : ''} on
+                        </div>
+                        <div className='avail-string-nodes'>
+                            {this.props.freeCores[count]}
+                        </div>
+                        <div className='avail-string-word'>
+                            node{(this.props.freeCores[count] > 1) ? 's' : ''}
+                        </div>
+                    </div>
+                )
+            }
+        }
 
         return (
             <div className='main-item left'>
                 <div className='instruction'>
-                    Select a user to view detailed system usage:
+                    Select a user to view detailed system usage
                 </div>
                 <UsagePie
                     runningData={this.props.usageData.running}
@@ -142,6 +164,14 @@ export default class UserPiePlot extends React.Component {
                 <div className="queue-strings">
                     {queueStrings}
                 </div>
+                <div className="heading">
+                    Available resource summary:
+                </div>
+                <div>
+                    {availableResources}
+                </div>
+                <br />
+                <button onClick={() => this.updateUsername(null, 'allnodes')}>View all non-empty nodes</button>
             </div>
         )
     }

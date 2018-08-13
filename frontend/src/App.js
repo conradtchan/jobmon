@@ -23,6 +23,7 @@ class App extends React.Component {
             history: null,
             historyData: [],
             historyDataWindow: 3600, // seconds
+            reservedCores: 4,
         };
 
         this.fetchHistory();
@@ -183,7 +184,7 @@ class App extends React.Component {
                 hasUser = true
             }
         }
-        if (!(hasUser)) this.setState({nodeName: null})
+        if ((this.state.username !== 'allnodes') && !(hasUser)) this.setState({nodeName: null})
     }
 
     selectNode(node) {
@@ -281,9 +282,10 @@ class App extends React.Component {
             runningCores: 0,
             availNodes: 0,
             runningNodes: 0,
-
+            freeCores: {},
         };
 
+        let nodeFreeCores = {};
 
         const nodes = this.state.apiData.nodes;
         for (let host in nodes) {
@@ -293,6 +295,9 @@ class App extends React.Component {
 
                 // Available nodes
                 usage.availNodes += 1
+
+                // Node specific free cores
+                nodeFreeCores[host] = nodes[host].nCpus
             }
         }
 
@@ -307,13 +312,25 @@ class App extends React.Component {
                     if (!(runningNodeList.includes(host))) {
                         runningNodeList.push(host)
                     }
+                    if (nodeFreeCores.hasOwnProperty(host)) {
+                        nodeFreeCores[host] -= jobs[jobId].layout[host].length
+                    }
                 }
             }
         }
 
+        for (let host in nodeFreeCores) {
+          const count = nodeFreeCores[host]
+          if (!(usage.freeCores.hasOwnProperty(count))) {
+            usage.freeCores[count] = 1
+          } else {
+            usage.freeCores[count] += 1
+          }
+        }
+
         // Some nodes are not counted because they are rarely used
         // But if they are used, then bump up the avail count
-        // if (usage.runningCores > usage.availCores) usage.availCores = usage.runningCores;
+        if (usage.runningCores > usage.availCores) usage.availCores = usage.runningCores;
 
         usage.runningNodes = runningNodeList.length;
 
@@ -425,14 +442,14 @@ class App extends React.Component {
                 usageData = {usageData}
                 runningCores = {systemUsage.runningCores}
                 availCores = {systemUsage.availCores}
+                freeCores = {systemUsage.freeCores}
                 updateUsername = {(name) => this.updateUsername(name)}
                 warnedUsers = {this.getWarnedUsers(warnings)}
                 queue = {this.getQueue()}
+                reservedCores = {this.state.reservedCores}
             />
         )
-
     }
-
 
     show() {
         if (this.state.gotData) {
