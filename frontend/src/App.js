@@ -319,6 +319,14 @@ class App extends React.Component {
             }
         }
 
+        // if a "bonus" node us being wholy or partially used then count it as avail
+        for (let host in runningNodeList) {
+            if (!(nodes[host].isCounted)) {
+                usage.availCores += nodes[host].nCpus;
+                usage.availNodes += 1;
+            }
+        }
+
         for (let host in nodeFreeCores) {
           const count = nodeFreeCores[host]
           if (!(usage.freeCores.hasOwnProperty(count))) {
