@@ -3,7 +3,7 @@ DATA_PATH = '/var/spool/bobMon2/'
 FILE_NAME_PATTERN = 'bobData{:}.json.gz'
 
 # Time between updating API
-UPDATE_INTERVAL = 10
+UPDATE_INTERVAL = 30
 
 # Non-standard data in ganglia that we want to harvest and use
 # NOTE: there needs to be server code in bobMon.py to insert these into the xml
@@ -33,10 +33,10 @@ NODE_DEAD_TIMEOUT = 60
 MULTICPU_MAX = 72
 
 # How much history to return in a list (in seconds)
-HISTORY_LENGTH = 86400
+HISTORY_LENGTH = 43200
 
 # When to delete old history (seconds old)
-HISTORY_DELETE_AGE = 86400 * 1.1
+HISTORY_DELETE_AGE = 86400
 
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ['john', 'bryan']
