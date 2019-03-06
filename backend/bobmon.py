@@ -355,13 +355,11 @@ def write_data(data, filename):
 def get_core_usage(data):
     usage = {'avail': 0, 'running': 0}
     for hostname, node in data['nodes'].items():
-        # This is for compatability with old snapshots - can delete 'isSlurm' after 2 days
-        try:
-            if node['isCounted']:
-                usage['avail'] += node['nCpus']
-        except:
-            if node['inSlurm']:
-                usage['avail'] += node['nCpus']
+        if node['isCounted']:
+            usage['avail'] += node['nCpus']
+
+    bonus_nodes = []
+    n_bonus = 0
 
     for id, job in data['jobs'].items():
         if job['state'] == 'RUNNING':
@@ -371,7 +369,10 @@ def get_core_usage(data):
             for hostname in job['layout']:
                 node = data['nodes'][hostname]
                 if not node['isCounted']:
-                    usage['avail'] += node['nCpus']
+                    if hostname not in bonus_nodes:
+                        bonus_nodes += [hostname]
+                        usage['avail'] += node['nCpus']
+                        n_bonus += node['nCpus']
 
     return usage
 
