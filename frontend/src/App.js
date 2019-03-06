@@ -336,10 +336,6 @@ class App extends React.Component {
           }
         }
 
-        // Some nodes are not counted because they are rarely used
-        // But if they are used, then bump up the avail count
-        if (usage.runningCores > usage.availCores) usage.availCores = usage.runningCores;
-
         usage.runningNodes = runningNodeList.length;
 
         return usage
