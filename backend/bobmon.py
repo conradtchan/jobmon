@@ -367,6 +367,12 @@ def get_core_usage(data):
         if job['state'] == 'RUNNING':
             usage['running'] += job['nCpus']
 
+            # if job is running on a bonus node then add the bonus node to avail
+            for hostname in job['layout']:
+                node = data['nodes'][hostname]
+                if not node['isCounted']:
+                    usage['avail'] += node['nCpus']
+
     return usage
 
 
