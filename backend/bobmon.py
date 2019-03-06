@@ -251,20 +251,70 @@ def hide_username(name):
     return usernames[name]
 
 
+def expand_array(r):
+    # ignore % 'run-at once'
+    if '%' in r:
+       r = r.split('%')[0]
+    # remember step
+    step = 1
+    if ':' in r:
+       i = r.split(':')
+       r = i[0]
+       step = int(i[1])
+    cc = expand_array_range(r)
+    if step == 1:
+        return cc
+    c = []
+    for i in cc:
+        if i % step == 0:  # might not be correct. eg 1-8:4 vs. 0-7:4. whatevs
+            c.append(i)
+    return c
+
+
+def expand_array_range(r):
+    # "0,5-6,17,23-25" ->  [0,5,6,17,23,24,25]
+    c = []
+    for i in r.split(','):
+        ss = i.split('-')
+        if len(ss) > 1: # found a range
+            for j in range(int(ss[0]), int(ss[1])+1):
+                c.append(j)
+        else:          # found a single
+            c.append(int(i))
+    return c
+
+
+def job_info(slurm_job):
+    return { 'name':      slurm_job['name'],
+             'username':  hide_username(pwd.getpwuid(slurm_job['user_id'])[0]),
+             'nCpus':     slurm_job['num_cpus'],
+             'state':     slurm_job['job_state'],
+             'layout':    slurm_job['cpus_alloc_layout'],
+             'timeLimit': slurm_job['time_limit'], # minutes
+            }
+
 def jobs():
     slurm_jobs = pyslurm.job().get()
 
     j = {}
 
     for job_id in slurm_jobs:
-        j[job_id] = {
-            'name':      slurm_jobs[job_id]['name'],
-            'username':  hide_username(pwd.getpwuid(slurm_jobs[job_id]['user_id'])[0]),
-            'nCpus':     slurm_jobs[job_id]['num_cpus'],
-            'state':     slurm_jobs[job_id]['job_state'],
-            'layout':    slurm_jobs[job_id]['cpus_alloc_layout'],
-            'timeLimit': slurm_jobs[job_id]['time_limit'], # minutes
-        }
+        s = slurm_jobs[job_id]
+
+        if s['array_task_str'] != None:  # queued array job(s)
+            # expand into separate sub jobs
+            for t in expand_array(s['array_task_str']):
+                jid = str(job_id) + '_' + str(t)
+                j[jid] = job_info(s)
+
+        else:
+            if s['array_task_id'] != None and s['array_job_id'] != None:  # running array task
+                # change the jobid to be array syntax
+                jid = str(s['array_job_id']) + '_' + str(s['array_task_id'])
+            else:
+                jid = str(job_id)
+
+            j[jid] = job_info(s)
 
     return j
 
