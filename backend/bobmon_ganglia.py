@@ -78,9 +78,9 @@ class Stats:
         if len(xml) == 0:
             xml = None
 
-        with open('ganglia_stats.xml', 'w') as f:
-            for line in xml:
-                f.write(line)
+        #with open('ganglia_stats.xml', 'w') as f:
+        #    for line in xml:
+        #        f.write(line)
 
         return xml
 
