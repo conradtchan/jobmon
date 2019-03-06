@@ -58,7 +58,7 @@ class Stats:
             # merge data from each gmond into self.all
             self.merge(data)
 
-    def read(selfself, host, port):
+    def read(self, host, port):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((host, port))
