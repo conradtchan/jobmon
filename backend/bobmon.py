@@ -243,8 +243,11 @@ def hide_username(name):
         new_name = name[:3]
         add_letters = 0
         for long_name, short_name in usernames.items():
-            if short_name == new_name:
+            while short_name == new_name:
                 add_letters += 1
+
+                if 3 + add_letters > len(name):
+                    new_name = name + str(3 + add_letters - name)
                 new_name = name[:3 + add_letters]
         usernames[name] = new_name
 
