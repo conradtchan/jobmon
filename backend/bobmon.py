@@ -246,9 +246,12 @@ def hide_username(name):
             while short_name == new_name:
                 add_letters += 1
 
+                # Add a number if out of characters
                 if 3 + add_letters > len(name):
                     new_name = name + str(3 + add_letters - name)
-                new_name = name[:3 + add_letters]
+                else:
+                    new_name = name[:3 + add_letters]
+
         usernames[name] = new_name
 
     return usernames[name]
@@ -286,9 +289,16 @@ def expand_array_range(r):
             c.append(int(i))
     return c
 
+def trim_job_name(name):
+    max_name_length = 10
+
+    if len(name) <= max_name_length:
+        return name
+    else:
+        return name[:max_name_length] + '...'
 
 def job_info(slurm_job):
-    return { 'name':      slurm_job['name'],
+    return { 'name':      trim_job_name(slurm_job['name']),
              'username':  hide_username(pwd.getpwuid(slurm_job['user_id'])[0]),
              'nCpus':     slurm_job['num_cpus'],
              'state':     slurm_job['job_state'],
