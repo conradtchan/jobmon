@@ -229,7 +229,7 @@ def nodes():
             for gres in pyslurm_nodes[host]['gres']:
                 g = gres.split(':')
                 if (g[0] == 'gpu'):
-                    nodes[host]['nGpus'] += int(g[-1])
+                    nodes[host]['nGpus'] += int(g[2][0])
 
     return nodes
 
