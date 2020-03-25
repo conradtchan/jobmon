@@ -473,7 +473,7 @@ export default class NodeOverview extends React.Component {
                     </div>
 
                     <div className='job-names heading'>
-                        Running:
+                        Running
                     </div>
                         {jobList.running}
                     <br />
@@ -482,7 +482,7 @@ export default class NodeOverview extends React.Component {
                         {(jobList.pending.length > 0) &&
                             <div>
                                 <div className='job-names heading'>
-                                    Pending:
+                                    Pending
                                 </div>
                                 <div>
                                     {jobList.pending}
@@ -492,7 +492,7 @@ export default class NodeOverview extends React.Component {
                         {(jobList.completed.length > 0) &&
                             <div>
                                 <div className='job-names heading'>
-                                    Completed:
+                                    Completed
                                 </div>
                                 <div>
                                     {jobList.completed}
@@ -502,7 +502,7 @@ export default class NodeOverview extends React.Component {
                         {(jobList.cancelled.length > 0) &&
                             <div>
                                 <div className='job-names heading'>
-                                    Cancelled:
+                                    Cancelled
                                 </div>
                                 <div>
                                     {jobList.cancelled}
@@ -512,7 +512,7 @@ export default class NodeOverview extends React.Component {
                         {(jobList.failed.length > 0) &&
                             <div>
                                 <div className='job-names heading'>
-                                    Failed:
+                                    Failed
                                 </div>
                                 <div>
                                     {jobList.failed}

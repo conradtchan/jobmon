@@ -13,7 +13,12 @@ export default class JobText extends React.Component {
             <div
                 className={this.getClass()}
             >
-                {this.props.id}: {this.props.job.name} ({this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''})
+                <div className='job-name-id'>
+                    {this.props.id} ({this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''})
+                </div>
+                <div>
+                {this.props.job.name} 
+                </div>          
             </div>
         )
     }

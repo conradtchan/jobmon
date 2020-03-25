@@ -155,6 +155,7 @@ body {
 }
 
 .job-names.heading {
+    font-size: large;
     font-weight: 500;
     margin: 0;
 }
@@ -162,10 +163,19 @@ body {
 .job-name {
     width: 100%;
     text-align: left;
+    white-space: pre-wrap;      /* CSS3 */   
+    white-space: -moz-pre-wrap; /* Firefox */    
+    white-space: -pre-wrap;     /* Opera <7 */   
+    white-space: -o-pre-wrap;   /* Opera 7 */    
+    word-wrap: break-word;      /* IE */
+    margin-bottom: 5px;
 }
 
 .job-name.warn {
     color: var(--bad-job-color);
+}
+.job-name-id {
+    font-weight: 500;
 }
 
 .cohab-job {
@@ -376,6 +386,7 @@ body {
 }
 
 .heading {
+    font-size: large;
     margin-top: 1.0em;
     font-weight: 500;
 }
