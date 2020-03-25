@@ -298,7 +298,7 @@ def trim_job_name(name):
         return name[:max_name_length] + '...'
 
 def job_info(slurm_job):
-    return { 'name':      trim_job_name(slurm_job['name']),
+    return { 'name':      slurm_job['name'],
              'username':  hide_username(pwd.getpwuid(slurm_job['user_id'])[0]),
              'nCpus':     slurm_job['num_cpus'],
              'state':     slurm_job['job_state'],
