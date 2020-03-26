@@ -127,13 +127,24 @@ export default class NodeOverview extends React.Component {
 
     getWarnedJobs() {
         let warnedJobs = [];
-        for (let host in this.props.warnings) {
-            const warnings = this.props.warnings[host];
+        // For each node in warnings
+        for (let nodeName in this.props.warnings) {
+            const warnings = this.props.warnings[nodeName];
+            // For each job on each node
             over_jobs:
             for (let jobId in warnings.jobs) {
                 if (!(warnedJobs.includes(jobId))) {
+                    // Job type warnings
                     for (let warning in warnings.jobs[jobId]) {
                         if (warnings.jobs[jobId][warning]) {
+                            warnedJobs.push(jobId);
+                            continue over_jobs
+                        }
+                    }
+
+                    // Node type warnings
+                    for (let warning in warnings.node) {
+                        if (warnings.node[warning]) {
                             warnedJobs.push(jobId);
                             continue over_jobs
                         }
