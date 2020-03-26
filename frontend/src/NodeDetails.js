@@ -288,7 +288,7 @@ export default class NodeDetails extends React.Component {
                 {(otherJobList.length > 0) &&
                 <div>
                     <div className='job-names heading'>
-                        Cohabitant jobs:
+                        Cohabitant jobs
                     </div>
                     <div>
                         {otherJobList}

@@ -203,6 +203,13 @@ body {
 
 .cohab-job {
     cursor: pointer;
+    margin-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    box-sizing: border-box;
+    background-color: var(--medium-shade);
 }
 
 #node-description {
