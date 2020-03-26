@@ -347,12 +347,13 @@ class CorePie extends React.Component {
                             nameKey='name'
                             dataKey='ring'
                             innerRadius='120%'
-                            outerRadius='150%'
+                            outerRadius='140%'
                             startAngle={90}
                             endAngle={450}
                             fill="#222222"
                             paddingAngle={0}
                             isAnimationActive={false}
+                            stroke="none"
                         />
                     </PieChart>
                 </ResponsiveContainer>
