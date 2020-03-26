@@ -52,16 +52,22 @@ def cpu_usage(data, name):
             except:
                 continue
 
-        # Slurm reports cores with a different numbering, so we map to that
+        # Some machines report cores with a different numbering, so we map to that
         # Could generalize for n sockets
-        core_left = []
-        core_right = []
-        for i, x in enumerate(core):
-            if (i % 2 == 0):
-                core_left += [x]
-            else:
-                core_right += [x]
-        core = core_left + core_right
+        core_swap = False
+        for prefix in config.COLUMN_ORDER_CPUS:
+            if prefix in name:
+                core_swap = True
+
+        if core_swap:       
+            core_left = []
+            core_right = []
+            for i, x in enumerate(core):
+                if (i % 2 == 0):
+                    core_left += [x]
+                else:
+                    core_right += [x]
+            core = core_left + core_right
 
         return {'total': total, 'core': core}
     except KeyError:

@@ -40,3 +40,6 @@ HISTORY_DELETE_AGE = 86400
 
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ['john', 'bryan']
+
+# Nodes which have column-ordered CPUs
+COLUMN_ORDER_CPUS = ['john', 'bryan']
