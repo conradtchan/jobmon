@@ -10,7 +10,7 @@ export default class JobText extends React.Component {
     time_convert(num) { 
         const hours = Math.floor(num / 60);  
         const minutes = num % 60;
-        return `${hours}:${minutes}`;         
+        return `${hours}:${("0"+minutes).slice(-2)}`;         
     }
 
     render () {
