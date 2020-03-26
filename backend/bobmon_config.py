@@ -30,7 +30,7 @@ GMONDS = [ ['transom1', 8649, '/ganglia/?c=farnarkle&h=%h'] ]
 NODE_DEAD_TIMEOUT = 60
 
 # Max number for multicpu metric (set to maximum number of cores on system)
-MULTICPU_MAX = 72
+MULTICPU_MAX = 272
 
 # How much history to return in a list (in seconds)
 HISTORY_LENGTH = 43200
