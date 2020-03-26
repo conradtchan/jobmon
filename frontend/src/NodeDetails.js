@@ -19,8 +19,7 @@ export default class NodeDetails extends React.Component {
                 jobCores = jobLayout[this.props.name];
             }
         }
-        let corePiesLeft = [];
-        let corePiesRight = [];
+        let corePies = [];
         for (let i = 0; i < this.props.node.cpu.core.length; i++) {
             const core = this.props.node.cpu.core[i];
             let coreSelected = false;
@@ -28,39 +27,22 @@ export default class NodeDetails extends React.Component {
                 coreSelected = jobCores.includes(i);
             }
 
-            // const coreTotal = core.user + core.wait + core.system + core.idle;
-            if (i < this.props.node.cpu.core.length / 2){
-                corePiesLeft.push(
-                    <CorePie
-                        key = {i}
-                        type = 'cpu'
-                        data = {[
-                            {name: 'user', data: core.user},
-                            {name: 'wait', data: core.wait},
-                            {name: 'system', data: core.system},
-                            {name: 'idle', data: core.idle}
-                        ]}
-                        selected = {coreSelected}
-                    />
-                )
-            } else {
-                corePiesRight.push(
-                    <CorePie
-                        key = {i}
-                        type = 'cpu'
-                        data = {[
-                            {name: 'user', data: core.user},
-                            {name: 'wait', data: core.wait},
-                            {name: 'system', data: core.system},
-                            {name: 'idle', data: core.idle}
-                        ]}
-                        selected = {coreSelected}
-                    />
-                )
-            }
+            corePies.push(
+                <CorePie
+                    key = {i}
+                    type = 'cpu'
+                    data = {[
+                        {name: 'user', data: core.user},
+                        {name: 'wait', data: core.wait},
+                        {name: 'system', data: core.system},
+                        {name: 'idle', data: core.idle}
+                    ]}
+                    selected = {coreSelected}
+                />
+            )
 
         }
-        return [corePiesLeft, corePiesRight]
+        return corePies
     }
 
     getWarnings() {
@@ -276,10 +258,7 @@ export default class NodeDetails extends React.Component {
                     CPU cores
                 </div>
                 <div className='core-grid'>
-                    {corePiesLeft}
-                </div>
-                <div className='core-grid'>
-                    {corePiesRight}
+                    {corePies}
                 </div>
                 <div className="heading">
                     Node resource usage (past hour)
