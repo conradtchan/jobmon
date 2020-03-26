@@ -214,7 +214,7 @@ export default class NodeOverview extends React.Component {
                 jobList.running.push(jobText)
             } else {
                 const jobText = (
-                <div key={jobId}>
+                <div key={jobId} className = 'other-job-row'>
                     <JobText
                         id={jobId}
                         job={job}

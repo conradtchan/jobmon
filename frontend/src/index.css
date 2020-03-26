@@ -117,6 +117,10 @@ body {
     /*border: 1px black solid;*/
 }
 
+.other-job-row{
+    margin-bottom: 5px;
+}
+
 .running-job-row {
     width: 100%;
     cursor: pointer;
@@ -127,6 +131,11 @@ body {
     /* ...and now for the proper property */
     transition:var(--transition-time);
     margin-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    box-sizing: border-box;
 }
 
 .running-job-row:nth-child(odd) {
@@ -168,14 +177,28 @@ body {
     white-space: -pre-wrap;     /* Opera <7 */   
     white-space: -o-pre-wrap;   /* Opera 7 */    
     word-wrap: break-word;      /* IE */
-    margin-bottom: 5px;
 }
 
 .job-name.warn {
     color: var(--bad-job-color);
 }
-.job-name-id {
+.job-name-title {
     font-weight: 500;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.job-name-title-item-l{
+    margin-right: 3px;
+}
+.job-name-title-item-c{
+    margin-left: 3px;
+    margin-right: 3px;
+}
+
+.job-name-title-item-r{
+    margin-left: 3px;
 }
 
 .cohab-job {

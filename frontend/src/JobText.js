@@ -7,18 +7,32 @@ export default class JobText extends React.Component {
         return nameClass
     }
 
+    time_convert(num) { 
+        const hours = Math.floor(num / 60);  
+        const minutes = num % 60;
+        return `${hours}:${minutes}`;         
+    }
+
     render () {
 
         return (
             <div
                 className={this.getClass()}
             >
-                <div className='job-name-id'>
-                    {this.props.id} ({this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''})
+                <div className='job-name-title'>
+                    <div className='job-name-title-item-l'>
+                        {this.props.id}
+                    </div>
+                    <div className='job-name-title-item-c'>
+                        {this.time_convert(this.props.job.runTime)} / {this.time_convert(this.props.job.timeLimit)}
+                    </div>
+                    <div className='job-name-title-item-r'>
+                        {this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''}
+                    </div>        
                 </div>
                 <div>
-                {this.props.job.name} 
-                </div>          
+                    {this.props.job.name} 
+                </div>      
             </div>
         )
     }

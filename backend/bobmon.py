@@ -304,6 +304,7 @@ def job_info(slurm_job):
              'state':     slurm_job['job_state'],
              'layout':    slurm_job['cpus_alloc_layout'],
              'timeLimit': slurm_job['time_limit'], # minutes
+             'runTime':   slurm_job['run_time'], # minutes
             }
 
 def jobs():
