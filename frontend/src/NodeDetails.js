@@ -237,8 +237,6 @@ export default class NodeDetails extends React.Component {
 
     render () {
         const corePies = this.getCorePies();
-        const corePiesLeft = corePies[0];
-        const corePiesRight = corePies[1];
 
         const historyChart = this.getHistoryChart();
         const gpuNames = this.getGpuNames();
