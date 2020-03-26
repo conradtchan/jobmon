@@ -471,7 +471,7 @@ class App extends React.Component {
     instantWarnings(data) {
         const warnSwap = 20; // If swap greater than
         const warnWait = 10; // If waiting more than
-        const warnUtil = 90; // If CPU utilisation below
+        const warnUtil = 95; // If CPU utilisation below
 
         let warnings = {};
 
@@ -492,7 +492,7 @@ class App extends React.Component {
 
                     let cpuUsage = 0;
                     for (let i of job.layout[nodeName]) {
-                        cpuUsage += node.cpu.core[i].user
+                        cpuUsage += node.cpu.core[i].user + node.cpu.core[i].system
                     }
                     cpuUsage /= job.layout[nodeName].length;
                     warnings[nodeName].jobs[jobId]['cpuUtil'] = (cpuUsage < warnUtil);
