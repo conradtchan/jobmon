@@ -472,6 +472,7 @@ class App extends React.Component {
         const warnSwap = 20; // If swap greater than
         const warnWait = 10; // If waiting more than
         const warnUtil = 95; // If CPU utilisation below
+        const graceTime = 5; // (Minutes) give jobs some time to get setup
 
         let warnings = {};
 
@@ -485,7 +486,7 @@ class App extends React.Component {
 
         for (let jobId in data.jobs) {
             const job = data.jobs[jobId];
-            if (job.state === 'RUNNING') {
+            if (job.state === 'RUNNING' && job.runTime > graceTime) {
                 for (let nodeName in job.layout) {
                     const node = data.nodes[nodeName];
                     warnings[nodeName].jobs[jobId] = {};
