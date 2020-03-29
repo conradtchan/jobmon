@@ -486,7 +486,7 @@ class App extends React.Component {
 
         for (let jobId in data.jobs) {
             const job = data.jobs[jobId];
-            if (job.state === 'RUNNING' && job.runTime > graceTime) {
+            if (job.state === 'RUNNING' && job.runTime > graceTime && !job.Gpu) {
                 for (let nodeName in job.layout) {
                     const node = data.nodes[nodeName];
                     warnings[nodeName].jobs[jobId] = {};

@@ -316,6 +316,10 @@ def cpu_layout(layout):
     return layout
 
 def job_info(slurm_job):
+    gpu_job = False
+    if slurm_job['tres_alloc_str'] is not None:
+        gpu_job = 'gpu' in slurm_job['tres_alloc_str']
+
     return { 'name':      slurm_job['name'],
              'username':  hide_username(pwd.getpwuid(slurm_job['user_id'])[0]),
              'nCpus':     slurm_job['num_cpus'],
@@ -323,6 +327,7 @@ def job_info(slurm_job):
              'layout':    cpu_layout(slurm_job['cpus_alloc_layout']),
              'timeLimit': slurm_job['time_limit'], # minutes
              'runTime':   int(slurm_job['run_time']/60), # minutes
+             'Gpu':       gpu_job,
             }
 
 def jobs():
