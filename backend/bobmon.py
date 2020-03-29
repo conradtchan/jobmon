@@ -303,12 +303,24 @@ def trim_job_name(name):
     else:
         return name[:max_name_length] + '...'
 
+def cpu_layout(layout):
+    # Expand to HT core labelling if necessary
+    for node in layout.keys():
+        for ht_node in config.HT_NODES:
+            if ht_node[0] in node:
+                extra_layout = []
+                for i in range(1, ht_node[2]):
+                    extra_layout += [x + i*ht_node[1] for x in layout[node]]
+                layout[node] += extra_layout
+    
+    return layout
+
 def job_info(slurm_job):
     return { 'name':      slurm_job['name'],
              'username':  hide_username(pwd.getpwuid(slurm_job['user_id'])[0]),
              'nCpus':     slurm_job['num_cpus'],
              'state':     slurm_job['job_state'],
-             'layout':    slurm_job['cpus_alloc_layout'],
+             'layout':    cpu_layout(slurm_job['cpus_alloc_layout']),
              'timeLimit': slurm_job['time_limit'], # minutes
              'runTime':   int(slurm_job['run_time']/60), # minutes
             }

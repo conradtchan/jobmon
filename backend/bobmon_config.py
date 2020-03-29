@@ -43,3 +43,6 @@ CORE_COUNT_NODES = ['john', 'bryan']
 
 # Nodes which have column-ordered CPUs
 COLUMN_ORDER_CPUS = ['john', 'bryan']
+
+# Nodes with HT
+HT_NODES = [['gina', 68, 4]]
