@@ -486,7 +486,7 @@ class App extends React.Component {
 
         for (let jobId in data.jobs) {
             const job = data.jobs[jobId];
-            if (job.state === 'RUNNING' && job.runTime > graceTime && !job.Gpu) {
+            if (job.state === 'RUNNING' && job.runTime > graceTime) {
                 for (let nodeName in job.layout) {
                     const node = data.nodes[nodeName];
                     warnings[nodeName].jobs[jobId] = {};
@@ -496,7 +496,13 @@ class App extends React.Component {
                         cpuUsage += node.cpu.core[i].user + node.cpu.core[i].system
                     }
                     cpuUsage /= job.layout[nodeName].length;
-                    warnings[nodeName].jobs[jobId]['cpuUtil'] = (cpuUsage < warnUtil);
+
+                    if (cpuUsage < warnUtil && (job.layout[nodeName].length || job.Gpu == 0)) {
+                        warnings[nodeName].jobs[jobId]['cpuUtil'] = true
+                    }
+                     (cpuUsage < warnUtil );
+
+                    !job.Gpu
                 }
             }
         }
