@@ -48,9 +48,6 @@ export default class NodeDetails extends React.Component {
     getWarnings() {
         let warningText = [];
         if (Object.keys(this.props.warnings).length > 0) {
-            if (this.props.warnings[this.props.name].node.cpuWait) {
-                warningText.push('Significant CPU time spent waiting for IO')
-            }
             if (this.props.warnings[this.props.name].node.swapUse) {
                 warningText.push('Heavy use of disk swap')
             }
@@ -58,6 +55,9 @@ export default class NodeDetails extends React.Component {
                 const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
                 if (jobWarns['cpuUtil']) {
                     warningText.push(`Job ${jobId} under-utilizes requested CPUs`)
+                }
+                if (jobWarns['cpuWait']) {
+                    warningText.push(`Job ${jobId} spends significant time waiting`)
                 }
             }
         }

@@ -470,7 +470,7 @@ class App extends React.Component {
 
     instantWarnings(data) {
         const warnSwap = 20; // If swap greater than
-        const warnWait = 10; // If waiting more than
+        const warnWait = 5; // If waiting more than
         const warnUtil = 95; // If CPU utilisation below
         const graceTime = 5; // (Minutes) give jobs some time to get setup
 
@@ -480,7 +480,6 @@ class App extends React.Component {
             const node = data.nodes[nodeName];
             warnings[nodeName] = {node: {}, jobs: {}};
 
-            warnings[nodeName].node['cpuWait'] = (node.cpu.total.wait > warnWait);
             warnings[nodeName].node['swapUse'] = (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap);
         }
 
@@ -492,17 +491,23 @@ class App extends React.Component {
                     warnings[nodeName].jobs[jobId] = {};
 
                     let cpuUsage = 0;
+                    let cpuWait = 0;
                     for (let i of job.layout[nodeName]) {
                         cpuUsage += node.cpu.core[i].user + node.cpu.core[i].system
+                        cpuWait += node.cpu.total.wait
                     }
                     cpuUsage /= job.layout[nodeName].length;
+                    cpuWait /= job.layout[nodeName].length;
 
-                    if (cpuUsage < warnUtil && (job.layout[nodeName].length || job.Gpu == 0)) {
+                    // If below utilisation AND (not a GPU job OR uses more than 1 core)
+                    if (cpuUsage < warnUtil && (job.layout[nodeName].length > 1 || job.Gpu == 0)) {
                         warnings[nodeName].jobs[jobId]['cpuUtil'] = true
                     }
-                     (cpuUsage < warnUtil );
 
-                    !job.Gpu
+                    if (cpuWait > warnWait) {
+                        warnings[nodeName].jobs[jobId]['cpuWait'] = true
+                    }
+
                 }
             }
         }
