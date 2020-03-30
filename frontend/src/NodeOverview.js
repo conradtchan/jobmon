@@ -254,7 +254,7 @@ export default class NodeOverview extends React.Component {
                 usage.cpu.wait += node.cpu.core[i].wait;
                 usage.cpu.idle += node.cpu.core[i].idle;
             }
-            for (let gpuName in usage.gpus) {
+            for (let gpuName in node.gpus) {
                 usage.gpu.total += node.gpus[gpuName]
             }
             usage.mem.used          += node.mem.used;

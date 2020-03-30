@@ -31,7 +31,7 @@ export default class JobText extends React.Component {
                     </div>        
                 </div>
                 <div>
-                    {this.props.job.name} {(this.props.job.Gpu) ? '(GPU)' : ''}
+                    {this.props.job.name} {(this.props.job.nGpus > 0) ? '(GPU)' : ''}
                 </div>      
             </div>
         )
