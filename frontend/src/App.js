@@ -500,7 +500,7 @@ class App extends React.Component {
                     cpuWait /= job.layout[nodeName].length;
 
                     // If below utilisation AND (not a GPU job OR uses more than 1 core)
-                    if (cpuUsage < warnUtil && (job.layout[nodeName].length > 1 || job.Gpu == 0)) {
+                    if (cpuUsage < warnUtil && (job.layout[nodeName].length > 1 || job.Gpu === 0)) {
                         warnings[nodeName].jobs[jobId]['cpuUtil'] = true
                     }
 
