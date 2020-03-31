@@ -3,6 +3,7 @@
 API_VERSION = 11
 
 import gzip
+import sys
 from os import path
 from os import rename
 from os import chmod
@@ -18,6 +19,7 @@ import bobmon_ganglia as ganglia
 import pyslurm
 import pwd
 import re
+import showbf
 
 # Get 644 for chmod
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
@@ -456,8 +458,37 @@ def history(usage_cache):
 
     return h
 
+def backfill():
+    data = showbf.do_all()
+    u, bcu = showbf.get_core_usage(data)
+
+    bf = {}
+    
+    for node_type in config.BF_NODES:
+        bf[node_type] = {}
+        b = bcu[node_type]
+        
+        # b.bins(): core counts
+        # b.cnt(i): number of nodes with i available
+        # b.timesMax(i): max time available for slot
+        for i in sorted(b.bins()):
+            bf[node_type][i] = {'count': b.cnt(i), 'tMax': b.timesMax(i)}
+
 
 if __name__ == '__main__':
+
+    test = False
+    if len(sys.argv) == 2:
+        arg = sys.argv[1]
+        test = arg == 'test'
+
+    if test:
+        print('Testing backend, not writing any data')
+        data = do_all()
+        bf = backfill()
+        print('Done!')
+        sys.exit()
+
     print('Starting bobMon2 backend')
 
     # Initially, get the usage from disk
@@ -486,6 +517,13 @@ if __name__ == '__main__':
             # Write history file
             history_file = path.join(config.DATA_PATH, 'history.json.gz')
             write_data(history(usage_cache), history_file)
+
+            # Calculate backfill
+            bf = backfill()
+
+            # Write backfill file
+            backfill_file = path.join(config.DATA_PATH, 'backfill.json.gz')
+            write_data(bf, backfill_file)
 
             time_finish = timestamp()
             time_taken = time_finish - time_start

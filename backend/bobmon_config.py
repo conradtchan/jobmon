@@ -46,3 +46,6 @@ COLUMN_ORDER_CPUS = ['john', 'bryan']
 
 # Nodes with HT
 HT_NODES = [['gina', 68, 4]]
+
+# Nodes to print backfill
+BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]
