@@ -7,7 +7,7 @@ export default class JobText extends React.Component {
         return nameClass
     }
 
-    time_convert(num) { 
+    timeConvert(num) { 
         const hours = Math.floor(num / 60);  
         const minutes = num % 60;
         return `${hours}:${("0"+minutes).slice(-2)}`;         
@@ -24,7 +24,7 @@ export default class JobText extends React.Component {
                         {this.props.id}
                     </div>
                     <div className='job-name-title-item-c'>
-                        {this.time_convert(this.props.job.runTime)} / {this.time_convert(this.props.job.timeLimit)}
+                        {this.timeConvert(this.props.job.runTime)} / {this.timeConvert(this.props.job.timeLimit)}
                     </div>
                     <div className='job-name-title-item-r'>
                         {this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''}

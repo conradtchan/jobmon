@@ -411,6 +411,7 @@ export default class NodeOverview extends React.Component {
     }
 
     render() {
+
         const jobList = this.getUserJobList();
 
         const legend = <div id='cpu-legend'>
@@ -640,7 +641,7 @@ class NodePie extends React.Component {
                             outerRadius={110 + dRing + '%'}
                             startAngle={90}
                             endAngle={450}
-                            isAnimationActive={false}
+                            // isAnimationActive={false}
                         >
                             <Label
                                 position="center"
@@ -666,7 +667,7 @@ class NodePie extends React.Component {
                             outerRadius={90 + dRing + '%'}
                             startAngle={90}
                             endAngle={450}
-                            isAnimationActive={false}
+                            // isAnimationActive={false}
                         >
                             {
                                 data.mem.reverse().map(
@@ -685,7 +686,7 @@ class NodePie extends React.Component {
                             outerRadius={75 + dRing + '%'}
                             startAngle={90}
                             endAngle={450}
-                            isAnimationActive={false}
+                            // isAnimationActive={false}
                         >
                             {
                                 data.gpu.reverse().map(

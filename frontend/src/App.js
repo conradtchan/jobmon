@@ -6,6 +6,8 @@ import NodeDetails from "./NodeDetails"
 import NodeOverview from "./NodeOverview"
 import UserPiePlot from "./UserPiePlot"
 import TimeMachine from "./TimeMachine"
+import Queue from "./Queue"
+import Backfill from "./Backfill"
 
 class App extends React.Component {
     constructor(props) {
@@ -23,11 +25,13 @@ class App extends React.Component {
             history: null,
             historyData: [],
             historyDataWindow: 3600, // seconds
-            reservedCores: 4,
+            future: false,
+            backfill: null,
         };
 
         this.fetchHistory();
         this.fetchLatest();
+        this.fetchBackfill();
 
     }
 
@@ -148,6 +152,19 @@ class App extends React.Component {
         }
     }
 
+    fetchBackfill() {
+        let xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                const jsonData = JSON.parse(xhr.responseText);
+                this.setState({backfill: jsonData})
+                setTimeout(() => {this.fetchBackfill()}, 100000) // 100 seconds
+            }
+        };
+        xhr.open("GET", this.state.address + "bobbackfill.py", true);
+        xhr.send();
+    }
+
     fetchTime(time) {
         this.setState({holdSnap: true});
         let xhr = new XMLHttpRequest();
@@ -211,7 +228,7 @@ class App extends React.Component {
         }
 
         if (this.state.username === null) {
-            return (<div className="main-item center"/>)
+            return (null)
         } else {
             return (
                 <NodeOverview
@@ -240,7 +257,7 @@ class App extends React.Component {
 
     getNodeDetails(warnings) {
         if (this.state.nodeName === null) {
-            return (<div className="main-item right"/>)
+            return (null)
         } else {
             return (
                 <NodeDetails
@@ -256,23 +273,6 @@ class App extends React.Component {
                 />
             )
         }
-    }
-
-    getQueue() {
-        let queue = {
-            size: 0,
-            cpuHours: 0,
-        };
-        for (let jobId in this.state.apiData.jobs) {
-            const job = this.state.apiData.jobs[jobId]
-            if (job.state === 'PENDING') {
-                queue.size++;
-                // Time limit is given in minutes
-                queue.cpuHours += job.timeLimit * job.nCpus / 60
-
-            }
-        }
-        return queue
     }
 
 
@@ -383,86 +383,127 @@ class App extends React.Component {
 
     getUserPiePlot(warnings) {
         const systemUsage = this.getSystemUsage();
-        let usageData = {running: {}, queued: {}};
+        let runningData = {};
 
         // Sum usage
         for (let jobId in this.state.apiData.jobs) {
             const job = this.state.apiData.jobs[jobId];
             const username = job.username;
             if (job.state === 'RUNNING') {
-                if (!(usageData.running.hasOwnProperty(username))) {
-                    usageData.running[username] = {
+                if (!(runningData.hasOwnProperty(username))) {
+                    runningData[username] = {
                         cpus: 0,
                         jobs: 0,
                     }
                 }
-                usageData.running[username].cpus += job.nCpus;
-                usageData.running[username].jobs++
-            } else if (job.state === 'PENDING') {
-                if (!(usageData.queued.hasOwnProperty(username))) {
-                    usageData.queued[username] = {
-                        jobs: 0,
-                        hours: 0,
-                    }
-                }
-                usageData.queued[username].hours += job.nCpus * job.timeLimit / 60;
-                usageData.queued[username].jobs++
+                runningData[username].cpus += job.nCpus;
+                runningData[username].jobs++
             }
         }
 
         // Get usage percentage
-        for (let username in usageData.running) {
-            usageData.running[username]['percent'] = 100 * usageData.running[username]['cpus'] / systemUsage.availCores.toFixed(0)
+        for (let username in runningData) {
+            runningData[username]['percent'] = 100 * runningData[username]['cpus'] / systemUsage.availCores.toFixed(0)
         }
 
         // Convert to array
         let usageDataArray = [];
-        for (let username in usageData.running) {
+        for (let username in runningData) {
             usageDataArray.push({
                 username: username,
-                cpus: usageData.running[username].cpus,
-                jobs: usageData.running[username].jobs,
+                cpus: runningData[username].cpus,
+                jobs: runningData[username].jobs,
             })
         }
-        usageData.running = usageDataArray;
-        let queueDataArray = [];
-        for (let username in usageData.queued) {
-            queueDataArray.push({
-                username: username,
-                jobs: usageData.queued[username].jobs,
-                hours: usageData.queued[username].hours,
-            })
-        }
-        usageData.queued = queueDataArray;
+        runningData = usageDataArray;
 
         // Sort by usage
-        usageData.running.sort((a, b) => a.cpus - b.cpus);
-        for (let i=0; i<usageData.running.length; i++) {
-            usageData.running[i]['index'] = i
+        runningData.sort((a, b) => a.cpus - b.cpus);
+        for (let i=0; i<runningData.length; i++) {
+            runningData[i]['index'] = i
         }
 
         return (
             <UserPiePlot
-                usageData = {usageData}
+                runningData = {runningData}
                 runningCores = {systemUsage.runningCores}
                 availCores = {systemUsage.availCores}
-                freeCores = {systemUsage.freeCores}
                 updateUsername = {(name) => this.updateUsername(name)}
                 warnedUsers = {this.getWarnedUsers(warnings)}
-                queue = {this.getQueue()}
-                reservedCores = {this.state.reservedCores}
+            />
+        )
+    }
+
+    getQueue() {
+        // Sum usage
+        let queueData = {};
+        let queueTotal = {size: 0, cpuHours: 0};
+        
+        for (let jobId in this.state.apiData.jobs) {
+            const job = this.state.apiData.jobs[jobId];
+            const username = job.username;
+            if (job.state === 'PENDING') {
+                queueTotal.size++;
+
+                // Time limit is given in minutes
+                queueTotal.cpuHours += job.timeLimit * job.nCpus / 60
+
+                if (!(queueData.hasOwnProperty(username))) {
+                    queueData[username] = {
+                        jobs: 0,
+                        hours: 0,
+                    }
+                }
+                queueData[username].hours += job.nCpus * job.timeLimit / 60;
+                queueData[username].jobs++
+            }
+        }
+
+        let queueDataArray = [];
+        for (let username in queueData) {
+            queueDataArray.push({
+                username: username,
+                jobs: queueData[username].jobs,
+                hours: queueData[username].hours,
+            })
+        }
+        queueData = queueDataArray;
+
+
+        return(
+            <Queue
+                queueData={queueData}
+                queueTotal = {queueTotal}
+                availCores = {this.getSystemUsage().availCores}
+            />
+        )
+    }
+
+    getBackfill() {
+        return(
+            <Backfill
+                backfillData={this.state.backfill}
             />
         )
     }
 
     show() {
-        if (this.state.gotData) {
-            const warnings = this.generateWarnings();
-            return (
+        if (!this.state.future) {
+            if (this.state.gotData) {
+                const warnings = this.generateWarnings();
+                return (
+                    <div id='main-box'>
+                        {this.getUserPiePlot(warnings)}
+                        {this.getNodeOverview(warnings)}
+                        {this.getNodeDetails(warnings)}
+                    </div>
+                )
+            }
+        } else {
+            return(
                 <div id='main-box'>
-                    {this.getUserPiePlot(warnings)}
-                    {this.getNodeOverview(warnings)}
-                    {this.getNodeDetails(warnings)}
+                    {this.getQueue()}
+                    {this.getBackfill()}          
                 </div>
             )
         }
@@ -583,8 +624,9 @@ class App extends React.Component {
                 history = {this.state.history}
                 clickLoadTime = {(time) => this.fetchTime(time)}
                 snapshotTime = {this.state.snapshotTime}
-                freeze = {() => this.freeze()}
-                unfreeze = {() => this.unfreeze()}
+                viewPresent = {() => this.viewPresent()}
+                viewFuture = {() => this.viewFuture()}
+                viewPast = {() => this.viewPast()}
             />
         )
     }
@@ -597,6 +639,20 @@ class App extends React.Component {
         this.setState({holdSnap: false},
             () => this.fetchLatest()
         );
+    }
+
+    viewFuture() {
+        this.setState({future: true});
+    }
+
+    viewPresent() {
+        this.setState({future: false});
+        this.unfreeze();
+    }
+
+    viewPast() {
+        this.setState({future: false});
+        this.freeze();
     }
 
     render() {

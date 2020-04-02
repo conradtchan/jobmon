@@ -48,7 +48,7 @@ export default class UserPiePlot extends React.Component {
 
     render() {
         let userStrings = [];
-        for (let user of this.props.usageData.running) {
+        for (let user of this.props.runningData) {
             userStrings.push(
                 <UserString
                     key={user.username}
@@ -59,16 +59,6 @@ export default class UserPiePlot extends React.Component {
                     mouseLeave={() => this.restoreSelected()}
                     onClick={() => this.updateUsername(user.index, user.username)}
                     warning={this.props.warnedUsers.includes(user.username)}
-                />
-            )
-        }
-
-        let queueStrings = [];
-        for (let user of this.props.usageData.queued) {
-            queueStrings.push(
-                <QueueString
-                    key={user.username}
-                    user={user}
                 />
             )
         }
@@ -111,36 +101,13 @@ export default class UserPiePlot extends React.Component {
             );
         }
 
-        let availableResources = []
-        for (let count in this.props.freeCores) {
-            const usable = count - this.props.reservedCores
-            if (usable > 0) {
-                availableResources.push(
-                    <div className='avail-string' key={count}>
-                        <div className='avail-string-cores'>
-                            {usable}
-                        </div>
-                        <div className='avail-string-word'>
-                            core{(usable > 1) ? 's' : ''} on
-                        </div>
-                        <div className='avail-string-nodes'>
-                            {this.props.freeCores[count]}
-                        </div>
-                        <div className='avail-string-word'>
-                            node{(this.props.freeCores[count] > 1) ? 's' : ''}
-                        </div>
-                    </div>
-                )
-            }
-        }
-
         return (
             <div className='main-item left'>
                 <div className='instruction'>
                     Select a user to view detailed system usage
                 </div>
                 <UsagePie
-                    runningData={this.props.usageData.running}
+                    runningData={this.props.runningData}
                     runningCores={this.props.runningCores}
                     availCores={this.props.availCores}
                     onPieClick={(data,index) => this.updateUsername(index,data.name)}
@@ -158,22 +125,6 @@ export default class UserPiePlot extends React.Component {
                     Running
                 </div>
                 {userStringsBlock}
-                <div className="heading">
-                    Queue
-                </div>
-                <div>
-                    {this.props.queue.size} job{(this.props.queue.size !== 1) ? 's' : ''} for {this.props.queue.cpuHours.toFixed(0)} cpu-h ({(this.props.queue.cpuHours / this.props.availCores).toFixed(0)} machine-h)
-                    <br />
-                </div>
-                <div className="queue-strings">
-                    {queueStrings}
-                </div>
-                <div className="heading">
-                    Available resources
-                </div>
-                <div>
-                    {availableResources}
-                </div>
                 <br />
                 <button onClick={() => this.updateUsername(null, 'allnodes')}>View all non-empty nodes</button>
             </div>
@@ -319,7 +270,7 @@ class UsagePie extends React.Component {
                             onClick={(data,index) => this.props.onPieClick(data,index)}
                             onMouseEnter={(data,index) => this.pieMouseEnter(data,index)}
                             onMouseLeave={(data,index) => this.pieMouseLeave(data,index)}
-                            isAnimationActive={false}
+                            // isAnimationActive={false}
                         >
                             {
                                 this.props.runningData.map(
@@ -342,28 +293,6 @@ class UsagePie extends React.Component {
                         </Pie>
                     </PieChart>
                 </ResponsiveContainer>
-            </div>
-        )
-    }
-}
-
-
-
-class QueueString extends React.Component {
-    render() {
-        return (
-            <div
-                className='queue-string'
-            >
-                <div className="queue-string-username">
-                    {this.props.user.username}
-                </div>
-                <div className="queue-string-hours">
-                    {this.props.user.hours.toFixed(0)} cpu-h
-                </div>
-                <div className="queue-string-jobs">
-                    ({this.props.user.jobs} job{(this.props.user.jobs > 1) ? 's' : ''})
-                </div>
             </div>
         )
     }

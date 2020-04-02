@@ -26,6 +26,9 @@
     --piecycle-4: #FF8042;
 
     --transition-time: 0.2s;
+
+    --switch-width: 100;
+    --switch-widthpx: 100px;
 }
 
 body {
@@ -220,11 +223,10 @@ body {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: flex-start;
     width: 90%;
     max-width: 1600px;
     margin: 0 auto;
-    /*border: 1px black solid;*/
     align-items: top;
 
 }
@@ -241,6 +243,7 @@ body {
     top: 0;
     position: -webkit-sticky;
     position: sticky;
+    margin-right: 1%;
 }
 
 .main-item.center{
@@ -248,11 +251,18 @@ body {
 }
 
 .main-item.right{
-    width: 41%;
+    width: 40%;
     top: 0;
     position: -webkit-sticky;
     position: sticky;
-    /*border: 1px black solid;*/
+    margin-left: 1%;
+}
+
+.main-item.center-right{
+    width: 65%;
+    top: 0;
+    position: -webkit-sticky;
+    position: sticky;
 }
 
 #usage-pie {
@@ -473,4 +483,53 @@ body {
 
 #ganglia-link {
     margin-top: 1.0em;
+}
+
+.switch-parent{
+    width:100%;
+    height:100%;
+    display:inline-flex;
+    background:#fff;
+    padding-top: 15px;
+  }
+
+.switch3ways{
+    margin:auto;
+    font-size:1em;
+    height:2em;
+    line-height:2em;
+    border-radius:0.3em;
+    background:var(--light-shade);
+    position:relative;
+    display:block;
+    float:left;
+}
+
+.switch.past,
+.switch.present,
+.switch.future{
+    width:var(--switch-widthpx);
+    cursor:pointer;
+    position:relative;
+    display:block;
+    float:left;
+    -webkit-transition: 300ms ease-out;
+    -moz-transition: 300ms ease-out;
+    transition: 300ms ease-out;
+}
+
+.selector{
+    text-align:center;
+    position:absolute;
+    width:0;
+    box-sizing:border-box;
+    -webkit-transition: 300ms ease-out;
+    -moz-transition: 300ms ease-out;
+    transition: 300ms ease-out;
+    border-radius:0.3em;  
+    color:white;
+    -moz-box-shadow: 0px 2px 13px 0px var(--dark-shade);
+    -webkit-box-shadow: 0px 2px 13px 0px var(--dark-shade);
+    -o-box-shadow: 0px 2px 13px 0px var(--dark-shade);
+    box-shadow: 0px 2px 13px 0px var(--dark-shade);
 }

@@ -307,7 +307,7 @@ class CorePie extends React.Component {
                             outerRadius='100%'
                             startAngle={90}
                             endAngle={450}
-                            isAnimationActive={false}
+                            // isAnimationActive={false}
                         >
                             {
                                 this.props.data.reverse().map(
@@ -329,7 +329,7 @@ class CorePie extends React.Component {
                             endAngle={450}
                             fill="#222222"
                             paddingAngle={0}
-                            isAnimationActive={false}
+                            // isAnimationActive={false}
                             stroke="none"
                         />
                     </PieChart>

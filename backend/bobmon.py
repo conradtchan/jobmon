@@ -459,6 +459,7 @@ def history(usage_cache):
     return h
 
 def backfill():
+    now = time.time()
     data = showbf.do_all()
     u, bcu = showbf.get_core_usage(data)
 
@@ -472,8 +473,15 @@ def backfill():
         # b.cnt(i): number of nodes with i available
         # b.timesMax(i): max time available for slot
         for i in sorted(b.bins()):
-            bf[node_type][i] = {'count': b.cnt(i), 'tMax': b.timesMax(i)}
+            tmax = b.timesMax(i)
+            tmin = b.timesMin(i)
+            if tmax is not None:
+                tmax -= now
+            if tmin is not None:
+                tmin -= now
+            bf[node_type][i] = {'count': b.cnt(i), 'tMax': tmax, 'tMin': tmin}
 
+    return bf
 
 if __name__ == '__main__':
 
