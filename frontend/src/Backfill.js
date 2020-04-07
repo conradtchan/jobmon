@@ -51,6 +51,11 @@ export default class Backfill extends React.Component {
                         longest: tMax,
                     })
                 }
+
+                let unit = "-core"
+                if (Object.keys(this.props.backfillData[partition]).length > 6) {
+                    unit = ""
+                }
                 
 
                 backfillCharts.push(
@@ -63,7 +68,7 @@ export default class Backfill extends React.Component {
                                 barSize={20}
                                 barGap={0}
                             >
-                                <XAxis dataKey="cores" unit="-core" interval={0}/>
+                                <XAxis dataKey="cores" unit={unit} interval={0}/>
                                 <YAxis hide={true} type="number" domain={[0, this.state.tMaxRes/(24*7)*8]} allowDataOverflow={true} />
                                 <Tooltip
                                     labelFormatter={(name) => name + ' cores (' + this.props.backfillData[partition][name].count + ' slots)'}
