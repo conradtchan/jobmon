@@ -263,7 +263,6 @@ class App extends React.Component {
                 <NodeDetails
                     name={this.state.nodeName}
                     node={this.state.apiData.nodes[this.state.nodeName]}
-                    gangliaURL={this.state.apiData.gangliaURL}
                     jobs={this.state.apiData.jobs}
                     username={this.state.username}
                     selectedJobId={this.state.job}

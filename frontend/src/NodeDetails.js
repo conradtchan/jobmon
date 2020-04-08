@@ -247,8 +247,6 @@ export default class NodeDetails extends React.Component {
         const warningList = this.getWarnings();
         const otherJobList = this.getOtherJobList();
 
-        const gangliaLink = this.props.gangliaURL.replace('%h', this.props.name);
-
         return (
             <div className="main-item right">
                 <div id='nodename-title'>
@@ -275,11 +273,6 @@ export default class NodeDetails extends React.Component {
                     </div>
                 </div>
                 }
-                <div id='ganglia-link'>
-                    <a href = {gangliaLink}>
-                        Ganglia report
-                    </a>
-                </div>
             </div>
         )
     }

@@ -365,7 +365,6 @@ def do_all():
     data['timestamp'] = timestamp()
     data['nodes'] = nodes()
     data['jobs'] = jobs()
-    data['gangliaURL'] = config.GMONDS[0][2]
 
     return data
 
