@@ -34,6 +34,7 @@ export default class Backfill extends React.Component {
             // If not empty
             if (Object.keys(this.props.backfillData[partition]).length > 0) {
                 let data = [];
+                let count = {}
                 for (let cores in this.props.backfillData[partition]) {
                     let tMax = this.props.backfillData[partition][cores].tMax;
                     let tMin = this.props.backfillData[partition][cores].tMin;
@@ -46,10 +47,10 @@ export default class Backfill extends React.Component {
 
                     data.push({
                         cores: cores,
-                        count: this.props.backfillData[partition][cores].count,
                         shortest: tMin,
                         longest: tMax,
                     })
+                    count[cores] = this.props.backfillData[partition][cores].count
                 }
 
                 let unit = "-core"
@@ -71,7 +72,7 @@ export default class Backfill extends React.Component {
                                 <XAxis dataKey="cores" unit={unit} interval={0}/>
                                 <YAxis hide={true} type="number" domain={[0, this.state.tMaxRes/(24*7)*8]} allowDataOverflow={true} />
                                 <Tooltip
-                                    labelFormatter={(name) => name + ' cores (' + this.props.backfillData[partition][name].count + ' slots)'}
+                                    labelFormatter={(cores) => cores + ' cores (' + count[cores] + ' slots)'}
                                     formatter={(value) => this.timeString(value/60)}
                                 />
                                 <Bar dataKey="shortest" fill='#8884d8' />
