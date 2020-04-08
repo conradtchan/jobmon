@@ -38,7 +38,6 @@ export default class NodeOverview extends React.Component {
             const nodeName = ns.name;
 
             if (this.props.username === 'allnodes') {
-                // CPU percent is only out of the requested cores
                 const cpuUsage = this.props.nodeData[nodeName].cpu.total
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
@@ -239,7 +238,7 @@ export default class NodeOverview extends React.Component {
 
     getNodeUsage(job, node, host) {
         let usage = {
-            cpu: {user: 0, system: 0, wait: 0, idle: 0},
+            cpu: {user: 0, system: 0, wait: 0, nice: 0, idle: 0},
             mem: {used: 0, total: 0},
             infiniband: {bytes_in: 0, bytes_out: 0},
             lustre: {read: 0, write: 0},
@@ -252,6 +251,7 @@ export default class NodeOverview extends React.Component {
                 usage.cpu.user += node.cpu.core[i].user;
                 usage.cpu.system += node.cpu.core[i].system;
                 usage.cpu.wait += node.cpu.core[i].wait;
+                usage.cpu.nice += node.cpu.core[i].nice;
                 usage.cpu.idle += node.cpu.core[i].idle;
             }
             for (let gpuName in node.gpus) {
@@ -268,6 +268,7 @@ export default class NodeOverview extends React.Component {
             usage.cpu.user   /= nCores;
             usage.cpu.system /= nCores;
             usage.cpu.wait   /= nCores;
+            usage.cpu.nice   /= nCores;
             usage.cpu.idle   /= nCores;
             usage.gpu.total  /= node.nGpus;
         }
@@ -277,7 +278,7 @@ export default class NodeOverview extends React.Component {
 
     getJobUsage(job, nodes) {
         let usage = {
-            cpu: {user: 0, system: 0, wait: 0, idle: 0},
+            cpu: {user: 0, system: 0, wait: 0, nice: 0, idle: 0},
             mem: {used: 0, total: 0},
             infiniband: {bytes_in: 0, bytes_out: 0},
             lustre: {read: 0, write: 0},
@@ -289,6 +290,7 @@ export default class NodeOverview extends React.Component {
             usage.cpu.user              += nodeUsage.cpu.user * nCores;
             usage.cpu.system            += nodeUsage.cpu.system * nCores;
             usage.cpu.wait              += nodeUsage.cpu.wait * nCores;
+            usage.cpu.nice              += nodeUsage.cpu.nice * nCores;
             usage.cpu.idle              += nodeUsage.cpu.idle * nCores;
             usage.mem.used          += nodeUsage.mem.used;
             usage.mem.total         += nodeUsage.mem.total;
@@ -302,6 +304,7 @@ export default class NodeOverview extends React.Component {
         usage.cpu.user   /= job.nCpus;
         usage.cpu.system /= job.nCpus;
         usage.cpu.wait   /= job.nCpus;
+        usage.cpu.nice   /= job.nCpus;
         usage.cpu.idle   /= job.nCpus;
         usage.gpu.total  /= Object.keys(job.layout).length;
 
@@ -335,6 +338,7 @@ export default class NodeOverview extends React.Component {
                 user: usage.cpu.user,
                 system: usage.cpu.system,
                 wait: usage.cpu.wait,
+                nice: usage.cpu.nice,
                 mem: usage.mem.used * 1048576, // mb
                 infiniband_in: usage.infiniband.bytes_in,
                 infiniband_out: usage.infiniband.bytes_out,
@@ -350,11 +354,12 @@ export default class NodeOverview extends React.Component {
                 <PropChartMini
                     name = 'Job CPU usage'
                     data = {historyChart}
-                    dataKeys = {['user', 'system', 'wait']}
+                    dataKeys = {['user', 'system', 'wait', 'nice']}
                     colors = {[
                         style.getPropertyValue('--piecolor-user'),
                         style.getPropertyValue('--piecolor-system'),
                         style.getPropertyValue('--piecolor-wait'),
+                        style.getPropertyValue('--piecolor-nice'),
                     ]}
                     unit = '%'
                     dataMax = {100}
@@ -437,6 +442,14 @@ export default class NodeOverview extends React.Component {
                 </div>
                 <div className='cpu-legend-label'>
                     wait
+                </div>
+            </div>
+            <div className='cpu-legend-item'>
+                <div className='circle nice'>
+                    &nbsp;
+                </div>
+                <div className='cpu-legend-label'>
+                    nice
                 </div>
             </div>
             <div className='cpu-legend-item'>
@@ -550,6 +563,7 @@ class NodePie extends React.Component {
 
         const cpuColors = [
             style.getPropertyValue('--piecolor-blank'),
+            style.getPropertyValue('--piecolor-nice'),
             style.getPropertyValue('--piecolor-system'),
             style.getPropertyValue('--piecolor-wait'),
             style.getPropertyValue('--piecolor-user'),
@@ -570,6 +584,7 @@ class NodePie extends React.Component {
                 {name: 'user', data: this.props.cpuUsage.user},
                 {name: 'wait', data: this.props.cpuUsage.wait},
                 {name: 'system', data: this.props.cpuUsage.system},
+                {name: 'nice', data: this.props.cpuUsage.nice},
                 {name: 'idle', data: this.props.cpuUsage.idle},
             ],
             mem: [

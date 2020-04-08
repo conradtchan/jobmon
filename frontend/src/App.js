@@ -534,7 +534,7 @@ class App extends React.Component {
                     let cpuUsage = 0;
                     let cpuWait = 0;
                     for (let i of job.layout[nodeName]) {
-                        cpuUsage += node.cpu.core[i].user + node.cpu.core[i].system
+                        cpuUsage += node.cpu.core[i].user + node.cpu.core[i].system + node.cpu.core[i].nice
                         cpuWait += node.cpu.total.wait
                     }
                     cpuUsage /= job.layout[nodeName].length;

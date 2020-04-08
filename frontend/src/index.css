@@ -15,6 +15,7 @@
     --piecolor-user: #637AFF;
     --piecolor-system: #17852D;
     --piecolor-wait: #BF2B1A;
+    --piecolor-nice: var(--dark-shade);
     --piecolor-mem: #E5B81F;
     --piecolor-disk: #3A2CC2;
     --piecolor-gpu: #9A3FC2;
@@ -471,6 +472,10 @@ body {
 
 .circle.wait {
     background: var(--piecolor-wait)
+}
+
+.circle.nice {
+    background: var(--piecolor-nice)
 }
 
 .circle.mem {

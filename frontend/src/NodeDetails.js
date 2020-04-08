@@ -35,6 +35,7 @@ export default class NodeDetails extends React.Component {
                         {name: 'user', data: core.user},
                         {name: 'wait', data: core.wait},
                         {name: 'system', data: core.system},
+                        {name: 'nice', data: core.nice},
                         {name: 'idle', data: core.idle}
                     ]}
                     selected = {coreSelected}
@@ -117,6 +118,7 @@ export default class NodeDetails extends React.Component {
                 user: nodeData.cpu.total.user,
                 system: nodeData.cpu.total.system,
                 wait: nodeData.cpu.total.wait,
+                nice: nodeData.cpu.total.nice,
                 mem: nodeData.mem.used * 1048576, // mb
                 swap: (nodeData.swap.total - nodeData.swap.free) * 1024, // kb
                 infiniband_in: nodeData.infiniband.bytes_in,
@@ -152,11 +154,12 @@ export default class NodeDetails extends React.Component {
                 <PropChart
                     name = 'CPU total'
                     data = {historyChart}
-                    dataKeys = {['user', 'system', 'wait']}
+                    dataKeys = {['user', 'system', 'wait', 'nice']}
                     colors = {[
                         style.getPropertyValue('--piecolor-user'),
                         style.getPropertyValue('--piecolor-system'),
                         style.getPropertyValue('--piecolor-wait'),
+                        style.getPropertyValue('--piecolor-nice'),
                     ]}
                     unit = '%'
                     dataMax = {100}
@@ -288,6 +291,7 @@ class CorePie extends React.Component {
         const style = getComputedStyle(document.documentElement);
         let pieColors = [];
         pieColors.push(style.getPropertyValue('--piecolor-blank'));
+        pieColors.push(style.getPropertyValue('--piecolor-nice'));
         pieColors.push(style.getPropertyValue('--piecolor-system'));
         pieColors.push(style.getPropertyValue('--piecolor-wait'));
         pieColors.push(style.getPropertyValue('--piecolor-user'));
