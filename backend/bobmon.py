@@ -485,9 +485,11 @@ def backfill():
 if __name__ == '__main__':
 
     test = False
+    nohist = False
     if len(sys.argv) == 2:
         arg = sys.argv[1]
         test = arg == 'test'
+        nohist = arg == 'nohist'
 
     if test:
         print('Testing backend, not writing any data')
@@ -499,8 +501,9 @@ if __name__ == '__main__':
     print('Starting bobMon2 backend')
 
     # Initially, get the usage from disk
-    print('Reading previous snapshots from disk')
-    usage_cache = usage_from_disk()
+    if not nohist:
+        print('Reading previous snapshots from disk')
+        usage_cache = usage_from_disk()
 
     while True:
         time_start = timestamp()
