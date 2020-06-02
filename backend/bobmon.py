@@ -40,6 +40,8 @@ def cpu_usage(data, name):
             'idle':     float(data['cpu_idle']),
         }
 
+        totalC = [total[x] for x in config.CPU_KEYS]
+
         core = []
         for i in range(config.MULTICPU_MAX):
             try:
@@ -71,7 +73,10 @@ def cpu_usage(data, name):
                     core_right += [x]
             core = core_left + core_right
 
-        return {'total': total, 'core': core}
+        coreC = [ [c[x] for x in config.CPU_KEYS] for c in core]
+
+        # totalC: compact total, coreC: compact core
+        return {'total': total, 'core': core, 'totalC': totalC, 'coreC': coreC}
     except KeyError:
         print(name, 'cpu user/nice/system/wio/idle not in ganglia')
 
@@ -362,6 +367,7 @@ def jobs():
 def do_all():
     data = {}
     data['api'] = API_VERSION
+    data['cpukeys'] = config.CPU_KEYS
     data['timestamp'] = timestamp()
     data['nodes'] = nodes()
     data['jobs'] = jobs()

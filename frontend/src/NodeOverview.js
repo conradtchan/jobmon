@@ -38,7 +38,7 @@ export default class NodeOverview extends React.Component {
             const nodeName = ns.name;
 
             if (this.props.username === 'allnodes') {
-                const cpuUsage = this.props.nodeData[nodeName].cpu.total
+                const cpuUsage = this.getTotalUsage(this.props.nodeData[nodeName].cpu.total)
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
                     memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
@@ -236,6 +236,13 @@ export default class NodeOverview extends React.Component {
         return jobList
     }
 
+    getTotalUsage(totalC) {
+        let total = {}
+        for (let key in this.props.cpuKeys) {
+            total[key] = totalC[this.props.cpuKeys[key]]
+        }
+    }
+
     getNodeUsage(job, node, host) {
         let usage = {
             cpu: {user: 0, system: 0, wait: 0, idle: 0},
@@ -247,11 +254,13 @@ export default class NodeOverview extends React.Component {
 
         if (job.layout.hasOwnProperty(host)) {
             const layout = job.layout[host];
+            console.log(host)
+            console.log(node)
             for (let i of layout) {
-                usage.cpu.user += node.cpu.core[i].user + node.cpu.core[i].nice;
-                usage.cpu.system += node.cpu.core[i].system;
-                usage.cpu.wait += node.cpu.core[i].wait;
-                usage.cpu.idle += node.cpu.core[i].idle;
+                usage.cpu.user   += node.cpu.coreC[i][this.props.cpuKeys['user']] + node.cpu.coreC[i][this.props.cpuKeys['nice']];
+                usage.cpu.system += node.cpu.coreC[i][this.props.cpuKeys['system']];
+                usage.cpu.wait   += node.cpu.coreC[i][this.props.cpuKeys['wait']];
+                usage.cpu.idle   += node.cpu.coreC[i][this.props.cpuKeys['idle']];
             }
             for (let gpuName in node.gpus) {
                 usage.gpu.total += node.gpus[gpuName]

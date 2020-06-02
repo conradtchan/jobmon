@@ -20,8 +20,8 @@ export default class NodeDetails extends React.Component {
             }
         }
         let corePies = [];
-        for (let i = 0; i < this.props.node.cpu.core.length; i++) {
-            const core = this.props.node.cpu.core[i];
+        for (let i = 0; i < this.props.node.cpu.coreC.length; i++) {
+            const core = this.props.node.cpu.coreC[i];
             let coreSelected = false;
             if (!(jobCores === null) ) {
                 coreSelected = jobCores.includes(i);
@@ -32,10 +32,10 @@ export default class NodeDetails extends React.Component {
                     key = {i}
                     type = 'cpu'
                     data = {[
-                        {name: 'user', data: core.user + core.nice},
-                        {name: 'wait', data: core.wait},
-                        {name: 'system', data: core.system},
-                        {name: 'idle', data: core.idle}
+                        {name: 'user', data: core[this.props.cpuKeys['user']] + core[this.props.cpuKeys['nice']]},
+                        {name: 'wait', data: core[this.props.cpuKeys['wait']]},
+                        {name: 'system', data: core[this.props.cpuKeys['system']]},
+                        {name: 'idle', data: core[this.props.cpuKeys['idle']]}
                     ]}
                     selected = {coreSelected}
                 />
@@ -114,9 +114,9 @@ export default class NodeDetails extends React.Component {
             let x = {
                 time: data.timestamp,
                 timeString: d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0'),
-                user: nodeData.cpu.total.user + nodeData.cpu.total.nice,
-                system: nodeData.cpu.total.system,
-                wait: nodeData.cpu.total.wait,
+                user: nodeData.cpu.totalC[this.props.cpuKeys['user']] + nodeData.cpu.totalC[this.props.cpuKeys['nice']] ,
+                system: nodeData.cpu.totalC[this.props.cpuKeys['system']],
+                wait: nodeData.cpu.totalC[this.props.cpuKeys['wait']],
                 mem: nodeData.mem.used * 1048576, // mb
                 swap: (nodeData.swap.total - nodeData.swap.free) * 1024, // kb
                 infiniband_in: nodeData.infiniband.bytes_in,

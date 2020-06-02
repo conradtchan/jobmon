@@ -24,9 +24,11 @@ class App extends React.Component {
             holdSnap: false,
             history: null,
             historyData: [],
-            historyDataWindow: 3600, // seconds
+            // historyDataWindow: 3600, // seconds
+            historyDataWindow: 300, // seconds
             future: false,
             backfill: null,
+            cpuKeys: {'user': 0, 'nice': 1, 'system': 2, 'wait': 3, 'idle': 4}
         };
 
         this.fetchHistory();
@@ -138,6 +140,7 @@ class App extends React.Component {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     const jsonData = JSON.parse(xhr.responseText);
+                    console.log(jsonData)
                     this.cleanState(jsonData);
                     this.setState({
                         apiData: jsonData,
@@ -241,6 +244,7 @@ class App extends React.Component {
                     warnings={warnings}
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     historyData={this.state.historyData}
+                    cpuKeys={this.state.cpuKeys}
                 />
             )
         }
@@ -269,6 +273,7 @@ class App extends React.Component {
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     warnings={warnings}
                     historyData={this.state.historyData}
+                    cpuKeys={this.state.cpuKeys}
                 />
             )
         }
@@ -533,8 +538,8 @@ class App extends React.Component {
                     let cpuUsage = 0;
                     let cpuWait = 0;
                     for (let i of job.layout[nodeName]) {
-                        cpuUsage += node.cpu.core[i].user + node.cpu.core[i].system + node.cpu.core[i].nice
-                        cpuWait += node.cpu.total.wait
+                        cpuUsage += node.cpu.coreC[i][this.state.cpuKeys['user']] + node.cpu.coreC[i][this.state.cpuKeys['system']] + node.cpu.coreC[i][this.state.cpuKeys['nice']]
+                        cpuWait += node.cpu.totalC[this.state.cpuKeys['wait']]
                     }
                     cpuUsage /= job.layout[nodeName].length;
                     cpuWait /= job.layout[nodeName].length;
