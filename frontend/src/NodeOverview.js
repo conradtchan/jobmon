@@ -254,8 +254,6 @@ export default class NodeOverview extends React.Component {
 
         if (job.layout.hasOwnProperty(host)) {
             const layout = job.layout[host];
-            console.log(host)
-            console.log(node)
             for (let i of layout) {
                 usage.cpu.user   += node.cpu.coreC[i][this.props.cpuKeys['user']] + node.cpu.coreC[i][this.props.cpuKeys['nice']];
                 usage.cpu.system += node.cpu.coreC[i][this.props.cpuKeys['system']];
@@ -323,7 +321,7 @@ export default class NodeOverview extends React.Component {
         let sortedHistory = this.props.historyData;
         sortedHistory.sort((a, b) => (a.timestamp < b.timestamp ) ? -1 : (a.timestamp  > b.timestamp) ? 1 : 0);
 
-        const chartRes = 30;
+        const chartRes = 20;
         let nSkip = 1;
         if (chartRes < sortedHistory.length) {
             nSkip = Math.floor(sortedHistory.length / chartRes);

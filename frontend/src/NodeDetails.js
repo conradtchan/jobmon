@@ -257,7 +257,15 @@ export default class NodeDetails extends React.Component {
                     {corePies}
                 </div>
                 <div className="heading">
-                    Node resource usage (past hour)
+                    Node resource usage
+                </div>
+                <div>
+                    <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)}/>
+                    <label htmlFor="5h"> 5 hours   </label>
+                    <input type="radio" id="1h" name="timeWindow" value="1h" onChange={() => this.props.changeTimeWindow(3600)}/>
+                    <label htmlFor="1h"> 1 hour   </label>
+                    <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} defaultChecked/>
+                    <label htmlFor="10m"> 10 minutes   </label>
                 </div>
                 {this.getPropCharts(historyChart, gpuNames)}
                 {(otherJobList.length > 0) &&

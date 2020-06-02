@@ -24,8 +24,8 @@ class App extends React.Component {
             holdSnap: false,
             history: null,
             historyData: [],
-            // historyDataWindow: 3600, // seconds
-            historyDataWindow: 300, // seconds
+            historyDataWindow: 600, // seconds
+            historyDataCountInitial: 30,
             future: false,
             backfill: null,
             cpuKeys: {'user': 0, 'nice': 1, 'system': 2, 'wait': 3, 'idle': 4}
@@ -75,9 +75,11 @@ class App extends React.Component {
                             if (nVal > historyDataTimes.length) {
                                 this.setState({historyData: historyDataTemp});
                             } else {
-                                this.setState({
-                                    historyData: historyDataTemp,
-                                }, () => this.initHistoryData(nVal * 10));
+                                if (nVal < 100) {
+                                    this.setState({
+                                        historyData: historyDataTemp,
+                                    }, () => this.initHistoryData(nVal * 4));
+                                }
                             }
                         }
                     }
@@ -116,7 +118,7 @@ class App extends React.Component {
 
     historyTimeJump() {
         this.setState({historyData: []},
-            () => this.initHistoryData(20)
+            () => this.initHistoryData(this.state.historyDataCountInitial)
         )
     }
 
@@ -140,7 +142,6 @@ class App extends React.Component {
             xhr.onreadystatechange = () => {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     const jsonData = JSON.parse(xhr.responseText);
-                    console.log(jsonData)
                     this.cleanState(jsonData);
                     this.setState({
                         apiData: jsonData,
@@ -274,9 +275,16 @@ class App extends React.Component {
                     warnings={warnings}
                     historyData={this.state.historyData}
                     cpuKeys={this.state.cpuKeys}
+                    changeTimeWindow={(t) => this.changeTimeWindow(t)}
                 />
             )
         }
+    }
+
+    changeTimeWindow(t) {
+        this.setState({historyDataWindow: t},
+            () => this.initHistoryData(this.state.historyDataCountInitial)
+        )
     }
 
 
