@@ -15,8 +15,10 @@ import time
 import stat
 import json
 import bobmon_config as config
+import influx_config
 import bobmon_ganglia as ganglia
 import pyslurm
+from influxdb import InfluxDBClient
 import pwd
 import re
 import showbf
@@ -63,7 +65,7 @@ def cpu_usage(data, name):
             if prefix in name:
                 core_swap = True
 
-        if core_swap:       
+        if core_swap:
             core_left = []
             core_right = []
             for i, x in enumerate(core):
@@ -319,7 +321,7 @@ def cpu_layout(layout):
                 for i in range(1, ht_node[2]):
                     extra_layout += [x + i*ht_node[1] for x in layout[node]]
                 layout[node] += extra_layout
-    
+
     return layout
 
 def job_info(slurm_job):
@@ -336,12 +338,60 @@ def job_info(slurm_job):
              'timeLimit': slurm_job['time_limit'], # minutes
              'runTime':   int(slurm_job['run_time']/60), # minutes
              'nGpus':     num_gpus,
+             'mem':       {}, # populate later
             }
 
+def add_job_mem_info(j, id_map):
+    print('Getting memory stats')
+    # InfluxDB client for memory stats
+    influx_client = InfluxDBClient(
+        host=influx_config.HOST,
+        port=influx_config.PORT,
+        username=influx_config.USERNAME,
+        password=influx_config.PASSWORD
+    )
+    # Choose database
+    influx_client.switch_database('ozstar_slurm')
+
+    # Query all jobs
+    window = 20 # minutes
+    query = "SELECT host, LAST(value) FROM RSS WHERE time > now() - {:}m  GROUP BY job, host".format(window)
+    result = influx_client.query(query)
+
+    # Count jobs
+    print('Got', len(result.keys()), 'entries from influx')
+
+    active_slurm_jobs = []
+    for array_id in j:
+        if j[array_id]['state'] =='RUNNING':
+            active_slurm_jobs += [array_id]
+
+    count_stat = 0
+    for array_id in active_slurm_jobs:
+        key = ('RSS', {'job': str(id_map[array_id])})
+        nodes = list(result[key])
+
+        if len(nodes) > 0:
+            for x in nodes:
+                node_name = x['host']
+                mem = x['last']
+                j[array_id]['mem'][node_name] = mem
+
+            count_stat += 1
+
+            if len(nodes) != len(j[array_id]['layout']):
+                print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
+
+    print('Active slurm jobs:', len(active_slurm_jobs), 'Memory stats available:', count_stat)
+
 def jobs():
+    # Get job info from slurm
     slurm_jobs = pyslurm.job().get()
 
     j = {}
+
+    # Map between array syntax and job numbers
+    id_map = {}
 
     for job_id in slurm_jobs:
         s = slurm_jobs[job_id]
@@ -361,10 +411,17 @@ def jobs():
 
             j[jid] = job_info(s)
 
+            id_map[jid]     = job_id
+            #      array_id   integer
+
+    # Add memory information
+    add_job_mem_info(j, id_map)
+
     return j
 
 
 def do_all():
+
     data = {}
     data['api'] = API_VERSION
     data['cpukeys'] = config.CPU_KEYS
@@ -469,11 +526,11 @@ def backfill():
     u, bcu = showbf.get_core_usage(data)
 
     bf = {}
-    
+
     for node_type in config.BF_NODES:
         bf[node_type] = {}
         b = bcu[node_type]
-        
+
         # b.bins(): core counts
         # b.cnt(i): number of nodes with i available
         # b.timesMax(i): max time available for slot
