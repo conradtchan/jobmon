@@ -78,7 +78,8 @@ def cpu_usage(data, name):
         coreC = [ [c[x] for x in config.CPU_KEYS] for c in core]
 
         # totalC: compact total, coreC: compact core
-        return {'total': total, 'core': core, 'totalC': totalC, 'coreC': coreC}
+        # return {'total': total, 'core': core, 'totalC': totalC, 'coreC': coreC}
+        return {'totalC': totalC, 'coreC': coreC}
     except KeyError:
         print(name, 'cpu user/nice/system/wio/idle not in ganglia')
 
