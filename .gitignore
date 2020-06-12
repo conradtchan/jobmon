@@ -2,3 +2,5 @@
 \.DS_Store
 
 *.log
+
+backend/influx_config.py
