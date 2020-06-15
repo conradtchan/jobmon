@@ -340,6 +340,7 @@ def job_info(slurm_job):
              'runTime':   int(slurm_job['run_time']/60), # minutes
              'nGpus':     num_gpus,
              'mem':       {}, # populate later
+             'hasMem':    False,
             }
 
 def add_job_mem_info(j, id_map):
@@ -372,16 +373,16 @@ def add_job_mem_info(j, id_map):
         nodes = list(result[key])
 
         if len(nodes) > 0:
+            j[array_id]['hasMem'] = True
             for x in nodes:
                 node_name = x['host']
-                mem = x['last']
+                mem = x['max']
                 j[array_id]['mem'][node_name] = mem
 
             count_stat += 1
 
             if len(nodes) != len(j[array_id]['layout']):
                 print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
-
     print('Active slurm jobs:', len(active_slurm_jobs), 'Memory stats available:', count_stat)
 
 def jobs():
