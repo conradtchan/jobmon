@@ -110,6 +110,12 @@ export default class NodeDetails extends React.Component {
 
         for (let data of sortedHistory) {
             const nodeData = data.nodes[this.props.name];
+
+            let jobMem = 0.0
+            if (data.jobs[this.props.selectedJobId].mem.hasOwnProperty(this.props.name)) {
+                jobMem = data.jobs[this.props.selectedJobId].mem[this.props.name]
+            }
+
             const d = new Date(data.timestamp * 1000);
             let x = {
                 time: data.timestamp,
@@ -118,6 +124,7 @@ export default class NodeDetails extends React.Component {
                 system: nodeData.cpu.totalC[this.props.cpuKeys['system']],
                 wait: nodeData.cpu.totalC[this.props.cpuKeys['wait']],
                 mem: nodeData.mem.used * 1048576, // mb
+                job_mem: jobMem * 1024, // kb
                 swap: (nodeData.swap.total - nodeData.swap.free) * 1024, // kb
                 infiniband_in: nodeData.infiniband.bytes_in,
                 infiniband_out: nodeData.infiniband.bytes_out,
@@ -235,6 +242,37 @@ export default class NodeDetails extends React.Component {
         )
     }
 
+    getJobPropCharts(historyChart) {
+        const style = getComputedStyle(document.documentElement);
+        return(
+            <div className='prop-charts'>
+                <PropChart
+                    name = 'CPU'
+                    data = {historyChart}
+                    dataKeys = {['user', 'system', 'wait']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-user'),
+                        style.getPropertyValue('--piecolor-system'),
+                        style.getPropertyValue('--piecolor-wait'),
+                    ]}
+                    unit = '%'
+                    dataMax = {100}
+                    stacked = {true}
+                />
+                <PropChart
+                    name = 'Memory'
+                    data = {historyChart}
+                    dataKeys = {['job_mem']}
+                    colors = {[
+                        style.getPropertyValue('--piecolor-mem'),
+                    ]}
+                    unit = 'B'
+                    stacked = {false}
+                />
+            </div>
+        )
+    }
+
     render () {
         const corePies = this.getCorePies();
 
@@ -250,15 +288,7 @@ export default class NodeDetails extends React.Component {
                     {this.props.name}
                 </div>
                 {warningList}
-                <div className="heading">
-                    CPU cores
-                </div>
-                <div className='core-grid'>
-                    {corePies}
-                </div>
-                <div className="heading">
-                    Node resource usage
-                </div>
+
                 <div>
                     <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)}/>
                     <label htmlFor="5h"> 5 hours   </label>
@@ -267,8 +297,27 @@ export default class NodeDetails extends React.Component {
                     <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} defaultChecked/>
                     <label htmlFor="10m"> 10 minutes   </label>
                 </div>
+
+                <div className="heading">
+                    Job rseource usage
+                </div>
+
+                {this.getJobPropCharts(historyChart)}
+
+                <div className="heading">
+                    Node resource usage
+                </div>
+                <div>
+                    CPU cores
+                </div>
+                <div className='core-grid'>
+                    {corePies}
+                </div>
+
                 {this.getPropCharts(historyChart, gpuNames)}
+
                 {(otherJobList.length > 0) &&
+
                 <div>
                     <div className='job-names heading'>
                         Cohabitant jobs
@@ -325,7 +374,7 @@ class CorePie extends React.Component {
                             nameKey='name'
                             dataKey='ring'
                             innerRadius='120%'
-                            outerRadius='140%'
+                            outerRadius='150%'
                             startAngle={90}
                             endAngle={450}
                             fill="#222222"
