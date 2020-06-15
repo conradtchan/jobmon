@@ -246,6 +246,8 @@ class App extends React.Component {
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     historyData={this.state.historyData}
                     cpuKeys={this.state.cpuKeys}
+                    getJobUsage={(job, nodes) => this.getJobUsage(job, nodes)}
+                    getNodeUsage={(job, node, host) => this.getNodeUsage(job, node, host)}
                 />
             )
         }
@@ -276,6 +278,8 @@ class App extends React.Component {
                     historyData={this.state.historyData}
                     cpuKeys={this.state.cpuKeys}
                     changeTimeWindow={(t) => this.changeTimeWindow(t)}
+                    timeWindow={this.state.historyDataWindow}
+                    getJobUsage={(job, nodes) => this.getJobUsage(job, nodes)}
                 />
             )
         }
@@ -393,6 +397,79 @@ class App extends React.Component {
         return warnedUsers
     }
 
+    getJobUsage(job, nodes) {
+        let usage = {
+            cpu: {user: 0, system: 0, wait: 0, idle: 0},
+            mem: {used: 0, total: 0},
+            infiniband: {bytes_in: 0, bytes_out: 0},
+            lustre: {read: 0, write: 0},
+            gpu: {total: 0},
+        };
+        for (let host in job.layout) {
+            if (host in nodes) {
+                const nodeUsage = this.getNodeUsage(job, nodes[host], host);
+                const nCores = job.layout[host].length;
+                usage.cpu.user              += nodeUsage.cpu.user * nCores;
+                usage.cpu.system            += nodeUsage.cpu.system * nCores;
+                usage.cpu.wait              += nodeUsage.cpu.wait * nCores;
+                usage.cpu.idle              += nodeUsage.cpu.idle * nCores;
+                usage.mem.used          += job.mem[host]
+                usage.mem.total         += nodeUsage.mem.total;
+                usage.infiniband.bytes_in     += nodeUsage.infiniband.bytes_in;
+                usage.infiniband.bytes_out    += nodeUsage.infiniband.bytes_out;
+                usage.lustre.read       += nodeUsage.lustre.read;
+                usage.lustre.write      += nodeUsage.lustre.write;
+                usage.gpu.total         += nodeUsage.gpu.total;
+            }
+        }
+
+        usage.cpu.user   /= job.nCpus;
+        usage.cpu.system /= job.nCpus;
+        usage.cpu.wait   /= job.nCpus;
+        usage.cpu.idle   /= job.nCpus;
+        usage.gpu.total  /= Object.keys(job.layout).length;
+
+        return usage
+    }
+
+    getNodeUsage(job, node, host) {
+        let usage = {
+            cpu: {user: 0, system: 0, wait: 0, idle: 0},
+            mem: {used: 0, total: 0},
+            infiniband: {bytes_in: 0, bytes_out: 0},
+            lustre: {read: 0, write: 0},
+            gpu: {total: 0},
+        };
+
+        if (job.layout.hasOwnProperty(host)) {
+            const layout = job.layout[host];
+            for (let i of layout) {
+                usage.cpu.user   += node.cpu.coreC[i][this.state.cpuKeys['user']] + node.cpu.coreC[i][this.state.cpuKeys['nice']];
+                usage.cpu.system += node.cpu.coreC[i][this.state.cpuKeys['system']];
+                usage.cpu.wait   += node.cpu.coreC[i][this.state.cpuKeys['wait']];
+                usage.cpu.idle   += node.cpu.coreC[i][this.state.cpuKeys['idle']];
+            }
+            for (let gpuName in node.gpus) {
+                usage.gpu.total += node.gpus[gpuName]
+            }
+            usage.mem.used          += node.mem.used;
+            usage.mem.total         += node.mem.total;
+            usage.infiniband.bytes_in     += node.infiniband.bytes_in;
+            usage.infiniband.bytes_out    += node.infiniband.bytes_out;
+            usage.lustre.read       += node.lustre.read;
+            usage.lustre.write      += node.lustre.write;
+
+            const nCores = layout.length;
+            usage.cpu.user   /= nCores;
+            usage.cpu.system /= nCores;
+            usage.cpu.wait   /= nCores;
+            usage.cpu.idle   /= nCores;
+            usage.gpu.total  /= node.nGpus;
+        }
+
+        return usage
+    }
+
     getUserPiePlot(warnings) {
         const systemUsage = this.getSystemUsage();
         let runningData = {};
@@ -450,7 +527,7 @@ class App extends React.Component {
         // Sum usage
         let queueData = {};
         let queueTotal = {size: 0, cpuHours: 0};
-        
+
         for (let jobId in this.state.apiData.jobs) {
             const job = this.state.apiData.jobs[jobId];
             const username = job.username;
@@ -515,7 +592,7 @@ class App extends React.Component {
             return(
                 <div id='main-box'>
                     {this.getQueue()}
-                    {this.getBackfill()}          
+                    {this.getBackfill()}
                 </div>
             )
         }

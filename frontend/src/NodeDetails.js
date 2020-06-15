@@ -112,9 +112,30 @@ export default class NodeDetails extends React.Component {
             const nodeData = data.nodes[this.props.name];
 
             let jobMem = 0.0
-            if (data.jobs[this.props.selectedJobId].mem.hasOwnProperty(this.props.name)) {
-                jobMem = data.jobs[this.props.selectedJobId].mem[this.props.name]
+            let jobUser = 0.0
+            let jobSystem = 0.0
+            let jobWait = 0.0
+            // Only if the job has started running
+            if (data.jobs.hasOwnProperty(this.props.selectedJobId)) {
+                const job = data.jobs[this.props.selectedJobId]
+
+                // Instead of summing over all nodes, just sum this one
+                let singleNode = {}
+                singleNode[this.props.name] = nodeData
+                const usage = this.props.getJobUsage(data.jobs[this.props.selectedJobId], singleNode)
+
+                // Memory usage
+                if (job.mem.hasOwnProperty(this.props.name)) {
+                    jobMem = usage.mem.used
+                }
+
+                // CPU usage
+                jobUser = usage.cpu.user
+                jobSystem = usage.cpu.system
+                jobWait = usage.cpu.wait
             }
+
+
 
             const d = new Date(data.timestamp * 1000);
             let x = {
@@ -124,6 +145,9 @@ export default class NodeDetails extends React.Component {
                 system: nodeData.cpu.totalC[this.props.cpuKeys['system']],
                 wait: nodeData.cpu.totalC[this.props.cpuKeys['wait']],
                 mem: nodeData.mem.used * 1048576, // mb
+                job_user: jobUser,
+                job_system: jobSystem,
+                job_wait: jobWait,
                 job_mem: jobMem * 1024, // kb
                 swap: (nodeData.swap.total - nodeData.swap.free) * 1024, // kb
                 infiniband_in: nodeData.infiniband.bytes_in,
@@ -140,6 +164,19 @@ export default class NodeDetails extends React.Component {
             historyChart.push(x);
         }
         return historyChart
+    }
+
+    hasMemStats() {
+        let hasMem = false
+        for (let data of this.props.historyData) {
+            if (data.jobs.hasOwnProperty(this.props.selectedJobId)) {
+                if (data.jobs[this.props.selectedJobId].hasMem) {
+                    hasMem = true
+                }
+            }
+        }
+
+        return hasMem
     }
 
     getGpuNames() {
@@ -242,24 +279,32 @@ export default class NodeDetails extends React.Component {
         )
     }
 
-    getJobPropCharts(historyChart) {
+    getJobPropCharts(historyChart, hasMemStats) {
         const style = getComputedStyle(document.documentElement);
-        return(
-            <div className='prop-charts'>
+
+        let charts = []
+
+        charts.push(
+            <PropChart
+                key = 'cpu'
+                name = 'CPU'
+                data = {historyChart}
+                dataKeys = {['job_user', 'job_system', 'job_wait']}
+                colors = {[
+                    style.getPropertyValue('--piecolor-user'),
+                    style.getPropertyValue('--piecolor-system'),
+                    style.getPropertyValue('--piecolor-wait'),
+                ]}
+                unit = '%'
+                dataMax = {100}
+                stacked = {true}
+            />
+        )
+
+        if (hasMemStats) {
+            charts.push(
                 <PropChart
-                    name = 'CPU'
-                    data = {historyChart}
-                    dataKeys = {['user', 'system', 'wait']}
-                    colors = {[
-                        style.getPropertyValue('--piecolor-user'),
-                        style.getPropertyValue('--piecolor-system'),
-                        style.getPropertyValue('--piecolor-wait'),
-                    ]}
-                    unit = '%'
-                    dataMax = {100}
-                    stacked = {true}
-                />
-                <PropChart
+                    key = 'mem'
                     name = 'Memory'
                     data = {historyChart}
                     dataKeys = {['job_mem']}
@@ -269,6 +314,12 @@ export default class NodeDetails extends React.Component {
                     unit = 'B'
                     stacked = {false}
                 />
+            )
+        }
+
+        return(
+            <div className='prop-charts'>
+                {charts}
             </div>
         )
     }
@@ -290,19 +341,19 @@ export default class NodeDetails extends React.Component {
                 {warningList}
 
                 <div>
-                    <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)}/>
-                    <label htmlFor="5h"> 5 hours   </label>
-                    <input type="radio" id="1h" name="timeWindow" value="1h" onChange={() => this.props.changeTimeWindow(3600)}/>
-                    <label htmlFor="1h"> 1 hour   </label>
-                    <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} defaultChecked/>
-                    <label htmlFor="10m"> 10 minutes   </label>
+                    <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)} checked={this.props.timeWindow === 18000}/>
+                    <label> 5 hours   </label>
+                    <input type="radio" id="1h" name="timeWindow" value="1h" onChange={() => this.props.changeTimeWindow(3600)} checked={this.props.timeWindow === 3600}/>
+                    <label> 1 hour   </label>
+                    <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} checked={this.props.timeWindow === 600}/>
+                    <label> 10 minutes   </label>
                 </div>
 
                 <div className="heading">
                     Job rseource usage
                 </div>
 
-                {this.getJobPropCharts(historyChart)}
+                {this.getJobPropCharts(historyChart, this.hasMemStats() )}
 
                 <div className="heading">
                     Node resource usage
