@@ -355,8 +355,7 @@ def add_job_mem_info(j, id_map):
     influx_client.switch_database('ozstar_slurm')
 
     # Query all jobs
-    window = 20 # minutes
-    query = "SELECT host, LAST(value) FROM RSS WHERE time > now() - {:}m  GROUP BY job, host".format(window)
+    query = "SELECT host, LAST(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host".format(config.UPDATE_INTERVAL * 2)
     result = influx_client.query(query)
 
     # Count jobs
