@@ -605,7 +605,7 @@ class App extends React.Component {
         const warnWait = 5; // If waiting more than
         const warnUtil = 95; // If CPU utilisation below
         const warnMem = 80; // If memory used is less than
-        const baseMem = 1024; // Megabytes of "free" memory per core not to warn for
+        const baseMem = 2048; // Megabytes of "free" memory per core not to warn for
         const graceTime = 5; // (Minutes) give jobs some time to get setup
 
         let warnings = {};
