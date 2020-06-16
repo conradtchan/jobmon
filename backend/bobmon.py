@@ -340,7 +340,9 @@ def job_info(slurm_job):
              'runTime':   int(slurm_job['run_time']/60), # minutes
              'nGpus':     num_gpus,
              'mem':       {}, # populate later
+             'memMax':    {}, # populate later
              'hasMem':    False,
+             'memReq':    slurm_job['pn_min_memory'] # mb
             }
 
 def add_job_mem_info(j, id_map):
@@ -355,13 +357,11 @@ def add_job_mem_info(j, id_map):
     # Choose database
     influx_client.switch_database('ozstar_slurm')
 
-    # Query all jobs
-    query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host".format(config.UPDATE_INTERVAL * 4)
+    # Query all jobs for current memory usage
+    query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host".format(config.UPDATE_INTERVAL * 2)
     result = influx_client.query(query)
 
     # Count jobs
-    print('Got', len(result.keys()), 'entries from influx')
-
     active_slurm_jobs = []
     for array_id in j:
         if j[array_id]['state'] =='RUNNING':
@@ -374,6 +374,8 @@ def add_job_mem_info(j, id_map):
 
         if len(nodes) > 0:
             j[array_id]['hasMem'] = True
+
+            # Current memory usage
             for x in nodes:
                 node_name = x['host']
                 mem = x['max']
@@ -381,8 +383,14 @@ def add_job_mem_info(j, id_map):
 
             count_stat += 1
 
+            # Max memory usage
+            query = "SELECT MAX(value) FROM RSS WHERE job='{:}'".format(id_map[array_id])
+            sub_result = influx_client.query(query)
+            j[array_id]['memMax'] = list(sub_result)[0][0]['max']
+
             if len(nodes) != len(j[array_id]['layout']):
                 print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
+
     print('Active slurm jobs:', len(active_slurm_jobs), 'Memory stats available:', count_stat)
 
 def jobs():
