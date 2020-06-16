@@ -7,18 +7,16 @@ export default class JobText extends React.Component {
         return nameClass
     }
 
-    timeConvert(num) { 
-        const hours = Math.floor(num / 60);  
+    timeConvert(num) {
+        const hours = Math.floor(num / 60);
         const minutes = num % 60;
-        return `${hours}:${("0"+minutes).slice(-2)}`;         
+        return `${hours}:${("0"+minutes).slice(-2)}`;
     }
 
     render () {
 
         return (
-            <div
-                className={this.getClass()}
-            >
+            <div className={this.getClass()}>
                 <div className='job-name-title'>
                     <div className='job-name-title-item-l'>
                         {this.props.id}
@@ -28,11 +26,11 @@ export default class JobText extends React.Component {
                     </div>
                     <div className='job-name-title-item-r'>
                         {this.props.job.nCpus} core{(this.props.job.nCpus > 1) ? 's' : ''}
-                    </div>        
+                    </div>
                 </div>
                 <div>
                     {this.props.job.name} {(this.props.job.nGpus > 0) ? '(GPU)' : ''}
-                </div>      
+                </div>
             </div>
         )
     }

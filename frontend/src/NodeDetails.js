@@ -379,7 +379,10 @@ export default class NodeDetails extends React.Component {
         return (
             <div className="main-item right">
                 <div id='nodename-title'>
-                    {this.props.name}
+                    {this.props.selectedJobId} on {this.props.name}
+                </div>
+                <div id='nodename-subtitle'>
+                    {this.props.jobs[this.props.selectedJobId].name}
                 </div>
                 {warningList}
 
