@@ -242,7 +242,7 @@ export default class NodeDetails extends React.Component {
                         false,
                     ]}
                     unit = 'B'
-                    dataMax = {this.props.node.swap.total * 1024*2}
+                    dataMax = {this.props.node.swap.total * 1024**2}
                     stacked = {false}
                 />
                 <PropChart

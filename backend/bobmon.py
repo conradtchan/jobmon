@@ -26,6 +26,7 @@ import showbf
 # Get 644 for chmod
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
 
+KB = 1024
 
 def timestamp():
     # Seconds since epoch
@@ -93,8 +94,8 @@ def mem(data, name):
 
         # convert to MB
         return {
-            'used':  used / 1000.0,
-            'total': float(data['mem_total']) / 1000.0
+            'used':  used / KB,
+            'total': float(data['mem_total']) / KB
         }
 
     except:
@@ -107,8 +108,8 @@ def swap(data, name):
     try:
         # convert to MB
         return {
-            'free':     float(data['swap_free']) / 1000.0,
-            'total':    float(data['swap_total']) / 1000.0
+            'free':     float(data['swap_free']) / KB,
+            'total':    float(data['swap_total']) / KB
         }
     except KeyError:
         print(name, 'swap not in ganglia')
@@ -380,14 +381,14 @@ def add_job_mem_info(j, id_map):
             for x in nodes:
                 node_name = x['host']
                 mem = x['max']
-                j[array_id]['mem'][node_name] = mem / 1000.0 # kb to mb
+                j[array_id]['mem'][node_name] = mem / KB # kb to mb
 
             count_stat += 1
 
             # Max memory usage
             query = "SELECT MAX(value) FROM RSS WHERE job='{:}'".format(id_map[array_id])
             sub_result = influx_client.query(query)
-            j[array_id]['memMax'] = list(sub_result)[0][0]['max'] / 1000.0 # kb to mb
+            j[array_id]['memMax'] = list(sub_result)[0][0]['max'] / KB # kb to mb
 
             if len(nodes) != len(j[array_id]['layout']):
                 print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
