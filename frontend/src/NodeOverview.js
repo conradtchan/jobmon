@@ -274,7 +274,7 @@ export default class NodeOverview extends React.Component {
                 user: usage.cpu.user,
                 system: usage.cpu.system,
                 wait: usage.cpu.wait,
-                mem: usage.mem.used * 1000**2, // mb
+                mem: usage.mem.used * 1024**2, // mb
                 infiniband_in: usage.infiniband.bytes_in,
                 infiniband_out: usage.infiniband.bytes_out,
                 lustre_read: usage.lustre.read,
