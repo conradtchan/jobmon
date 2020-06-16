@@ -144,12 +144,12 @@ export default class NodeDetails extends React.Component {
                 user: nodeData.cpu.totalC[this.props.cpuKeys['user']] + nodeData.cpu.totalC[this.props.cpuKeys['nice']] ,
                 system: nodeData.cpu.totalC[this.props.cpuKeys['system']],
                 wait: nodeData.cpu.totalC[this.props.cpuKeys['wait']],
-                mem: nodeData.mem.used * 1048576, // mb
+                mem: nodeData.mem.used * 1000**2, // mb
                 job_user: jobUser,
                 job_system: jobSystem,
                 job_wait: jobWait,
-                job_mem: jobMem * 1024, // kb
-                swap: (nodeData.swap.total - nodeData.swap.free) * 1024, // kb
+                job_mem: jobMem * 1000**2, // mb
+                swap: (nodeData.swap.total - nodeData.swap.free) * 1000**2, // mb
                 infiniband_in: nodeData.infiniband.bytes_in,
                 infiniband_out: nodeData.infiniband.bytes_out,
                 infiniband_pkts_in: nodeData.infiniband.pkts_in,
@@ -214,7 +214,7 @@ export default class NodeDetails extends React.Component {
                         style.getPropertyValue('--piecolor-mem'),
                     ]}
                     unit = 'B'
-                    dataMax = {this.props.node.mem.total * 1048576}
+                    dataMax = {this.props.node.mem.total * 1000**2}
                     stacked = {false}
                 />
                 <PropChart
@@ -225,7 +225,7 @@ export default class NodeDetails extends React.Component {
                         style.getPropertyValue('--piecolor-wait'),
                     ]}
                     unit = 'B'
-                    dataMax = {this.props.node.swap.total * 1024}
+                    dataMax = {this.props.node.swap.total * 1000*2}
                     stacked = {false}
                 />
                 <PropChart

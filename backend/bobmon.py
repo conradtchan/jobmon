@@ -93,8 +93,8 @@ def mem(data, name):
 
         # convert to MB
         return {
-            'used':  used / 1024.0,
-            'total': float(data['mem_total']) / 1024.0
+            'used':  used / 1000.0,
+            'total': float(data['mem_total']) / 1000.0
         }
 
     except:
@@ -105,9 +105,10 @@ def mem(data, name):
 
 def swap(data, name):
     try:
+        # convert to MB
         return {
-            'free':     float(data['swap_free']),
-            'total':    float(data['swap_total'])
+            'free':     float(data['swap_free']) / 1000.0,
+            'total':    float(data['swap_total']) / 1000.0
         }
     except KeyError:
         print(name, 'swap not in ganglia')
@@ -379,14 +380,14 @@ def add_job_mem_info(j, id_map):
             for x in nodes:
                 node_name = x['host']
                 mem = x['max']
-                j[array_id]['mem'][node_name] = mem
+                j[array_id]['mem'][node_name] = mem / 1000.0 # kb to mb
 
             count_stat += 1
 
             # Max memory usage
             query = "SELECT MAX(value) FROM RSS WHERE job='{:}'".format(id_map[array_id])
             sub_result = influx_client.query(query)
-            j[array_id]['memMax'] = list(sub_result)[0][0]['max']
+            j[array_id]['memMax'] = list(sub_result)[0][0]['max'] / 1000.0 # kb to mb
 
             if len(nodes) != len(j[array_id]['layout']):
                 print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
