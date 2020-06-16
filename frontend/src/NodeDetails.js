@@ -47,20 +47,22 @@ export default class NodeDetails extends React.Component {
 
     getWarnings() {
         let warningText = [];
-        if (Object.keys(this.props.warnings).length > 0) {
+
+        if (this.props.warnings.hasOwnProperty(this.props.name)) {
             if (this.props.warnings[this.props.name].node.swapUse) {
-                warningText.push('Heavy use of disk swap')
+                warningText.push('Node is using disk swap')
             }
-            for (let jobId in this.props.warnings[this.props.name].jobs) {
-                const jobWarns = this.props.warnings[this.props.name].jobs[jobId];
+
+            if (this.props.warnings[this.props.name].jobs.hasOwnProperty(this.props.selectedJobId)) {
+                const jobWarns = this.props.warnings[this.props.name].jobs[this.props.selectedJobId];
                 if (jobWarns['cpuUtil']) {
-                    warningText.push(`Job ${jobId} under-utilizes requested CPUs`)
+                    warningText.push(`Job under-utilizes requested CPUs`)
                 }
                 if (jobWarns['cpuWait']) {
-                    warningText.push(`Job ${jobId} spends significant time waiting`)
+                    warningText.push(`Job spends significant time waiting`)
                 }
                 if (jobWarns['memUtil']) {
-                    warningText.push(`Job ${jobId} under-utilizes requested memory`)
+                    warningText.push(`Job under-utilizes requested memory`)
                 }
             }
         }
