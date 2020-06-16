@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-API_VERSION = 11
+API_VERSION = 12
 
 import gzip
 import sys
