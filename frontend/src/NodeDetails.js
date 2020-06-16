@@ -115,6 +115,7 @@ export default class NodeDetails extends React.Component {
             const nodeData = data.nodes[this.props.name];
 
             let jobMem = 0.0
+            let jobMemRequested = 0.0
             let jobUser = 0.0
             let jobSystem = 0.0
             let jobWait = 0.0
@@ -130,6 +131,7 @@ export default class NodeDetails extends React.Component {
                 // Memory usage
                 if (job.mem.hasOwnProperty(this.props.name)) {
                     jobMem = usage.mem.used
+                    jobMemRequested = job.memReq
                 }
 
                 // CPU usage
@@ -152,6 +154,7 @@ export default class NodeDetails extends React.Component {
                 job_system: jobSystem,
                 job_wait: jobWait,
                 job_mem: jobMem * 1000**2, // mb
+                job_mem_requested: jobMemRequested * 1000**2, // mb
                 swap: (nodeData.swap.total - nodeData.swap.free) * 1000**2, // mb
                 infiniband_in: nodeData.infiniband.bytes_in,
                 infiniband_out: nodeData.infiniband.bytes_out,
@@ -205,6 +208,11 @@ export default class NodeDetails extends React.Component {
                         style.getPropertyValue('--piecolor-system'),
                         style.getPropertyValue('--piecolor-wait'),
                     ]}
+                    lineOnly = {[
+                        false,
+                        false,
+                        false,
+                    ]}
                     unit = '%'
                     dataMax = {100}
                     stacked = {true}
@@ -215,6 +223,9 @@ export default class NodeDetails extends React.Component {
                     dataKeys = {['mem']}
                     colors = {[
                         style.getPropertyValue('--piecolor-mem'),
+                    ]}
+                    lineOnly = {[
+                        false,
                     ]}
                     unit = 'B'
                     dataMax = {this.props.node.mem.total * 1000**2}
@@ -227,6 +238,9 @@ export default class NodeDetails extends React.Component {
                     colors = {[
                         style.getPropertyValue('--piecolor-wait'),
                     ]}
+                    lineOnly = {[
+                        false,
+                    ]}
                     unit = 'B'
                     dataMax = {this.props.node.swap.total * 1000*2}
                     stacked = {false}
@@ -237,6 +251,9 @@ export default class NodeDetails extends React.Component {
                     dataKeys = {gpuNames}
                     colors = {[
                         style.getPropertyValue('--piecolor-gpu'),
+                    ]}
+                    lineOnly = {[
+                        false,
                     ]}
                     unit = '%'
                     dataMax = {100}
@@ -250,6 +267,10 @@ export default class NodeDetails extends React.Component {
                         style.getPropertyValue('--piecycle-1'),
                         style.getPropertyValue('--piecycle-2'),
                     ]}
+                    lineOnly = {[
+                        false,
+                        false,
+                    ]}
                     unit = 'B/s'
                     dataMax = 'dataMax'
                     stacked = {false}
@@ -262,6 +283,10 @@ export default class NodeDetails extends React.Component {
                         style.getPropertyValue('--piecycle-3'),
                         style.getPropertyValue('--piecycle-4'),
                     ]}
+                    lineOnly = {[
+                        false,
+                        false,
+                    ]}
                     unit = '/s'
                     dataMax = 'dataMax'
                     stacked = {false}
@@ -273,6 +298,10 @@ export default class NodeDetails extends React.Component {
                     colors = {[
                         style.getPropertyValue('--piecycle-1'),
                         style.getPropertyValue('--piecycle-2'),
+                    ]}
+                    lineOnly = {[
+                        false,
+                        false,
                     ]}
                     unit = 'B/s'
                     dataMax = 'dataMax'
@@ -298,6 +327,10 @@ export default class NodeDetails extends React.Component {
                     style.getPropertyValue('--piecolor-system'),
                     style.getPropertyValue('--piecolor-wait'),
                 ]}
+                lineOnly = {[
+                    false,
+                    false,
+                ]}
                 unit = '%'
                 dataMax = {100}
                 stacked = {true}
@@ -310,9 +343,14 @@ export default class NodeDetails extends React.Component {
                     key = 'mem'
                     name = 'Memory'
                     data = {historyChart}
-                    dataKeys = {['job_mem']}
+                    dataKeys = {['job_mem', 'job_mem_requested']}
                     colors = {[
                         style.getPropertyValue('--piecolor-mem'),
+                        style.getPropertyValue('--piecolor-mem'),
+                    ]}
+                    lineOnly = {[
+                        false,
+                        true
                     ]}
                     unit = 'B'
                     stacked = {false}
@@ -353,7 +391,7 @@ export default class NodeDetails extends React.Component {
                 </div>
 
                 <div className="heading">
-                    Job rseource usage
+                    Job resource usage
                 </div>
 
                 {this.getJobPropCharts(historyChart, this.hasMemStats() )}

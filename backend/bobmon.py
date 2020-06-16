@@ -343,7 +343,7 @@ def job_info(slurm_job):
              'mem':       {}, # populate later
              'memMax':    {}, # populate later
              'hasMem':    False,
-             'memReq':    slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node'] # mb
+             'memReq':    requested_memory(slurm_job) # mb
             }
 
 def add_job_mem_info(j, id_map):
@@ -393,6 +393,12 @@ def add_job_mem_info(j, id_map):
                 print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
 
     print('Active slurm jobs:', len(active_slurm_jobs), 'Memory stats available:', count_stat)
+
+def requested_memory(slurm_job):
+    if slurm_job['min_memory_cpu'] is not None:
+        return slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node']
+    else:
+        return slurm_job['min_memory_node']
 
 def jobs():
     # Get job info from slurm

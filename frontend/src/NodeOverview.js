@@ -295,6 +295,11 @@ export default class NodeOverview extends React.Component {
                         style.getPropertyValue('--piecolor-system'),
                         style.getPropertyValue('--piecolor-wait'),
                     ]}
+                    lineOnly = {[
+                        false,
+                        false,
+                        false,
+                    ]}
                     unit = '%'
                     dataMax = {100}
                     stacked = {true}
@@ -306,6 +311,9 @@ export default class NodeOverview extends React.Component {
                     colors = {[
                         style.getPropertyValue('--piecolor-mem'),
                     ]}
+                    lineOnly = {[
+                        false,
+                    ]}
                     unit = 'B'
                     dataMax = {memTotal}
                     stacked = {true}
@@ -316,6 +324,9 @@ export default class NodeOverview extends React.Component {
                     dataKeys = {['gpu']}
                     colors = {[
                         style.getPropertyValue('--piecolor-gpu')
+                    ]}
+                    lineOnly = {[
+                        false,
                     ]}
                     unit = '%'
                     dataMax = {100}
@@ -329,6 +340,10 @@ export default class NodeOverview extends React.Component {
                         style.getPropertyValue('--piecycle-1'),
                         style.getPropertyValue('--piecycle-2'),
                     ]}
+                    lineOnly = {[
+                        false,
+                        false,
+                    ]}
                     unit = 'B/s'
                     dataMax = 'dataMax'
                     stacked = {true}
@@ -340,6 +355,10 @@ export default class NodeOverview extends React.Component {
                     colors = {[
                         style.getPropertyValue('--piecycle-1'),
                         style.getPropertyValue('--piecycle-2'),
+                    ]}
+                    lineOnly = {[
+                        false,
+                        false,
                     ]}
                     unit = 'B/s'
                     dataMax = 'dataMax'

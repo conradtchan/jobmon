@@ -70,26 +70,43 @@ export default class PropChart extends React.Component {
     }
 
     getAreas (scale) {
-        let areas = [];
+        let items = [];
 
         // Make areas
         for (let i = 0; i < this.props.dataKeys.length; i++) {
-            areas.push(
-                <Area
-                    key={this.props.dataKeys[i]}
-                    type='monotone'
-                    nameKey='time'
-                    dataKey={this.props.dataKeys[i]}
-                    stroke={this.props.colors[i]}
-                    fill={this.props.colors[i]}
-                    stackId= {this.props.stacked ? "1" : i}
-                    isAnimationActive={false}
-                    unit={scale + this.props.unit}
-                />
-            )
+            if (this.props.lineOnly[i]) {
+                items.push(
+                    <Area
+                        key={this.props.dataKeys[i]}
+                        type='monotone'
+                        nameKey='time'
+                        dataKey={this.props.dataKeys[i]}
+                        stroke={this.props.colors[i]}
+                        fillOpacity={0}
+                        strokeDasharray="5 5"
+                        stackId= {this.props.stacked ? "2" : i}
+                        isAnimationActive={false}
+                        unit={scale + this.props.unit}
+                    />
+                )
+            } else {
+                items.push(
+                    <Area
+                        key={this.props.dataKeys[i]}
+                        type='monotone'
+                        nameKey='time'
+                        dataKey={this.props.dataKeys[i]}
+                        stroke={this.props.colors[i]}
+                        fill={this.props.colors[i]}
+                        stackId= {this.props.stacked ? "1" : i}
+                        isAnimationActive={false}
+                        unit={scale + this.props.unit}
+                    />
+                )
+            }
         }
 
-        return areas
+        return items
     }
 
     render () {
