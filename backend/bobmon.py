@@ -343,7 +343,7 @@ def job_info(slurm_job):
              'mem':       {}, # populate later
              'memMax':    {}, # populate later
              'hasMem':    False,
-             'memReq':    slurm_job['pn_min_memory'] # mb
+             'memReq':    slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node'] # mb
             }
 
 def add_job_mem_info(j, id_map):
