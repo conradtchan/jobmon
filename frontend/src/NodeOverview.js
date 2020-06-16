@@ -38,7 +38,8 @@ export default class NodeOverview extends React.Component {
             const nodeName = ns.name;
 
             if (this.props.username === 'allnodes') {
-                const cpuUsage = this.getTotalUsage(this.props.nodeData[nodeName].cpu.total)
+                const cpuUsage = this.props.getTotalUsage(this.props.nodeData[nodeName].cpu.totalC)
+
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
                     memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
@@ -76,7 +77,7 @@ export default class NodeOverview extends React.Component {
                 )
             }
 
-            else if (Object.keys(this.props.nodeHasJob[nodeName]).includes(this.props.jobId)) {
+            else if (this.props.nodeHasJob[nodeName].hasOwnProperty(this.props.jobId)) {
                 // CPU percent is only out of the requested cores
                 const cpuUsage = this.props.getNodeUsage(
                     this.props.jobs[this.props.jobId],
@@ -234,13 +235,6 @@ export default class NodeOverview extends React.Component {
             }
         }
         return jobList
-    }
-
-    getTotalUsage(totalC) {
-        let total = {}
-        for (let key in this.props.cpuKeys) {
-            total[key] = totalC[this.props.cpuKeys[key]]
-        }
     }
 
     getRunningJobChart(job, jobId) {

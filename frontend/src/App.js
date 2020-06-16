@@ -248,6 +248,7 @@ class App extends React.Component {
                     cpuKeys={this.state.cpuKeys}
                     getJobUsage={(job, nodes) => this.getJobUsage(job, nodes)}
                     getNodeUsage={(job, node, host) => this.getNodeUsage(job, node, host)}
+                    getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
                 />
             )
         }
@@ -470,6 +471,14 @@ class App extends React.Component {
         }
 
         return usage
+    }
+
+    getTotalUsage(totalC) {
+        let total = {}
+        for (let key in this.state.cpuKeys) {
+            total[key] = totalC[this.state.cpuKeys[key]]
+        }
+        return total
     }
 
     getUserPiePlot(warnings) {
