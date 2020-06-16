@@ -640,12 +640,14 @@ class App extends React.Component {
                     if (cpuWait > warnWait) {
                         warnings[nodeName].jobs[jobId]['cpuWait'] = true
                     }
-
                 }
 
                 // Memory use
                 if (job.memMax < warnMem/100.0 * job.memReq) {
-                    warnings[nodeName].jobs[jobId]['memUtil'] = true
+                    // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
+                    for (let nodeName in job.mem) {
+                        warnings[nodeName].jobs[jobId]['memUtil'] = true
+                    }
                 }
             }
         }
