@@ -602,6 +602,7 @@ class App extends React.Component {
         const warnSwap = 20; // If swap greater than
         const warnWait = 5; // If waiting more than
         const warnUtil = 95; // If CPU utilisation below
+        const warnMem = 30; // If memory used is less than
         const graceTime = 5; // (Minutes) give jobs some time to get setup
 
         let warnings = {};
@@ -610,6 +611,7 @@ class App extends React.Component {
             const node = data.nodes[nodeName];
             warnings[nodeName] = {node: {}, jobs: {}};
 
+            // Swap use
             warnings[nodeName].node['swapUse'] = (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap);
         }
 
@@ -620,6 +622,7 @@ class App extends React.Component {
                     const node = data.nodes[nodeName];
                     warnings[nodeName].jobs[jobId] = {};
 
+                    // CPU use
                     let cpuUsage = 0;
                     let cpuWait = 0;
                     for (let i of job.layout[nodeName]) {
@@ -638,6 +641,11 @@ class App extends React.Component {
                         warnings[nodeName].jobs[jobId]['cpuWait'] = true
                     }
 
+                }
+
+                // Memory use
+                if (job.memMax < warnMem/100.0 * job.memReq) {
+                    warnings[nodeName].jobs[jobId]['memUtil'] = true
                 }
             }
         }

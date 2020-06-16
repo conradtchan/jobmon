@@ -59,6 +59,9 @@ export default class NodeDetails extends React.Component {
                 if (jobWarns['cpuWait']) {
                     warningText.push(`Job ${jobId} spends significant time waiting`)
                 }
+                if (jobWarns['memUtil']) {
+                    warningText.push(`Job ${jobId} under-utilizes requested memory`)
+                }
             }
         }
 
