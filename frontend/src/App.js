@@ -413,13 +413,15 @@ class App extends React.Component {
                 usage.cpu.system            += nodeUsage.cpu.system * nCores;
                 usage.cpu.wait              += nodeUsage.cpu.wait * nCores;
                 usage.cpu.idle              += nodeUsage.cpu.idle * nCores;
-                usage.mem.used          += job.mem[host]
-                usage.mem.total         += nodeUsage.mem.total;
-                usage.infiniband.bytes_in     += nodeUsage.infiniband.bytes_in;
-                usage.infiniband.bytes_out    += nodeUsage.infiniband.bytes_out;
-                usage.lustre.read       += nodeUsage.lustre.read;
-                usage.lustre.write      += nodeUsage.lustre.write;
-                usage.gpu.total         += nodeUsage.gpu.total;
+                usage.mem.used              += job.mem[host]
+                usage.mem.total             += nodeUsage.mem.total;
+                usage.infiniband.bytes_in   += nodeUsage.infiniband.bytes_in;
+                usage.infiniband.bytes_out  += nodeUsage.infiniband.bytes_out;
+                usage.lustre.read           += nodeUsage.lustre.read;
+                usage.lustre.write          += nodeUsage.lustre.write;
+                if (job.nGpus > 0) {
+                    usage.gpu.total         += nodeUsage.gpu.total;
+                }
             }
         }
 
