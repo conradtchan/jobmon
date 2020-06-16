@@ -667,7 +667,7 @@ class App extends React.Component {
     }
 
     generateWarnings() {
-        const warningWindow = 60; // Time window to check for warnings
+        const warningWindow = 600; // Time window to check for warnings
         const warningFraction = 0.5; // If more than this fraction in the window is bad, then trigger warning
 
         // Get the data snapshots that we check for warnings
