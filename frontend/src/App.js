@@ -604,7 +604,8 @@ class App extends React.Component {
         const warnSwap = 20; // If swap greater than
         const warnWait = 5; // If waiting more than
         const warnUtil = 95; // If CPU utilisation below
-        const warnMem = 30; // If memory used is less than
+        const warnMem = 80; // If memory used is less than
+        const baseMem = 1024; // Megabytes of "free" memory per core not to warn for
         const graceTime = 5; // (Minutes) give jobs some time to get setup
 
         let warnings = {};
@@ -645,7 +646,7 @@ class App extends React.Component {
                 }
 
                 // Memory use
-                if (job.memMax < warnMem/100.0 * job.memReq) {
+                if (job.memMax/job.memReq < (warnMem/100.0) * (job.memReq - baseMem*job.nCpus) / (job.memReq)) {
                     // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
                     for (let nodeName in job.mem) {
                         warnings[nodeName].jobs[jobId]['memUtil'] = true
