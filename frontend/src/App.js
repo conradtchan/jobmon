@@ -702,10 +702,6 @@ class App extends React.Component {
                     if (warnings[nodeName].node[warningName]) {
                         warningSums[nodeName].node[warningName]++
                     }
-                    // Convert count into boolean
-                    if (j === warningDataIndex.length) {
-                        warningSums[nodeName].node[warningName] = (warningSums[nodeName].node[warningName] > threshold)
-                    }
                 }
                 for (let jobId in warnings[nodeName].jobs) {
                     if (!(warningSums[nodeName].jobs.hasOwnProperty(jobId))) {
@@ -718,14 +714,23 @@ class App extends React.Component {
                         if (warnings[nodeName].jobs[jobId][warningName]) {
                             warningSums[nodeName].jobs[jobId][warningName]++
                         }
-                        // Convert count into boolean
-                        if (j === warningDataIndex.length) {
-                            warningSums[nodeName].jobs[jobId][warningName] = (warningSums[nodeName].jobs[jobId][warningName] > threshold)
-                        }
                     }
                 }
             }
         }
+
+        // Convert counts into booleans
+        for (let nodeName in warningSums) {
+            for (let warningName in warningSums[nodeName].node) {
+                warningSums[nodeName].node[warningName] = (warningSums[nodeName].node[warningName] > threshold)
+            }
+            for (let jobId in warningSums[nodeName].jobs) {
+                for (let warningName in warningSums[nodeName].jobs[jobId]) {
+                    warningSums[nodeName].jobs[jobId][warningName] = (warningSums[nodeName].jobs[jobId][warningName] > threshold)
+                }
+            }
+        }
+
         return warningSums // Has been converted from counts into booleans
     }
 
