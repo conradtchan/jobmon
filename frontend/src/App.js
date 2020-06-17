@@ -685,10 +685,9 @@ class App extends React.Component {
 
         // Collate all the instantaneous warnings
         let warningSums = {};
-        // i is the index of the data, j is counting the snapshots
-        let j = 0;
+
+        // i is the index of the data
         for (let i of warningDataIndex) {
-            j++;
             const data = this.state.historyData[i];
             const warnings = this.instantWarnings(data);
             for (let nodeName in warnings) {
