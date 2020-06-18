@@ -28,7 +28,7 @@ class App extends React.Component {
             historyDataCountInitial: 30,
             future: false,
             backfill: null,
-            cpuKeys: {'user': 0, 'nice': 1, 'system': 2, 'wait': 3, 'idle': 4}
+            cpuKeys: {'user': 0, 'nice': 1, 'system': 2, 'wait': 3, 'idle': 4},
         };
 
         this.fetchHistory();
@@ -398,6 +398,30 @@ class App extends React.Component {
         return warnedUsers
     }
 
+    getUserBadness(scoreSums, users) {
+        let badness = {};
+        const jobs = this.state.apiData.jobs;
+
+        // Start each user at 0
+        for (let username of users) {
+            badness[username] = 0
+        }
+
+        for (let nodeName in scoreSums) {
+            for (let jobId in scoreSums[nodeName].jobs) {
+                if (jobs.hasOwnProperty(jobId)) {
+                    const username = jobs[jobId].username;
+
+                    // Job type warnings
+                    for (let warning in scoreSums[nodeName].jobs[jobId]) {
+                        badness[username] += scoreSums[nodeName].jobs[jobId][warning]
+                    }
+                }
+            }
+        }
+        return badness
+    }
+
     getJobUsage(job, nodes) {
         let usage = {
             cpu: {user: 0, system: 0, wait: 0, idle: 0},
@@ -501,8 +525,10 @@ class App extends React.Component {
             }
         }
 
+        const usernames = Object.keys(runningData)
+
         // Get usage percentage
-        for (let username in runningData) {
+        for (let username of usernames) {
             runningData[username]['percent'] = 100 * runningData[username]['cpus'] / systemUsage.availCores.toFixed(0)
         }
 
@@ -530,6 +556,7 @@ class App extends React.Component {
                 availCores = {systemUsage.availCores}
                 updateUsername = {(name) => this.updateUsername(name)}
                 warnedUsers = {this.getWarnedUsers(warnings)}
+                badness = {this.getUserBadness(warnings, usernames)}
             />
         )
     }
@@ -621,15 +648,21 @@ class App extends React.Component {
 
         for (let nodeName in data.nodes) {
             const node = data.nodes[nodeName];
-            warnings[nodeName] = {node: {}, jobs: {}};
 
-            // Swap use
-            warnings[nodeName].node['swapUse'] = (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap);
+            // Default scores to zero
+            warnings[nodeName] = {node: {swapUse: 0}, jobs: {cpuUtil: 0, cpuWait: 0, memUtil: 0}};
+
+            // Score = percentage of swap used
+            if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
+                warnings[nodeName].node['swapUse'] = 100 * ((node.swap.total - node.swap.free) / node.swap.total)
+            }
+
         }
 
         for (let jobId in data.jobs) {
             const job = data.jobs[jobId];
             if (job.state === 'RUNNING' && job.runTime > graceTime) {
+
                 for (let nodeName in job.layout) {
                     const node = data.nodes[nodeName];
                     warnings[nodeName].jobs[jobId] = {};
@@ -641,24 +674,28 @@ class App extends React.Component {
                         cpuUsage += node.cpu.coreC[i][this.state.cpuKeys['user']] + node.cpu.coreC[i][this.state.cpuKeys['system']] + node.cpu.coreC[i][this.state.cpuKeys['nice']]
                         cpuWait += node.cpu.totalC[this.state.cpuKeys['wait']]
                     }
-                    cpuUsage /= job.layout[nodeName].length;
-                    cpuWait /= job.layout[nodeName].length;
 
-                    // If below utilisation AND (not a GPU job OR uses more than 1 core)
-                    if (cpuUsage < warnUtil && (job.layout[nodeName].length > 1 || job.Gpu === 0)) {
-                        warnings[nodeName].jobs[jobId]['cpuUtil'] = true
+                    // cpuUsage /= job.layout[nodeName].length;
+                    // cpuWait /= job.layout[nodeName].length;
+
+                    // If below utilisation                               AND (not a GPU job                  OR uses more than 1 core)
+                    if (cpuUsage / job.layout[nodeName].length < warnUtil && (job.layout[nodeName].length > 1 || job.Gpu === 0)) {
+                        // Score = percentage wasted * number of cores
+                        warnings[nodeName].jobs[jobId]['cpuUtil'] = (job.layout[nodeName].length * warnUtil) - cpuUsage
                     }
 
-                    if (cpuWait > warnWait) {
-                        warnings[nodeName].jobs[jobId]['cpuWait'] = true
+                    if (cpuWait / job.layout[nodeName].length > warnWait) {
+                        // Score = percentage waiting * number of cores
+                        warnings[nodeName].jobs[jobId]['cpuWait'] = cpuWait - warnWait
                     }
                 }
 
                 // Memory use
-                if (job.memMax/job.memReq < (warnMem/100.0) * (job.memReq - baseMem*job.nCpus) / (job.memReq)) {
+                if (job.memMax < (warnMem/100.0) * (job.memReq - baseMem*job.nCpus) ) {
                     // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
                     for (let nodeName in job.mem) {
-                        warnings[nodeName].jobs[jobId]['memUtil'] = true
+                        // Score = GB wasted
+                        warnings[nodeName].jobs[jobId]['memUtil'] = ((warnMem/100.0) * (job.memReq - baseMem*job.nCpus) - job.memMax) / 1024
                     }
                 }
             }
@@ -685,52 +722,77 @@ class App extends React.Component {
 
         // Collate all the instantaneous warnings
         let warningSums = {};
+        let scoreSums = {};
 
         // i is the index of the data
         for (let i of warningDataIndex) {
             const data = this.state.historyData[i];
             const warnings = this.instantWarnings(data);
+
+            // For each node
             for (let nodeName in warnings) {
+
                 if (!(warningSums.hasOwnProperty(nodeName))) {
-                    warningSums[nodeName] = {node: {}, jobs: {}};
+                    warningSums[nodeName] = {node: {}, jobs: {}}
+                    scoreSums[nodeName]   = {node: {}, jobs: {}}
                 }
+
+                // Count node warnings
                 for (let warningName in warnings[nodeName].node) {
                     if (!(warningSums[nodeName].node.hasOwnProperty(warningName))) {
-                        warningSums[nodeName].node[warningName] = 0;
+                        warningSums[nodeName].node[warningName] = 0
+                        scoreSums[nodeName].node[warningName] = 0
                     }
-                    if (warnings[nodeName].node[warningName]) {
+                    if (warnings[nodeName].node[warningName] > 0) {
                         warningSums[nodeName].node[warningName]++
+                        scoreSums[nodeName].node[warningName] += warnings[nodeName].node[warningName]
                     }
                 }
+
+                // Count job warnings
                 for (let jobId in warnings[nodeName].jobs) {
                     if (!(warningSums[nodeName].jobs.hasOwnProperty(jobId))) {
                         warningSums[nodeName].jobs[jobId] = {}
+                        scoreSums[nodeName].jobs[jobId] = {}
                     }
+
                     for (let warningName in warnings[nodeName].jobs[jobId]) {
                         if (!(warningSums[nodeName].jobs[jobId].hasOwnProperty(warningName))) {
-                            warningSums[nodeName].jobs[jobId][warningName] = 0;
+                            warningSums[nodeName].jobs[jobId][warningName] = 0
+                            scoreSums[nodeName].jobs[jobId][warningName] = 0
                         }
-                        if (warnings[nodeName].jobs[jobId][warningName]) {
+                        if (warnings[nodeName].jobs[jobId][warningName] > 0) {
                             warningSums[nodeName].jobs[jobId][warningName]++
+                            scoreSums[nodeName].jobs[jobId][warningName] += warnings[nodeName].jobs[jobId][warningName]
                         }
                     }
                 }
             }
         }
 
-        // Convert counts into booleans
+        // Set jobs below the threshold to score = 0
         for (let nodeName in warningSums) {
+
             for (let warningName in warningSums[nodeName].node) {
-                warningSums[nodeName].node[warningName] = (warningSums[nodeName].node[warningName] > threshold)
+                if (warningSums[nodeName].node[warningName] > threshold) {
+                    scoreSums[nodeName].node[warningName] = (scoreSums[nodeName].node[warningName] / this.state.historyData.length) | 0
+                } else {
+                    scoreSums[nodeName].node[warningName] = 0
+                }
+
             }
             for (let jobId in warningSums[nodeName].jobs) {
                 for (let warningName in warningSums[nodeName].jobs[jobId]) {
-                    warningSums[nodeName].jobs[jobId][warningName] = (warningSums[nodeName].jobs[jobId][warningName] > threshold)
+                    if (warningSums[nodeName].jobs[jobId][warningName] > threshold) {
+                        scoreSums[nodeName].jobs[jobId][warningName] = (scoreSums[nodeName].jobs[jobId][warningName] / this.state.historyData.length) | 0
+                    } else {
+                        scoreSums[nodeName].jobs[jobId][warningName] = 0
+                    }
                 }
             }
         }
 
-        return warningSums // Has been converted from counts into booleans
+        return scoreSums
     }
 
     getTimeMachine() {

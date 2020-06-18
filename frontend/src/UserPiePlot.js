@@ -59,6 +59,7 @@ export default class UserPiePlot extends React.Component {
                     mouseLeave={() => this.restoreSelected()}
                     onClick={() => this.updateUsername(user.index, user.username)}
                     warning={this.props.warnedUsers.includes(user.username)}
+                    badness={this.props.badness[user.username]}
                 />
             )
         }
@@ -134,14 +135,40 @@ export default class UserPiePlot extends React.Component {
 
 
 class UserString extends React.Component {
+
     render() {
-        let nameClass= 'user-string';
+        let nameClass = 'user-string';
         if (this.props.warning) {
             nameClass += ' warn'
         }
         if (this.props.user.index === this.props.hoveredIndex) {
             nameClass += ' hovered'
         }
+
+        // Check for badness param
+        const windowUrl = window.location.search
+        const params = new URLSearchParams(windowUrl)
+
+        let userDescription = []
+        if (params.has("golf")) {
+            userDescription.push(
+                <div className="user-string-percent" key='badness'>
+                    {this.props.badness}
+                </div>
+            )
+        } else {
+            userDescription.push(
+                <div className="user-string-percent" key='percent'>
+                    {(100 * this.props.user.cpus / this.props.availCores).toFixed(1)}%
+                </div>
+            )
+            userDescription.push(
+                <div className="user-string-jobs" key='nJobs'>
+                    ({this.props.user.jobs} job{(this.props.user.jobs > 1) ? 's' : ''})
+                </div>
+            )
+        }
+
         return (
             <div
                 className={nameClass}
@@ -152,12 +179,9 @@ class UserString extends React.Component {
                 <div className="user-string-username">
                     {this.props.user.username}
                 </div>
-                <div className="user-string-percent">
-                    {(100 * this.props.user.cpus / this.props.availCores).toFixed(1)}%
-                </div>
-                <div className="user-string-jobs">
-                    ({this.props.user.jobs} job{(this.props.user.jobs > 1) ? 's' : ''})
-                </div>
+
+                {userDescription}
+
             </div>
         )
     }
