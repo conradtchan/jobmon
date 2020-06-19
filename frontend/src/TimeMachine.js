@@ -129,7 +129,7 @@ export default class TimeMachine extends React.Component {
                         </ComposedChart>
                     </ResponsiveContainer>
                 </div>
-                <div class="instruction">
+                <div className="instruction">
                     View the previous state of OzSTAR by selecting a time
                     <br />
                     <br />
@@ -141,7 +141,7 @@ export default class TimeMachine extends React.Component {
     getSelector(period) {
         const style = getComputedStyle(document.documentElement);
         const switchWidth = style.getPropertyValue("--switch-width")
-        
+
         let divStyle = {};
         let text;
         if(period === "past") {
@@ -162,9 +162,9 @@ export default class TimeMachine extends React.Component {
         }
 
         return(
-            <div 
-                id="selector" 
-                className="selector" 
+            <div
+                id="selector"
+                className="selector"
                 style={divStyle}
             >
                 {text}
@@ -211,4 +211,3 @@ export default class TimeMachine extends React.Component {
         )
     }
 }
-  
