@@ -22,6 +22,7 @@ from influxdb import InfluxDBClient
 import pwd
 import re
 import showbf
+import math
 
 # Get 644 for chmod
 mode644 = (stat.S_IRUSR|stat.S_IWUSR|stat.S_IRGRP|stat.S_IROTH)
@@ -43,7 +44,7 @@ def cpu_usage(data, name):
             'idle':     float(data['cpu_idle']),
         }
 
-        totalC = [total[x] for x in config.CPU_KEYS]
+        totalC = [math.floor(total[x]) for x in config.CPU_KEYS]
 
         core = []
         for i in range(config.MULTICPU_MAX):
@@ -76,7 +77,7 @@ def cpu_usage(data, name):
                     core_right += [x]
             core = core_left + core_right
 
-        coreC = [ [c[x] for x in config.CPU_KEYS] for c in core]
+        coreC = [ [math.floor(c[x]) for x in config.CPU_KEYS] for c in core]
 
         # totalC: compact total, coreC: compact core
         # return {'total': total, 'core': core, 'totalC': totalC, 'coreC': coreC}
@@ -94,8 +95,8 @@ def mem(data, name):
 
         # convert to MB
         return {
-            'used':  used / KB,
-            'total': float(data['mem_total']) / KB
+            'used':  math.ceil(used / KB),
+            'total': math.ceil(float(data['mem_total']) / KB)
         }
 
     except:
@@ -108,8 +109,8 @@ def swap(data, name):
     try:
         # convert to MB
         return {
-            'free':     float(data['swap_free']) / KB,
-            'total':    float(data['swap_total']) / KB
+            'free':     math.ceil(float(data['swap_free']) / KB),
+            'total':    math.ceil(float(data['swap_total']) / KB)
         }
     except KeyError:
         print(name, 'swap not in ganglia')
@@ -118,8 +119,8 @@ def swap(data, name):
 def disk(data, name):
     try:
         return {
-            'free':     float(data['disk_free']),
-            'total':    float(data['disk_total'])
+            'free':     math.ceil(float(data['disk_free'])),
+            'total':    math.ceil(float(data['disk_total']))
         }
     except KeyError:
         print(name, 'disk not in ganglia')
@@ -182,16 +183,16 @@ def gpus(data):
 def infiniband(data):
     n = {}
     if 'ib_bytes_in' in data.keys():
-        n['bytes_in'] = float(data['ib_bytes_in'])
+        n['bytes_in'] = math.ceil(float(data['ib_bytes_in']))
 
     if 'ib_bytes_out' in data.keys():
-        n['bytes_out'] = float(data['ib_bytes_out'])
+        n['bytes_out'] = math.ceil(float(data['ib_bytes_out']))
 
     if 'ib_pkts_in' in data.keys():
-        n['pkts_in'] = float(data['ib_pkts_in'])
+        n['pkts_in'] = math.ceil(float(data['ib_pkts_in']))
 
     if 'ib_pkts_out' in data.keys():
-        n['pkts_out'] = float(data['ib_pkts_out'])
+        n['pkts_out'] = math.ceil(float(data['ib_pkts_out']))
 
 
     if len(n.keys()) > 0:
@@ -200,10 +201,10 @@ def infiniband(data):
 def lustre(data):
     l = {}
     if 'farnarkle_fred_read_bytes' in data.keys():
-        l['read'] = float(data['farnarkle_fred_read_bytes'])
+        l['read'] = math.ceil(float(data['farnarkle_fred_read_bytes']))
 
     if 'farnarkle_fred_write_bytes' in data.keys():
-        l['write'] = float(data['farnarkle_fred_write_bytes'])
+        l['write'] = math.ceil(float(data['farnarkle_fred_write_bytes']))
 
     if len(l.keys()) > 0:
         return l
@@ -381,14 +382,14 @@ def add_job_mem_info(j, id_map):
             for x in nodes:
                 node_name = x['host']
                 mem = x['max']
-                j[array_id]['mem'][node_name] = mem / KB # kb to mb
+                j[array_id]['mem'][node_name] = math.ceil(mem / KB) # kb to mb
 
             count_stat += 1
 
             # Max memory usage
             query = "SELECT MAX(value) FROM RSS WHERE job='{:}'".format(id_map[array_id])
             sub_result = influx_client.query(query)
-            j[array_id]['memMax'] = list(sub_result)[0][0]['max'] / KB # kb to mb
+            j[array_id]['memMax'] = math.ceil(list(sub_result)[0][0]['max'] / KB) # kb to mb
 
             if len(nodes) != len(j[array_id]['layout']):
                 print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
