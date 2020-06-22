@@ -261,6 +261,10 @@ class App extends React.Component {
         } else {
             this.setState({job: jobId})
         }
+
+        // Clear selected job
+        this.selectNode(null)
+
     }
 
     getNodeDetails(warnings) {
