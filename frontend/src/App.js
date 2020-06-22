@@ -793,7 +793,7 @@ class App extends React.Component {
 
             for (let warningName in warningSums[nodeName].node) {
                 if (warningSums[nodeName].node[warningName] > threshold) {
-                    scoreSums[nodeName].node[warningName] = (scoreSums[nodeName].node[warningName] / this.state.historyData.length) | 0
+                    scoreSums[nodeName].node[warningName] = (scoreSums[nodeName].node[warningName] / warningDataIndex.length) | 0
                 } else {
                     scoreSums[nodeName].node[warningName] = 0
                 }
@@ -802,7 +802,7 @@ class App extends React.Component {
             for (let jobId in warningSums[nodeName].jobs) {
                 for (let warningName in warningSums[nodeName].jobs[jobId]) {
                     if (warningSums[nodeName].jobs[jobId][warningName] > threshold) {
-                        scoreSums[nodeName].jobs[jobId][warningName] = (scoreSums[nodeName].jobs[jobId][warningName] / this.state.historyData.length) | 0
+                        scoreSums[nodeName].jobs[jobId][warningName] = (scoreSums[nodeName].jobs[jobId][warningName] / warningDataIndex.length) | 0
                     } else {
                         scoreSums[nodeName].jobs[jobId][warningName] = 0
                     }
