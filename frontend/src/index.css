@@ -227,42 +227,49 @@ body {
 }
 
 #main-box{
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    width: 90%;
-    max-width: 1600px;
+    position: relative;
     margin: 0 auto;
-    align-items: top;
-
+    overflow: hidden;
+    height: 100%;
 }
 
 .main-item{
     height: 100%;
-    padding: 2%;
     text-align: left;
     background-color: var(--light-shade);
 }
 
 .main-item.left{
+    position: relative;
+    top: 0px;
+    bottom: 0;
+    left: 5%;
     width: 26%;
-    top: 0;
-    position: -webkit-sticky;
-    position: sticky;
-    margin-right: 1%;
+    overflow-y: scroll;
+    box-sizing: border-box;
+    padding: 1%;
 }
 
 .main-item.center{
-    width: 20%;
+    position: absolute;
+    top: 0px;
+    bottom: 0;
+    left: 32%;
+    width: 21%;
+    overflow-y: scroll;
+    box-sizing: border-box;
+    padding: 1%;
 }
 
 .main-item.right{
-    width: 40%;
+    position: absolute;
     top: 0;
-    position: -webkit-sticky;
-    position: sticky;
-    margin-left: 1%;
+    bottom: 0;
+    left: 54%;
+    overflow-y: scroll;
+    width: 41%;
+    box-sizing: border-box;
+    padding: 1%;
 }
 
 .main-item.center-right{
