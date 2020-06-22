@@ -408,13 +408,26 @@ class App extends React.Component {
         }
 
         for (let nodeName in scoreSums) {
+
+            // For job type warnings
             for (let jobId in scoreSums[nodeName].jobs) {
                 if (jobs.hasOwnProperty(jobId)) {
-                    const username = jobs[jobId].username;
+                    const username = jobs[jobId].username
 
                     // Job type warnings
                     for (let warning in scoreSums[nodeName].jobs[jobId]) {
                         badness[username] += scoreSums[nodeName].jobs[jobId][warning]
+                    }
+                }
+            }
+
+            // For node type warnings
+            for (let warning in scoreSums[nodeName].node) {
+                // Find each job
+                for (let jobId in scoreSums[nodeName].jobs) {
+                    if (jobs.hasOwnProperty(jobId)) {
+                        const username = jobs[jobId].username
+                        badness[username] += scoreSums[nodeName].node[warning]
                     }
                 }
             }

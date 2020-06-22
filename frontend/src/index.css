@@ -9,6 +9,7 @@
     /*Hover-over colors*/
     --hover-outline-color: #555555;
     --hover-shade: #FFFFFF;
+    --hover-black: #000000;
 
     /*Pie colors*/
     --piecolor-blank: #DDDDDD;
@@ -102,6 +103,10 @@ body {
 .bad-job {
     color: var(--bad-job-color);
 }
+.terrible-job {
+    color: var(--hover-shade);
+    background: var(--bad-job-color);
+}
 
 .overview-pies{
     display: flex;
@@ -186,6 +191,7 @@ body {
 .job-name.warn {
     color: var(--bad-job-color);
 }
+
 .job-name-title {
     font-weight: 500;
     display: flex;
@@ -287,6 +293,16 @@ body {
 
 .user-string.warn {
     color: var(--bad-job-color);
+}
+
+.user-string.terrible {
+    color: var(--hover-shade);
+    background: var(--bad-job-color);
+}
+
+.user-string.terrible.hovered {
+    color: var(--hover-shade);
+    background: var(--hover-black);
 }
 
 .user-string-username{

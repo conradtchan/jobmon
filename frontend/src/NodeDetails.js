@@ -56,13 +56,13 @@ export default class NodeDetails extends React.Component {
             if (this.props.warnings[this.props.name].jobs.hasOwnProperty(this.props.selectedJobId)) {
                 const jobWarns = this.props.warnings[this.props.name].jobs[this.props.selectedJobId];
                 if (jobWarns['cpuUtil']) {
-                    warningText.push(`Job under-utilizes requested CPUs`)
+                    warningText.push(`Job underutilizes requested CPUs`)
                 }
                 if (jobWarns['cpuWait']) {
                     warningText.push(`Job spends significant time waiting`)
                 }
                 if (jobWarns['memUtil']) {
-                    warningText.push(`Job under-utilizes requested memory`)
+                    warningText.push(`Job underutilizes requested memory`)
                 }
             }
         }

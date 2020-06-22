@@ -16,6 +16,8 @@ export default class UserPiePlot extends React.Component {
             usagePieActiveIndex: null,
             usagePieSelectedIndex: null,
             activeSectorSize: 'small',
+            nameSort: 'alpha',
+            terribleThreshold: 1000,
         }
     }
 
@@ -48,6 +50,7 @@ export default class UserPiePlot extends React.Component {
 
     render() {
         let userStrings = [];
+        let maxBadness = 0
         for (let user of this.props.runningData) {
             userStrings.push(
                 <UserString
@@ -60,11 +63,19 @@ export default class UserPiePlot extends React.Component {
                     onClick={() => this.updateUsername(user.index, user.username)}
                     warning={this.props.warnedUsers.includes(user.username)}
                     badness={this.props.badness[user.username]}
+                    terribleThreshold={this.state.terribleThreshold}
+                    nameSort={this.state.nameSort}
                 />
             )
+            maxBadness = Math.max(maxBadness, this.props.badness[user.username])
         }
 
-        userStrings.sort((a, b) => (a.props.user.username < b.props.user.username ) ? -1 : (a.props.user.username  > b.props.user.username) ? 1 : 0);
+        if (this.state.nameSort === 'alpha') {
+            userStrings.sort((a, b) => (a.props.user.username < b.props.user.username ) ? -1 : (a.props.user.username  > b.props.user.username) ? 1 : 0);
+        } else if (this.state.nameSort === 'badness') {
+            userStrings.sort((a, b) => b.props.badness - a.props.badness);
+        }
+
 
         const mainBox = document.getElementById('main-box');
         let mainBoxWidth = 0;
@@ -119,11 +130,22 @@ export default class UserPiePlot extends React.Component {
                 />
                 {(Object.keys(this.props.warnedUsers).length > 0) &&
                     <div className='bad-job'>
-                        Highlighted users and jobs may require attention.
+                        Red users and jobs may require attention.
+                    </div>
+                }
+                {(maxBadness > this.state.terribleThreshold && this.state.nameSort === 'badness') &&
+                    <div className='terrible-job'>
+                        Highlighted users are severely underutilizing resources and impacting other users.
                     </div>
                 }
                 <div className="heading">
                     Running
+                </div>
+                <div>
+                    <input type="radio" id="alpha" name="nameSort" value="alpha" onChange={() => this.setState({nameSort: 'alpha'})} checked={this.state.nameSort === 'alpha'}/>
+                    <label> Alphabetical &nbsp;&nbsp;</label>
+                    <input type="radio" id="badness" name="nameSort" value="badness" onChange={() => this.setState({nameSort: 'badness'})} checked={this.state.nameSort === 'badness'}/>
+                    <label> Inefficiency </label>
                 </div>
                 {userStringsBlock}
                 <br />
@@ -139,7 +161,11 @@ class UserString extends React.Component {
     render() {
         let nameClass = 'user-string';
         if (this.props.warning) {
-            nameClass += ' warn'
+            if (this.props.badness > this.props.terribleThreshold && this.props.nameSort === 'badness') {
+                nameClass += ' terrible'
+            } else {
+                nameClass += ' warn'
+            }
         }
         if (this.props.user.index === this.props.hoveredIndex) {
             nameClass += ' hovered'
