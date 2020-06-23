@@ -50,6 +50,3 @@ HT_NODES = [['gina', 68, 4]]
 
 # Nodes to print backfill
 BF_NODES = ['skylake', 'skylake-gpu', 'sstar', 'gstar', 'knl']
-
-# CPU keys
-CPU_KEYS = ['user', 'nice', 'system', 'wait', 'idle']

@@ -448,7 +448,6 @@ def do_all():
 
     data = {}
     data['api'] = API_VERSION
-    data['cpukeys'] = config.CPU_KEYS
     data['timestamp'] = timestamp()
     data['nodes'] = nodes()
     data['jobs'] = jobs()
