@@ -380,6 +380,7 @@ def add_job_mem_info(j, id_map):
         nodes = list(result[key])
 
         if len(nodes) > 0:
+            count_stat += 1
             j[array_id]['hasMem'] = True
 
             # Current memory usage
@@ -388,8 +389,6 @@ def add_job_mem_info(j, id_map):
                 mem = x['max']
                 j[array_id]['mem'][node_name] = math.ceil(mem / KB) # kb to mb
 
-            count_stat += 1
-
             # Max memory usage
             query = "SELECT MAX(value) FROM RSS WHERE job='{:}'".format(id_map[array_id])
             sub_result = influx_client.query(query)
@@ -397,6 +396,9 @@ def add_job_mem_info(j, id_map):
 
             if len(nodes) != len(j[array_id]['layout']):
                 print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
+
+        else:
+            print('{:} ({:}) has no memory stats'.format(array_id, id_map[array_id]))
 
     print('Active slurm jobs:', len(active_slurm_jobs), 'Memory stats available:', count_stat)
 
