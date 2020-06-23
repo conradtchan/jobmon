@@ -302,9 +302,13 @@ def expand_array_range(r):
     for i in r.split(','):
         ss = i.split('-')
         if len(ss) > 1: # found a range
-            for j in range(int(ss[0]), int(ss[1])+1):
-                c.append(j)
-        else:          # found a single
+            # If range is truncated, just append first number
+            if ss[1] == '...':
+                c.append(int(ss[0]))
+            else:
+                for j in range(int(ss[0]), int(ss[1])+1):
+                    c.append(j)
+        else: # found a single
             c.append(int(i))
     return c
 
