@@ -209,6 +209,17 @@ def lustre(data):
     if len(l.keys()) > 0:
         return l
 
+def jobfs(data):
+    j = {}
+    if 'diskstat_sda_read_bytes_per_sec' in data.keys():
+        j['read'] = math.ceil(float(data['diskstat_sda_read_bytes_per_sec']))
+
+    if 'diskstat_sda_write_bytes_per_sec' in data.keys():
+        j['write'] = math.ceil(float(data['diskstat_sda_write_bytes_per_sec']))
+
+    if len(j.keys()) > 0:
+        return j
+
 def nodes():
     all = ganglia.Stats(do_cpus=True).all
 
@@ -236,6 +247,7 @@ def nodes():
         nodes[host]['gpus']         = gpus(all[host])
         nodes[host]['infiniband']   = infiniband(all[host])
         nodes[host]['lustre']       = lustre(all[host])
+        nodes[host]['jobfs']        = jobfs(all[host])
 
         nodes[host]['isCounted'] = False
         if host in pyslurm_nodes.keys():

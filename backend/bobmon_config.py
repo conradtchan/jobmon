@@ -15,7 +15,6 @@ EXTRA_GANGLIA_METRICS = [
     'cpu1_temp', 'cpu2_temp', 'ambient_temp', 'chassis_temp', 'rear_temp', 'front_temp',  # temperatures
     'node_power', 'cmm_power_in', 'fan_rms',   # node and cmm input kw, cmm fans
     'farnarkle_fred_read_bytes', 'farnarkle_fred_write_bytes',  # lustre
-    'diskstat_sda_read_bytes_per_sec', 'diskstat_sda_write_bytes_per_sec', # jobfs disk stats
 ]
 
 # Ganglia config
