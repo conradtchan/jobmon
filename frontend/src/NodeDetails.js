@@ -164,6 +164,8 @@ export default class NodeDetails extends React.Component {
                 infiniband_pkts_out: nodeData.infiniband.pkts_out,
                 lustre_read: nodeData.lustre.read,
                 lustre_write: nodeData.lustre.write,
+                jobfs_read: nodeData.jobfs.read,
+                jobfs_write: nodeData.jobfs.write,
             };
             for (let i = 0; i < nodeData.nGpus; i++) {
                 const gpuName = 'gpu' + i.toString();
@@ -297,6 +299,22 @@ export default class NodeDetails extends React.Component {
                     name = 'Lustre access'
                     data = {historyChart}
                     dataKeys = {['lustre_read', 'lustre_write']}
+                    colors = {[
+                        style.getPropertyValue('--piecycle-1'),
+                        style.getPropertyValue('--piecycle-2'),
+                    ]}
+                    lineOnly = {[
+                        false,
+                        false,
+                    ]}
+                    unit = 'B/s'
+                    dataMax = 'dataMax'
+                    stacked = {false}
+                />
+                <PropChart
+                    name = 'JOBFS access'
+                    data = {historyChart}
+                    dataKeys = {['jobfs_read', 'jobfs_write']}
                     colors = {[
                         style.getPropertyValue('--piecycle-1'),
                         style.getPropertyValue('--piecycle-2'),
