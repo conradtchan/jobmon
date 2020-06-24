@@ -416,7 +416,12 @@ def add_job_mem_info(j, id_map):
 
 def requested_memory(slurm_job):
     if slurm_job['min_memory_cpu'] is not None:
-        return slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node']
+        if slurm_job['ntasks_per_node'] > 0:
+            return slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node']
+        elif slurm_job['cpus_per_task'] > 0:
+            return slurm_job['min_memory_cpu'] * slurm_job['cpus_per_task']
+        else:
+            return 0
     else:
         return slurm_job['min_memory_node']
 
