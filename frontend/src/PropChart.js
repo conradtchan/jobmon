@@ -154,8 +154,13 @@ export class PropChartMini extends PropChart {
         const d = this.scaledData();
         const areas = this.getAreas(d.scale);
 
+        let chartClass = "prop-chart-mini-2"
+        if (this.props.hasGpu) {
+            chartClass = "prop-chart-mini-3"
+        }
+
         return (
-            <div className="prop-chart-mini">
+            <div className={chartClass}>
                 <ResponsiveContainer>
                     <AreaChart
                         data={d.scaledData}

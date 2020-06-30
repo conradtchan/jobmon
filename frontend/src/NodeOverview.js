@@ -237,10 +237,6 @@ export default class NodeOverview extends React.Component {
                 wait: usage.cpu.wait,
                 mem: usage.mem.used * 1024**2, // mb
                 mem_requested: memRequested,
-                infiniband_in: usage.infiniband.bytes_in,
-                infiniband_out: usage.infiniband.bytes_out,
-                lustre_read: usage.lustre.read,
-                lustre_write: usage.lustre.write,
                 gpu: usage.gpu.total,
             });
         }
@@ -264,6 +260,7 @@ export default class NodeOverview extends React.Component {
                     unit = '%'
                     dataMax = {100}
                     stacked = {true}
+                    hasGpu = {job.nGpus > 0}
                 />
                 <PropChartMini
                     name = 'Job Memory usage'
@@ -280,6 +277,7 @@ export default class NodeOverview extends React.Component {
                     unit = 'B'
                     dataMax = {memRequested}
                     stacked = {true}
+                    hasGpu = {job.nGpus > 0}
                 />
                 {job.nGpus > 0 && <PropChartMini
                     name = 'Job GPU usage'
@@ -294,39 +292,8 @@ export default class NodeOverview extends React.Component {
                     unit = '%'
                     dataMax = {100}
                     stacked = {true}
+                    hasGpu = {job.nGpus > 0}
                 />}
-                <PropChartMini
-                    name = 'Job InfiniBand traffic'
-                    data = {historyChart}
-                    dataKeys = {['infiniband_in', 'infiniband_out']}
-                    colors = {[
-                        style.getPropertyValue('--piecycle-1'),
-                        style.getPropertyValue('--piecycle-2'),
-                    ]}
-                    lineOnly = {[
-                        false,
-                        false,
-                    ]}
-                    unit = 'B/s'
-                    dataMax = 'dataMax'
-                    stacked = {true}
-                />
-                <PropChartMini
-                    name = 'Job Lustre access'
-                    data = {historyChart}
-                    dataKeys = {['lustre_read', 'lustre_write']}
-                    colors = {[
-                        style.getPropertyValue('--piecycle-1'),
-                        style.getPropertyValue('--piecycle-2'),
-                    ]}
-                    lineOnly = {[
-                        false,
-                        false,
-                    ]}
-                    unit = 'B/s'
-                    dataMax = 'dataMax'
-                    stacked = {true}
-                />
             </div>
         )
     }

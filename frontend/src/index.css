@@ -444,8 +444,14 @@ body {
     height: 100px;
 }
 
-.prop-chart-mini {
-    width: 20%;
+.prop-chart-mini-2 {
+    width: 50%;
+    height: 30px;
+    margin: 0 auto;
+}
+
+.prop-chart-mini-3 {
+    width: 33%;
     height: 30px;
     margin: 0 auto;
 }
