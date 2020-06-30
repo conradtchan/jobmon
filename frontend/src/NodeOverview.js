@@ -83,6 +83,7 @@ export default class NodeOverview extends React.Component {
                         gangliaURL={this.props.gangliaURL}
                         onRowClick={(node) => this.props.onRowClick(node)}
                         nodeWarn={this.props.warnings[nodeName]}
+                        isGpuJob={job.nGpus > 0}
                     />
                 )
             }
@@ -280,7 +281,7 @@ export default class NodeOverview extends React.Component {
                     dataMax = {memRequested}
                     stacked = {true}
                 />
-                <PropChartMini
+                {job.nGpus > 0 && <PropChartMini
                     name = 'Job GPU usage'
                     data = {historyChart}
                     dataKeys = {['gpu']}
@@ -293,7 +294,7 @@ export default class NodeOverview extends React.Component {
                     unit = '%'
                     dataMax = {100}
                     stacked = {true}
-                />
+                />}
                 <PropChartMini
                     name = 'Job InfiniBand traffic'
                     data = {historyChart}
@@ -581,7 +582,7 @@ class NodePie extends React.Component {
                                 )
                             }
                         </Pie>
-                        <Pie
+                        {this.props.isGpuJob && <Pie
                             data = {data.gpu}
                             nameKey='name'
                             dataKey='data'
@@ -599,7 +600,7 @@ class NodePie extends React.Component {
                                     />
                                 )
                             }
-                        </Pie>
+                        </Pie>}
                     </PieChart>
                 </ResponsiveContainer>
             </div>
