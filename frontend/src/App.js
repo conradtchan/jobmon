@@ -203,9 +203,10 @@ class App extends React.Component {
         for (let jobId in newData.jobs) {
             if (newData.jobs[jobId].username === this.state.username) {
                 hasUser = true
+                break
             }
         }
-        if ((this.state.username !== 'allnodes') && !(hasUser)) this.setState({nodeName: null})
+        if (!(hasUser)) this.setState({nodeName: null})
     }
 
     selectNode(node) {

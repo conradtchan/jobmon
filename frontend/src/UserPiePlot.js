@@ -148,8 +148,6 @@ export default class UserPiePlot extends React.Component {
                     <label> Inefficiency </label>
                 </div>
                 {userStringsBlock}
-                <br />
-                <button onClick={() => this.updateUsername(null, 'allnodes')}>View all non-empty nodes</button>
             </div>
         )
     }

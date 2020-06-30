@@ -37,47 +37,7 @@ export default class NodeOverview extends React.Component {
         for (let ns of nameSorted) {
             const nodeName = ns.name;
 
-            if (this.props.username === 'allnodes') {
-                const cpuUsage = this.props.getTotalUsage(this.props.nodeData[nodeName].cpu.totalC)
-
-                let memPercent = 0.0;
-                if (!(this.props.nodeData[nodeName].mem === null)) {
-                    memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
-                }
-                let diskPercent = 0.0;
-                if (!(this.props.nodeData[nodeName].disk === null)) {
-                    diskPercent = 100 * (1.0 - this.props.nodeData[nodeName].disk.free / this.props.nodeData[nodeName].disk.total);
-                }
-                let swapPercent = 0.0;
-                if (!(this.props.nodeData[nodeName].swap === null)) {
-                    swapPercent = 100 * (1.0 - this.props.nodeData[nodeName].swap.free / this.props.nodeData[nodeName].swap.total);
-                }
-                let gpuPercent = 0.0;
-                if (!(this.props.nodeData[nodeName].gpus === null)) {
-                    let nGpus = 0;
-                    for (let gpu in this.props.nodeData[nodeName].gpus) {
-                        nGpus += 1;
-                        gpuPercent += this.props.nodeData[nodeName].gpus[gpu]
-                    }
-                    gpuPercent /= nGpus;
-                }
-                nodePies.push(
-                    <NodePie
-                        key={nodeName}
-                        nodeName={nodeName}
-                        cpuUsage={cpuUsage}
-                        mem={memPercent}
-                        disk={diskPercent}
-                        gpu={gpuPercent}
-                        swap={swapPercent}
-                        gangliaURL={this.props.gangliaURL}
-                        onRowClick={(node) => this.props.onRowClick(node)}
-                        nodeWarn={this.props.warnings[nodeName]}
-                    />
-                )
-            }
-
-            else if (this.props.nodeHasJob[nodeName].hasOwnProperty(this.props.jobId)) {
+            if (this.props.nodeHasJob[nodeName].hasOwnProperty(this.props.jobId)) {
                 // CPU percent is only out of the requested cores
                 const cpuUsage = this.props.getNodeUsage(
                     this.props.jobs[this.props.jobId],
@@ -409,84 +369,67 @@ export default class NodeOverview extends React.Component {
             </div>
         </div>
 
-        if (this.props.username === 'allnodes') {
-            return (
-                <div className="main-item center">
-                    <div className="heading">
-                        All non-empty nodes:
-                    </div>
-                    {legend}
-                    <div className='instruction'>
-                        Select a node to view detailed system usage
-                    </div>
-                    <div className='overview-pies'>
-                        {this.getNodePies()}
-                    </div>
+        return (
+            <div className="main-item center">
+                <div id='username-title'>
+                    {this.props.username}
                 </div>
-            )
-        } else {
-            return (
-                <div className="main-item center">
-                    <div id='username-title'>
-                        {this.props.username}
-                    </div>
-                    {legend}
+                {legend}
 
-                    <div className='instruction'>
-                        Select a running job to view nodes:
-                    </div>
-
-                    <div className='job-names heading'>
-                        Running
-                    </div>
-                        {jobList.running}
-                    <br />
-
-                    <div className='job-names'>
-                        {(jobList.pending.length > 0) &&
-                            <div>
-                                <div className='job-names heading'>
-                                    Pending
-                                </div>
-                                <div>
-                                    {jobList.pending}
-                                </div>
-                            </div>
-                        }
-                        {(jobList.completed.length > 0) &&
-                            <div>
-                                <div className='job-names heading'>
-                                    Completed
-                                </div>
-                                <div>
-                                    {jobList.completed}
-                                </div>
-                            </div>
-                        }
-                        {(jobList.cancelled.length > 0) &&
-                            <div>
-                                <div className='job-names heading'>
-                                    Cancelled
-                                </div>
-                                <div>
-                                    {jobList.cancelled}
-                                </div>
-                            </div>
-                        }
-                        {(jobList.failed.length > 0) &&
-                            <div>
-                                <div className='job-names heading'>
-                                    Failed
-                                </div>
-                                <div>
-                                    {jobList.failed}
-                                </div>
-                            </div>
-                        }
-                    </div>
+                <div className='instruction'>
+                    Select a running job to view nodes:
                 </div>
-            )
-        }
+
+                <div className='job-names heading'>
+                    Running
+                </div>
+                    {jobList.running}
+                <br />
+
+                <div className='job-names'>
+                    {(jobList.pending.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Pending
+                            </div>
+                            <div>
+                                {jobList.pending}
+                            </div>
+                        </div>
+                    }
+                    {(jobList.completed.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Completed
+                            </div>
+                            <div>
+                                {jobList.completed}
+                            </div>
+                        </div>
+                    }
+                    {(jobList.cancelled.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Cancelled
+                            </div>
+                            <div>
+                                {jobList.cancelled}
+                            </div>
+                        </div>
+                    }
+                    {(jobList.failed.length > 0) &&
+                        <div>
+                            <div className='job-names heading'>
+                                Failed
+                            </div>
+                            <div>
+                                {jobList.failed}
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        )
     }
 }
 
