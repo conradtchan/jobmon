@@ -505,7 +505,7 @@ class App extends React.Component {
             for (let gpuName in node.gpus) {
                 usage.gpu.total += node.gpus[gpuName]
             }
-            usage.mem.used          += node.mem.used;
+            usage.mem.used          += job.mem[host];
             usage.mem.total         += node.mem.total;
             usage.infiniband.bytes_in     += node.infiniband.bytes_in;
             usage.infiniband.bytes_out    += node.infiniband.bytes_out;
