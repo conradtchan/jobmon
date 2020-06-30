@@ -235,8 +235,8 @@ export default class NodeOverview extends React.Component {
                 user: usage.cpu.user,
                 system: usage.cpu.system,
                 wait: usage.cpu.wait,
-                mem: usage.mem.used * 1024**2, // mb
-                mem_requested: memRequested,
+                used: usage.mem.used * 1024**2, // mb
+                request: memRequested, // used = memory used, request = memory requested (text shortened for display)
                 gpu: usage.gpu.total,
             });
         }
@@ -265,7 +265,7 @@ export default class NodeOverview extends React.Component {
                 <PropChartMini
                     name = 'Job Memory usage'
                     data = {historyChart}
-                    dataKeys = {['mem', 'mem_requested']}
+                    dataKeys = {['used', 'request']}
                     colors = {[
                         style.getPropertyValue('--piecolor-mem'),
                         style.getPropertyValue('--piecolor-mem'),
