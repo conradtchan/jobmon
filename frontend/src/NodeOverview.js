@@ -216,7 +216,8 @@ export default class NodeOverview extends React.Component {
         }
         let i = 0;
 
-        let memTotal = 0;
+        const memRequested = job.memReq * 1024**2 * Object.keys(job.layout).length
+
         for (let data of sortedHistory) {
             i++;
             if (!(i % nSkip === 0)) continue;
@@ -234,13 +235,13 @@ export default class NodeOverview extends React.Component {
                 system: usage.cpu.system,
                 wait: usage.cpu.wait,
                 mem: usage.mem.used * 1024**2, // mb
+                mem_requested: memRequested,
                 infiniband_in: usage.infiniband.bytes_in,
                 infiniband_out: usage.infiniband.bytes_out,
                 lustre_read: usage.lustre.read,
                 lustre_write: usage.lustre.write,
                 gpu: usage.gpu.total,
             });
-            if (usage.mem.total > memTotal) memTotal = usage.mem.total
         }
 
         return (
@@ -266,15 +267,17 @@ export default class NodeOverview extends React.Component {
                 <PropChartMini
                     name = 'Job Memory usage'
                     data = {historyChart}
-                    dataKeys = {['mem']}
+                    dataKeys = {['mem', 'mem_requested']}
                     colors = {[
+                        style.getPropertyValue('--piecolor-mem'),
                         style.getPropertyValue('--piecolor-mem'),
                     ]}
                     lineOnly = {[
                         false,
+                        true,
                     ]}
                     unit = 'B'
-                    dataMax = {memTotal}
+                    dataMax = {memRequested}
                     stacked = {true}
                 />
                 <PropChartMini

@@ -136,7 +136,6 @@ export default class PropChart extends React.Component {
                                 type="number"
                                 domain={[0, d.dataMax]}
                                 unit={d.scale + this.props.unit}
-                                // mirror={true}
                                 interval={0}
                             />
                             {areas}
@@ -167,6 +166,10 @@ export class PropChartMini extends PropChart {
                             hide = {true}
                             label = 'time'
                             dataKey = 'timeString'
+                        />
+                        <YAxis
+                            hide = {true}
+                            domain={[0, d.dataMax]}
                         />
                         <Tooltip/>
                     </AreaChart>
