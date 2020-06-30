@@ -38,16 +38,21 @@ export default class NodeOverview extends React.Component {
             const nodeName = ns.name;
 
             if (this.props.nodeHasJob[nodeName].hasOwnProperty(this.props.jobId)) {
+                const job = this.props.jobs[this.props.jobId]
+
                 // CPU percent is only out of the requested cores
                 const cpuUsage = this.props.getNodeUsage(
-                    this.props.jobs[this.props.jobId],
+                    job,
                     this.props.nodeData[nodeName],
                     nodeName
                 ).cpu;
+
+                // CPU percent is out of the requested memory
                 let memPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].mem === null)) {
-                    memPercent = 100 * this.props.nodeData[nodeName].mem.used / this.props.nodeData[nodeName].mem.total;
+                    memPercent = 100 * job.mem[nodeName] / job.memReq;
                 }
+
                 let diskPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].disk === null)) {
                     diskPercent = 100 * (1.0 - this.props.nodeData[nodeName].disk.free / this.props.nodeData[nodeName].disk.total);
