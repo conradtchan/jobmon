@@ -125,10 +125,7 @@ export default class NodeDetails extends React.Component {
             if (data.jobs.hasOwnProperty(this.props.selectedJobId)) {
                 const job = data.jobs[this.props.selectedJobId]
 
-                // Instead of summing over all nodes, just sum this one
-                let singleNode = {}
-                singleNode[this.props.name] = nodeData
-                const usage = this.props.getJobUsage(data.jobs[this.props.selectedJobId], singleNode)
+                const usage = this.props.getNodeUsage(data.jobs[this.props.selectedJobId], nodeData, this.props.name)
 
                 // Memory usage
                 if (job.mem.hasOwnProperty(this.props.name)) {

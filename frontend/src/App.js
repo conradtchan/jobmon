@@ -285,7 +285,7 @@ class App extends React.Component {
                     cpuKeys={this.state.cpuKeys}
                     changeTimeWindow={(t) => this.changeTimeWindow(t)}
                     timeWindow={this.state.historyDataWindow}
-                    getJobUsage={(job, nodes) => this.getJobUsage(job, nodes)}
+                    getNodeUsage={(job, node, host) => this.getNodeUsage(job, node, host)}
                 />
             )
         }
@@ -440,6 +440,7 @@ class App extends React.Component {
         return badness
     }
 
+    // Get the per job usage
     getJobUsage(job, nodes) {
         let usage = {
             cpu: {user: 0, system: 0, wait: 0, idle: 0},
@@ -483,6 +484,7 @@ class App extends React.Component {
         return usage
     }
 
+    // Get the per job usage for a specific node
     getNodeUsage(job, node, host) {
         let usage = {
             cpu: {user: 0, system: 0, wait: 0, idle: 0},
