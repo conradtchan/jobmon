@@ -448,6 +448,9 @@ class App extends React.Component {
             lustre: {read: 0, write: 0},
             gpu: {total: 0},
         };
+
+        let nCpus = 0
+
         for (let host in job.layout) {
             if (host in nodes) {
                 const nodeUsage = this.getNodeUsage(job, nodes[host], host);
@@ -465,13 +468,16 @@ class App extends React.Component {
                 if (job.nGpus > 0) {
                     usage.gpu.total         += nodeUsage.gpu.total;
                 }
+
+                // Count number of CPUs (job.nCpus gives the total amount, not the subset)
+                nCpus += job.layout[host].length
             }
         }
 
-        usage.cpu.user   /= job.nCpus;
-        usage.cpu.system /= job.nCpus;
-        usage.cpu.wait   /= job.nCpus;
-        usage.cpu.idle   /= job.nCpus;
+        usage.cpu.user   /= nCpus;
+        usage.cpu.system /= nCpus;
+        usage.cpu.wait   /= nCpus;
+        usage.cpu.idle   /= nCpus;
         usage.gpu.total  /= Object.keys(job.layout).length;
 
         return usage
