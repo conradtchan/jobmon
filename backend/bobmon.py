@@ -422,7 +422,7 @@ class Backend:
             else:
                 print('{:} ({:}) has no memory stats'.format(array_id, id_map[array_id]))
 
-        print('Active slurm jobs:', len(active_slurm_jobs), 'Memory stats available:', count_stat)
+        print('Memory stats: {:} / {:}'.format(len(active_slurm_jobs),count_stat))
 
     @staticmethod
     def requested_memory(slurm_job):
@@ -435,6 +435,20 @@ class Backend:
                 return 0
         else:
             return slurm_job['min_memory_node']
+
+    def add_job_gpu_mapping(self, j):
+        # Update GPU mapping and determine
+        self.ga.update_jobs(j)
+        self.ga.determine()
+
+        # Give all jobs a gpuLayout entry
+        for jid in j:
+            j[jid]['gpuLayout'] = {}
+
+        # Populate GPU layout for GPU jobs
+        for jid in self.ga.mapping:
+            for host in self.ga.mapping[jid]:
+                j[jid]['gpuLayout'][host] = self.ga.mapping[jid][host]
 
     def jobs(self):
         # Get job info from slurm
@@ -469,9 +483,8 @@ class Backend:
         # Add memory information
         self.add_job_mem_info(j, id_map)
 
-        # Update GPU mapping and determine
-        self.ga.update_jobs(j)
-        self.ga.determine()
+        # Add GPU mapping
+        self.add_job_gpu_mapping(j)
 
         return j
 
@@ -626,12 +639,11 @@ if __name__ == '__main__':
             b.update_core_usage()
 
             # Calculate backfill
-            bf = b.update_backfill()
+            b.update_backfill()
 
             # Write data to disk
             print('Writing data')
             b.write()
-
 
             time_finish = b.timestamp()
             time_taken = time_finish - time_start

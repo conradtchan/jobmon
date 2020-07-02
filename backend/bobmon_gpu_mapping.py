@@ -60,14 +60,33 @@ class GPUmapping:
                         for host in job['layout']:
                             self.unknown[jid][host] = job['nGpus']
 
+        del_count = 0
         # Clear jobs that are finished from unknown and mapping
         for jid in list(self.unknown.keys()):
             # Sadly this job was never determined
+            delete = False
             if jid not in jobs:
+                delete = True
+            else:
+                if jobs[jid]['state'] in ['COMPLETED', 'CANCELLED', 'FAILED']:
+                    delete = True
+            if delete:
                 self.del_unknown(jid, 'all')
+                del_count += 1
+        if del_count > 0: print('Deleted {:} known GPU mappings'.format(del_count))
+
+        del_count = 0
         for jid in list(self.mapping.keys()):
+            delete = False
             if jid not in jobs:
+                delete = True
+            else:
+                if jobs[jid]['state'] in ['COMPLETED', 'CANCELLED', 'FAILED']:
+                    delete = True
+            if delete:
                 self.del_mapping(jid)
+                del_count += 1
+        if del_count > 0: print('Deleted {:} unknown GPU mappings'.format(del_count))
 
     def update_node_info(self):
         '''Get which GPUs are being used'''
@@ -131,6 +150,7 @@ class GPUmapping:
 
         self.update_node_info()
 
+        self.correct_solo()
         self.determine_double()
         self.determine_solo()
         self.determine_remainder()
@@ -171,3 +191,13 @@ class GPUmapping:
                                     self.del_unknown(jid, host)
                                     break
 
+    def correct_solo(self):
+        '''Fix an incorrect solo mapping propagated from the past'''
+        for jid in list(self.mapping):
+            for host in list(self.mapping[jid]):
+                # If this job uses 1 GPU and there is only 1 GPU being used on the node
+                if len(self.mapping[jid][host]) == 1 and len(self.gres[host]) == 1:
+                    # If the mapping is not the same, fix it
+                    if self.mapping[jid][host][0] != self.gres[host][0]:
+                        print('Correcting GPU mapping for {:} on {:}'.format(jid, host))
+                        self.mapping[jid][host][0] = self.gres[host][0]
