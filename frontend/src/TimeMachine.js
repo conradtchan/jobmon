@@ -27,8 +27,12 @@ export default class TimeMachine extends React.Component {
     timeString(time) {
         if (time < 60) {
             return time.toFixed(0) + ' seconds'
+        } else if (time < 120) {
+            return (time / 60).toFixed(0) + ' minute'
         } else if (time < 3600) {
             return (time / 60).toFixed(0) + ' minutes'
+        } else if (time < 7200) {
+            return (time / 3600).toFixed(0) + ' hour'
         } else if (time < 86400) {
             return (time / 3600).toFixed(0) + ' hours'
         } else {
