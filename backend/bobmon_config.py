@@ -1,6 +1,8 @@
 # Location to output JSON
 DATA_PATH = '/var/spool/bobMon2/'
 FILE_NAME_PATTERN = 'bobData{:}.json.gz'
+FILE_NAME_HISTORY = 'history.json.gz'
+FILE_NAME_BACKFILL = 'backfill.json.gz'
 
 # Time between updating API
 UPDATE_INTERVAL = 30
