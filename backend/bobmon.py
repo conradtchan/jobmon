@@ -427,10 +427,8 @@ class Backend:
     @staticmethod
     def requested_memory(slurm_job):
         if slurm_job['min_memory_cpu'] is not None:
-            if slurm_job['ntasks_per_node'] > 0:
-                return slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node']
-            elif slurm_job['cpus_per_task'] > 0:
-                return slurm_job['min_memory_cpu'] * slurm_job['cpus_per_task']
+            if slurm_job['ntasks_per_node'] > 0 and slurm_job['cpus_per_task'] > 0:
+                return slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node'] * slurm_job['cpus_per_task']
             else:
                 return 0
         else:
@@ -494,7 +492,6 @@ class Backend:
         data['timestamp'] = self.timestamp()
         data['nodes'] = self.nodes()
         data['jobs'] = self.jobs()
-
         self.data = data
 
     def update_core_usage(self, data=None):
