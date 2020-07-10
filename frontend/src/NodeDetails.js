@@ -125,7 +125,7 @@ export default class NodeDetails extends React.Component {
             if (data.jobs.hasOwnProperty(this.props.selectedJobId)) {
                 const job = data.jobs[this.props.selectedJobId]
 
-                const usage = this.props.getNodeUsage(data.jobs[this.props.selectedJobId], nodeData, this.props.name)
+                const usage = this.props.getNodeUsage(this.props.selectedJobId, data.jobs[this.props.selectedJobId], nodeData, this.props.name)
 
                 // Memory usage
                 if (job.mem.hasOwnProperty(this.props.name)) {
@@ -138,8 +138,6 @@ export default class NodeDetails extends React.Component {
                 jobSystem = usage.cpu.system
                 jobWait = usage.cpu.wait
             }
-
-
 
             const d = new Date(data.timestamp * 1000);
             let x = {

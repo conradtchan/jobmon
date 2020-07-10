@@ -42,6 +42,7 @@ export default class NodeOverview extends React.Component {
 
                 // CPU percent is only out of the requested cores
                 const cpuUsage = this.props.getNodeUsage(
+                    this.props.jobId,
                     job,
                     this.props.nodeData[nodeName],
                     nodeName
@@ -64,9 +65,9 @@ export default class NodeOverview extends React.Component {
                 let gpuPercent = 0.0;
                 if (!(this.props.nodeData[nodeName].gpus === null)) {
                     let nGpus = 0;
-                    for (let gpu in this.props.nodeData[nodeName].gpus) {
+                    for (let i in job.gpuLayout[nodeName]) {
                         nGpus += 1;
-                        gpuPercent += this.props.nodeData[nodeName].gpus[gpu]
+                        gpuPercent += this.props.nodeData[nodeName].gpus['gpu'.concat(i.toString())]
                     }
                     gpuPercent /= nGpus;
                 }
@@ -226,7 +227,7 @@ export default class NodeOverview extends React.Component {
             const nodes = data.nodes;
 
             // Job CPU usage for all nodes of job
-            const usage = this.props.getJobUsage(job, nodes);
+            const usage = this.props.getJobUsage(jobId, job, nodes);
 
             const d = new Date(data.timestamp * 1000);
 

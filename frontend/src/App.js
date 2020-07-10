@@ -29,6 +29,7 @@ class App extends React.Component {
             future: false,
             backfill: null,
             cpuKeys: {'user': 0, 'nice': 1, 'system': 2, 'wait': 3, 'idle': 4},
+            gpuLayout: null,
         };
 
         this.fetchHistory();
@@ -145,6 +146,7 @@ class App extends React.Component {
                     this.cleanState(jsonData);
                     this.setState({
                         apiData: jsonData,
+                        gpuLayout: this.extractGpuLayout(jsonData),
                         snapshotTime: new Date(jsonData.timestamp * 1000),
                         gotData: true,
                     }, () => this.updateHistoryData());
@@ -213,6 +215,21 @@ class App extends React.Component {
         this.setState({nodeName: node})
     }
 
+    extractGpuLayout(data) {
+        // The GPU mapping always needs to be the current one,
+        // because it may not have been properly determined in the past
+        let layout = {}
+        for (let jid in data.jobs) {
+            if (data.jobs[jid].nGpus > 0) {
+                layout[jid] = {}
+                for (let host in data.jobs[jid].gpuLayout) {
+                    layout[jid][host] = data.jobs[jid].gpuLayout[host]
+                }
+            }
+        }
+        return layout
+    }
+
     getNodeOverview(warnings) {
         const jobs = this.state.apiData.jobs;
 
@@ -247,8 +264,8 @@ class App extends React.Component {
                     onJobClick={(jobId) => this.selectJob(jobId)}
                     historyData={this.state.historyData}
                     cpuKeys={this.state.cpuKeys}
-                    getJobUsage={(job, nodes) => this.getJobUsage(job, nodes)}
-                    getNodeUsage={(job, node, host) => this.getNodeUsage(job, node, host)}
+                    getJobUsage={(jid, job, nodes) => this.getJobUsage(jid, job, nodes)}
+                    getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
                     getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
                 />
             )
@@ -285,7 +302,7 @@ class App extends React.Component {
                     cpuKeys={this.state.cpuKeys}
                     changeTimeWindow={(t) => this.changeTimeWindow(t)}
                     timeWindow={this.state.historyDataWindow}
-                    getNodeUsage={(job, node, host) => this.getNodeUsage(job, node, host)}
+                    getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
                 />
             )
         }
@@ -441,7 +458,7 @@ class App extends React.Component {
     }
 
     // Get the per job usage
-    getJobUsage(job, nodes) {
+    getJobUsage(jid, job, nodes) {
         let usage = {
             cpu: {user: 0, system: 0, wait: 0, idle: 0},
             mem: {used: 0, total: 0},
@@ -454,7 +471,7 @@ class App extends React.Component {
 
         for (let host in job.layout) {
             if (host in nodes) {
-                const nodeUsage = this.getNodeUsage(job, nodes[host], host);
+                const nodeUsage = this.getNodeUsage(jid, job, nodes[host], host);
                 const nCores = job.layout[host].length;
                 usage.cpu.user              += nodeUsage.cpu.user * nCores;
                 usage.cpu.system            += nodeUsage.cpu.system * nCores;
@@ -485,7 +502,7 @@ class App extends React.Component {
     }
 
     // Get the per job usage for a specific node
-    getNodeUsage(job, node, host) {
+    getNodeUsage(jid, job, node, host) {
         let usage = {
             cpu: {user: 0, system: 0, wait: 0, idle: 0},
             mem: {used: 0, total: 0},
@@ -502,8 +519,27 @@ class App extends React.Component {
                 usage.cpu.wait   += node.cpu.coreC[i][this.state.cpuKeys['wait']];
                 usage.cpu.idle   += node.cpu.coreC[i][this.state.cpuKeys['idle']];
             }
-            for (let gpuName in node.gpus) {
-                usage.gpu.total += node.gpus[gpuName]
+            let nGpus = 0
+            // If thif is a GPU job
+            if (job.nGpus > 0) {
+                // Zero if unknown
+                usage.gpu.total = 0
+
+                // If the GPU mapping is known
+                if (this.state.gpuLayout.hasOwnProperty(jid)) {
+                    if (this.state.gpuLayout[jid].hasOwnProperty(host)) {
+                        if (this.state.gpuLayout[jid][host].length > 0) {
+                            usage.gpu.total = 0
+                            nGpus = 0
+                            for (let i in this.state.gpuLayout[jid][host]) {
+                                usage.gpu.total += node.gpus['gpu'.concat(i.toString())]
+                                nGpus++
+                            }
+                        }
+                    }
+                }
+            } else {
+                usage.gpu.total = 0
             }
             usage.mem.used          += job.mem[host];
             usage.mem.total         += node.mem.total;
@@ -517,7 +553,7 @@ class App extends React.Component {
             usage.cpu.system /= nCores;
             usage.cpu.wait   /= nCores;
             usage.cpu.idle   /= nCores;
-            usage.gpu.total  /= node.nGpus;
+            usage.gpu.total  /= nGpus;
         }
 
         return usage
