@@ -716,9 +716,9 @@ class App extends React.Component {
             warnings[nodeName] = {node: {swapUse: 0}, jobs: {cpuUtil: 0, cpuWait: 0, memUtil: 0}};
 
             // Score = percentage of swap used
-            if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
-                warnings[nodeName].node['swapUse'] = 100 * ((node.swap.total - node.swap.free) / node.swap.total)
-            }
+            // if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
+            //     warnings[nodeName].node['swapUse'] = 100 * ((node.swap.total - node.swap.free) / node.swap.total)
+            // }
 
         }
 
