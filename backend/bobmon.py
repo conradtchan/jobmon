@@ -427,10 +427,7 @@ class Backend:
     @staticmethod
     def requested_memory(slurm_job):
         if slurm_job['min_memory_cpu'] is not None:
-            if slurm_job['ntasks_per_node'] > 0 and slurm_job['cpus_per_task'] > 0:
-                return slurm_job['min_memory_cpu'] * slurm_job['ntasks_per_node'] * slurm_job['cpus_per_task']
-            else:
-                return 0
+            return slurm_job['min_memory_cpu'] * max(slurm_job['ntasks_per_node'], 1) * max(slurm_job['cpus_per_task'], 1)
         else:
             return slurm_job['min_memory_node']
 
