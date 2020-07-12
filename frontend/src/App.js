@@ -758,7 +758,7 @@ class App extends React.Component {
                     // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
                     for (let nodeName in job.mem) {
                         // Score = GB wasted
-                        warnings[nodeName].jobs[jobId]['memUtil'] = ((warnMem/100.0) * (job.memReq - baseMem*job.nCpus) - job.memMax) / 1024
+                        warnings[nodeName].jobs[jobId]['memUtil'] = ((warnMem/100.0) * (job.memReq - baseMem*(job.nCpus-1) - baseMemSingle) - job.memMax) / 1024
                     }
                 }
             }
