@@ -699,10 +699,10 @@ class App extends React.Component {
     }
 
     instantWarnings(data) {
-        const warnSwap = 20; // If swap greater than
+        // const warnSwap = 20; // If swap greater than
         const warnWait = 5; // If waiting more than
-        const warnUtil = 90; // If CPU utilisation below
-        const warnMem = 80; // If memory used is less than
+        const warnUtil = 80; // If CPU utilisation below
+        const warnMem = 70; // If memory used is less than
         const baseMem = 2048; // Megabytes of "free" memory per core not to warn for
         const baseMemSingle = 4096 // Megabytes of memory for the first core
         const graceTime = 5; // (Minutes) give jobs some time to get setup
@@ -753,12 +753,21 @@ class App extends React.Component {
                     }
                 }
 
-                // Memory use
-                if (job.memMax < (warnMem/100.0) * (job.memReq - baseMem*(job.nCpus-1) - baseMemSingle) ) {
+                // CPUs per node
+                const nCpus = job.nCpus / Object.keys(job.layout).length
+
+                // Memory that jobs can get for free
+                const freeMem = baseMem*(nCpus-1.0) + baseMemSingle
+
+                // Factor for making it stricter for large requests
+                const x = Math.max(0.0, (job.memReq - freeMem) / job.memReq)
+
+                const criteria = (job.memReq - freeMem)*(1.0 - x) + x*(warnMem/100.0)*job.memReq
+                if (job.memMax < criteria) {
                     // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
                     for (let nodeName in job.mem) {
                         // Score = GB wasted
-                        warnings[nodeName].jobs[jobId]['memUtil'] = ((warnMem/100.0) * (job.memReq - baseMem*(job.nCpus-1) - baseMemSingle) - job.memMax) / 1024
+                        warnings[nodeName].jobs[jobId]['memUtil'] = (criteria - job.memMax) / 1024
                     }
                 }
             }
