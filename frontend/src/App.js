@@ -699,7 +699,7 @@ class App extends React.Component {
     }
 
     instantWarnings(data) {
-        // const warnSwap = 20; // If swap greater than
+        const warnSwap = 20; // If swap greater than
         const warnWait = 5; // If waiting more than
         const warnUtil = 80; // If CPU utilisation below
         const warnMem = 70; // If memory used is less than
@@ -716,9 +716,9 @@ class App extends React.Component {
             warnings[nodeName] = {node: {swapUse: 0}, jobs: {cpuUtil: 0, cpuWait: 0, memUtil: 0}};
 
             // Score = percentage of swap used
-            // if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
-            //     warnings[nodeName].node['swapUse'] = 100 * ((node.swap.total - node.swap.free) / node.swap.total)
-            // }
+            if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
+                warnings[nodeName].node['swapUse'] = 100 * ((node.swap.total - node.swap.free) / node.swap.total)
+            }
 
         }
 
