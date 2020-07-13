@@ -131,6 +131,7 @@ export default class NodeDetails extends React.Component {
                 // Memory usage
                 if (job.mem.hasOwnProperty(this.props.name)) {
                     jobMem = usage.mem.used
+                    jobMemMax = usage.mem.max
                     jobMemRequested = job.memReq
                 }
 
