@@ -461,7 +461,7 @@ class App extends React.Component {
     getJobUsage(jid, job, nodes) {
         let usage = {
             cpu: {user: 0, system: 0, wait: 0, idle: 0},
-            mem: {used: 0, total: 0},
+            mem: {used: 0, max: 0, total: 0},
             infiniband: {bytes_in: 0, bytes_out: 0},
             lustre: {read: 0, write: 0},
             gpu: {total: 0},
@@ -477,7 +477,7 @@ class App extends React.Component {
                 usage.cpu.system            += nodeUsage.cpu.system * nCores;
                 usage.cpu.wait              += nodeUsage.cpu.wait * nCores;
                 usage.cpu.idle              += nodeUsage.cpu.idle * nCores;
-                usage.mem.used              += job.mem[host]
+                usage.mem.used              += job.mem[host];
                 usage.mem.total             += nodeUsage.mem.total;
                 usage.infiniband.bytes_in   += nodeUsage.infiniband.bytes_in;
                 usage.infiniband.bytes_out  += nodeUsage.infiniband.bytes_out;
@@ -491,6 +491,8 @@ class App extends React.Component {
                 nCpus += job.layout[host].length
             }
         }
+
+        usage.mem.max = job.memMax
 
         usage.cpu.user   /= nCpus;
         usage.cpu.system /= nCpus;
@@ -541,12 +543,13 @@ class App extends React.Component {
             } else {
                 usage.gpu.total = 0
             }
-            usage.mem.used          += job.mem[host];
-            usage.mem.total         += node.mem.total;
-            usage.infiniband.bytes_in     += node.infiniband.bytes_in;
-            usage.infiniband.bytes_out    += node.infiniband.bytes_out;
-            usage.lustre.read       += node.lustre.read;
-            usage.lustre.write      += node.lustre.write;
+            usage.mem.used          = job.mem[host];
+            usage.mem.max           = job.memMax
+            usage.mem.total         = node.mem.total;
+            usage.infiniband.bytes_in     = node.infiniband.bytes_in;
+            usage.infiniband.bytes_out    = node.infiniband.bytes_out;
+            usage.lustre.read       = node.lustre.read;
+            usage.lustre.write      = node.lustre.write;
 
             const nCores = layout.length;
             usage.cpu.user   /= nCores;

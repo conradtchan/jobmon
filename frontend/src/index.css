@@ -577,3 +577,8 @@ body {
     -o-box-shadow: 0px 2px 13px 0px var(--dark-shade);
     box-shadow: 0px 2px 13px 0px var(--dark-shade);
 }
+
+/* Render recharts tooltip on top */
+.recharts-tooltip-wrapper {
+    z-index: 100;
+  }

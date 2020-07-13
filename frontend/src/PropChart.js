@@ -74,7 +74,7 @@ export default class PropChart extends React.Component {
 
         // Make areas
         for (let i = 0; i < this.props.dataKeys.length; i++) {
-            if (this.props.lineOnly[i]) {
+            if (this.props.lineStyle[i] === 'dashed') {
                 items.push(
                     <Area
                         key={this.props.dataKeys[i]}
@@ -84,6 +84,20 @@ export default class PropChart extends React.Component {
                         stroke={this.props.colors[i]}
                         fillOpacity={0}
                         strokeDasharray="5 5"
+                        stackId= {this.props.stacked ? "2" : i}
+                        isAnimationActive={false}
+                        unit={scale + this.props.unit}
+                    />
+                )
+            } else if (this.props.lineStyle[i] === 'line') {
+                items.push(
+                    <Area
+                        key={this.props.dataKeys[i]}
+                        type='monotone'
+                        nameKey='time'
+                        dataKey={this.props.dataKeys[i]}
+                        stroke={this.props.colors[i]}
+                        fillOpacity={0}
                         stackId= {this.props.stacked ? "2" : i}
                         isAnimationActive={false}
                         unit={scale + this.props.unit}

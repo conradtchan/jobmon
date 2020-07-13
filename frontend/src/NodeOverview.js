@@ -237,6 +237,7 @@ export default class NodeOverview extends React.Component {
                 system: usage.cpu.system,
                 wait: usage.cpu.wait,
                 used: usage.mem.used * 1024**2, // mb
+                max: usage.mem.max * 1024**2, // mb
                 request: memRequested, // used = memory used, request = memory requested (text shortened for display)
                 gpu: usage.gpu.total,
             });
@@ -253,10 +254,10 @@ export default class NodeOverview extends React.Component {
                         style.getPropertyValue('--piecolor-system'),
                         style.getPropertyValue('--piecolor-wait'),
                     ]}
-                    lineOnly = {[
-                        false,
-                        false,
-                        false,
+                    lineStyle = {[
+                        'fill',
+                        'fill',
+                        'fill',
                     ]}
                     unit = '%'
                     dataMax = {100}
@@ -266,14 +267,16 @@ export default class NodeOverview extends React.Component {
                 <PropChartMini
                     name = 'Job Memory usage'
                     data = {historyChart}
-                    dataKeys = {['used', 'request']}
+                    dataKeys = {['used', 'max', 'request']}
                     colors = {[
                         style.getPropertyValue('--piecolor-mem'),
                         style.getPropertyValue('--piecolor-mem'),
+                        style.getPropertyValue('--piecolor-mem'),
                     ]}
-                    lineOnly = {[
-                        false,
-                        true,
+                    lineStyle = {[
+                        'fill',
+                        'line',
+                        'dashed',
                     ]}
                     unit = 'B'
                     dataMax = {memRequested}
@@ -287,8 +290,8 @@ export default class NodeOverview extends React.Component {
                     colors = {[
                         style.getPropertyValue('--piecolor-gpu')
                     ]}
-                    lineOnly = {[
-                        false,
+                    lineStyle = {[
+                        'fill',
                     ]}
                     unit = '%'
                     dataMax = {100}
