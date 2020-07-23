@@ -38,6 +38,9 @@ class Backend:
         # Initialise GPU mapping determination
         self.ga = GPUmapping()
 
+        # Maximum memory usage of a job
+        self.mem_max = {}
+
         # Load usage from disk
         self.usage_cache = {'history': {}}
         if not no_history:
@@ -373,8 +376,7 @@ class Backend:
                 'memReq':    self.requested_memory(slurm_job) # mb
                 }
 
-    @staticmethod
-    def add_job_mem_info(j, id_map):
+    def add_job_mem_info(self, j, id_map):
         print('Getting memory stats')
         # InfluxDB client for memory stats
         influx_client = InfluxDBClient(
@@ -387,7 +389,7 @@ class Backend:
         influx_client.switch_database('ozstar_slurm')
 
         # Query all jobs for current memory usage
-        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host".format(config.UPDATE_INTERVAL * 2)
+        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host, task".format(config.UPDATE_INTERVAL * 2)
         result = influx_client.query(query)
 
         # Count jobs
@@ -405,19 +407,34 @@ class Backend:
                 count_stat += 1
                 j[array_id]['hasMem'] = True
 
+                mem_sum = {}
                 # Current memory usage
                 for x in nodes:
                     node_name = x['host']
                     mem = x['max']
-                    j[array_id]['mem'][node_name] = math.ceil(mem / KB) # kb to mb
 
-                # Max memory usage
-                query = "SELECT MAX(value) FROM RSS WHERE job='{:}'".format(id_map[array_id])
-                sub_result = influx_client.query(query)
-                j[array_id]['memMax'] = math.ceil(list(sub_result)[0][0]['max'] / KB) # kb to mb
+                    # Sum up memory usage from different tasks
+                    if node_name in mem_sum:
+                        mem_sum[node_name] += mem
+                    else:
+                        mem_sum[node_name] = mem
 
-                if len(nodes) != len(j[array_id]['layout']):
-                    print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes),len(j[array_id]['layout'])))
+                # Determine max over time
+                if array_id not in self.mem_max:
+                    self.mem_max[array_id] = 0
+
+                # Convert KB to MB
+                for node_name in mem_sum:
+                    mem_mb = math.ceil(mem_sum[node_name] / KB)
+                    self.mem_max[array_id] = int(max(self.mem_max[array_id], mem_mb))
+                    mem_sum[node_name] = mem_mb
+
+                # Add to job dict
+                j[array_id]['mem'] = mem_sum
+                j[array_id]['memMax'] = self.mem_max[array_id]
+
+                if len(mem_sum) != len(j[array_id]['layout']):
+                    print('{:} has {:} mem nodes but {:} cpu nodes'.format(array_id, len(nodes), len(j[array_id]['layout'])))
 
             else:
                 print('{:} ({:}) has no memory stats'.format(array_id, id_map[array_id]))
@@ -478,6 +495,9 @@ class Backend:
         # Add memory information
         self.add_job_mem_info(j, id_map)
 
+        # Prune max memory usage dict based on the current data
+        self.prune_mem_max(j)
+
         # Add GPU mapping
         self.add_job_gpu_mapping(j)
 
@@ -519,6 +539,25 @@ class Backend:
 
         self.usage_cache['history'][self.data['timestamp']] = usage
 
+    def load_mem_max(self, data):
+        # Determining max memory usage of a job
+        n = 0
+        for id, job in data['jobs'].items():
+            if job['state'] == 'RUNNING':
+                if id not in self.mem_max:
+                    self.mem_max[id] = 0
+                print(self.mem_max[id], job['memMax'])
+                self.mem_max[id] = int(max(self.mem_max[id], job['memMax']))
+                n += 1
+
+    def prune_mem_max(self, jobs):
+        n = 0
+        for jobid in list(self.mem_max.keys()):
+            if jobid not in jobs:
+                n += 1
+                del self.mem_max[jobid]
+        print('Pruned {:}/{:} old max memory records'.format(n, len(self.mem_max)))
+
     def usage_from_disk(self):
         filenames = config.FILE_NAME_PATTERN.format('*')
         filepaths = path.join(config.DATA_PATH, filenames)
@@ -530,13 +569,17 @@ class Backend:
             if match is not None:
                 times += [match.group(1)]
 
+        t_latest = max(times)
         for t in times:
+            print('Loading timestamp {:}'.format(t))
             filename = config.FILE_NAME_PATTERN.format(t)
             filepath = path.join(config.DATA_PATH, filename)
             with gzip.open(filepath, 'r') as f:
                 json_text = f.read().decode('utf-8')
                 data = json.loads(json_text)
                 self.update_core_usage(data=data)
+                if t == t_latest:
+                    self.load_mem_max(data)
 
     def history(self):
         now = self.timestamp()
