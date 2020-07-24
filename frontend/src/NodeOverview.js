@@ -267,10 +267,11 @@ export default class NodeOverview extends React.Component {
                 <PropChartMini
                     name = 'Job Memory usage'
                     data = {historyChart}
-                    dataKeys = {['used', 'max', 'request']}
+                    // dataKeys = {['used', 'max', 'request']}
+                    dataKeys = {['used', 'request']}
                     colors = {[
                         style.getPropertyValue('--piecolor-mem'),
-                        style.getPropertyValue('--piecolor-mem'),
+                        // style.getPropertyValue('--piecolor-mem'),
                         style.getPropertyValue('--piecolor-mem'),
                     ]}
                     lineStyle = {[
