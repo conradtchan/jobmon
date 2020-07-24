@@ -276,7 +276,7 @@ export default class NodeOverview extends React.Component {
                     ]}
                     lineStyle = {[
                         'fill',
-                        'line',
+                        // 'line',
                         'dashed',
                     ]}
                     unit = 'B'
