@@ -76,10 +76,10 @@ class App extends React.Component {
                             if (nVal > historyDataTimes.length) {
                                 this.setState({historyData: historyDataTemp});
                             } else {
-                                if (nVal < 100) {
+                                if (nVal < 200) {
                                     this.setState({
                                         historyData: historyDataTemp,
-                                    }, () => this.initHistoryData(nVal * 4));
+                                    }, () => this.initHistoryData(nVal * 3));
                                 }
                             }
                         }
