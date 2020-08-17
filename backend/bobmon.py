@@ -439,7 +439,7 @@ class Backend:
             else:
                 print('{:} ({:}) has no memory stats'.format(array_id, id_map[array_id]))
 
-        print('Memory stats: {:} / {:}'.format(len(active_slurm_jobs),count_stat))
+        print('Memory stats: {:} / {:}'.format(count_stat, len(active_slurm_jobs)))
 
     @staticmethod
     def requested_memory(slurm_job):
