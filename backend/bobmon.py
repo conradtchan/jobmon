@@ -389,7 +389,7 @@ class Backend:
         influx_client.switch_database('ozstar_slurm')
 
         # Query all jobs for current memory usage
-        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host, task".format(config.UPDATE_INTERVAL * 2)
+        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host, task".format(config.UPDATE_INTERVAL * 4)
         result = influx_client.query(query)
 
         # Count jobs
