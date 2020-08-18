@@ -404,7 +404,7 @@ export default class NodeDetails extends React.Component {
                 </div>
                 {warningList}
 
-                <div>
+                <div className="time-selector">
                     <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)} checked={this.props.timeWindow === 18000}/>
                     <label> 5 hours   </label>
                     <input type="radio" id="1h" name="timeWindow" value="1h" onChange={() => this.props.changeTimeWindow(3600)} checked={this.props.timeWindow === 3600}/>
@@ -412,7 +412,7 @@ export default class NodeDetails extends React.Component {
                     <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} checked={this.props.timeWindow === 600}/>
                     <label> 10 minutes   </label>
                 </div>
-
+                <br />
                 <div className="heading">
                     Job resource usage
                 </div>

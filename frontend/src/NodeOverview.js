@@ -169,7 +169,7 @@ export default class NodeOverview extends React.Component {
                     {(jobId === this.props.jobId) &&
                         <div>
                             <div className='instruction'>
-                                Select a node to view detailed system usage:
+                                Select a node to view detailed system usage
                             </div>
                             <div className='overview-pies'>
                                 {this.getNodePies()}
@@ -358,10 +358,10 @@ export default class NodeOverview extends React.Component {
                 {legend}
 
                 <div className='instruction'>
-                    Select a running job to view nodes:
+                    Select a running job to view nodes
                 </div>
-
-                <div className='job-names heading'>
+                <br />
+                <div className='heading'>
                     Running
                 </div>
                     {jobList.running}

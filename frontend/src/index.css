@@ -4,7 +4,7 @@
   /* Box colors */
   --light-shade: #eee;
   --medium-shade: #ddd;
-  --dark-shade: #aaa;
+  --dark-shade: #ccc;
 
   /* Hover-over colors */
   --hover-outline-color: #555;
@@ -29,6 +29,14 @@
   --transition-time: 0.2s;
   --switch-width: 100;
   --switch-widthpx: 100px;
+
+  --rounding-radius: 0.3em;
+  --box-padding: 1.0em;
+  --box-padding-inner: 0.6em;
+  --block-spacing: 1.0em;
+  --inter-item-spacing: 0.6em;
+
+  --border-width: 0.5px;
 }
 
 body {
@@ -82,6 +90,12 @@ body {
   max-width: 1600px;
   margin: 10px auto;
   justify-content: space-between;
+  border-radius: var(--rounding-radius);
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--medium-shade);
+  padding: var(--box-padding);
+  box-sizing: border-box;
 }
 
 #time-machine-title {
@@ -99,10 +113,12 @@ body {
 }
 
 .bad-job {
+  text-align: center;
   color: var(--bad-job-color);
 }
 
 .terrible-job {
+  text-align: center;
   color: var(--hover-shade);
   background: var(--bad-job-color);
 }
@@ -142,17 +158,21 @@ body {
 
   /* ...and now for the proper property */
   transition: var(--transition-time);
-  margin-bottom: 5px;
+  margin-bottom: var(--inter-item-spacing);
   padding-left: 10px;
   padding-right: 10px;
   padding-top: 5px;
   padding-bottom: 5px;
   box-sizing: border-box;
+  background-color: var(--medium-shade);
+  border-radius: var(--rounding-radius);
+  padding: var(--box-padding-inner);
+  box-sizing: border-box;
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--dark-shade);
 }
 
-.running-job-row:nth-child(odd) {
-  background-color: var(--medium-shade);
-}
 
 .running-job-row:hover {
   background: var(--hover-shade);
@@ -217,13 +237,14 @@ body {
 
 .cohab-job {
   cursor: pointer;
-  margin-bottom: 5px;
-  padding-left: 10px;
-  padding-right: 10px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-  box-sizing: border-box;
+  margin-bottom: var(--inter-item-spacing);
   background-color: var(--medium-shade);
+  border-radius: var(--rounding-radius);
+  padding: var(--box-padding-inner);
+  box-sizing: border-box;
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--dark-shade);
 }
 
 #node-description {
@@ -242,9 +263,13 @@ body {
   text-align: left;
   background-color: var(--light-shade);
   box-sizing: border-box;
-  padding: 1%;
+  padding: var(--box-padding);
+  border-radius: var(--rounding-radius);
   overflow-y: scroll;
   min-height: 600px;
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--medium-shade);
 }
 
 .main-item.left {
@@ -413,12 +438,22 @@ body {
   word-wrap: break-word;      /* IE */
 }
 
+.time-selector {
+  text-align: center;
+}
+
 .core-grid {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   background: var(--medium-shade);
-  margin-bottom: 1em;
+  border-radius: var(--rounding-radius);
+  padding: var(--box-padding-inner);
+  box-sizing: border-box;
+  margin-bottom: var(--inter-item-spacing);
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--dark-shade);
 }
 
 .core-pie {
@@ -432,8 +467,13 @@ body {
   flex-direction: row;
   flex-wrap: wrap;
   background: var(--medium-shade);
-  padding: 5px;
+  border-radius: var(--rounding-radius);
+  padding: var(--box-padding-inner);
   box-sizing: border-box;
+  margin-bottom: var(--block-spacing);
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--dark-shade);
 }
 
 .prop-chart-group {
@@ -466,11 +506,11 @@ body {
 
 .instruction {
   font-style: italic;
+  text-align: center;
 }
 
 .heading {
   font-size: large;
-  margin-top: 1em;
   font-weight: 500;
 }
 
@@ -480,7 +520,13 @@ body {
   flex-direction: row;
   flex-wrap: wrap;
   background: var(--medium-shade);
-  margin-bottom: 1em;
+  margin-bottom: var(--block-spacing);
+  border-radius: var(--rounding-radius);
+  padding: var(--box-padding-inner);
+  box-sizing: border-box;
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--dark-shade);
 }
 
 .cpu-legend-item {
@@ -540,11 +586,14 @@ body {
   font-size: 1em;
   height: 2em;
   line-height: 2em;
-  border-radius: 0.3em;
+  border-radius: var(--rounding-radius);
   background: var(--light-shade);
   position: relative;
   display: block;
   float: left;
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--medium-shade);
 }
 
 .switch.past,
@@ -570,10 +619,10 @@ body {
   transition: 300ms ease-out;
   border-radius: 0.3em;
   color: white;
-  -moz-box-shadow: 0 2px 13px 0 var(--dark-shade);
+  /* -moz-box-shadow: 0 2px 13px 0 var(--dark-shade);
   -webkit-box-shadow: 0 2px 13px 0 var(--dark-shade);
   -o-box-shadow: 0 2px 13px 0 var(--dark-shade);
-  box-shadow: 0 2px 13px 0 var(--dark-shade);
+  box-shadow: 0 2px 13px 0 var(--dark-shade); */
 }
 
 /* Render recharts tooltip on top */

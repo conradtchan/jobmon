@@ -135,8 +135,6 @@ export default class TimeMachine extends React.Component {
                 </div>
                 <div className="instruction">
                     View the previous state of OzSTAR by selecting a time
-                    <br />
-                    <br />
                 </div>
             </div>
         )
@@ -208,9 +206,11 @@ export default class TimeMachine extends React.Component {
                         {this.getSelector(this.state.period)}
                     </div>
                 </div>
+                {this.state.showTimeMachine &&
                 <div id="time-machine">
-                    {this.state.showTimeMachine && this.historyBar()}
+                    {this.historyBar()}
                 </div>
+                }
             </div>
         )
     }

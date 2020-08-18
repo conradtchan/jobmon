@@ -130,14 +130,15 @@ export default class UserPiePlot extends React.Component {
                 />
                 {(Object.keys(this.props.warnedUsers).length > 0) &&
                     <div className='bad-job'>
-                        Red users and jobs may require attention.
+                        Red users and jobs may require attention
                     </div>
                 }
                 {(maxBadness > this.state.terribleThreshold && this.state.nameSort === 'badness') &&
                     <div className='terrible-job'>
-                        Highlighted users are severely underutilizing resources and impacting other users.
+                        Highlighted users are severely underutilizing resources and impacting other users
                     </div>
                 }
+                <br />
                 <div className="heading">
                     Running
                 </div>
