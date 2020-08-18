@@ -578,7 +578,8 @@ body {
   height: 100%;
   display: inline-flex;
   background: #fff;
-  padding-top: 15px;
+  padding-top: var(--block-spacing);
+  padding-bottom: var(--block-spacing);
 }
 
 .switch3ways {
