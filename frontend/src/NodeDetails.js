@@ -488,8 +488,8 @@ class CorePie extends React.Component {
                             data={[{name: 'ring', ring: ring}]}
                             nameKey='name'
                             dataKey='ring'
-                            innerRadius='120%'
-                            outerRadius='150%'
+                            innerRadius='110%'
+                            outerRadius='130%'
                             startAngle={90}
                             endAngle={450}
                             fill="#222222"
