@@ -15,5 +15,9 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "homepage": "https://supercomputing.swin.edu.au/monitor"
+  "homepage": "https://supercomputing.swin.edu.au/monitor",
+  "devDependencies": {
+    "stylelint": "^13.6.1",
+    "stylelint-config-standard": "^20.0.0"
+  }
 }
