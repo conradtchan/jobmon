@@ -474,12 +474,11 @@ body {
   border-style: solid;
   border-width: var(--border-width);
   border-color: var(--dark-shade);
+  justify-content: center;
 }
 
 .prop-chart-group {
-  flex-grow: 0;
-  flex-shrink: 0;
-  flex-basis: 49%;
+  width: max(200px,50%);
 }
 
 .prop-chart {
