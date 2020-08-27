@@ -682,14 +682,23 @@ class App extends React.Component {
     show() {
         if (!this.state.future) {
             if (this.state.gotData) {
-                const warnings = this.generateWarnings();
-                return (
-                    <div id='main-box'>
-                        {this.getUserPiePlot(warnings)}
-                        {this.getNodeOverview(warnings)}
-                        {this.getNodeDetails(warnings)}
-                    </div>
-                )
+                if ( (new Date() - this.state.snapshotTime) / 1000 > 600) {
+                    return (
+                        <div id='main-box'>
+                            Sorry! The job monitor is currently down for maintenance and will be back soon. <br/>
+                            Jobs will continue running and can still be inspected by logging in to the compute nodes directly.
+                        </div>
+                    )
+                } else {
+                    const warnings = this.generateWarnings();
+                    return (
+                        <div id='main-box'>
+                            {this.getUserPiePlot(warnings)}
+                            {this.getNodeOverview(warnings)}
+                            {this.getNodeDetails(warnings)}
+                        </div>
+                    )
+                }
             }
         } else {
             return(
