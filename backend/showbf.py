@@ -3,11 +3,11 @@
 # (c) Robin Humble. Wed Sep 25 18:58:22 AEST 2019
 # licensed under the GPLv3
 
-import pyslurm
+import math
 import sys
 import time
-import datetime
-import math
+
+import pyslurm
 
 PARTITIONS = {
     "skylake-gpu": ["john", "bryan"],
@@ -45,7 +45,7 @@ partitionLowDisk = {
     "sstar": 3000,
     "gstar": 3000,
     "knl": 600,
-}  #  ""
+}
 # max allowed walltime
 TMAX = 24 * 7 * 3600
 
@@ -113,16 +113,6 @@ def nodes():
         nodes[host]["features"] = n["features"]
         nodes[host]["futureJobs"] = []
 
-        if debug:
-            if (
-                host in []
-            ):  #  'gstar040', 'sstar151', 'john99', 'john2', 'john85', 'john71' ]:
-                # print(host, n)
-                print(host, nodes[host])
-                # for i in n.keys():
-                #    if 'feature' in i:
-                #        print(host, 'feature', i, n[i])
-
     return nodes
 
 
@@ -139,7 +129,6 @@ def jobs():
             "state": s["job_state"],
             "layout": s["cpus_alloc_layout"],
             "timeLimit": s["time_limit"],  # minutes
-            "timeLimit": s["time_limit"],  # minutes
             # pyslurm 18
             "schedNodes": s["sched_nodes"],  # None or eg. bryan[1-4,6-8],john[1-3]
             "startTime": s["start_time"],  # 0 or seconds
@@ -155,11 +144,11 @@ def jobs():
             if g[0] == "gpu":  # eg. gpu:p100:2  gpu:2  gpu
                 try:
                     j[id]["nGpus"] += int(g[-1])
-                except:
+                except ValueError:
                     j[id]["nGpus"] += 1
 
         if debug:
-            if j[id]["startTime"] != 0 and j[id]["schedNodes"] != None:
+            if j[id]["startTime"] != 0 and j[id]["schedNodes"] is not None:
                 print(id, j[id])
             if id in [2453709, 2405807, 2453086]:
                 print(id, s)
@@ -172,9 +161,9 @@ def isFixedWidth(c):
     # return 0 if floating, otherwise the field width
     a = 0
     for j in c.split(","):
-        for l in j.split("-"):  # eg. 011
-            if len(l) != len("%d" % int(l)):
-                return len(l)
+        for string in j.split("-"):  # eg. 011
+            if len(string) != len("%d" % int(string)):
+                return len(string)
     return a
 
 
@@ -228,10 +217,11 @@ def reservations():
     a = pyslurm.reservation()
     res_dict = a.get()
     resnodes = {}
-    # for the purposes of backfill, we're only interested in the next res on a node, and don't care if it's whole node or 1 core.
+    # for the purposes of backfill, we're only interested in the next res on a node,
+    # and don't care if it's whole node or 1 core.
     # this will be incorrect for currently active res's that aren't whole node.
     for r, v in res_dict.items():
-        if "node_list" in v.keys() and v["node_list"] != None:
+        if "node_list" in v.keys() and v["node_list"] is not None:
             for n in expandSlurmNodeList(v["node_list"]):
                 if n in resnodes.keys():
                     tprev = resnodes[n]
@@ -260,7 +250,7 @@ class bins:
 
     def add(self, k, m=0, d=0, t=None, node=None):
         if (
-            t != None and t - time.time() < 0
+            t is not None and t - time.time() < 0
         ):  # time is -ve. reservation started some time in the past. can't use this bin
             return
         if k not in self.keycache:
@@ -361,14 +351,14 @@ def minFutureJobTime(node, jobs, hn, res):
     # future jobs
     for id in node["futureJobs"]:
         t = jobs[id]["startTime"]
-        if st == None:
+        if st is None:
             st = t
         else:
             st = min(st, t)
     # next or current res
     if hn in res.keys():
         t = res[hn]
-        if st == None:
+        if st is None:
             st = t
         else:
             st = min(st, t)
@@ -393,7 +383,7 @@ def get_core_usage(data):
 
         elif job["state"] == "PENDING":
             # store future jobs with the nodes they're going to run on
-            if job["startTime"] != 0 and job["schedNodes"] != None:
+            if job["startTime"] != 0 and job["schedNodes"] is not None:
                 b = pyslurm.hostlist()
                 b.create(job["schedNodes"])
                 for n in b.get_list():
@@ -502,8 +492,10 @@ def get_core_usage(data):
 
                             # g0+g1  = 0 - 4 cores held idle (no gpu jobs running)
                             # g0+g1 >= 4 - 0 cores held idle
-                            # but we could be a weird situation where previous gpu jobs (eg. 4 cores, 1 gpu) have skewed the cpus used
-                            # on each socket, so even though if there are cores avail we don't know where they'll be.
+                            # but we could be a weird situation where previous gpu jobs (
+                            # eg. 4 cores, 1 gpu) have skewed the cpus used
+                            # on each socket, so even though if there are cores avail we don't
+                            # know where they'll be.
                             cpuCoresIdle0 = 18 - (s0 + g0)
                             cpuCoresIdle1 = 18 - (s1 + g1)
 
@@ -865,32 +857,32 @@ def secondsToStr(t):
     return "%d:%.2d:%.2d" % (h, m, s)
 
 
-def uniq(list):
-    l = []
+def uniq(list_in):
+    list_out = []
     prev = None
-    for i in list:
+    for i in list_in:
         if i != prev:
-            l.append(i)
+            list_out.append(i)
         prev = i
-    return l
+    return list_out
 
 
 # compress a list of integers into the minimal cexec-like list
-def compressList(l):
-    l = sorted(l)
-    l = uniq(l)
+def compressList(list_in):
+    list_in = sorted(list_in)
+    list_in = uniq(list_in)
     c = []
     start = -1
     end = -1
-    for i in range(len(l)):
+    for i in range(len(list_in)):
         if start == -1:
-            start = l[i]
-        if i == len(l) - 1 or l[i] + 1 != l[i + 1]:
+            start = list_in[i]
+        if i == len(list_in) - 1 or list_in[i] + 1 != list_in[i + 1]:
             c.append((start, end))
             start = -1
             end = -1
         else:
-            end = l[i + 1]
+            end = list_in[i + 1]
 
     s = ""
     last = len(c) - 1
@@ -911,15 +903,14 @@ def mysplit(s):
     return head, tail
 
 
-def compact(l):
+def compact(list_in):
     c = {}
-    for i in l:
+    for i in list_in:
         pre, n = mysplit(i)
         if pre not in c.keys():
             c[pre] = []
         c[pre].append(int(n))
     # sort
-    cc = {}
     for i in c.keys():
         c[i].sort()
     return c
@@ -952,7 +943,7 @@ def printFreeBins(b, n, lmp, ldp, printNodes=0, prefix=" "):
             d = b.data[i]
             for k in range(len(d["nodes"])):
                 t = d["time"][k]
-                if t == None or (t - time.time()) > TMAX:
+                if t is None or (t - time.time()) > TMAX:
                     t = "Inf"
                 else:
                     t = secondsToStr(t)
@@ -978,11 +969,11 @@ def printFreeBins(b, n, lmp, ldp, printNodes=0, prefix=" "):
                 lowDisk = "(low/zero tmp disk jobs only)"
         tmin = b.timesMin(i)
         tmax = b.timesMax(i)
-        if tmin == None:
+        if tmin is None:
             ts = ""  # Inf time
         else:
             sm = secondsToStr(tmin)
-            if tmax == None or (tmax - time.time()) > TMAX:
+            if tmax is None or (tmax - time.time()) > TMAX:
                 sM = "    Inf"
             else:
                 sM = secondsToStr(tmax)
@@ -1011,7 +1002,6 @@ def printFreeBins(b, n, lmp, ldp, printNodes=0, prefix=" "):
         if t == "nodes":  # whole nodes
             if b.cnt(i) == 1:
                 t = "node "
-            # print('%3d %s free' % (b.cnt(i), t), '(%d cores total)' % (i*b.cnt(i)), 'for unknown time', b.mems(i),'ave',b.memsAve(i),'median',b.memsMedian(i),lowMem)
             print(
                 prefix + "%3d %s (%d core) free" % (b.cnt(i), t, i),
                 "(%d cores total)" % (i * b.cnt(i)),
@@ -1023,7 +1013,6 @@ def printFreeBins(b, n, lmp, ldp, printNodes=0, prefix=" "):
             s = "slots"
             if b.cnt(i) == 1:
                 s = "slot "
-            # print('%3d %s for %d-core jobs free' % (b.cnt(i), s, i), '(%d cores total)' % (i*b.cnt(i)), 'for unknown time', b.mems(i),'ave',b.memsAve(i),'median',b.memsMedian(i),lowMem)
             print(
                 prefix + "%3d %s for %d-core jobs free" % (b.cnt(i), s, i),
                 "(%d cores total)" % (i * b.cnt(i)),
@@ -1175,20 +1164,20 @@ if __name__ == "__main__":
                         )
 
             # find max field lengths
-            l = {}
+            length = {}
             for i in ["cores", "nodes", "gpus"]:
-                l[i] = 0
+                length[i] = 0
                 for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
-                    l[i] = max(l[i], len(s[(k, i)]))
-            # print(l)
+                    length[i] = max(length[i], len(s[(k, i)]))
+
             spc = 2
             print(
                 "QUEUE     "
-                + " " * (spc + max(0, l["nodes"] - 16))
+                + " " * (spc + max(0, length["nodes"] - 16))
                 + "NODES(A/I/O/B/T)"
-                + " " * (spc + max(0, l["cores"] - 16))
+                + " " * (spc + max(0, length["cores"] - 16))
                 + "CORES(A/I/O/B/T)"
-                + " " * (spc + max(0, l["gpus"] - 15))
+                + " " * (spc + max(0, length["gpus"] - 15))
                 + "GPUS(A/I/O/B/T)"
             )
             for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
@@ -1198,17 +1187,18 @@ if __name__ == "__main__":
                     if i == "gpus" and k != "skylake-gpu":
                         fudge = 1
                     if k in ["skylake", "knl"] and i == "gpus":
-                        print(" " * (spc + fudge + int(l[i] / 2)) + "-", end="")
+                        print(" " * (spc + fudge + int(length[i] / 2)) + "-", end="")
                     elif k == "skylake-gpu" and i == "cores":
                         print(
-                            " " * (spc + fudge + l[i] - len(s[(k, i)]))
+                            " " * (spc + fudge + length[i] - len(s[(k, i)]))
                             + s[(k, i)]
                             + "+",
                             end="",
                         )
                     else:
                         print(
-                            " " * (spc + fudge + l[i] - len(s[(k, i)])) + s[(k, i)],
+                            " " * (spc + fudge + length[i] - len(s[(k, i)]))
+                            + s[(k, i)],
                             end="",
                         )
                 print()

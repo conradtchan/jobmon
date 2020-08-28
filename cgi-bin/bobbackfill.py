@@ -1,11 +1,10 @@
 #!/usr/bin/python3
 
-import cgi
 import cgitb
+from os import path
+from sys import stdout
 
 cgitb.enable()
-from sys import stdout
-from os import path
 
 DATA_PATH = "/var/spool/bobMon2/"
 FILE_NAME = "backfill.json.gz"

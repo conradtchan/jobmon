@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
-
-API_VERSION = 12
-
 import gzip
-import sys
-from os import path
-from os import remove
-from file_utils import write_data
-from datetime import datetime
-from glob import glob
-import time
 import json
-import bobmon_config as config
-import influx_config
-import bobmon_ganglia as ganglia
-from bobmon_gpu_mapping import GPUmapping
-import pyslurm
-from influxdb import InfluxDBClient
+import math
 import pwd
 import re
-import showbf
-import math
+import sys
+import time
+from datetime import datetime
+from glob import glob
+from os import path, remove
 
+import bobmon_config as config
+import bobmon_ganglia as ganglia
+import influx_config
+import pyslurm
+import showbf
+from bobmon_gpu_mapping import GPUmapping
+from file_utils import write_data
+from influxdb import InfluxDBClient
+
+API_VERSION = 12
 KB = 1024
 
 
@@ -77,7 +75,7 @@ class Backend:
                         "idle": float(data["multicpu_idle{:}".format(i)]),
                     }
                     core += [vals]
-                except:
+                except KeyError:
                     continue
 
             # Some machines report cores with a different numbering, so we map to that
@@ -121,7 +119,7 @@ class Backend:
                 "total": math.ceil(float(data["mem_total"]) / KB),
             }
 
-        except:
+        except KeyError:
             now = time.time()
             if now - data["reported"] < config.NODE_DEAD_TIMEOUT:
                 print(name, "mem gmond data is incomplete")
@@ -223,15 +221,15 @@ class Backend:
 
     @staticmethod
     def lustre(data):
-        l = {}
+        lustre_data = {}
         if "farnarkle_fred_read_bytes" in data.keys():
-            l["read"] = math.ceil(float(data["farnarkle_fred_read_bytes"]))
+            lustre_data["read"] = math.ceil(float(data["farnarkle_fred_read_bytes"]))
 
         if "farnarkle_fred_write_bytes" in data.keys():
-            l["write"] = math.ceil(float(data["farnarkle_fred_write_bytes"]))
+            lustre_data["write"] = math.ceil(float(data["farnarkle_fred_write_bytes"]))
 
-        if len(l.keys()) > 0:
-            return l
+        if len(lustre_data.keys()) > 0:
+            return lustre_data
 
     @staticmethod
     def jobfs(data):
@@ -489,7 +487,7 @@ class Backend:
         for job_id in slurm_jobs:
             s = slurm_jobs[job_id]
 
-            if s["array_task_str"] != None:  # queued array job(s)
+            if s["array_task_str"] is not None:  # queued array job(s)
                 # expand into separate sub jobs
                 for t in self.expand_array(s["array_task_str"]):
                     jid = str(job_id) + "_" + str(t)
@@ -497,7 +495,7 @@ class Backend:
 
             else:
                 if (
-                    s["array_task_id"] != None and s["array_job_id"] != None
+                    s["array_task_id"] is not None and s["array_job_id"] is not None
                 ):  # running array task
                     # change the jobid to be array syntax
                     jid = str(s["array_job_id"]) + "_" + str(s["array_task_id"])
@@ -582,7 +580,7 @@ class Backend:
         times = []
         for x in data_files:
             filename = path.basename(x)
-            match = re.search(config.FILE_NAME_PATTERN.format("(\d+)"), filename)
+            match = re.search(config.FILE_NAME_PATTERN.format(r"(\d+)"), filename)
             if match is not None:
                 times += [match.group(1)]
 
@@ -609,9 +607,9 @@ class Backend:
                 filename = config.FILE_NAME_PATTERN.format(t)
                 filepath = path.join(config.DATA_PATH, filename)
                 try:
-                    removed_data = self.usage_cache["history"].pop(t)
+                    del self.usage_cache["history"][t]
                     remove(filepath)
-                except:
+                except KeyError:
                     print("Tried to remove {:}, but already deleted".format(filename))
 
         return h

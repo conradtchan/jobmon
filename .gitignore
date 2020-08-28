@@ -4,3 +4,5 @@
 *.log
 
 backend/influx_config.py
+
+.vscode/

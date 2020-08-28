@@ -1,13 +1,12 @@
 #!/usr/bin/python3
-
 import cgi
 import cgitb
+import re
+from glob import glob
+from os import path
+from sys import stdout
 
 cgitb.enable()
-from sys import stdout
-from os import path
-from glob import glob
-import re
 
 DATA_PATH = "/var/spool/bobMon2/"
 FILE_NAME_PATTERN = "bobData{:}.json.gz"
@@ -20,7 +19,7 @@ def get_closest_file():
     if "time" in arguments.keys():
         try:
             time_request = int(arguments["time"].value)
-        except:
+        except ValueError:
             return FILE_NAME_PATTERN.format("")
 
         # Get all the timestamps from filenames
@@ -30,7 +29,7 @@ def get_closest_file():
         times = []
         for x in data_files:
             filename = path.basename(x)
-            match = re.search(FILE_NAME_PATTERN.format("(\d+)"), filename)
+            match = re.search(FILE_NAME_PATTERN.format(r"(\d+)"), filename)
             if match is not None:
                 times += [match.group(1)]
 

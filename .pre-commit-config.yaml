@@ -4,13 +4,13 @@ repos:
   - repo: https://github.com/ambv/black
     rev: stable
     hooks:
-    - id: black
-      language_version: python3.7
+      - id: black
+        language_version: python3.7
 
   - repo: https://gitlab.com/PyCQA/flake8
     rev: 3.8.3
     hooks:
-    - id: flake8
+      - id: flake8
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.24.2
@@ -23,3 +23,8 @@ repos:
     hooks:
       - id: check-json
       - id: check-merge-conflict
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.4.2
+    hooks:
+      - id: isort

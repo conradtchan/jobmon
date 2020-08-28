@@ -1,5 +1,6 @@
-import bobmon_config as config
 import socket
+
+import bobmon_config as config
 
 
 class Stats:
@@ -78,7 +79,7 @@ class Stats:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             sock.connect((host, port))
-        except:
+        except OSError:
             return None
 
         xml = ""
@@ -115,7 +116,7 @@ class Stats:
                     if xml[i][:4] == "TAGS":  # must be ganglia 3.2.0
                         i += 1
 
-                    reported = xmlData[i].split('"')[1]
+                    reported = xml[i].split('"')[1]
                     all[host] = {"reported": int(reported)}
                     i += 1
 
