@@ -4,11 +4,7 @@ import socket
 
 class Stats:
     def __init__(
-        self,
-        do_cpus=False,
-        report_time_only=False,
-        quiet=False,
-        dead_timeout=120,
+        self, do_cpus=False, report_time_only=False, quiet=False, dead_timeout=120,
     ):
         self.mem = {}  # dict of mem usage
         self.disk = {}  # dict of disk usage
