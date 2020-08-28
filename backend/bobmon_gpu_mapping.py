@@ -4,12 +4,13 @@
     and other jobs
 """
 
-from os import path
-import pyslurm
-import json
 import gzip
-from file_utils import write_data
+import json
+from os import path
+
 import bobmon_config as config
+import pyslurm
+from file_utils import write_data
 
 
 class GPUmapping:

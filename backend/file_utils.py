@@ -1,7 +1,7 @@
-from os import chmod, rename, unlink
 import gzip
 import json
 import stat
+from os import chmod, rename, unlink
 
 
 def mode644():
@@ -20,7 +20,7 @@ def write_data(data, filename):
     # Rename temporary file to live file
     try:
         rename(tmp_filename, filename)
-    except (OSError, error):
+    except OSError as error:
         err_num, err_str = error
         print("write_data: renamed failed. OsError", error)
         if err_num == 13:  # Permission denied
