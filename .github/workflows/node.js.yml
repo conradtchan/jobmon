@@ -20,5 +20,5 @@ jobs:
         with:
           node-version: '10.x'
       - run: yarn install
-      - run: yarn build
+      - run: yarn run build
       - run: yarn test
