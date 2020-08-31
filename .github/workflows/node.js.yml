@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ master, dev ]
 
+defaults:
+  run:
+    working-directory: frontend
+
 jobs:
   build:
 
@@ -16,8 +20,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '10.x'
+      # - uses: actions/setup-node@v1
+      # - run: apt-get update
+      # - run: apt-get install yarn
       - run: yarn install
-      - run: yarn run build
+      - run: yarn build
+      - run: yarn test

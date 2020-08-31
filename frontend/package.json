@@ -2,6 +2,7 @@
   "name": "bobmon",
   "version": "0.1.0",
   "private": true,
+  "license": "GPL",
   "dependencies": {
     "mocha": "^8.1.3",
     "react": "^16.2.0",
