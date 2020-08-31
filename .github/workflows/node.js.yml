@@ -14,11 +14,19 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [8.x, 10.x, 12.x]
+
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
         with:
-          node-version: '10.x'
-      - run: yarn install
-      - run: yarn run build
-      - run: yarn test
+          node-version: ${{ matrix.node-version }}
+      - run: npm install -g yarn
+      - name: install, build, and test
+        run: |
+          yarn install
+          yarn run build
+          yarn test
