@@ -21,6 +21,7 @@ class App extends React.Component {
             job: null,
             warnings: null,
             snapshotTime: new Date(0),
+            lastFetchAttempt: new Date(0),
             holdSnap: false,
             history: null,
             historyData: [],
@@ -148,6 +149,7 @@ class App extends React.Component {
                         apiData: jsonData,
                         gpuLayout: this.extractGpuLayout(jsonData),
                         snapshotTime: new Date(jsonData.timestamp * 1000),
+                        lastFetchAttempt: new Date(),
                         gotData: true,
                     }, () => this.updateHistoryData());
                     setTimeout(() => {this.fetchLatest()}, 10000) // 10 seconds
@@ -682,7 +684,13 @@ class App extends React.Component {
     show() {
         if (!this.state.future) {
             if (this.state.gotData) {
-                if ( (new Date() - this.state.snapshotTime) / 1000 > 600) {
+                // If haven't fetched for a long time, then force a fetch
+                // Usually happens when computer is waking from sleep
+                const now = new Date()
+                if ( (now - this.state.lastFetchAttempt) / 1000 > 300) {
+                    this.fetchLatest()
+                // If the backend copy is old, then maintenance is occuring
+                } else if ( (now - this.state.snapshotTime) / 1000 > 600) {
                     return (
                         <div id='main-box'>
                             Sorry! The job monitor is currently down for maintenance and will be back soon. <br/>
