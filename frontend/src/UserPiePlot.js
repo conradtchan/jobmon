@@ -95,10 +95,10 @@ export default class UserPiePlot extends React.Component {
 
             userStringsBlock = (
                 <div className="user-strings">
-                    <div className="user-strings-halfcol">
+                    <div className="user-strings-halfcol-left">
                         {userStringsLeft}
                     </div>
-                    <div className="user-strings-halfcol">
+                    <div className="user-strings-halfcol-right">
                         {userStringsRight}
                     </div>
                 </div>
@@ -189,7 +189,7 @@ class UserString extends React.Component {
             )
             userDescription.push(
                 <div className="user-string-jobs" key='nJobs'>
-                    ({this.props.user.jobs} job{(this.props.user.jobs > 1) ? 's' : ''})
+                    {this.props.user.jobs} job{(this.props.user.jobs > 1) ? 's' : ''}
                 </div>
             )
         }

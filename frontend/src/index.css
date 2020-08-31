@@ -312,12 +312,17 @@ body {
   display: flex;
   text-align: left;
   cursor: pointer;
+  border-radius: var(--rounding-radius);
+  background: var(--medium-shade);
+  border-style: solid;
+  border-width: var(--border-width);
+  border-color: var(--dark-shade);
+  margin-bottom: var(--rounding-radius);
+
   -o-transition: var(--transition-time);
   -ms-transition: var(--transition-time);
   -moz-transition: var(--transition-time);
   -webkit-transition: var(--transition-time);
-
-  /* ...and now for the proper property */
   transition: var(--transition-time);
 }
 
@@ -360,8 +365,15 @@ body {
   flex-direction: row;
 }
 
-.user-strings-halfcol {
+.user-strings-halfcol-left {
   flex: 1 1 50%;
+  margin-left: var(--rounding-radius);
+  margin-right: var(--rounding-radius);
+}
+
+.user-strings-halfcol-right {
+  flex: 1 1 50%;
+  margin-right: var(--rounding-radius);
 }
 
 .user-strings-col {
