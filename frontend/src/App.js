@@ -690,7 +690,7 @@ class App extends React.Component {
                 if ( (now - this.state.lastFetchAttempt) / 1000 > 300) {
                     this.fetchLatest()
                 // If the backend copy is old, then maintenance is occuring
-                } else if ( (now - this.state.snapshotTime) / 1000 > 600) {
+                } else if (( (now - this.state.snapshotTime) / 1000 > 600) && !(this.state.holdSnap) ) {
                     return (
                         <div id='main-box'>
                             Sorry! The job monitor is currently down for maintenance and will be back soon. <br/>
