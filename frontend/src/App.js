@@ -31,6 +31,7 @@ class App extends React.Component {
             backfill: null,
             cpuKeys: {'user': 0, 'nice': 1, 'system': 2, 'wait': 3, 'idle': 4},
             gpuLayout: null,
+            runningCores: 1,
         };
 
         this.fetchHistory();
@@ -616,6 +617,8 @@ class App extends React.Component {
             runningData[i]['index'] = i
         }
 
+        this.setState({runningCores: systemUsage.runningCores})
+
         return (
             <UserPiePlot
                 runningData = {runningData}
@@ -693,8 +696,14 @@ class App extends React.Component {
                 } else if (( (now - this.state.snapshotTime) / 1000 > 600) && !(this.state.holdSnap) ) {
                     return (
                         <div id='main-box'>
-                            Sorry! The job monitor is currently down for maintenance and will be back soon. <br/>
+                            The job monitor is currently down for maintenance and will be back soon. <br/>
                             Jobs will continue running and can still be inspected by logging in to the compute nodes directly.
+                        </div>
+                    )
+                } else if (this.state.runningCores === 0) {
+                    return (
+                        <div id='main-box'>
+                            OzSTAR is currently down for maintenance and will be back soon. <br/>
                         </div>
                     )
                 } else {
