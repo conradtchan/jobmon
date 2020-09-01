@@ -31,7 +31,6 @@ class App extends React.Component {
             backfill: null,
             cpuKeys: {'user': 0, 'nice': 1, 'system': 2, 'wait': 3, 'idle': 4},
             gpuLayout: null,
-            runningCores: 1,
         };
 
         this.fetchHistory();
@@ -573,8 +572,7 @@ class App extends React.Component {
         return total
     }
 
-    getUserPiePlot(warnings) {
-        const systemUsage = this.getSystemUsage();
+    getUserPiePlot(warnings, systemUsage) {
         let runningData = {};
 
         // Sum usage
@@ -616,8 +614,6 @@ class App extends React.Component {
         for (let i=0; i<runningData.length; i++) {
             runningData[i]['index'] = i
         }
-
-        this.setState({runningCores: systemUsage.runningCores})
 
         return (
             <UserPiePlot
@@ -700,21 +696,24 @@ class App extends React.Component {
                             Jobs will continue running and can still be inspected by logging in to the compute nodes directly.
                         </div>
                     )
-                } else if (this.state.runningCores === 0) {
-                    return (
-                        <div id='main-box'>
-                            OzSTAR is currently down for maintenance and will be back soon. <br/>
-                        </div>
-                    )
                 } else {
                     const warnings = this.generateWarnings();
+                    const systemUsage = this.getSystemUsage()
+                    if (systemUsage.runningCores === 0) {
+                        return (
+                            <div id='main-box'>
+                                OzSTAR is currently down for maintenance and will be back soon. <br/>
+                            </div>
+                        )
+                    } else {
                     return (
                         <div id='main-box'>
-                            {this.getUserPiePlot(warnings)}
+                            {this.getUserPiePlot(warnings, systemUsage)}
                             {this.getNodeOverview(warnings)}
                             {this.getNodeDetails(warnings)}
                         </div>
                     )
+                    }
                 }
             }
         } else {
