@@ -15,17 +15,17 @@ export default class Backfill extends React.Component {
         this.state = {
             tMaxRes: 7*24*3600 // Max reservable time
         }
-    }    
+    }
 
-    timeString(num) { 
+    timeString(num) {
         if (num === this.state.tMaxRes/60) {
             return 'Unlimited'
         } else {
-            const hours = Math.floor(num / 60);  
+            const hours = Math.floor(num / 60);
             const minutes = num % 60;
-            return `${hours}:${("0"+minutes).slice(-2)}`;  
+            return `${hours}:${("0"+minutes).slice(-2)}`;
         }
-               
+
     }
 
     render() {
@@ -57,14 +57,14 @@ export default class Backfill extends React.Component {
                 if (Object.keys(this.props.backfillData[partition]).length > 6) {
                     unit = ""
                 }
-                
+
 
                 backfillCharts.push(
                     <div key={partition}>
                         {partition}
                         <ResponsiveContainer width="100%" height={100}>
-                            <BarChart 
-                                data={data} 
+                            <BarChart
+                                data={data}
                                 layout='horizontal'
                                 barSize={20}
                                 barGap={0}
@@ -72,7 +72,7 @@ export default class Backfill extends React.Component {
                                 <XAxis dataKey="cores" unit={unit} interval={0}/>
                                 <YAxis hide={true} type="number" domain={[0, this.state.tMaxRes/(24*7)*8]} allowDataOverflow={true} />
                                 <Tooltip
-                                    labelFormatter={(cores) => cores + ' cores (' + count[cores] + ' slots)'}
+                                    labelFormatter={(cores) => cores + ' cores (' + count[cores] + ' slot' + (count[cores] > 1 ? 's' : '') + ')'}
                                     formatter={(value) => this.timeString(value/60)}
                                 />
                                 <Bar dataKey="shortest" fill='#8884d8' />
@@ -92,8 +92,8 @@ export default class Backfill extends React.Component {
                 </div>
                 <div className='instruction'>
                     Jobs times shorter than the longest slot (mouseover) may be able to start instantly, subject to memory constraints.
-                    <br /> 
-                    <br /> 
+                    <br />
+                    <br />
                 </div>
                 {backfillCharts}
 
