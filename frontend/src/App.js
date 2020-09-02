@@ -572,8 +572,7 @@ class App extends React.Component {
         return total
     }
 
-    getUserPiePlot(warnings) {
-        const systemUsage = this.getSystemUsage();
+    getUserPiePlot(warnings, systemUsage) {
         let runningData = {};
 
         // Sum usage
@@ -687,25 +686,36 @@ class App extends React.Component {
                 // If haven't fetched for a long time, then force a fetch
                 // Usually happens when computer is waking from sleep
                 const now = new Date()
-                if ( (now - this.state.lastFetchAttempt) / 1000 > 300) {
+                const fetchAge = (now - this.state.lastFetchAttempt) / 1000
+                const snapAge = (now - this.state.snapshotTime) / 1000
+                if (fetchAge > 300) {
                     this.fetchLatest()
                 // If the backend copy is old, then maintenance is occuring
-                } else if (( (now - this.state.snapshotTime) / 1000 > 600) && !(this.state.holdSnap) ) {
+                } else if ((snapAge > 600) && !(this.state.holdSnap)) {
                     return (
                         <div id='main-box'>
-                            Sorry! The job monitor is currently down for maintenance and will be back soon. <br/>
+                            The job monitor is currently down for maintenance and will be back soon. <br/>
                             Jobs will continue running and can still be inspected by logging in to the compute nodes directly.
                         </div>
                     )
                 } else {
                     const warnings = this.generateWarnings();
+                    const systemUsage = this.getSystemUsage()
+                    if (systemUsage.runningCores === 0) {
+                        return (
+                            <div id='main-box'>
+                                OzSTAR is currently down for maintenance and will be back soon. <br/>
+                            </div>
+                        )
+                    } else {
                     return (
                         <div id='main-box'>
-                            {this.getUserPiePlot(warnings)}
+                            {this.getUserPiePlot(warnings, systemUsage)}
                             {this.getNodeOverview(warnings)}
                             {this.getNodeDetails(warnings)}
                         </div>
                     )
+                    }
                 }
             }
         } else {
@@ -905,7 +915,7 @@ class App extends React.Component {
     }
 
     unfreeze() {
-        this.setState({holdSnap: false},
+        this.setState({holdSnap: false, snapshotTime: new Date()},
             () => this.fetchLatest()
         );
     }
