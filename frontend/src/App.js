@@ -686,10 +686,12 @@ class App extends React.Component {
                 // If haven't fetched for a long time, then force a fetch
                 // Usually happens when computer is waking from sleep
                 const now = new Date()
-                if ( (now - this.state.lastFetchAttempt) / 1000 > 300) {
+                const fetchAge = (now - this.state.lastFetchAttempt) / 1000
+                const snapAge = (now - this.state.snapshotTime) / 1000
+                if (fetchAge > 300) {
                     this.fetchLatest()
                 // If the backend copy is old, then maintenance is occuring
-                } else if (( (now - this.state.snapshotTime) / 1000 > 600) && !(this.state.holdSnap) ) {
+                } else if ((snapAge > 600) && !(this.state.holdSnap)) {
                     return (
                         <div id='main-box'>
                             The job monitor is currently down for maintenance and will be back soon. <br/>
@@ -913,7 +915,7 @@ class App extends React.Component {
     }
 
     unfreeze() {
-        this.setState({holdSnap: false},
+        this.setState({holdSnap: false, snapshotTime: new Date()},
             () => this.fetchLatest()
         );
     }
