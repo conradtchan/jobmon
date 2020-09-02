@@ -386,64 +386,82 @@ export default class NodeDetails extends React.Component {
     }
 
     render () {
-        const corePies = this.getCorePies();
-
-        const historyChart = this.getHistoryChart();
-        const gpuNames = this.getGpuNames();
-
-        const warningList = this.getWarnings();
-        const otherJobList = this.getOtherJobList();
-
-        return (
-            <div className="main-item right">
-                <div id='nodename-title'>
-                    {this.props.selectedJobId} {(this.props.selectedJobId !== null) && 'on'} {this.props.name}
+        if (this.props.username === null) {
+            return null
+        } else if (this.props.node === null) {
+            return(
+                <div className="main-item right">
+                    <div className='instruction'>
+                        Select a running job to view nodes
+                    </div>
+                    <br />
+                    {this.props.selectedJobId === null ? null :
+                    <div className='instruction'>
+                        Select a node to view detailed system usage
+                    </div>
+                    }
                 </div>
-                <div id='nodename-subtitle'>
-                    {(this.props.selectedJobId !== null) && this.props.jobs[this.props.selectedJobId].name}
-                </div>
-                {warningList}
+            )
+        } else {
+            const corePies = this.getCorePies();
 
-                <div className="time-selector">
-                    <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)} checked={this.props.timeWindow === 18000}/>
-                    <label> 5 hours   </label>
-                    <input type="radio" id="1h" name="timeWindow" value="1h" onChange={() => this.props.changeTimeWindow(3600)} checked={this.props.timeWindow === 3600}/>
-                    <label> 1 hour   </label>
-                    <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} checked={this.props.timeWindow === 600}/>
-                    <label> 10 minutes   </label>
-                </div>
-                <br />
-                <div className="heading">
-                    Job resource usage
-                </div>
+            const historyChart = this.getHistoryChart();
+            const gpuNames = this.getGpuNames();
 
-                {this.getJobPropCharts(historyChart, this.hasMemStats() )}
+            const warningList = this.getWarnings();
+            const otherJobList = this.getOtherJobList();
 
-                <div className="heading">
-                    Node resource usage
-                </div>
-                <div>
-                    CPU cores
-                </div>
-                <div className='core-grid'>
-                    {corePies}
-                </div>
+            return (
+                <div className="main-item right">
+                    <div id='nodename-title'>
+                        {this.props.selectedJobId} {(this.props.selectedJobId !== null) && 'on'} {this.props.name}
+                    </div>
+                    <div id='nodename-subtitle'>
+                        {(this.props.selectedJobId !== null) && this.props.jobs[this.props.selectedJobId].name}
+                    </div>
+                    {warningList}
 
-                {this.getPropCharts(historyChart, gpuNames)}
+                    <div className="time-selector">
+                        <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)} checked={this.props.timeWindow === 18000}/>
+                        <label> 5 hours   </label>
+                        <input type="radio" id="1h" name="timeWindow" value="1h" onChange={() => this.props.changeTimeWindow(3600)} checked={this.props.timeWindow === 3600}/>
+                        <label> 1 hour   </label>
+                        <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} checked={this.props.timeWindow === 600}/>
+                        <label> 10 minutes   </label>
+                    </div>
+                    <br />
+                    <div className="heading">
+                        Job resource usage
+                    </div>
 
-                {(otherJobList.length > 0) &&
+                    {this.getJobPropCharts(historyChart, this.hasMemStats() )}
 
-                <div>
-                    <div className='job-names heading'>
-                        Cohabitant jobs
+                    <div className="heading">
+                        Node resource usage
                     </div>
                     <div>
-                        {otherJobList}
+                        CPU cores
                     </div>
+                    <div className='core-grid'>
+                        {corePies}
+                    </div>
+
+                    {this.getPropCharts(historyChart, gpuNames)}
+
+                    {(otherJobList.length > 0) &&
+
+                    <div>
+                        <div className='job-names heading'>
+                            Cohabitant jobs
+                        </div>
+                        <div>
+                            {otherJobList}
+                        </div>
+                    </div>
+                    }
                 </div>
-                }
-            </div>
-        )
+            )
+        }
     }
 
 }

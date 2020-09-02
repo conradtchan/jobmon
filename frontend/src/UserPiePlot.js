@@ -115,9 +115,6 @@ export default class UserPiePlot extends React.Component {
 
         return (
             <div className='main-item left'>
-                <div className='instruction'>
-                    Select a user to view detailed system usage
-                </div>
                 <UsagePie
                     runningData={this.props.runningData}
                     runningCores={this.props.runningCores}
@@ -128,11 +125,6 @@ export default class UserPiePlot extends React.Component {
                     activeIndex={this.state.usagePieActiveIndex}
                     activeSectorSize={this.state.activeSectorSize}
                 />
-                {(Object.keys(this.props.warnedUsers).length > 0) &&
-                    <div className='bad-job'>
-                        Red users and jobs may require attention
-                    </div>
-                }
                 {(maxBadness > this.state.terribleThreshold && this.state.nameSort === 'badness') &&
                     <div className='terrible-job'>
                         Highlighted users are severely underutilizing resources and impacting other users

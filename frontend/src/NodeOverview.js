@@ -168,9 +168,6 @@ export default class NodeOverview extends React.Component {
                     </div>
                     {(jobId === this.props.jobId) &&
                         <div>
-                            <div className='instruction'>
-                                Select a node to view detailed system usage
-                            </div>
                             <div className='overview-pies'>
                                 {this.getNodePies()}
                             </div>
@@ -350,6 +347,22 @@ export default class NodeOverview extends React.Component {
             </div>
         </div>
 
+        if (this.props.username === null) {
+            return (
+                <div className="main-item center">
+                    <div className='instruction'>
+                    Select a user on the left to view jobs
+                    </div>
+                    <br />
+                    {(Object.keys(this.props.warnedUsers).length > 0) &&
+                    <div className='bad-job'>
+                        Red users and jobs may require attention
+                    </div>
+                }
+                </div>
+            )
+        }
+
         return (
             <div className="main-item center">
                 <div id='username-title'>
@@ -357,9 +370,6 @@ export default class NodeOverview extends React.Component {
                 </div>
                 {legend}
 
-                <div className='instruction'>
-                    Select a running job to view nodes
-                </div>
                 <br />
                 <div className='heading'>
                     Running
