@@ -232,7 +232,7 @@ class App extends React.Component {
         return layout
     }
 
-    getNodeOverview(warnings) {
+    getNodeOverview(warnings, warnedUsers) {
         const jobs = this.state.apiData.jobs;
 
         let nodeHasJob = {};
@@ -250,28 +250,24 @@ class App extends React.Component {
                 }
             }
         }
-
-        if (this.state.username === null) {
-            return (null)
-        } else {
-            return (
-                <NodeOverview
-                    username={this.state.username}
-                    jobId={this.state.job}
-                    nodeData={this.state.apiData.nodes}
-                    jobs={this.state.apiData.jobs}
-                    nodeHasJob={nodeHasJob}
-                    onRowClick={(node) => this.selectNode(node)}
-                    warnings={warnings}
-                    onJobClick={(jobId) => this.selectJob(jobId)}
-                    historyData={this.state.historyData}
-                    cpuKeys={this.state.cpuKeys}
-                    getJobUsage={(jid, job, nodes) => this.getJobUsage(jid, job, nodes)}
-                    getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
-                    getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
-                />
-            )
-        }
+        return (
+            <NodeOverview
+                username={this.state.username}
+                jobId={this.state.job}
+                nodeData={this.state.apiData.nodes}
+                jobs={this.state.apiData.jobs}
+                nodeHasJob={nodeHasJob}
+                onRowClick={(node) => this.selectNode(node)}
+                warnings={warnings}
+                warnedUsers={warnedUsers}
+                onJobClick={(jobId) => this.selectJob(jobId)}
+                historyData={this.state.historyData}
+                cpuKeys={this.state.cpuKeys}
+                getJobUsage={(jid, job, nodes) => this.getJobUsage(jid, job, nodes)}
+                getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
+                getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
+            />
+        )
     }
 
     selectJob(jobId) {
@@ -288,26 +284,22 @@ class App extends React.Component {
     }
 
     getNodeDetails(warnings) {
-        if (this.state.nodeName === null) {
-            return (null)
-        } else {
-            return (
-                <NodeDetails
-                    name={this.state.nodeName}
-                    node={this.state.apiData.nodes[this.state.nodeName]}
-                    jobs={this.state.apiData.jobs}
-                    username={this.state.username}
-                    selectedJobId={this.state.job}
-                    onJobClick={(jobId) => this.selectJob(jobId)}
-                    warnings={warnings}
-                    historyData={this.state.historyData}
-                    cpuKeys={this.state.cpuKeys}
-                    changeTimeWindow={(t) => this.changeTimeWindow(t)}
-                    timeWindow={this.state.historyDataWindow}
-                    getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
-                />
-            )
-        }
+        return (
+            <NodeDetails
+                name={this.state.nodeName}
+                node={this.state.nodeName === null ? null : this.state.apiData.nodes[this.state.nodeName]}
+                jobs={this.state.apiData.jobs}
+                username={this.state.username}
+                selectedJobId={this.state.job}
+                onJobClick={(jobId) => this.selectJob(jobId)}
+                warnings={warnings}
+                historyData={this.state.historyData}
+                cpuKeys={this.state.cpuKeys}
+                changeTimeWindow={(t) => this.changeTimeWindow(t)}
+                timeWindow={this.state.historyDataWindow}
+                getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
+            />
+        )
     }
 
     changeTimeWindow(t) {
@@ -572,7 +564,7 @@ class App extends React.Component {
         return total
     }
 
-    getUserPiePlot(warnings, systemUsage) {
+    getUserPiePlot(warnings, warnedUsers, systemUsage) {
         let runningData = {};
 
         // Sum usage
@@ -621,7 +613,7 @@ class App extends React.Component {
                 runningCores = {systemUsage.runningCores}
                 availCores = {systemUsage.availCores}
                 updateUsername = {(name) => this.updateUsername(name)}
-                warnedUsers = {this.getWarnedUsers(warnings)}
+                warnedUsers = {warnedUsers}
                 badness = {this.getUserBadness(warnings, usernames)}
             />
         )
@@ -700,6 +692,7 @@ class App extends React.Component {
                     )
                 } else {
                     const warnings = this.generateWarnings();
+                    const warnedUsers = this.getWarnedUsers(warnings)
                     const systemUsage = this.getSystemUsage()
                     if (systemUsage.runningCores === 0) {
                         return (
@@ -710,8 +703,8 @@ class App extends React.Component {
                     } else {
                     return (
                         <div id='main-box'>
-                            {this.getUserPiePlot(warnings, systemUsage)}
-                            {this.getNodeOverview(warnings)}
+                            {this.getUserPiePlot(warnings, warnedUsers, systemUsage)}
+                            {this.getNodeOverview(warnings, warnedUsers)}
                             {this.getNodeDetails(warnings)}
                         </div>
                     )
