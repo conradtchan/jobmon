@@ -537,8 +537,15 @@ class App extends React.Component {
       usage.mem.used = job.mem[host];
       usage.mem.max = job.memMax;
       usage.mem.total = node.mem.total;
-      usage.infiniband.bytes_in = node.infiniband.bytes_in;
-      usage.infiniband.bytes_out = node.infiniband.bytes_out;
+      if (node.infiniband !== null) {
+        console.log(node)
+        usage.infiniband.bytes_in = node.infiniband.bytes_in;
+        usage.infiniband.bytes_out = node.infiniband.bytes_out;
+      } else {
+        usage.infiniband.bytes_in = 0.0;
+        usage.infiniband.bytes_out = 0.0;
+      }
+
       usage.lustre.read = node.lustre.read;
       usage.lustre.write = node.lustre.write;
 

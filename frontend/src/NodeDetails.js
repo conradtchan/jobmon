@@ -138,6 +138,20 @@ export default class NodeDetails extends React.Component {
         jobUser = usage.cpu.user;
         jobSystem = usage.cpu.system;
         jobWait = usage.cpu.wait;
+
+      }
+
+      // IB usage
+      let ib_bytes_in = 0.0
+      let ib_bytes_out = 0.0
+      let ib_pkts_in = 0.0
+      let ib_pkts_out = 0.0
+
+      if (nodeData.infiniband !== null) {
+        ib_bytes_in = nodeData.infiniband.bytes_in
+        ib_bytes_out = nodeData.infiniband.bytes_out
+        ib_pkts_in = nodeData.infiniband.pkts_in
+        ib_pkts_out = nodeData.infiniband.pkts_out
       }
 
       const d = new Date(data.timestamp * 1000);
@@ -155,10 +169,10 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * 1024 ** 2, // mb
         job_mem_requested: jobMemRequested * 1024 ** 2, // mb
         swap: (nodeData.swap.total - nodeData.swap.free) * 1024 ** 2, // mb
-        infiniband_in: nodeData.infiniband.bytes_in,
-        infiniband_out: nodeData.infiniband.bytes_out,
-        infiniband_pkts_in: nodeData.infiniband.pkts_in,
-        infiniband_pkts_out: nodeData.infiniband.pkts_out,
+        infiniband_in: ib_bytes_in,
+        infiniband_out: ib_bytes_out,
+        infiniband_pkts_in: ib_pkts_in,
+        infiniband_pkts_out: ib_pkts_out,
         lustre_read: nodeData.lustre.read,
         lustre_write: nodeData.lustre.write,
         jobfs_read: nodeData.jobfs.read,
