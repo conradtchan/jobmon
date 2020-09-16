@@ -1,28 +1,34 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
-export default class QueueString extends React.Component {
+export default class QueueString extends React.PureComponent {
   render() {
+    const { user } = this.props;
     return (
       <div
         className="queue-string"
       >
         <div className="queue-string-username">
-          {this.props.user.username}
+          {user.username}
         </div>
         <div className="queue-string-hours">
-          {this.props.user.hours.toFixed(0)}
+          {user.hours.toFixed(0)}
           {' '}
           cpu-h
         </div>
         <div className="queue-string-jobs">
           (
-          {this.props.user.jobs}
+          {user.jobs}
           {' '}
           job
-          {(this.props.user.jobs > 1) ? 's' : ''}
+          {(user.jobs > 1) ? 's' : ''}
           )
         </div>
       </div>
     );
   }
 }
+
+QueueString.propTypes = {
+  user: PropTypes.objectOf(PropTypes.string).isRequired,
+};
