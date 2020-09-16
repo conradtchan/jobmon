@@ -1,6 +1,6 @@
 import React from 'react';
 import UsagePie from './UsagePie'
-import UserString from './UserString'
+import UserString from './UserString.jsx'
 
 export default class UserPiePlot extends React.Component {
   constructor(props) {

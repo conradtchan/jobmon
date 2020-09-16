@@ -45,6 +45,11 @@ body {
   font-family: 'Rubik', sans-serif;
 }
 
+button {
+  font-family: inherit;
+  font-size: medium;
+}
+
 #header {
   margin: auto;
   width: 90%;
@@ -312,6 +317,9 @@ body {
   display: flex;
   text-align: left;
   cursor: pointer;
+
+  width: 100%;
+
   border-radius: var(--rounding-radius);
   background: var(--medium-shade);
   border-style: solid;
