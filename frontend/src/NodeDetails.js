@@ -138,20 +138,19 @@ export default class NodeDetails extends React.Component {
         jobUser = usage.cpu.user;
         jobSystem = usage.cpu.system;
         jobWait = usage.cpu.wait;
-
       }
 
       // IB usage
-      let ib_bytes_in = 0.0
-      let ib_bytes_out = 0.0
-      let ib_pkts_in = 0.0
-      let ib_pkts_out = 0.0
+      let ib_bytes_in = 0.0;
+      let ib_bytes_out = 0.0;
+      let ib_pkts_in = 0.0;
+      let ib_pkts_out = 0.0;
 
       if (nodeData.infiniband !== null) {
-        ib_bytes_in = nodeData.infiniband.bytes_in
-        ib_bytes_out = nodeData.infiniband.bytes_out
-        ib_pkts_in = nodeData.infiniband.pkts_in
-        ib_pkts_out = nodeData.infiniband.pkts_out
+        ib_bytes_in = nodeData.infiniband.bytes_in;
+        ib_bytes_out = nodeData.infiniband.bytes_out;
+        ib_pkts_in = nodeData.infiniband.pkts_in;
+        ib_pkts_out = nodeData.infiniband.pkts_out;
       }
 
       const d = new Date(data.timestamp * 1000);

@@ -1,5 +1,5 @@
 import React from 'react';
-import QueueString from './QueueString'
+import QueueString from './QueueString';
 
 export default class Queue extends React.Component {
   render() {
