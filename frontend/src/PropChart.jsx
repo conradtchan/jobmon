@@ -191,6 +191,10 @@ PropChart.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
   ).isRequired,
-  dataMax: PropTypes.number.isRequired,
+  dataMax: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   name: PropTypes.string.isRequired,
+};
+
+PropChart.defaultProps = {
+  dataMax: null,
 };

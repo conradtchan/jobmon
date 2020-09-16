@@ -6,6 +6,7 @@ import {
   Cell,
   Label,
 } from 'recharts';
+import PropTypes from 'prop-types';
 
 export default class NodePie extends React.Component {
   constructor(props) {
@@ -14,6 +15,18 @@ export default class NodePie extends React.Component {
   }
 
   render() {
+    const {
+      cpuUsage,
+      mem,
+      gpu,
+      nodeWarn,
+      nodeName,
+      onRowClick,
+      isGpuJob,
+    } = this.props;
+
+    const { expanded } = this.state;
+
     const style = getComputedStyle(document.documentElement);
 
     const cpuColors = [
@@ -35,33 +48,39 @@ export default class NodePie extends React.Component {
 
     const data = {
       cpu: [
-        { name: 'user', data: this.props.cpuUsage.user },
-        { name: 'wait', data: this.props.cpuUsage.wait },
-        { name: 'system', data: this.props.cpuUsage.system },
-        { name: 'idle', data: this.props.cpuUsage.idle },
+        { name: 'user', data: cpuUsage.user },
+        { name: 'wait', data: cpuUsage.wait },
+        { name: 'system', data: cpuUsage.system },
+        { name: 'idle', data: cpuUsage.idle },
       ],
       mem: [
-        { name: 'mem', data: this.props.mem },
-        { name: 'free', data: 100 - this.props.mem },
+        { name: 'mem', data: mem },
+        { name: 'free', data: 100 - mem },
       ],
       gpu: [
-        { name: 'gpu', data: this.props.gpu },
-        { name: 'free', data: 100 - this.props.gpu },
+        { name: 'gpu', data: gpu },
+        { name: 'free', data: 100 - gpu },
       ],
     };
 
     // Make label red if warning
     let doWarn = false;
-    if (this.props.nodeWarn) {
-      for (const w in this.props.nodeWarn.node) {
-        if (this.props.nodeWarn.node[w]) {
+    if (nodeWarn) {
+      const nodes = Object.keys(nodeWarn.node);
+      for (let i = 0; i < nodes.length; i += 1) {
+        const w = nodes[i];
+        if (nodeWarn.node[w]) {
           doWarn = true;
           break;
         }
       }
-      for (const jobId in this.props.nodeWarn.jobs) {
-        for (const w in this.props.nodeWarn.jobs[jobId]) {
-          if (this.props.nodeWarn.jobs[jobId][w]) {
+      const jobs = Object.keys(nodeWarn.jobs);
+      for (let i = 0; i < jobs.length; i += 1) {
+        const jobId = jobs[i];
+        const jobWarn = Object.keys(nodeWarn.jobs[jobId]);
+        for (let j = 0; j < jobWarn.length; j += 1) {
+          const w = jobWarn[j];
+          if (nodeWarn.jobs[jobId][w]) {
             doWarn = true;
             break;
           }
@@ -87,14 +106,14 @@ export default class NodePie extends React.Component {
       );
     }
 
-    const nodeLetters = this.props.nodeName.replace(/\d+/g, '');
-    const nodeNumber = parseInt(this.props.nodeName.match(/\d+$/)[0], 10);
+    const nodeLetters = nodeName.replace(/\d+/g, '');
+    const nodeNumber = parseInt(nodeName.match(/\d+$/)[0], 10);
 
     let dRing = 0;
-    if (this.state.expanded) dRing = 10;
+    if (expanded) dRing = 10;
 
     return (
-      <div className="overview-pie" onClick={() => this.props.onRowClick(this.props.nodeName)}>
+      <button type="button" className="overview-pie" onClick={() => onRowClick(nodeName)}>
         <ResponsiveContainer>
           <PieChart
             onMouseEnter={() => this.setState({ expanded: true })}
@@ -117,18 +136,18 @@ export default class NodePie extends React.Component {
                     value1={nodeLetters}
                     value2={nodeNumber}
                   />
-)}
+                )}
               />
               {
-                                data.cpu.reverse().map(
-                                  (entry, index) => (
-                                    <Cell
-                                      key={index}
-                                      fill={cpuColors[index]}
-                                    />
-                                  ),
-                                )
-                            }
+                data.cpu.reverse().map(
+                  (entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={cpuColors[index]}
+                    />
+                  ),
+                )
+              }
             </Pie>
             <Pie
               data={data.mem}
@@ -140,17 +159,17 @@ export default class NodePie extends React.Component {
               endAngle={450}
             >
               {
-                                data.mem.reverse().map(
-                                  (entry, index) => (
-                                    <Cell
-                                      key={index}
-                                      fill={memColors[index]}
-                                    />
-                                  ),
-                                )
-                            }
+                data.mem.reverse().map(
+                  (entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={memColors[index]}
+                    />
+                  ),
+                )
+              }
             </Pie>
-            {this.props.isGpuJob && (
+            {isGpuJob && (
             <Pie
               data={data.gpu}
               nameKey="name"
@@ -161,20 +180,32 @@ export default class NodePie extends React.Component {
               endAngle={450}
             >
               {
-                                data.gpu.reverse().map(
-                                  (entry, index) => (
-                                    <Cell
-                                      key={index}
-                                      fill={gpuColors[index]}
-                                    />
-                                  ),
-                                )
-                            }
+                data.gpu.reverse().map(
+                  (entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={gpuColors[index]}
+                    />
+                  ),
+                )
+              }
             </Pie>
             )}
           </PieChart>
         </ResponsiveContainer>
-      </div>
+      </button>
     );
   }
 }
+
+NodePie.propTypes = {
+  cpuUsage: PropTypes.objectOf(PropTypes.number).isRequired,
+  mem: PropTypes.number.isRequired,
+  gpu: PropTypes.number.isRequired,
+  nodeWarn: PropTypes.objectOf(
+    PropTypes.objectOf(PropTypes.oneOfType([PropTypes.number, PropTypes.number, PropTypes.object])),
+  ).isRequired,
+  nodeName: PropTypes.string.isRequired,
+  onRowClick: PropTypes.func.isRequired,
+  isGpuJob: PropTypes.bool.isRequired,
+};
