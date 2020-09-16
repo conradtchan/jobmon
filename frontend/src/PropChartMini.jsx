@@ -1,6 +1,4 @@
 import React from 'react';
-import PropChart from './PropChart';
-
 import {
   ResponsiveContainer,
   Tooltip,
@@ -8,7 +6,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-
+import PropChart from './PropChart';
 
 export default class PropChartMini extends PropChart {
   render() {
