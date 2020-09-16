@@ -103,7 +103,7 @@ export default class UsagePie extends React.Component {
     }
 
     const pieData = [];
-    for (let i; i < runningData.length; i += 1) {
+    for (let i = 0; i < runningData.length; i += 1) {
       const user = runningData[i];
       pieData.push({
         username: user.username,
