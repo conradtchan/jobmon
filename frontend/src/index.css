@@ -132,23 +132,19 @@ div:focus {outline: 0px;}
 
 .overview-pies {
   display: flex;
-
-  /* flex-direction: row; */
   flex-wrap: wrap;
   justify-content: flex-end;
   width: 100%;
   margin-bottom: 10px;
-
-  /* border: 1px black solid; */
 }
 
 .overview-pie {
-  cursor: pointer;
   height: 64px;
   width: 64px;
   margin: 0 auto;
-
-  /* border: 1px black solid; */
+  border: none;
+  background: none;
+  padding: 0;
 }
 
 .other-job-row {
