@@ -1,10 +1,18 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import QueueString from './QueueString';
 
-export default class Queue extends React.Component {
+export default class Queue extends React.PureComponent {
   render() {
+    const {
+      queueData,
+      queueTotal,
+      availCores,
+    } = this.props;
+
     const queueStrings = [];
-    for (const user of this.props.queueData) {
+    for (let i = 0; i < queueData.length; i += 1) {
+      const user = queueData[i];
       queueStrings.push(
         <QueueString
           key={user.username}
@@ -19,16 +27,16 @@ export default class Queue extends React.Component {
           Queue
         </div>
         <div>
-          {this.props.queueTotal.size}
+          {queueTotal.size}
           {' '}
           job
-          {(this.props.queueTotal.size !== 1) ? 's' : ''}
+          {(queueTotal.size !== 1) ? 's' : ''}
           {' '}
           for
-          {this.props.queueTotal.cpuHours.toFixed(0)}
+          {queueTotal.cpuHours.toFixed(0)}
           {' '}
           cpu-h (
-          {(this.props.queueTotal.cpuHours / this.props.availCores).toFixed(0)}
+          {(queueTotal.cpuHours / availCores).toFixed(0)}
           {' '}
           machine-h)
           <br />
@@ -40,3 +48,9 @@ export default class Queue extends React.Component {
     );
   }
 }
+
+Queue.propTypes = {
+  queueData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  queueTotal: PropTypes.objectOf(PropTypes.number).isRequired,
+  availCores: PropTypes.number.isRequired,
+};

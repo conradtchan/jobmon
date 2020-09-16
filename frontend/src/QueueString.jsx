@@ -30,5 +30,5 @@ export default class QueueString extends React.PureComponent {
 }
 
 QueueString.propTypes = {
-  user: PropTypes.objectOf(PropTypes.string).isRequired,
+  user: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])).isRequired,
 };
