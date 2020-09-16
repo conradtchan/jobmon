@@ -76,7 +76,7 @@ export default class UserString extends React.PureComponent {
 }
 
 UserString.propTypes = {
-  user: PropTypes.objectOf(PropTypes.object).isRequired,
+  user: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])).isRequired,
   availCores: PropTypes.number.isRequired,
   hoveredIndex: PropTypes.number,
   mouseEnter: PropTypes.func.isRequired,

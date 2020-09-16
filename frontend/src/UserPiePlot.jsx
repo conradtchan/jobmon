@@ -173,10 +173,10 @@ export default class UserPiePlot extends React.Component {
 }
 
 UserPiePlot.propTypes = {
-  runningData: PropTypes.objectOf(PropTypes.object).isRequired,
+  runningData: PropTypes.arrayOf(PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number]))).isRequired,
   runningCores: PropTypes.number.isRequired,
   availCores: PropTypes.number.isRequired,
   updateUsername: PropTypes.func.isRequired,
-  warnedUsers: PropTypes.objectOf(PropTypes.object).isRequired,
-  badness: PropTypes.objectOf(PropTypes.object).isRequired,
+  warnedUsers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  badness: PropTypes.objectOf(PropTypes.number).isRequired,
 };
