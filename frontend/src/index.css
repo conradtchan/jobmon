@@ -50,6 +50,8 @@ button {
   font-size: medium;
 }
 
+div:focus {outline: 0px;}
+
 #header {
   margin: auto;
   width: 90%;
