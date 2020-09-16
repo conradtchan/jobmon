@@ -538,7 +538,6 @@ class App extends React.Component {
       usage.mem.max = job.memMax;
       usage.mem.total = node.mem.total;
       if (node.infiniband !== null) {
-        console.log(node)
         usage.infiniband.bytes_in = node.infiniband.bytes_in;
         usage.infiniband.bytes_out = node.infiniband.bytes_out;
       } else {
