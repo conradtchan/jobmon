@@ -1,6 +1,7 @@
 import React from 'react';
-import UsagePie from './UsagePie'
-import UserString from './UserString.jsx'
+import PropTypes from 'prop-types';
+import UsagePie from './UsagePie';
+import UserString from './UserString';
 
 export default class UserPiePlot extends React.Component {
   constructor(props) {
@@ -32,40 +33,67 @@ export default class UserPiePlot extends React.Component {
     }
 
     restoreSelected() {
-      this.setState({ usagePieActiveIndex: this.state.usagePieSelectedIndex });
+      const { usagePieSelectedIndex } = this.state;
+      this.setState({ usagePieActiveIndex: usagePieSelectedIndex });
       this.setState({ activeSectorSize: 'small' });
     }
 
     updateUsername(index, name) {
-      this.props.updateUsername(name);
+      const { updateUsername } = this.props;
+      updateUsername(name);
       this.setState({ usagePieSelectedIndex: index });
     }
 
     render() {
+      const {
+        runningData,
+        runningCores,
+        availCores,
+        warnedUsers,
+        badness,
+      } = this.props;
+
+      const {
+        usagePieActiveIndex,
+        activeSectorSize,
+        nameSort,
+        terribleThreshold,
+      } = this.state;
+
       const userStrings = [];
       let maxBadness = 0;
-      for (const user of this.props.runningData) {
+      for (let i = 0; i < runningData.length; i += 1) {
+        const user = runningData[i];
         userStrings.push(
           <UserString
             key={user.username}
             user={user}
-            availCores={this.props.availCores}
-            hoveredIndex={this.state.usagePieActiveIndex}
+            availCores={availCores}
+            hoveredIndex={usagePieActiveIndex}
             mouseEnter={() => this.updateActive(user.index)}
             mouseLeave={() => this.restoreSelected()}
             onClick={() => this.updateUsername(user.index, user.username)}
-            warning={this.props.warnedUsers.includes(user.username)}
-            badness={this.props.badness[user.username]}
-            terribleThreshold={this.state.terribleThreshold}
-            nameSort={this.state.nameSort}
+            warning={warnedUsers.includes(user.username)}
+            badness={badness[user.username]}
+            terribleThreshold={terribleThreshold}
+            nameSort={nameSort}
           />,
         );
-        maxBadness = Math.max(maxBadness, this.props.badness[user.username]);
+        maxBadness = Math.max(maxBadness, badness[user.username]);
       }
 
-      if (this.state.nameSort === 'alpha') {
-        userStrings.sort((a, b) => ((a.props.user.username < b.props.user.username) ? -1 : (a.props.user.username > b.props.user.username) ? 1 : 0));
-      } else if (this.state.nameSort === 'badness') {
+      if (nameSort === 'alpha') {
+        userStrings.sort(
+          (a, b) => {
+            if (a.props.user.username < b.props.user.username) {
+              return -1;
+            } if (a.props.user.username > b.props.user.username) {
+              return 1;
+            }
+            return 0;
+          },
+        );
+      } else if (nameSort === 'badness') {
         userStrings.sort((a, b) => b.props.badness - a.props.badness);
       }
 
@@ -77,7 +105,7 @@ export default class UserPiePlot extends React.Component {
       if (mainBoxWidth > 1024) {
         const userStringsLeft = [];
         const userStringsRight = [];
-        for (let i = 0; i < userStrings.length; i++) {
+        for (let i = 0; i < userStrings.length; i += 1) {
           if (i < userStrings.length / 2) {
             userStringsLeft.push(userStrings[i]);
           } else {
@@ -108,19 +136,20 @@ export default class UserPiePlot extends React.Component {
       return (
         <div className="main-item left">
           <UsagePie
-            runningData={this.props.runningData}
-            runningCores={this.props.runningCores}
-            availCores={this.props.availCores}
+            runningData={runningData}
+            runningCores={runningCores}
+            availCores={availCores}
             onPieClick={(data, index) => this.updateUsername(index, data.name)}
-            onMouseEnter={(data, index) => this.updateActive(index)}
-            onMouseLeave={(data, index) => this.restoreSelected()}
-            activeIndex={this.state.usagePieActiveIndex}
-            activeSectorSize={this.state.activeSectorSize}
+            onMouseEnter={(index) => this.updateActive(index)}
+            onMouseLeave={() => this.restoreSelected()}
+            activeIndex={usagePieActiveIndex}
+            activeSectorSize={activeSectorSize}
           />
-          {(maxBadness > this.state.terribleThreshold && this.state.nameSort === 'badness')
+          {(maxBadness > terribleThreshold && nameSort === 'badness')
                     && (
                     <div className="terrible-job">
-                      Highlighted users are severely underutilizing resources and impacting other users
+                      Highlighted users are severely underutilizing resources
+                      and impacting other users
                     </div>
                     )}
           <br />
@@ -128,13 +157,26 @@ export default class UserPiePlot extends React.Component {
             Running
           </div>
           <div>
-            <input type="radio" id="alpha" name="nameSort" value="alpha" onChange={() => this.setState({ nameSort: 'alpha' })} checked={this.state.nameSort === 'alpha'} />
-            <label> Alphabetical &nbsp;&nbsp;</label>
-            <input type="radio" id="badness" name="nameSort" value="badness" onChange={() => this.setState({ nameSort: 'badness' })} checked={this.state.nameSort === 'badness'} />
-            <label> Inefficiency </label>
+            <label htmlFor="alpha">
+              <input type="radio" id="alpha" name="nameSort" value="alpha" onChange={() => this.setState({ nameSort: 'alpha' })} checked={nameSort === 'alpha'} />
+              Alphabetical &nbsp;&nbsp;
+            </label>
+            <label htmlFor="badness">
+              <input type="radio" id="badness" name="nameSort" value="badness" onChange={() => this.setState({ nameSort: 'badness' })} checked={nameSort === 'badness'} />
+              Inefficiency
+            </label>
           </div>
           {userStringsBlock}
         </div>
       );
     }
 }
+
+UserPiePlot.propTypes = {
+  runningData: PropTypes.objectOf(PropTypes.object).isRequired,
+  runningCores: PropTypes.number.isRequired,
+  availCores: PropTypes.number.isRequired,
+  updateUsername: PropTypes.func.isRequired,
+  warnedUsers: PropTypes.objectOf(PropTypes.object).isRequired,
+  badness: PropTypes.objectOf(PropTypes.object).isRequired,
+};
