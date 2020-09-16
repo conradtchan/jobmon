@@ -38,7 +38,7 @@ export default class UserPiePlot extends React.Component {
       this.setState({ activeSectorSize: 'small' });
     }
 
-    updateUsername(index, name) {
+    updateSelectedUsername(index, name) {
       const { updateUsername } = this.props;
       updateUsername(name);
       this.setState({ usagePieSelectedIndex: index });
@@ -72,7 +72,7 @@ export default class UserPiePlot extends React.Component {
             hoveredIndex={usagePieActiveIndex}
             mouseEnter={() => this.updateActive(user.index)}
             mouseLeave={() => this.restoreSelected()}
-            onClick={() => this.updateUsername(user.index, user.username)}
+            onClick={() => this.updateSelectedUsername(user.index, user.username)}
             warning={warnedUsers.includes(user.username)}
             badness={badness[user.username]}
             terribleThreshold={terribleThreshold}
@@ -139,8 +139,8 @@ export default class UserPiePlot extends React.Component {
             runningData={runningData}
             runningCores={runningCores}
             availCores={availCores}
-            onPieClick={(data, index) => this.updateUsername(index, data.name)}
-            onMouseEnter={(index) => this.updateActive(index)}
+            onPieClick={(data, index) => this.updateSelectedUsername(index, data.name)}
+            onMouseEnter={(data, index) => this.updateActive(index)}
             onMouseLeave={() => this.restoreSelected()}
             activeIndex={usagePieActiveIndex}
             activeSectorSize={activeSectorSize}
