@@ -1,6 +1,6 @@
 import React from 'react';
 import JobText from './JobText';
-import PropChartMini from './PropChart';
+import { PropChartMini } from './PropChart';
 import NodePie from './NodePie';
 
 export default class NodeOverview extends React.Component {
