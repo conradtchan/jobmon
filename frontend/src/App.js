@@ -270,14 +270,23 @@ class App extends React.Component {
 
   selectJob(jobId) {
     // Unselect job if it is already selected
-    if (this.state.job === jobId) {
+    const { job } = this.state
+    if (job === jobId) {
       this.setState({ job: null });
+      this.selectNode(null);
     } else {
-      this.setState({ job: jobId });
+      this.setState({ job: jobId },
+        () => this.setUserToJob());
     }
+  }
 
-    // Clear selected job
-    this.selectNode(null);
+  setUserToJob() {
+    const { username, apiData, job } = this.state
+    // Set the username to the currently selected job
+    const jobUsername = apiData.jobs[job].username
+    if (username !== jobUsername) {
+      this.updateUsername(jobUsername)
+    }
   }
 
   getNodeDetails(warnings) {
@@ -370,7 +379,22 @@ class App extends React.Component {
   }
 
   updateUsername(name) {
-    this.setState({ username: name, nodeName: null, job: null });
+    const { job, apiData } = this.state
+    // If this new user owns the job, then a cohab job was selected
+    // Don't clear
+    let clearJob = true
+    if (job !== null) {
+      if (apiData.jobs[job].username === name) {
+        clearJob = false
+      }
+    }
+
+    if (clearJob) {
+      this.setState({ username: name, nodeName: null, job: null });
+    } else {
+      this.setState({ username: name});
+    }
+
   }
 
   getWarnedUsers(warnings) {
