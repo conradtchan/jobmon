@@ -7,9 +7,9 @@ import {
 } from 'recharts';
 import PropTypes from 'prop-types';
 
-export default class CorePie extends React.Component {
+export default class CorePie extends React.PureComponent {
   render() {
-    const { selected } = this.props;
+    const { data, selected } = this.props;
     const style = getComputedStyle(document.documentElement);
     const pieColors = [];
     pieColors.push(style.getPropertyValue('--piecolor-blank'));
@@ -25,7 +25,7 @@ export default class CorePie extends React.Component {
         <ResponsiveContainer>
           <PieChart>
             <Pie
-              data={this.props.data}
+              data={data}
               nameKey="name"
               dataKey="data"
               innerRadius="0%"
@@ -34,10 +34,10 @@ export default class CorePie extends React.Component {
               endAngle={450}
             >
               {
-                this.props.data.reverse().map(
+                data.reverse().map(
                   (entry, index) => (
                     <Cell
-                      key={index}
+                      key={entry.name}
                       fill={pieColors[index]}
                     />
                   ),
@@ -65,5 +65,6 @@ export default class CorePie extends React.Component {
 }
 
 CorePie.propTypes = {
-  selected: PropTypes.bool,
+  selected: PropTypes.bool.isRequired,
+  data: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
