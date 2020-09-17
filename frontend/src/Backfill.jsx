@@ -8,6 +8,7 @@ import {
   Tooltip,
   BarChart,
 } from 'recharts';
+import PropTypes from 'prop-types';
 
 export default class Backfill extends React.Component {
   constructor(props) {
@@ -18,7 +19,8 @@ export default class Backfill extends React.Component {
   }
 
   timeString(num) {
-    if (num === this.state.tMaxRes / 60) {
+    const { tMaxRes } = this.state;
+    if (num === tMaxRes / 60) {
       return 'Unlimited';
     }
     const hours = Math.floor(num / 60);
@@ -27,17 +29,23 @@ export default class Backfill extends React.Component {
   }
 
   render() {
+    const { tMaxRes } = this.state;
+    const { backfillData } = this.props;
+
     const backfillCharts = [];
-    for (const partition of Object.keys(this.props.backfillData).sort()) {
+    const sortedPartitions = Object.keys(backfillData).sort();
+    for (let i = 0; i < sortedPartitions.length; i += 1) {
+      const partition = sortedPartitions[i];
       // If not empty
-      if (Object.keys(this.props.backfillData[partition]).length > 0) {
+      if (Object.keys(backfillData[partition]).length > 0) {
         const data = [];
         const count = {};
-        for (const cores in this.props.backfillData[partition]) {
-          let { tMax } = this.props.backfillData[partition][cores];
-          let { tMin } = this.props.backfillData[partition][cores];
+        const coreCounts = Object.keys(backfillData[partition]);
+        for (let j = 0; j < coreCounts.length; j += 1) {
+          const cores = coreCounts[j];
+          let { tMin, tMax } = backfillData[partition][cores];
           if (tMax == null) {
-            tMax = this.state.tMaxRes;
+            tMax = tMaxRes;
           }
           if (tMin == null) {
             tMin = tMax;
@@ -48,11 +56,11 @@ export default class Backfill extends React.Component {
             shortest: tMin,
             longest: tMax,
           });
-          count[cores] = this.props.backfillData[partition][cores].count;
+          count[cores] = backfillData[partition][cores].count;
         }
 
         let unit = '-core';
-        if (Object.keys(this.props.backfillData[partition]).length > 6) {
+        if (Object.keys(backfillData[partition]).length > 6) {
           unit = '';
         }
 
@@ -67,7 +75,7 @@ export default class Backfill extends React.Component {
                 barGap={0}
               >
                 <XAxis dataKey="cores" unit={unit} interval={0} />
-                <YAxis hide type="number" domain={[0, this.state.tMaxRes / (24 * 7) * 8]} allowDataOverflow />
+                <YAxis hide type="number" domain={[0, (8 * tMaxRes) / (24 * 7)]} allowDataOverflow />
                 <Tooltip
                   labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''})`}
                   formatter={(value) => this.timeString(value / 60)}
@@ -87,7 +95,8 @@ export default class Backfill extends React.Component {
           Available Resources
         </div>
         <div className="instruction">
-          Jobs times shorter than the longest slot (mouseover) may be able to start instantly, subject to memory constraints.
+          Jobs times shorter than the longest slot (mouseover) may be able to start instantly,
+          subject to memory constraints.
           <br />
           <br />
         </div>
@@ -97,3 +106,11 @@ export default class Backfill extends React.Component {
     );
   }
 }
+
+Backfill.propTypes = {
+  backfillData: PropTypes.objectOf(PropTypes.object),
+};
+
+Backfill.defaultProps = {
+  backfillData: null,
+};
