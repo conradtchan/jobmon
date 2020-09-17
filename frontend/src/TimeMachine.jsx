@@ -7,7 +7,7 @@ import {
   Tooltip,
 } from 'recharts';
 import PropTypes from 'prop-types';
-import timeString from './timeFunctions';
+import { timeString } from './timeFunctions';
 
 export default class TimeMachine extends React.Component {
   constructor(props) {
