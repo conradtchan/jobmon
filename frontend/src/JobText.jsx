@@ -45,6 +45,12 @@ JobText.propTypes = {
   warn: PropTypes.bool.isRequired,
   id: PropTypes.string.isRequired,
   job: PropTypes.objectOf(PropTypes.oneOfType(
-    [PropTypes.number, PropTypes.string, PropTypes.objectOf(PropTypes.arrayOf(PropTypes.number))],
+    [
+      PropTypes.number,
+      PropTypes.string,
+      PropTypes.objectOf(PropTypes.arrayOf(PropTypes.number)),
+      PropTypes.objectOf(PropTypes.number),
+      PropTypes.bool,
+    ],
   )).isRequired,
 };
