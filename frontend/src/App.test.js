@@ -7,3 +7,8 @@ it('renders without crashing', () => {
   ReactDOM.render(<App />, div);
   ReactDOM.unmountComponentAtNode(div);
 });
+
+// sanity check
+it('one is one', () => {
+  expect(1).toEqual(1)
+});
