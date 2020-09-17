@@ -1,26 +1,29 @@
 import React from 'react';
-import {
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import PropTypes from 'prop-types';
 import JobText from './JobText';
 import PropChart from './PropChart';
+import CorePie from './CorePie';
 
 export default class NodeDetails extends React.Component {
   getCorePies() {
+    const {
+      selectedJobId,
+      name,
+      node,
+      cpuKeys,
+      jobs,
+    } = this.props;
     // Cores belonging to selected job
     let jobCores = [];
-    if (!(this.props.selectedJobId === null)) {
-      const jobLayout = this.props.jobs[this.props.selectedJobId].layout;
-      if (jobLayout.hasOwnProperty(this.props.name)) {
-        jobCores = jobLayout[this.props.name];
+    if (!(selectedJobId === null)) {
+      const jobLayout = jobs[selectedJobId].layout;
+      if (Object.prototype.hasOwnProperty.call(jobLayout, name)) {
+        jobCores = jobLayout[name];
       }
     }
     const corePies = [];
-    for (let i = 0; i < this.props.node.cpu.coreC.length; i++) {
-      const core = this.props.node.cpu.coreC[i];
+    for (let i = 0; i < node.cpu.coreC.length; i += 1) {
+      const core = node.cpu.coreC[i];
       let coreSelected = false;
       if (!(jobCores === null)) {
         coreSelected = jobCores.includes(i);
@@ -31,10 +34,10 @@ export default class NodeDetails extends React.Component {
           key={i}
           type="cpu"
           data={[
-            { name: 'user', data: core[this.props.cpuKeys.user] + core[this.props.cpuKeys.nice] },
-            { name: 'wait', data: core[this.props.cpuKeys.wait] },
-            { name: 'system', data: core[this.props.cpuKeys.system] },
-            { name: 'idle', data: core[this.props.cpuKeys.idle] },
+            { name: 'user', data: core[cpuKeys.user] + core[cpuKeys.nice] },
+            { name: 'wait', data: core[cpuKeys.wait] },
+            { name: 'system', data: core[cpuKeys.system] },
+            { name: 'idle', data: core[cpuKeys.idle] },
           ]}
           selected={coreSelected}
         />,
@@ -44,15 +47,20 @@ export default class NodeDetails extends React.Component {
   }
 
   getWarnings() {
+    const {
+      name,
+      selectedJobId,
+      warnings,
+    } = this.props;
     const warningText = [];
 
-    if (this.props.warnings.hasOwnProperty(this.props.name)) {
-      if (this.props.warnings[this.props.name].node.swapUse) {
+    if (Object.prototype.hasOwnProperty.call(warnings, name)) {
+      if (warnings[name].node.swapUse) {
         warningText.push('Node is using disk swap');
       }
 
-      if (this.props.warnings[this.props.name].jobs.hasOwnProperty(this.props.selectedJobId)) {
-        const jobWarns = this.props.warnings[this.props.name].jobs[this.props.selectedJobId];
+      if (Object.prototype.hasOwnProperty.call(warnings[name].jobs, selectedJobId)) {
+        const jobWarns = warnings[name].jobs[selectedJobId];
         if (jobWarns.cpuUtil) {
           warningText.push('Job underutilizes requested CPUs');
         }
@@ -67,7 +75,8 @@ export default class NodeDetails extends React.Component {
 
     const warningList = [];
     if (warningText.length > 0) {
-      for (const w of warningText) {
+      for (let i = 0; i < warningText.length; i += 1) {
+        const w = warningText[i];
         warningList.push(
           <div key={w} className="bad-job">
             Warning:
@@ -81,24 +90,32 @@ export default class NodeDetails extends React.Component {
   }
 
   getOtherJobList() {
+    const {
+      jobs,
+      name,
+      username,
+      warnings,
+      onJobClick,
+    } = this.props;
     const otherJobList = [];
-
-    for (const jobId in this.props.jobs) {
-      if (this.props.jobs[jobId].layout.hasOwnProperty(this.props.name)) {
-        if (!(this.props.jobs[jobId].username === this.props.username)) {
+    const jobIds = Object.keys(jobs);
+    for (let i = 0; i < jobIds.length; i += 1) {
+      const jobId = jobIds[i];
+      if (Object.prototype.hasOwnProperty.call(jobs[jobId].layout, name)) {
+        if (!(jobs[jobId].username === username)) {
           let warnJob = false;
-          if (Object.keys(this.props.warnings).length > 0) {
-            warnJob = this.props.warnings[this.props.name].jobs.hasOwnProperty(jobId);
+          if (Object.keys(warnings).length > 0) {
+            warnJob = Object.prototype.hasOwnProperty.call(warnings[name].jobs, jobId);
           }
           otherJobList.push(
-            <div key={jobId} className="cohab-job" onClick={() => this.props.onJobClick(jobId)}>
+            <button type="button" key={jobId} className="cohab-job" onClick={() => onJobClick(jobId)}>
               <JobText
                 key={jobId}
                 id={jobId}
-                job={this.props.jobs[jobId]}
+                job={jobs[jobId]}
                 warn={warnJob}
               />
-            </div>,
+            </button>,
           );
         }
       }
@@ -107,13 +124,30 @@ export default class NodeDetails extends React.Component {
   }
 
   getHistoryChart() {
+    const {
+      name,
+      selectedJobId,
+      getNodeUsage,
+      cpuKeys,
+      historyData,
+    } = this.props;
     const historyChart = [];
 
-    const sortedHistory = this.props.historyData;
-    sortedHistory.sort((a, b) => ((a.timestamp < b.timestamp) ? -1 : (a.timestamp > b.timestamp) ? 1 : 0));
+    const sortedHistory = historyData;
+    sortedHistory.sort(
+      (a, b) => {
+        if (a.timestamp < b.timestamp) {
+          return -1;
+        }
+        if (a.timestamp > b.timestamp) {
+          return 1;
+        } return 0;
+      },
+    );
 
-    for (const data of sortedHistory) {
-      const nodeData = data.nodes[this.props.name];
+    for (let i = 0; i < sortedHistory.length; i += 1) {
+      const data = sortedHistory[i];
+      const nodeData = data.nodes[name];
 
       let jobMem = 0.0;
       let jobMemMax = 0.0;
@@ -122,13 +156,13 @@ export default class NodeDetails extends React.Component {
       let jobSystem = 0.0;
       let jobWait = 0.0;
       // Only if the job has started running
-      if (data.jobs.hasOwnProperty(this.props.selectedJobId)) {
-        const job = data.jobs[this.props.selectedJobId];
+      if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
+        const job = data.jobs[selectedJobId];
 
-        const usage = this.props.getNodeUsage(this.props.selectedJobId, data.jobs[this.props.selectedJobId], nodeData, this.props.name);
+        const usage = getNodeUsage(selectedJobId, data.jobs[selectedJobId], nodeData, name);
 
         // Memory usage
-        if (job.mem.hasOwnProperty(this.props.name)) {
+        if (Object.prototype.hasOwnProperty.call(job.mem, name)) {
           jobMem = usage.mem.used;
           jobMemMax = usage.mem.max;
           jobMemRequested = job.memReq;
@@ -141,25 +175,25 @@ export default class NodeDetails extends React.Component {
       }
 
       // IB usage
-      let ib_bytes_in = 0.0;
-      let ib_bytes_out = 0.0;
-      let ib_pkts_in = 0.0;
-      let ib_pkts_out = 0.0;
+      let ibBytesIn = 0.0;
+      let ibBytesOut = 0.0;
+      let ibPktsIn = 0.0;
+      let ibPktsOut = 0.0;
 
       if (nodeData.infiniband !== null) {
-        ib_bytes_in = nodeData.infiniband.bytes_in;
-        ib_bytes_out = nodeData.infiniband.bytes_out;
-        ib_pkts_in = nodeData.infiniband.pkts_in;
-        ib_pkts_out = nodeData.infiniband.pkts_out;
+        ibBytesIn = nodeData.infiniband.bytes_in;
+        ibBytesOut = nodeData.infiniband.bytes_out;
+        ibPktsIn = nodeData.infiniband.pkts_in;
+        ibPktsOut = nodeData.infiniband.pkts_out;
       }
 
       const d = new Date(data.timestamp * 1000);
       const x = {
         time: data.timestamp,
         timeString: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
-        user: nodeData.cpu.totalC[this.props.cpuKeys.user] + nodeData.cpu.totalC[this.props.cpuKeys.nice],
-        system: nodeData.cpu.totalC[this.props.cpuKeys.system],
-        wait: nodeData.cpu.totalC[this.props.cpuKeys.wait],
+        user: nodeData.cpu.totalC[cpuKeys.user] + nodeData.cpu.totalC[cpuKeys.nice],
+        system: nodeData.cpu.totalC[cpuKeys.system],
+        wait: nodeData.cpu.totalC[cpuKeys.wait],
         mem: nodeData.mem.used * 1024 ** 2, // mb
         job_user: jobUser,
         job_system: jobSystem,
@@ -168,17 +202,17 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * 1024 ** 2, // mb
         job_mem_requested: jobMemRequested * 1024 ** 2, // mb
         swap: (nodeData.swap.total - nodeData.swap.free) * 1024 ** 2, // mb
-        infiniband_in: ib_bytes_in,
-        infiniband_out: ib_bytes_out,
-        infiniband_pkts_in: ib_pkts_in,
-        infiniband_pkts_out: ib_pkts_out,
+        infiniband_in: ibBytesIn,
+        infiniband_out: ibBytesOut,
+        infiniband_pkts_in: ibPktsIn,
+        infiniband_pkts_out: ibPktsOut,
         lustre_read: nodeData.lustre.read,
         lustre_write: nodeData.lustre.write,
         jobfs_read: nodeData.jobfs.read,
         jobfs_write: nodeData.jobfs.write,
       };
-      for (let i = 0; i < nodeData.nGpus; i++) {
-        const gpuName = `gpu${i.toString()}`;
+      for (let j = 0; j < nodeData.nGpus; j += 1) {
+        const gpuName = `gpu${j.toString()}`;
         x[gpuName] = nodeData.gpus[gpuName];
       }
       historyChart.push(x);
@@ -186,22 +220,10 @@ export default class NodeDetails extends React.Component {
     return historyChart;
   }
 
-  hasMemStats() {
-    let hasMem = false;
-    for (const data of this.props.historyData) {
-      if (data.jobs.hasOwnProperty(this.props.selectedJobId)) {
-        if (data.jobs[this.props.selectedJobId].hasMem) {
-          hasMem = true;
-        }
-      }
-    }
-
-    return hasMem;
-  }
-
   getGpuNames() {
+    const { node } = this.props;
     const gpuNames = [];
-    for (let i = 0; i < this.props.node.nGpus; i++) {
+    for (let i = 0; i < node.nGpus; i += 1) {
       const gpuName = `gpu${i.toString()}`;
       gpuNames.push(gpuName);
     }
@@ -209,6 +231,7 @@ export default class NodeDetails extends React.Component {
   }
 
   getPropCharts(historyChart, gpuNames) {
+    const { node } = this.props;
     const style = getComputedStyle(document.documentElement);
 
     return (
@@ -242,7 +265,7 @@ export default class NodeDetails extends React.Component {
             'fill',
           ]}
           unit="B"
-          dataMax={this.props.node.mem.total * 1024 ** 2}
+          dataMax={node.mem.total * 1024 ** 2}
           stacked={false}
         />
         <PropChart
@@ -256,7 +279,7 @@ export default class NodeDetails extends React.Component {
             'fill',
           ]}
           unit="B"
-          dataMax={this.props.node.swap.total * 1024 ** 2}
+          dataMax={node.swap.total * 1024 ** 2}
           stacked={false}
         />
         <PropChart
@@ -341,7 +364,7 @@ export default class NodeDetails extends React.Component {
     );
   }
 
-  getJobPropCharts(historyChart, hasMemStats) {
+  getJobPropCharts(historyChart) {
     const style = getComputedStyle(document.documentElement);
 
     const charts = [];
@@ -367,7 +390,7 @@ export default class NodeDetails extends React.Component {
       />,
     );
 
-    if (hasMemStats) {
+    if (this.hasMemStats()) {
       charts.push(
         <PropChart
           key="mem"
@@ -397,17 +420,43 @@ export default class NodeDetails extends React.Component {
     );
   }
 
+  hasMemStats() {
+    const {
+      historyData,
+      selectedJobId,
+    } = this.props;
+
+    for (let i = 0; i < historyData.length; i += 1) {
+      const data = historyData[i];
+      if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
+        if (data.jobs[selectedJobId].hasMem) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   render() {
-    if (this.props.username === null) {
+    const {
+      name,
+      username,
+      node,
+      selectedJobId,
+      jobs,
+      changeTimeWindow,
+      timeWindow,
+    } = this.props;
+    if (username === null) {
       return null;
-    } if (this.props.node === null) {
+    } if (node === null) {
       return (
         <div className="main-item right">
           <div className="instruction">
             Select a running job to view nodes
           </div>
           <br />
-          {this.props.selectedJobId === null ? null
+          {selectedJobId === null ? null
             : (
               <div className="instruction">
                 Select a node to view detailed system usage
@@ -427,31 +476,58 @@ export default class NodeDetails extends React.Component {
     return (
       <div className="main-item right">
         <div id="nodename-title">
-          {this.props.selectedJobId}
+          {selectedJobId}
           {' '}
-          {(this.props.selectedJobId !== null) && 'on'}
+          {(selectedJobId !== null) && 'on'}
           {' '}
-          {this.props.name}
+          {name}
         </div>
         <div id="nodename-subtitle">
-          {(this.props.selectedJobId !== null) && this.props.jobs[this.props.selectedJobId].name}
+          {(selectedJobId !== null) && jobs[selectedJobId].name}
         </div>
         {warningList}
 
         <div className="time-selector">
-          <input type="radio" id="5h" name="timeWindow" value="5h" onChange={() => this.props.changeTimeWindow(18000)} checked={this.props.timeWindow === 18000} />
-          <label> 5 hours   </label>
-          <input type="radio" id="1h" name="timeWindow" value="1h" onChange={() => this.props.changeTimeWindow(3600)} checked={this.props.timeWindow === 3600} />
-          <label> 1 hour   </label>
-          <input type="radio" id="10m" name="timeWindow" value="10m" onChange={() => this.props.changeTimeWindow(600)} checked={this.props.timeWindow === 600} />
-          <label> 10 minutes   </label>
+          <label htmlFor="5h">
+            <input
+              type="radio"
+              id="5h"
+              name="timeWindow"
+              value="5h"
+              onChange={() => changeTimeWindow(18000)}
+              checked={timeWindow === 18000}
+            />
+            5 hours
+          </label>
+          <label htmlFor="1h">
+            <input
+              type="radio"
+              id="1h"
+              name="timeWindow"
+              value="1h"
+              onChange={() => changeTimeWindow(3600)}
+              checked={timeWindow === 3600}
+            />
+            1 hour
+          </label>
+          <label htmlFor="10m">
+            <input
+              type="radio"
+              id="10m"
+              name="timeWindow"
+              value="10m"
+              onChange={() => changeTimeWindow(600)}
+              checked={timeWindow === 600}
+            />
+            10 minutes
+          </label>
         </div>
         <br />
         <div className="heading">
           Job resource usage
         </div>
 
-        {this.getJobPropCharts(historyChart, this.hasMemStats())}
+        {this.getJobPropCharts(historyChart)}
 
         <div className="heading">
           Node resource usage
@@ -466,75 +542,44 @@ export default class NodeDetails extends React.Component {
         {this.getPropCharts(historyChart, gpuNames)}
 
         {(otherJobList.length > 0)
-
-                    && (
-                    <div>
-                      <div className="job-names heading">
-                        Cohabitant jobs
-                      </div>
-                      <div>
-                        {otherJobList}
-                      </div>
-                    </div>
-                    )}
+        && (
+          <div>
+            <div className="job-names heading">
+              Cohabitant jobs
+            </div>
+            <div>
+              {otherJobList}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 }
 
-class CorePie extends React.Component {
-  render() {
-    const style = getComputedStyle(document.documentElement);
-    const pieColors = [];
-    pieColors.push(style.getPropertyValue('--piecolor-blank'));
-    pieColors.push(style.getPropertyValue('--piecolor-system'));
-    pieColors.push(style.getPropertyValue('--piecolor-wait'));
-    pieColors.push(style.getPropertyValue('--piecolor-user'));
+NodeDetails.propTypes = {
+  selectedJobId: PropTypes.string,
+  name: PropTypes.string,
+  username: PropTypes.string,
+  node: PropTypes.objectOf(
+    PropTypes.oneOfType([PropTypes.object, PropTypes.bool, PropTypes.number]),
+  ),
+  cpuKeys: PropTypes.objectOf(PropTypes.number).isRequired,
+  jobs: PropTypes.objectOf(PropTypes.object),
+  warnings: PropTypes.objectOf(PropTypes.object),
+  onJobClick: PropTypes.func.isRequired,
+  changeTimeWindow: PropTypes.func.isRequired,
+  getNodeUsage: PropTypes.func.isRequired,
+  timeWindow: PropTypes.number.isRequired,
+  historyData: PropTypes.arrayOf(PropTypes.object),
+};
 
-    let ring = 0;
-    if (this.props.selected) ring = 100;
-
-    return (
-      <div className="core-pie">
-        <ResponsiveContainer>
-          <PieChart>
-            <Pie
-              data={this.props.data}
-              nameKey="name"
-              dataKey="data"
-              innerRadius="0%"
-              outerRadius="100%"
-              startAngle={90}
-              endAngle={450}
-            >
-              {
-                                this.props.data.reverse().map(
-                                  (entry, index) => (
-                                    <Cell
-                                      key={index}
-                                      fill={pieColors[index]}
-                                    />
-                                  ),
-                                )
-                            }
-            </Pie>
-            {/* Selector ring */}
-            <Pie
-              data={[{ name: 'ring', ring }]}
-              nameKey="name"
-              dataKey="ring"
-              innerRadius="110%"
-              outerRadius="130%"
-              startAngle={90}
-              endAngle={450}
-              fill="#222222"
-              paddingAngle={0}
-                            // isAnimationActive={false}
-              stroke="none"
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-    );
-  }
-}
+NodeDetails.defaultProps = {
+  selectedJobId: null,
+  name: null,
+  username: null,
+  node: null,
+  jobs: null,
+  warnings: null,
+  historyData: null,
+};
