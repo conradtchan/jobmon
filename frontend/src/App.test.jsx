@@ -10,5 +10,5 @@ it('renders without crashing', () => {
 
 // sanity check
 it('one is one', () => {
-  expect(1).toEqual(1)
+  expect(1).toEqual(1);
 });
