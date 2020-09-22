@@ -35,4 +35,5 @@ repos:
     hooks:
       - id: eslint
         additional_dependencies:
+          - eslint@7.8.1
           - eslint-plugin-react@7.20.6
