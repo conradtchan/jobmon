@@ -41,15 +41,22 @@ class App extends React.Component {
   }
 
   initHistoryData(nVal) {
-    if (!(this.state.history === null)) {
-      const observerNow = this.state.snapshotTime / 1000;
+    const {
+      history,
+      snapshotTime,
+      historyDataWindow,
+      address,
+    } = this.state
+
+    if (!(history === null)) {
+      const observerNow = snapshotTime / 1000;
 
       // Get the times to request
-      const times = Object.keys(this.state.history);
+      const times = Object.keys(history);
       const historyDataTimes = [];
       for (const time of times) {
         const timeDiff = observerNow - time;
-        if ((timeDiff < this.state.historyDataWindow) && (timeDiff > 0)) {
+        if ((timeDiff < historyDataWindow) && (timeDiff > 0)) {
           historyDataTimes.push(time);
         }
       }
@@ -85,31 +92,38 @@ class App extends React.Component {
             }
           }
         };
-        xhr.open('GET', `${this.state.address}bobdata.py?time=${time.toString()}`, true);
+        xhr.open('GET', `${address}bobdata.py?time=${time.toString()}`, true);
         xhr.send();
       }
     }
   }
 
   updateHistoryData() {
-    if (this.state.historyData.length < 3) {
+    const {
+      historyData,
+      snapshotTime,
+      historyDataWindow,
+      apiData,
+    } = this.state
+
+    if (historyData.length < 3) {
       this.historyTimeJump();
     } else {
-      const observerNow = this.state.snapshotTime / 1000;
+      const observerNow = snapshotTime / 1000;
 
       const newHistoryData = [];
       const times = [];
-      for (const data of this.state.historyData) {
+      for (const data of historyData) {
         const timeDiff = observerNow - data.timestamp;
-        if ((timeDiff < this.state.historyDataWindow) && (timeDiff > 0)) {
+        if ((timeDiff < historyDataWindow) && (timeDiff > 0)) {
           newHistoryData.push(data);
           times.push(data.timestamp);
         }
       }
 
       // Add newest snapshot
-      if (!(times.includes(this.state.apiData.timestamp)) && !(this.state.apiData === null)) {
-        newHistoryData.push(this.state.apiData);
+      if (!(times.includes(apiData.timestamp)) && !(apiData === null)) {
+        newHistoryData.push(apiData);
       }
 
       // Update, before putting past values in (if history is too short)
@@ -118,11 +132,13 @@ class App extends React.Component {
   }
 
   historyTimeJump() {
+    const { historyDataCountInitial } = this.state
     this.setState({ historyData: [] },
-      () => this.initHistoryData(this.state.historyDataCountInitial));
+      () => this.initHistoryData(historyDataCountInitial));
   }
 
   fetchHistory() {
+    const { address } = this.state
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4 && xhr.status === 200) {
@@ -131,13 +147,14 @@ class App extends React.Component {
         setTimeout(() => { this.fetchHistory(); }, 100000); // 100 seconds
       }
     };
-    xhr.open('GET', `${this.state.address}bobhistory.py`, true);
+    xhr.open('GET', `${address}bobhistory.py`, true);
     xhr.send();
   }
 
   fetchLatest() {
+    const { holdSnap, address } = this.state
     // Only update if the user doesn't want to hold onto a snap
-    if (!(this.state.holdSnap)) {
+    if (!(holdSnap)) {
       const xhr = new XMLHttpRequest();
       xhr.onreadystatechange = () => {
         if (xhr.readyState === 4 && xhr.status === 200) {
@@ -153,12 +170,13 @@ class App extends React.Component {
           setTimeout(() => { this.fetchLatest(); }, 10000); // 10 seconds
         }
       };
-      xhr.open('GET', `${this.state.address}bobdata.py`, true);
+      xhr.open('GET', `${address}bobdata.py`, true);
       xhr.send();
     }
   }
 
   fetchBackfill() {
+    const { address } = this.state
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
       if (xhr.readyState === 4 && xhr.status === 200) {
@@ -167,11 +185,12 @@ class App extends React.Component {
         setTimeout(() => { this.fetchBackfill(); }, 100000); // 100 seconds
       }
     };
-    xhr.open('GET', `${this.state.address}bobbackfill.py`, true);
+    xhr.open('GET', `${address}bobbackfill.py`, true);
     xhr.send();
   }
 
   fetchTime(time) {
+    const { address } = this.state
     this.setState({ holdSnap: true });
     const xhr = new XMLHttpRequest();
     xhr.onreadystatechange = () => {
@@ -185,25 +204,30 @@ class App extends React.Component {
         }, () => this.historyTimeJump());
       }
     };
-    xhr.open('GET', `${this.state.address}bobdata.py?time=${time.toString()}`, true);
+    xhr.open('GET', `${address}bobdata.py?time=${time.toString()}`, true);
     xhr.send();
   }
 
   cleanState(newData) {
+    const {
+      job,
+      nodeName,
+      username,
+    } = this.state
     // If a job is gone
-    if (!(newData.jobs.hasOwnProperty(this.state.job))) {
+    if (!(newData.jobs.hasOwnProperty(job))) {
       this.setState({ job: null });
     }
 
     // If a node is gone (unlikely)
-    if (!(newData.nodes.hasOwnProperty(this.state.nodeName))) {
+    if (!(newData.nodes.hasOwnProperty(nodeName))) {
       this.setState({ nodeName: null });
     }
 
     // If a user is gone
     let hasUser = false;
     for (const jobId in newData.jobs) {
-      if (newData.jobs[jobId].username === this.state.username) {
+      if (newData.jobs[jobId].username === username) {
         hasUser = true;
         break;
       }
@@ -231,7 +255,14 @@ class App extends React.Component {
   }
 
   getNodeOverview(warnings, warnedUsers) {
-    const { jobs } = this.state.apiData;
+    const {
+      apiData,
+      username,
+      job,
+      historyData,
+      cpuKeys,
+     } = this.state
+    const { jobs } = apiData;
 
     const nodeHasJob = {};
     // For each job
@@ -250,17 +281,17 @@ class App extends React.Component {
     }
     return (
       <NodeOverview
-        username={this.state.username}
-        jobId={this.state.job}
-        nodeData={this.state.apiData.nodes}
-        jobs={this.state.apiData.jobs}
+        username={username}
+        jobId={job}
+        nodeData={apiData.nodes}
+        jobs={apiData.jobs}
         nodeHasJob={nodeHasJob}
         onRowClick={(node) => this.selectNode(node)}
         warnings={warnings}
         warnedUsers={warnedUsers}
         onJobClick={(jobId) => this.selectJob(jobId)}
-        historyData={this.state.historyData}
-        cpuKeys={this.state.cpuKeys}
+        historyData={historyData}
+        cpuKeys={cpuKeys}
         getJobUsage={(jid, job, nodes) => this.getJobUsage(jid, job, nodes)}
         getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
         getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
@@ -290,30 +321,42 @@ class App extends React.Component {
   }
 
   getNodeDetails(warnings) {
+    const {
+      nodeName,
+      apiData,
+      username,
+      job,
+      historyData,
+      cpuKeys,
+      historyDataWindow,
+    } = this.state
     return (
       <NodeDetails
-        name={this.state.nodeName}
-        node={this.state.nodeName === null ? null : this.state.apiData.nodes[this.state.nodeName]}
-        jobs={this.state.apiData.jobs}
-        username={this.state.username}
-        selectedJobId={this.state.job}
+        name={nodeName}
+        node={nodeName === null ? null : apiData.nodes[nodeName]}
+        jobs={apiData.jobs}
+        username={username}
+        selectedJobId={job}
         onJobClick={(jobId) => this.selectJob(jobId)}
         warnings={warnings}
-        historyData={this.state.historyData}
-        cpuKeys={this.state.cpuKeys}
+        historyData={historyData}
+        cpuKeys={cpuKeys}
         changeTimeWindow={(t) => this.changeTimeWindow(t)}
-        timeWindow={this.state.historyDataWindow}
+        timeWindow={historyDataWindow}
         getNodeUsage={(jid, job, node, host) => this.getNodeUsage(jid, job, node, host)}
       />
     );
   }
 
   changeTimeWindow(t) {
+    const { historyDataCountInitial } = this.state
     this.setState({ historyDataWindow: t },
-      () => this.initHistoryData(this.state.historyDataCountInitial));
+      () => this.initHistoryData(historyDataCountInitial));
   }
 
   getSystemUsage() {
+    const { apiData } = this.state
+
     const usage = {
       availCores: 0,
       runningCores: 0,
@@ -324,7 +367,7 @@ class App extends React.Component {
 
     const nodeFreeCores = {};
 
-    const { nodes } = this.state.apiData;
+    const { nodes } = apiData;
     for (const host in nodes) {
       if (nodes[host].isCounted) {
         // Available cores
@@ -338,7 +381,7 @@ class App extends React.Component {
       }
     }
 
-    const { jobs } = this.state.apiData;
+    const { jobs } = apiData;
     const runningNodeList = [];
     for (const jobId in jobs) {
       if (jobs[jobId].state === 'RUNNING') {
@@ -397,8 +440,9 @@ class App extends React.Component {
   }
 
   getWarnedUsers(warnings) {
+    const { apiData } = this.state
     const warnedUsers = [];
-    const { jobs } = this.state.apiData;
+    const { jobs } = apiData;
     for (const nodeName in warnings) {
       over_jobs:
       for (const jobId in warnings[nodeName].jobs) {
@@ -432,8 +476,9 @@ class App extends React.Component {
   }
 
   getUserBadness(scoreSums, users) {
+    const { apiData } = this.state
     const badness = {};
-    const { jobs } = this.state.apiData;
+    const { jobs } = apiData;
 
     // Start each user at 0
     for (const username of users) {
@@ -517,6 +562,10 @@ class App extends React.Component {
 
   // Get the per job usage for a specific node
   getNodeUsage(jid, job, node, host) {
+    const {
+      cpuKeys,
+      gpuLayout,
+    } = this.state
     const usage = {
       cpu: {
         user: 0, system: 0, wait: 0, idle: 0,
@@ -530,10 +579,10 @@ class App extends React.Component {
     if (job.layout.hasOwnProperty(host)) {
       const layout = job.layout[host];
       for (const i of layout) {
-        usage.cpu.user += node.cpu.coreC[i][this.state.cpuKeys.user] + node.cpu.coreC[i][this.state.cpuKeys.nice];
-        usage.cpu.system += node.cpu.coreC[i][this.state.cpuKeys.system];
-        usage.cpu.wait += node.cpu.coreC[i][this.state.cpuKeys.wait];
-        usage.cpu.idle += node.cpu.coreC[i][this.state.cpuKeys.idle];
+        usage.cpu.user += node.cpu.coreC[i][cpuKeys.user] + node.cpu.coreC[i][cpuKeys.nice];
+        usage.cpu.system += node.cpu.coreC[i][cpuKeys.system];
+        usage.cpu.wait += node.cpu.coreC[i][cpuKeys.wait];
+        usage.cpu.idle += node.cpu.coreC[i][cpuKeys.idle];
       }
       let nGpus = 0;
       // If thif is a GPU job
@@ -542,12 +591,12 @@ class App extends React.Component {
         usage.gpu.total = 0;
 
         // If the GPU mapping is known
-        if (this.state.gpuLayout.hasOwnProperty(jid)) {
-          if (this.state.gpuLayout[jid].hasOwnProperty(host)) {
-            if (this.state.gpuLayout[jid][host].length > 0) {
+        if (gpuLayout.hasOwnProperty(jid)) {
+          if (gpuLayout[jid].hasOwnProperty(host)) {
+            if (gpuLayout[jid][host].length > 0) {
               usage.gpu.total = 0;
               nGpus = 0;
-              for (const i in this.state.gpuLayout[jid][host]) {
+              for (const i in gpuLayout[jid][host]) {
                 usage.gpu.total += node.gpus['gpu'.concat(i.toString())];
                 nGpus++;
               }
@@ -583,19 +632,21 @@ class App extends React.Component {
   }
 
   getTotalUsage(totalC) {
+    const { cpuKeys } = this.state
     const total = {};
-    for (const key in this.state.cpuKeys) {
-      total[key] = totalC[this.state.cpuKeys[key]];
+    for (const key in cpuKeys) {
+      total[key] = totalC[cpuKeys[key]];
     }
     return total;
   }
 
   getUserPiePlot(warnings, warnedUsers, systemUsage) {
+    const { apiData } = this.state
     let runningData = {};
 
     // Sum usage
-    for (const jobId in this.state.apiData.jobs) {
-      const job = this.state.apiData.jobs[jobId];
+    for (const jobId in apiData.jobs) {
+      const job = apiData.jobs[jobId];
       const { username } = job;
       if (job.state === 'RUNNING') {
         if (!(runningData.hasOwnProperty(username))) {
@@ -646,12 +697,13 @@ class App extends React.Component {
   }
 
   getQueue() {
+    const { apiData } = this.state
     // Sum usage
     let queueData = {};
     const queueTotal = { size: 0, cpuHours: 0 };
 
-    for (const jobId in this.state.apiData.jobs) {
-      const job = this.state.apiData.jobs[jobId];
+    for (const jobId in apiData.jobs) {
+      const job = apiData.jobs[jobId];
       const { username } = job;
       if (job.state === 'PENDING') {
         queueTotal.size++;
@@ -690,25 +742,33 @@ class App extends React.Component {
   }
 
   getBackfill() {
+    const { backfill } = this.state
     return (
       <Backfill
-        backfillData={this.state.backfill}
+        backfillData={backfill}
       />
     );
   }
 
   show() {
-    if (!this.state.future) {
-      if (this.state.gotData) {
+    const {
+      future,
+      gotData,
+      lastFetchAttempt,
+      snapshotTime,
+      holdSnap,
+    } = this.state
+    if (!future) {
+      if (gotData) {
         // If haven't fetched for a long time, then force a fetch
         // Usually happens when computer is waking from sleep
         const now = new Date();
-        const fetchAge = (now - this.state.lastFetchAttempt) / 1000;
-        const snapAge = (now - this.state.snapshotTime) / 1000;
+        const fetchAge = (now - lastFetchAttempt) / 1000;
+        const snapAge = (now - snapshotTime) / 1000;
         if (fetchAge > 300) {
           this.fetchLatest();
           // If the backend copy is old, then maintenance is occuring
-        } else if ((snapAge > 600) && !(this.state.holdSnap)) {
+        } else if ((snapAge > 600) && !(holdSnap)) {
           return (
             <div id="main-box">
               The job monitor is currently down for maintenance and will be back soon.
@@ -758,6 +818,8 @@ class App extends React.Component {
     const baseMemSingle = 4096; // Megabytes of memory for the first core
     const graceTime = 5; // (Minutes) give jobs some time to get setup
 
+    const { cpuKeys } = this.state
+
     const warnings = {};
 
     for (const nodeName in data.nodes) {
@@ -783,8 +845,8 @@ class App extends React.Component {
           let cpuUsage = 0;
           let cpuWait = 0;
           for (const i of job.layout[nodeName]) {
-            cpuUsage += node.cpu.coreC[i][this.state.cpuKeys.user] + node.cpu.coreC[i][this.state.cpuKeys.system] + node.cpu.coreC[i][this.state.cpuKeys.nice];
-            cpuWait += node.cpu.totalC[this.state.cpuKeys.wait];
+            cpuUsage += node.cpu.coreC[i][cpuKeys.user] + node.cpu.coreC[i][cpuKeys.system] + node.cpu.coreC[i][cpuKeys.nice];
+            cpuWait += node.cpu.totalC[cpuKeys.wait];
           }
 
           // cpuUsage /= job.layout[nodeName].length;
@@ -828,11 +890,16 @@ class App extends React.Component {
     const warningWindow = 600; // Time window to check for warnings
     const warningFraction = 0.5; // If more than this fraction in the window is bad, then trigger warning
 
+    const {
+      snapshotTime,
+      historyData,
+    } = this.state
+
     // Get the data snapshots that we check for warnings
-    const now = this.state.snapshotTime / 1000;
+    const now = snapshotTime / 1000;
     const warningDataIndex = [];
-    for (let i = 0; i < this.state.historyData.length; i++) {
-      const data = this.state.historyData[i];
+    for (let i = 0; i < historyData.length; i++) {
+      const data = historyData[i];
       if (now - data.timestamp < warningWindow) {
         warningDataIndex.push(i);
       }
@@ -847,7 +914,7 @@ class App extends React.Component {
 
     // i is the index of the data
     for (const i of warningDataIndex) {
-      const data = this.state.historyData[i];
+      const data = historyData[i];
       const warnings = this.instantWarnings(data);
 
       // For each node
@@ -914,11 +981,15 @@ class App extends React.Component {
   }
 
   getTimeMachine() {
+    const {
+      history,
+      snapshotTime,
+    } = this.state
     return (
       <TimeMachine
-        history={this.state.history}
+        history={history}
         clickLoadTime={(time) => this.fetchTime(time)}
-        snapshotTime={this.state.snapshotTime}
+        snapshotTime={snapshotTime}
         viewPresent={() => this.viewPresent()}
         viewFuture={() => this.viewFuture()}
         viewPast={() => this.viewPast()}
