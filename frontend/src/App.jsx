@@ -979,7 +979,7 @@ class App extends React.Component {
           this.cleanState(jsonData);
           this.setState({
             apiData: jsonData,
-            gpuLayout: this.extractGpuLayout(jsonData),
+            gpuLayout: App.extractGpuLayout(jsonData),
             snapshotTime: new Date(jsonData.timestamp * 1000),
             lastFetchAttempt: new Date(),
             gotData: true,
