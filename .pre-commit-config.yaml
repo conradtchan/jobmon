@@ -30,7 +30,9 @@ repos:
     hooks:
       - id: isort
 
-  -   repo: https://github.com/pre-commit/mirrors-eslint
-      rev: 'v7.9.0'
-      hooks:
-      -   id: eslint
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: 'v7.9.0'
+    hooks:
+      - id: eslint
+        additional_dependencies:
+          - eslint-plugin-react@7.20.6
