@@ -4,7 +4,7 @@ import JobText from './JobText';
 import PropChart from './PropChart';
 import CorePie from './CorePie';
 
-export default class NodeDetails extends React.Component {
+export default class NodeDetails extends React.PureComponent {
   getCorePies() {
     const {
       selectedJobId,

@@ -4,7 +4,7 @@ import JobText from './JobText';
 import PropChartMini from './PropChartMini';
 import NodePie from './NodePie';
 
-export default class NodeOverview extends React.Component {
+export default class NodeOverview extends React.PureComponent {
   getNodePies() {
     const {
       nodeHasJob,

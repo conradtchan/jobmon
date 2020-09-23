@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { timeConvert } from './timeFunctions';
 
-export default class JobText extends React.Component {
+export default class JobText extends React.PureComponent {
   getClass() {
     const { warn } = this.props;
     let nameClass = 'job-name';

@@ -10,7 +10,7 @@ import {
 } from 'recharts';
 import PropTypes from 'prop-types';
 
-export default class Backfill extends React.Component {
+export default class Backfill extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import UsagePie from './UsagePie';
 import UserString from './UserString';
 
-export default class UserPiePlot extends React.Component {
+export default class UserPiePlot extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = {

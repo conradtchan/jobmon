@@ -9,7 +9,7 @@ import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
 
-class App extends React.Component {
+class App extends React.PureComponent {
   static extractGpuLayout(data) {
     // The GPU mapping always needs to be the current one,
     // because it may not have been properly determined in the past

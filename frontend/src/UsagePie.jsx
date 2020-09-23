@@ -10,7 +10,7 @@ import {
   Label,
 } from 'recharts';
 
-export default class UsagePie extends React.Component {
+export default class UsagePie extends React.PureComponent {
   componentDidMount() {
     window.addEventListener('resize', this.handleResize);
   }
