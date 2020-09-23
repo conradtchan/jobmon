@@ -45,6 +45,13 @@ body {
   font-family: 'Rubik', sans-serif;
 }
 
+button {
+  font-family: inherit;
+  font-size: medium;
+}
+
+div:focus {outline: 0px;}
+
 #header {
   margin: auto;
   width: 90%;
@@ -125,23 +132,19 @@ body {
 
 .overview-pies {
   display: flex;
-
-  /* flex-direction: row; */
   flex-wrap: wrap;
   justify-content: flex-end;
   width: 100%;
   margin-bottom: 10px;
-
-  /* border: 1px black solid; */
 }
 
 .overview-pie {
-  cursor: pointer;
   height: 64px;
   width: 64px;
   margin: 0 auto;
-
-  /* border: 1px black solid; */
+  border: none;
+  background: none;
+  padding: 0;
 }
 
 .other-job-row {
@@ -312,6 +315,9 @@ body {
   display: flex;
   text-align: left;
   cursor: pointer;
+
+  width: 100%;
+
   border-radius: var(--rounding-radius);
   background: var(--medium-shade);
   border-style: solid;
