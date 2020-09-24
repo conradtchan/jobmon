@@ -1,7 +1,38 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-export default class UserString extends React.PureComponent {
+export default class UserString extends React.Component {
+
+  shouldComponentUpdate(nextProps) {
+    const {
+      user,
+      availCores,
+      hoveredIndex,
+      warning,
+      badness,
+     } = this.props
+    if (nextProps.user.username !== user.username) {
+      return true
+    } else if (nextProps.user.index !== user.index) {
+      return true
+    } else if (nextProps.user.cpus !== user.cpus) {
+      return true
+    } else if (nextProps.user.jobs !== user.jobs) {
+      return true
+    } else if (nextProps.availCores !== availCores) {
+      return true
+    } else if (nextProps.hoveredIndex !== hoveredIndex) {
+      return true
+    } else if (nextProps.warning !== warning) {
+      return true
+    } else if (nextProps.badness !== badness) {
+      return true
+    } else {
+      return false
+    }
+  }
+
+
   render() {
     const {
       user,
