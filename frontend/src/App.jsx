@@ -222,6 +222,7 @@ class App extends React.PureComponent {
         jobId={job}
         nodeData={apiData.nodes}
         jobs={apiData.jobs}
+        apiData={apiData}
         nodeHasJob={nodeHasJob}
         onRowClick={(node) => this.selectNode(node)}
         warnings={warnings}

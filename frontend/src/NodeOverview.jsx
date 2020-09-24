@@ -9,13 +9,14 @@ export default class NodeOverview extends React.PureComponent {
     const {
       nodeHasJob,
       jobId,
-      jobs,
-      nodeData,
+      apiData,
       gangliaURL,
       onRowClick,
       warnings,
       getNodeUsage,
     } = this.props;
+
+    const {jobs, nodes} = apiData
 
     const nodePies = [];
 
@@ -60,32 +61,32 @@ export default class NodeOverview extends React.PureComponent {
         const cpuUsage = getNodeUsage(
           jobId,
           job,
-          nodeData[nodeName],
+          nodes[nodeName],
           nodeName,
         ).cpu;
 
         // CPU percent is out of the requested memory
         let memPercent = 0.0;
-        if (!(nodeData[nodeName].mem === null)) {
+        if (!(nodes[nodeName].mem === null)) {
           memPercent = 100 * (job.mem[nodeName] / job.memReq);
         }
 
         let diskPercent = 0.0;
-        if (!(nodeData[nodeName].disk === null)) {
-          diskPercent = 100 * (1.0 - nodeData[nodeName].disk.free / nodeData[nodeName].disk.total);
+        if (!(nodes[nodeName].disk === null)) {
+          diskPercent = 100 * (1.0 - nodes[nodeName].disk.free / nodes[nodeName].disk.total);
         }
         let swapPercent = 0.0;
-        if (!(nodeData[nodeName].swap === null)) {
-          swapPercent = 100 * (1.0 - nodeData[nodeName].swap.free / nodeData[nodeName].swap.total);
+        if (!(nodes[nodeName].swap === null)) {
+          swapPercent = 100 * (1.0 - nodes[nodeName].swap.free / nodes[nodeName].swap.total);
         }
         let gpuPercent = 0.0;
-        if (!(nodeData[nodeName].gpus === null)) {
+        if (!(nodes[nodeName].gpus === null)) {
           let nGpus = 0;
           if (Object.prototype.hasOwnProperty.call(job.gpuLayout, nodeName)) {
             for (let j = 0; j < job.gpuLayout[nodeName].length; j += 1) {
               const gpuIndex = job.gpuLayout[nodeName][j];
               nGpus += 1;
-              gpuPercent += nodeData[nodeName].gpus['gpu'.concat(gpuIndex.toString())];
+              gpuPercent += nodes[nodeName].gpus['gpu'.concat(gpuIndex.toString())];
             }
           }
           gpuPercent /= nGpus;
@@ -164,11 +165,13 @@ export default class NodeOverview extends React.PureComponent {
 
   getUserJobList() {
     const {
-      jobs,
+      apiData,
       username,
       onJobClick,
       jobId,
     } = this.props;
+
+    const { jobs } = apiData
 
     const warnedJobs = this.getWarnedJobs();
 
@@ -505,8 +508,7 @@ export default class NodeOverview extends React.PureComponent {
 NodeOverview.propTypes = {
   nodeHasJob: PropTypes.objectOf(PropTypes.object).isRequired,
   jobId: PropTypes.string,
-  jobs: PropTypes.objectOf(PropTypes.object).isRequired,
-  nodeData: PropTypes.objectOf(PropTypes.object).isRequired,
+  apiData: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.object,PropTypes.number])).isRequired,
   gangliaURL: PropTypes.string,
   onRowClick: PropTypes.func.isRequired,
   onJobClick: PropTypes.func.isRequired,
