@@ -10,13 +10,29 @@ import {
   Label,
 } from 'recharts';
 
-export default class UsagePie extends React.PureComponent {
+export default class UsagePie extends React.Component {
   componentDidMount() {
     window.addEventListener('resize', this.handleResize);
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.handleResize);
+  }
+
+  shouldComponentUpdate(nextProps) {
+    const { runningData } = this.props
+
+    for (let i = 0; i < runningData.length; i += 1) {
+      if (runningData[i].username !== nextProps.runningData[i].username) {
+        return true
+      } else if (runningData[i].cpus !== nextProps.runningData[i].cpus) {
+        return true
+      } else if (runningData[i].jobs !== nextProps.runningData[i].jobs) {
+        return true
+      }
+    }
+
+    return false
   }
 
   handleResize = () => {
