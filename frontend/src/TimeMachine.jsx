@@ -9,7 +9,7 @@ import {
 import PropTypes from 'prop-types';
 import { timeString } from './timeFunctions';
 
-export default class TimeMachine extends React.PureComponent {
+export default class TimeMachine extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -17,6 +17,21 @@ export default class TimeMachine extends React.PureComponent {
       showTimeMachine: false,
       period: 'present',
     };
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const { snapshotTime } = this.props
+    const { period, timeAgo } = this.state
+
+    if (nextProps.snapshotTime !== snapshotTime) {
+      return true
+    } else if (nextState.period !== period) {
+      return true
+    } else if (nextState.timeAgo !== timeAgo) {
+      return true
+    } else {
+      return false
+    }
   }
 
   componentDidMount() {
