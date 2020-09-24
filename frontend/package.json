@@ -4,6 +4,7 @@
   "private": true,
   "license": "GPL",
   "dependencies": {
+    "@welldone-software/why-did-you-render": "^4.3.2",
     "prop-types": "^15.7.2",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
