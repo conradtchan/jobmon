@@ -50,10 +50,10 @@ export function instantWarnings(data) {
         // CPU use
         let cpuUsage = 0;
         let cpuWait = 0;
-        const layoutNumbers = Object.keys(job.layout[jobNodeName]);
-        nCores = layoutNumbers.length; // Number of cores used on this node
-        for (let k = 1; k < nCores; k += 1) {
-          const iLayout = layoutNumbers[k];
+        const layout = job.layout[jobNodeName];
+        nCores = layout.length; // Number of cores used on this node
+        for (let k = 0; k < nCores; k += 1) {
+          const iLayout = layout[k];
           cpuUsage += node.cpu.coreC[iLayout][cpuKeys.user]
             + node.cpu.coreC[iLayout][cpuKeys.system]
             + node.cpu.coreC[iLayout][cpuKeys.nice];
