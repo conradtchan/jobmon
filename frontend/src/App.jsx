@@ -938,73 +938,80 @@ class App extends React.PureComponent {
 
   fetchTime(time) {
     const { address } = this.state;
-    this.setState({ holdSnap: true });
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        const jsonData = JSON.parse(xhr.responseText);
-        this.cleanState(jsonData);
-        this.setState({
-          apiData: jsonData,
-          snapshotTime: new Date(jsonData.timestamp * 1000),
-          gotData: true,
-        }, () => this.historyTimeJump());
-      }
-    };
-    xhr.open('GET', `${address}bobdata.py?time=${time.toString()}`, true);
-    xhr.send();
+    const that = this
+    fetch(address + "bobdata.py?time=" + time.toString())
+    .then(function (response) {
+        return response.json();
+    })
+    .then(function (data) {
+        that.cleanState(data);
+        that.setState({
+            apiData: data,
+            snapshotTime: new Date(data.timestamp * 1000),
+            gotData: true,
+        }, () => that.historyTimeJump());
+    })
+    .catch(function (err) {
+        console.log("Error fetching history", err);
+    });
   }
 
   fetchHistory() {
     const { address } = this.state;
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        const jsonData = JSON.parse(xhr.responseText);
-        this.setState({ history: jsonData.history });
-        setTimeout(() => { this.fetchHistory(); }, 100000); // 100 seconds
-      }
-    };
-    xhr.open('GET', `${address}bobhistory.py`, true);
-    xhr.send();
+    const that = this
+    fetch(address + "bobhistory.py")
+    .then(function (response) {
+        return response.json();
+    })
+    .then(function (data) {
+        that.setState({history: data.history})
+        setTimeout(() => {that.fetchHistory()}, 100000) // 100 seconds
+    })
+    .catch(function (err) {
+        console.log("Error fetching history", err);
+    });
   }
 
   fetchLatest() {
     const { holdSnap, address } = this.state;
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
-      const xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          const jsonData = JSON.parse(xhr.responseText);
-          this.cleanState(jsonData);
-          this.setState({
-            apiData: jsonData,
-            gpuLayout: App.extractGpuLayout(jsonData),
-            snapshotTime: new Date(jsonData.timestamp * 1000),
-            lastFetchAttempt: new Date(),
-            gotData: true,
-          }, () => this.updateHistoryData());
-          setTimeout(() => { this.fetchLatest(); }, 10000); // 10 seconds
-        }
-      };
-      xhr.open('GET', `${address}bobdata.py`, true);
-      xhr.send();
+      const that = this
+      fetch(address + "bobdata.py")
+      .then(function (response) {
+          return response.json();
+      })
+      .then(function (data) {
+          that.cleanState(data)
+          that.setState({
+              apiData: data,
+              gpuLayout: App.extractGpuLayout(data),
+              snapshotTime: new Date(data.timestamp * 1000),
+              lastFetchAttempt: new Date(),
+              gotData: true,
+          }, () => that.updateHistoryData());
+          setTimeout(() => {that.fetchLatest()}, 10000) // 10 seconds
+      })
+      .catch(function (err) {
+          console.log("Error fetching latest data", err);
+      });
     }
   }
 
   fetchBackfill() {
     const { address } = this.state;
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        const jsonData = JSON.parse(xhr.responseText);
-        this.setState({ backfill: jsonData });
-        setTimeout(() => { this.fetchBackfill(); }, 100000); // 100 seconds
-      }
-    };
-    xhr.open('GET', `${address}bobbackfill.py`, true);
-    xhr.send();
+    const that = this
+    fetch(address + "bobbackfill.py")
+    .then(function (response) {
+        return response.json();
+    })
+    .then(function (data) {
+        that.setState({backfill: data})
+        setTimeout(() => {that.fetchBackfill()}, 100000) // 100 seconds
+    })
+    .catch(function (err) {
+        console.log("Error fetching history", err);
+    });
   }
 
   historyTimeJump() {
@@ -1082,27 +1089,30 @@ class App extends React.PureComponent {
 
       // Make requests, then push to list
       const historyDataTemp = [];
+      const that = this
       for (let i = 0; i < requestDataTimes.length; i += 1) {
         const time = requestDataTimes[i];
-        const xhr = new XMLHttpRequest();
-        // eslint-disable-next-line
-                xhr.onreadystatechange = () => {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            const jsonData = JSON.parse(xhr.responseText);
-            historyDataTemp.push(jsonData);
+        fetch(address + "bobdata.py?time=" + time.toString())
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            historyDataTemp.push(data)
             if (historyDataTemp.length === requestDataTimes.length) {
-              if (nVal > historyDataTimes.length) {
-                this.setState({ historyData: historyDataTemp });
-              } else if (nVal < 200) {
-                this.setState({
-                  historyData: historyDataTemp,
-                }, () => this.initHistoryData(nVal * 3));
-              }
+                if (nVal > historyDataTimes.length) {
+                    that.setState({historyData: historyDataTemp});
+                } else {
+                    if (nVal < 200) {
+                        that.setState({
+                            historyData: historyDataTemp,
+                        }, () => that.initHistoryData(nVal * 3));
+                    }
+                }
             }
-          }
-        };
-        xhr.open('GET', `${address}bobdata.py?time=${time.toString()}`, true);
-        xhr.send();
+        })
+        .catch(function (err) {
+            console.log("Error fetching history", err);
+        });
       }
     }
   }
