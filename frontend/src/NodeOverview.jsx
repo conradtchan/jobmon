@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import JobText from './JobText';
 import PropChartMini from './PropChartMini';
 import NodePie from './NodePie';
+import { getWarnedJobs } from './warnings'
 
 export default class NodeOverview extends React.PureComponent {
   getNodePies() {
@@ -112,68 +113,18 @@ export default class NodeOverview extends React.PureComponent {
     return nodePies;
   }
 
-  getWarnedJobs() {
-    const {
-      warnings,
-    } = this.props;
-
-    const warnedJobs = [];
-
-    // For each node in warnings
-    const warnedNodes = Object.keys(warnings);
-    for (let i = 0; i < warnedNodes.length; i += 1) {
-      const nodeName = warnedNodes[i];
-      const nodeWarnings = warnings[nodeName];
-
-      if (Object.prototype.hasOwnProperty.call(warnings, 'jobs')) {
-        // For each job on each node
-        const warnedJobIds = Object.keys(warnings.jobs);
-        let jobWarned = false;
-        for (let j = 0; j < warnedJobs.length; j += 1) {
-          const jobId = warnedJobIds[j];
-          if (!(warnedJobs.includes(jobId))) {
-            // Job type warnings
-            const jobTypeWarnIds = Object.keys(warnings.jobs[jobId]);
-            for (let k = 0; k < jobTypeWarnIds.length; k += 1) {
-              const warning = jobTypeWarnIds[k];
-              if (nodeWarnings.jobs[jobId][warning]) {
-                warnedJobs.push(jobId);
-                jobWarned = true;
-                break;
-              }
-            }
-
-            // Check for node type warnings if there are no job type warnings
-            if (!(jobWarned)) {
-              // Node type warnings
-              const nodeTypeWarnIds = Object.keys(warnings.node);
-              for (let k = 0; k < nodeTypeWarnIds.length; k += 1) {
-                const warning = nodeTypeWarnIds[k];
-                if (nodeWarnings.node[warning]) {
-                  warnedJobs.push(jobId);
-                  jobWarned = true;
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return warnedJobs;
-  }
-
   getUserJobList() {
     const {
       apiData,
       username,
       onJobClick,
       jobId,
+      warnings,
     } = this.props;
 
     const { jobs } = apiData;
 
-    const warnedJobs = this.getWarnedJobs();
+    const warnedJobs = getWarnedJobs(warnings);
 
     const jobList = {
       running: [],

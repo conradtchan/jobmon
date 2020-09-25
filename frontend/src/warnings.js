@@ -24,9 +24,10 @@ export function instantWarnings(data) {
 
     // Score = percentage of swap used
     if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
-      warnings[nodeName].node.swapUse = 100 * (
+      const score = 100 * (
         (node.swap.total - node.swap.free) / node.swap.total
       );
+      warnings[nodeName].node.swapUse = score;
     }
   }
 
@@ -59,22 +60,21 @@ export function instantWarnings(data) {
           cpuWait += node.cpu.coreC[iLayout][cpuKeys.wait];
         }
 
-        // Only perform CPU utilisation check if the job uses more than 1 core
-        // and if it is not a GPU job
-        const doUtilCheck = (nCores > 1) || (job.nGpus === 0);
+        // Perform util check unless this is a single-core GPU job
+        const doUtilCheck = !((nCores === 1) || (job.nGpus > 0));
 
         // If below utilisation
         if (doUtilCheck) {
           if (cpuUsage / nCores < warnUtil) {
             // Score = percentage wasted * number of cores
-            warnings[jobNodeName].jobs[jobId].cpuUtil = (nCores * warnUtil) - cpuUsage;
+            warnings[jobNodeName].jobs[jobId].cpuUtil = nCores * (warnUtil - cpuUsage);
           }
         }
 
         // If spending significant time waiting
         if (cpuWait / nCores > warnWait) {
           // Score = percentage waiting * number of cores
-          warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - warnWait;
+          warnings[jobNodeName].jobs[jobId].cpuWait = nCores * (cpuWait - warnWait);
         }
       }
 
@@ -123,15 +123,17 @@ export default function generateWarnings(snapshotTime, historyData) {
     }
   }
 
+  const nSnapshots = warningDataIndex.length;
+
   // Threshold number of snapshots for triggering warning
-  const threshold = Math.floor(warningFraction * warningDataIndex.length);
+  const threshold = Math.floor(warningFraction * nSnapshots);
 
   // Collate all the instantaneous warnings
-  const warningSums = {};
-  const scoreSums = {};
+  const warningSums = {}; // Number of times warned
+  const scoreSums = {}; // Warning score
 
-  // i is the index of the data
-  for (let i = 0; i < warningDataIndex.length; i += 1) {
+  // For each snapshot that the warning is being calculated for
+  for (let i = 0; i < nSnapshots; i += 1) {
     const data = historyData[warningDataIndex[i]];
     const warnings = instantWarnings(data);
 
@@ -139,23 +141,27 @@ export default function generateWarnings(snapshotTime, historyData) {
     const nodeNames = Object.keys(warnings);
     for (let j = 1; j < nodeNames.length; j += 1) {
       const nodeName = nodeNames[j];
-      if (!(Object.prototype.hasOwnProperty.call(warningSums, nodeName))) {
+
+      // If a tally hasn't been created for this node yet, create it
+      if (!Object.keys(warningSums).includes(nodeName)) {
         warningSums[nodeName] = { node: {}, jobs: {} };
         scoreSums[nodeName] = { node: {}, jobs: {} };
       }
 
       // Count node warnings
-      const warningNames = Object.keys(warnings);
-      for (let k = 0; k < warningNames.length; k += 1) {
-        const warningName = warningNames[k];
-        if (!(Object.prototype.hasOwnProperty.call(warningSums[nodeName].node, warningName))) {
+      const nodeWarningNames = Object.keys(warnings[nodeName].node);
+      for (let k = 0; k < nodeWarningNames.length; k += 1) {
+        const warningName = nodeWarningNames[k];
+
+        // If a tally hasn't been created for this warning yet, create it
+        if (!Object.keys(warningSums[nodeName].node).includes(warningName)) {
           warningSums[nodeName].node[warningName] = 0;
           scoreSums[nodeName].node[warningName] = 0;
         }
+
         if (warnings[nodeName].node[warningName] > 0) {
           warningSums[nodeName].node[warningName] += 1;
-          scoreSums[nodeName].node[warningName]
-            += Math.floor(warnings[nodeName].node[warningName]);
+          scoreSums[nodeName].node[warningName] += warnings[nodeName].node[warningName];
         }
       }
 
@@ -163,26 +169,28 @@ export default function generateWarnings(snapshotTime, historyData) {
       const jobIds = Object.keys(warnings[nodeName].jobs);
       for (let k = 0; k < jobIds.length; k += 1) {
         const jobId = jobIds[k];
-        if (!(Object.prototype.hasOwnProperty.call(warningSums[nodeName].jobs, jobId))) {
+
+        // If a tally hasn't been created for this warning yet, create it
+        if (!Object.keys(warningSums[nodeName].jobs).includes(jobId)) {
           warningSums[nodeName].jobs[jobId] = {};
           scoreSums[nodeName].jobs[jobId] = {};
         }
+
         const jobWarningNames = Object.keys(warnings[nodeName].jobs[jobId]);
+
         for (let l = 0; l < jobWarningNames.length; l += 1) {
           const jobWarningName = jobWarningNames[l];
-          if (!(
-            Object.prototype.hasOwnProperty.call(
-              warningSums[nodeName].jobs[jobId],
-              jobWarningName,
-            )
-          )) {
+
+          // If a tally hasn't been created for this warning yet, create it
+          if (!Object.keys(warningSums[nodeName].jobs[jobId]).includes(jobWarningName)) {
             warningSums[nodeName].jobs[jobId][jobWarningName] = 0;
             scoreSums[nodeName].jobs[jobId][jobWarningName] = 0;
           }
+
           if (warnings[nodeName].jobs[jobId][jobWarningName] > 0) {
             warningSums[nodeName].jobs[jobId][jobWarningName] += 1;
             scoreSums[nodeName].jobs[jobId][jobWarningName]
-              += Math.floor(warnings[nodeName].jobs[jobId][jobWarningName]);
+              += warnings[nodeName].jobs[jobId][jobWarningName];
           }
         }
       }
@@ -193,28 +201,32 @@ export default function generateWarnings(snapshotTime, historyData) {
   const nodeNames = Object.keys(warningSums);
   for (let i = 0; i < nodeNames.length; i += 1) {
     const nodeName = nodeNames[i];
+
+    // Node type warnings
     const warningNames = Object.keys(warningSums[nodeName].node);
     for (let j = 0; j < warningNames.length; j += 1) {
       const warningName = warningNames[j];
       if (warningSums[nodeName].node[warningName] > threshold) {
         // convert to integer
         scoreSums[nodeName].node[warningName] = Math.floor(
-          scoreSums[nodeName].node[warningName] / warningDataIndex.length,
+          scoreSums[nodeName].node[warningName] / nSnapshots,
         );
       } else {
         scoreSums[nodeName].node[warningName] = 0;
       }
     }
+
+    // Job type warnings
     const jobIds = Object.keys(warningSums[nodeName].jobs);
     for (let j = 0; j < jobIds.length; j += 1) {
       const jobId = jobIds[j];
-      const jobWarningNames = warningSums[nodeName].jobs[jobId];
+      const jobWarningNames = Object.keys(warningSums[nodeName].jobs[jobId]);
       for (let k = 0; k < jobWarningNames.length; k += 1) {
         const jobWarningName = jobWarningNames[k];
         if (warningSums[nodeName].jobs[jobId][jobWarningName] > threshold) {
           // convert to integer
           scoreSums[nodeName].jobs[jobId][jobWarningName] = Math.floor(
-            scoreSums[nodeName].jobs[jobId][jobWarningName] / warningDataIndex.length,
+            scoreSums[nodeName].jobs[jobId][jobWarningName] / nSnapshots,
           );
         } else {
           scoreSums[nodeName].jobs[jobId][jobWarningName] = 0;
@@ -224,4 +236,55 @@ export default function generateWarnings(snapshotTime, historyData) {
   }
 
   return scoreSums;
+}
+
+export function getWarnedJobs(warnings) {
+  const warnedJobs = [];
+
+  // For each node in warnings
+  const warnedNodes = Object.keys(warnings);
+  for (let i = 0; i < warnedNodes.length; i += 1) {
+    const nodeName = warnedNodes[i];
+    const nodeWarnings = warnings[nodeName];
+
+    if (Object.keys(nodeWarnings).includes('jobs')) {
+      const jobIds = Object.keys(nodeWarnings.jobs);
+      let jobWarned = false;
+
+      // For each job on the node
+      for (let j = 0; j < jobIds.length; j += 1) {
+        const jobId = jobIds[j];
+
+        // If the job hasn't already been added to the list
+        if (!(warnedJobs.includes(jobId))) {
+          // Job type warnings
+          const jobTypeWarnIds = Object.keys(nodeWarnings.jobs[jobId]);
+          for (let k = 0; k < jobTypeWarnIds.length; k += 1) {
+            const warning = jobTypeWarnIds[k];
+            if (nodeWarnings.jobs[jobId][warning]) {
+              warnedJobs.push(jobId);
+              jobWarned = true;
+              break;
+            }
+          }
+
+          // Check for node type warnings if there are no job type warnings
+          if (!(jobWarned)) {
+            // Node type warnings
+            const nodeTypeWarnings = Object.keys(nodeWarnings.node);
+            for (let k = 0; k < nodeTypeWarnings.length; k += 1) {
+              const warning = nodeTypeWarnings[k];
+              if (nodeWarnings.node[warning]) {
+                warnedJobs.push(jobId);
+                jobWarned = true;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return warnedJobs;
 }
