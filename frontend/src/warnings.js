@@ -139,7 +139,7 @@ export default function generateWarnings(snapshotTime, historyData) {
 
     // For each node
     const nodeNames = Object.keys(warnings);
-    for (let j = 1; j < nodeNames.length; j += 1) {
+    for (let j = 0; j < nodeNames.length; j += 1) {
       const nodeName = nodeNames[j];
 
       // If a tally hasn't been created for this node yet, create it
