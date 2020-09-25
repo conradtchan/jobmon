@@ -497,9 +497,8 @@ class App extends React.PureComponent {
 
     if (Object.prototype.hasOwnProperty.call(job.layout, host)) {
       const layout = job.layout[host];
-      const layoutNumbers = Object.keys(layout);
-      for (let i = 0; i < layoutNumbers.length; i += 1) {
-        const iLayout = layoutNumbers[i];
+      for (let i = 0; i < layout.length; i += 1) {
+        const iLayout = layout[i];
         usage.cpu.user += node.cpu.coreC[iLayout][cpuKeys.user]
           + node.cpu.coreC[iLayout][cpuKeys.nice];
         usage.cpu.system += node.cpu.coreC[iLayout][cpuKeys.system];
