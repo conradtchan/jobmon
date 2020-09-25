@@ -8,6 +8,7 @@ import UserPiePlot from './UserPiePlot';
 import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
+import { instantWarnings} from './warnings'
 
 class App extends React.PureComponent {
 
@@ -668,102 +669,6 @@ class App extends React.PureComponent {
     return null;
   }
 
-  instantWarnings(data) {
-    const warnSwap = 20; // If swap greater than
-    const warnWait = 5; // If waiting more than
-    const warnUtil = 80; // If CPU utilisation below
-    const warnMem = 70; // If memory used is less than
-    const baseMem = 2048; // Megabytes of "free" memory per core not to warn for
-    const baseMemSingle = 4096; // Megabytes of memory for the first core
-    const graceTime = 5; // (Minutes) give jobs some time to get setup
-
-    const { cpuKeys } = this.state;
-
-    const warnings = {};
-
-    const nodeNames = Object.keys(data.nodes);
-    for (let i = 0; i < nodeNames.length; i += 1) {
-      const nodeName = nodeNames[i];
-      const node = data.nodes[nodeName];
-
-      // Default scores to zero
-      warnings[nodeName] = { node: { swapUse: 0 }, jobs: {} };
-
-      // Score = percentage of swap used
-      if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
-        warnings[nodeName].node.swapUse = 100 * (
-          (node.swap.total - node.swap.free) / node.swap.total
-        );
-      }
-    }
-
-    const jobIds = Object.keys(data.jobs);
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jobId = jobIds[i];
-      const job = data.jobs[jobId];
-      if (job.state === 'RUNNING' && job.runTime > graceTime) {
-        const jobNodeNames = Object.keys(job.layout);
-        for (let j = 0; j < jobNodeNames.length; j += 1) {
-          const jobNodeName = jobNodeNames[j];
-          const node = data.nodes[jobNodeName];
-          warnings[jobNodeName].jobs[jobId] = {};
-
-          // CPU use
-          let cpuUsage = 0;
-          let cpuWait = 0;
-          const layoutNumbers = Object.keys(job.layout[jobNodeName]);
-          for (let k = 1; k < layoutNumbers.length; k += 1) {
-            const iLayout = layoutNumbers[k];
-            cpuUsage += node.cpu.coreC[iLayout][cpuKeys.user]
-              + node.cpu.coreC[iLayout][cpuKeys.system]
-              + node.cpu.coreC[iLayout][cpuKeys.nice];
-            cpuWait += node.cpu.coreC[iLayout][cpuKeys.wait];
-          }
-
-          // If below utilisation
-          if (
-            cpuUsage / job.layout[jobNodeName].length < warnUtil
-            && (
-              job.layout[jobNodeName].length > 1
-              || job.Gpu === 0
-            )
-          ) {
-            // Score = percentage wasted * number of cores
-            warnings[jobNodeName].jobs[jobId].cpuUtil = (job.layout[jobNodeName].length * warnUtil)
-            - cpuUsage;
-          }
-
-          if (cpuWait / job.layout[jobNodeName].length > warnWait) {
-            // Score = percentage waiting * number of cores
-            warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - warnWait;
-          }
-        }
-
-        // CPUs per node
-        const nCpus = job.nCpus / Object.keys(job.layout).length;
-
-        // Memory that jobs can get for free
-        const freeMem = baseMem * (nCpus - 1.0) + baseMemSingle;
-
-        // Factor for making it stricter for large requests
-        const x = Math.max(0.0, (job.memReq - freeMem) / job.memReq);
-
-        const criteria = (job.memReq - freeMem) * (1.0 - x) + x * (warnMem / 100.0) * job.memReq;
-        if (job.memMax < criteria) {
-          // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
-          const memNodeNames = Object.keys(job.mem);
-          for (let k = 1; k < memNodeNames.length; k += 1) {
-            const memNodeName = memNodeNames[k];
-            // Score = GB wasted
-            warnings[memNodeName].jobs[jobId].memUtil = (criteria - job.memMax) / 1024;
-          }
-        }
-      }
-    }
-
-    return warnings;
-  }
-
   generateWarnings() {
     // Time window to check for warnings
     const warningWindow = 600;
@@ -796,7 +701,7 @@ class App extends React.PureComponent {
     // i is the index of the data
     for (let i = 0; i < warningDataIndex.length; i += 1) {
       const data = historyData[warningDataIndex[i]];
-      const warnings = this.instantWarnings(data);
+      const warnings = instantWarnings(data);
 
       // For each node
       const nodeNames = Object.keys(warnings);
