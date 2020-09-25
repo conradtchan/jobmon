@@ -20,18 +20,17 @@ export default class TimeMachine extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    const { snapshotTime } = this.props
-    const { period, timeAgo } = this.state
+    const { snapshotTime } = this.props;
+    const { period, timeAgo } = this.state;
 
     if (nextProps.snapshotTime !== snapshotTime) {
-      return true
-    } else if (nextState.period !== period) {
-      return true
-    } else if (nextState.timeAgo !== timeAgo) {
-      return true
-    } else {
-      return false
+      return true;
+    } if (nextState.period !== period) {
+      return true;
+    } if (nextState.timeAgo !== timeAgo) {
+      return true;
     }
+    return false;
   }
 
   componentDidMount() {

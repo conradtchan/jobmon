@@ -16,7 +16,7 @@ export default class NodeOverview extends React.PureComponent {
       getNodeUsage,
     } = this.props;
 
-    const {jobs, nodes} = apiData
+    const { jobs, nodes } = apiData;
 
     const nodePies = [];
 
@@ -171,7 +171,7 @@ export default class NodeOverview extends React.PureComponent {
       jobId,
     } = this.props;
 
-    const { jobs } = apiData
+    const { jobs } = apiData;
 
     const warnedJobs = this.getWarnedJobs();
 
@@ -508,7 +508,7 @@ export default class NodeOverview extends React.PureComponent {
 NodeOverview.propTypes = {
   nodeHasJob: PropTypes.objectOf(PropTypes.object).isRequired,
   jobId: PropTypes.string,
-  apiData: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.object,PropTypes.number])).isRequired,
+  apiData: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.object, PropTypes.number])).isRequired,
   gangliaURL: PropTypes.string,
   onRowClick: PropTypes.func.isRequired,
   onJobClick: PropTypes.func.isRequired,

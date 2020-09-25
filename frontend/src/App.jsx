@@ -8,10 +8,9 @@ import UserPiePlot from './UserPiePlot';
 import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
-import { instantWarnings} from './warnings'
+import { instantWarnings } from './warnings';
 
 class App extends React.PureComponent {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -825,72 +824,65 @@ class App extends React.PureComponent {
 
   fetchTime(time) {
     const { address } = this.state;
-    const that = this
-    fetch(address + "bobdata.py?time=" + time.toString())
-    .then(function (response) {
-        return response.json();
-    })
-    .then(function (data) {
+    const that = this;
+    fetch(`${address}bobdata.py?time=${time.toString()}`)
+      .then((response) => response.json())
+      .then((data) => {
         that.cleanState(data);
         that.setState({
-            apiData: data,
-            snapshotTime: new Date(data.timestamp * 1000),
-            gotData: true,
+          apiData: data,
+          snapshotTime: new Date(data.timestamp * 1000),
+          gotData: true,
         }, () => that.historyTimeJump());
-    })
-    .catch(function (err) {
-        console.log("Error fetching history", err);
-    });
+      })
+      .catch((err) => {
+        console.log('Error fetching history', err);
+      });
   }
 
   fetchHistory() {
     const { address } = this.state;
-    const that = this
-    fetch(address + "bobhistory.py")
-    .then(function (response) {
-        return response.json();
-    })
-    .then(function (data) {
-        that.setState({history: data.history})
-        setTimeout(() => {that.fetchHistory()}, 100000) // 100 seconds
-    })
-    .catch(function (err) {
-        console.log("Error fetching history", err);
-    });
+    const that = this;
+    fetch(`${address}bobhistory.py`)
+      .then((response) => response.json())
+      .then((data) => {
+        that.setState({ history: data.history });
+        setTimeout(() => { that.fetchHistory(); }, 100000); // 100 seconds
+      })
+      .catch((err) => {
+        console.log('Error fetching history', err);
+      });
   }
 
   fetchLatest() {
     const { holdSnap, address } = this.state;
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
-      const that = this
-      fetch(address + "bobdata.py")
-      .then(function (response) {
-          return response.json();
-      })
-      .then(function (data) {
-          that.cleanState(data)
+      const that = this;
+      fetch(`${address}bobdata.py`)
+        .then((response) => response.json())
+        .then((data) => {
+          that.cleanState(data);
           that.setState({
-              apiData: data,
-              snapshotTime: new Date(data.timestamp * 1000),
-              lastFetchAttempt: new Date(),
-              gotData: true,
+            apiData: data,
+            snapshotTime: new Date(data.timestamp * 1000),
+            lastFetchAttempt: new Date(),
+            gotData: true,
           },
-          () => that.setState({gpuLayout: that.extractGpuLayout()},
-          () => that.updateHistoryData()
-          ));
-          setTimeout(() => {that.fetchLatest()}, 10000) // 10 seconds
-      })
-      .catch(function (err) {
-          console.log("Error fetching latest data", err);
-      });
+          () => that.setState({ gpuLayout: that.extractGpuLayout() },
+            () => that.updateHistoryData()));
+          setTimeout(() => { that.fetchLatest(); }, 10000); // 10 seconds
+        })
+        .catch((err) => {
+          console.log('Error fetching latest data', err);
+        });
     }
   }
 
   extractGpuLayout() {
     // The GPU mapping always needs to be the current one,
     // because it may not have been properly determined in the past
-    const { apiData } = this.state
+    const { apiData } = this.state;
     const layout = {};
     const jobIds = Object.keys(apiData.jobs);
     for (let i = 0; i < jobIds.length; i += 1) {
@@ -909,18 +901,16 @@ class App extends React.PureComponent {
 
   fetchBackfill() {
     const { address } = this.state;
-    const that = this
-    fetch(address + "bobbackfill.py")
-    .then(function (response) {
-        return response.json();
-    })
-    .then(function (data) {
-        that.setState({backfill: data})
-        setTimeout(() => {that.fetchBackfill()}, 100000) // 100 seconds
-    })
-    .catch(function (err) {
-        console.log("Error fetching history", err);
-    });
+    const that = this;
+    fetch(`${address}bobbackfill.py`)
+      .then((response) => response.json())
+      .then((data) => {
+        that.setState({ backfill: data });
+        setTimeout(() => { that.fetchBackfill(); }, 100000); // 100 seconds
+      })
+      .catch((err) => {
+        console.log('Error fetching history', err);
+      });
   }
 
   historyTimeJump() {
@@ -998,30 +988,26 @@ class App extends React.PureComponent {
 
       // Make requests, then push to list
       const historyDataTemp = [];
-      const that = this
+      const that = this;
       for (let i = 0; i < requestDataTimes.length; i += 1) {
         const time = requestDataTimes[i];
-        fetch(address + "bobdata.py?time=" + time.toString())
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (data) {
-            historyDataTemp.push(data)
+        fetch(`${address}bobdata.py?time=${time.toString()}`)
+          .then((response) => response.json())
+          .then((data) => {
+            historyDataTemp.push(data);
             if (historyDataTemp.length === requestDataTimes.length) {
-                if (nVal > historyDataTimes.length) {
-                    that.setState({historyData: historyDataTemp});
-                } else {
-                    if (nVal < 200) {
-                        that.setState({
-                            historyData: historyDataTemp,
-                        }, () => that.initHistoryData(nVal * 3));
-                    }
-                }
+              if (nVal > historyDataTimes.length) {
+                that.setState({ historyData: historyDataTemp });
+              } else if (nVal < 200) {
+                that.setState({
+                  historyData: historyDataTemp,
+                }, () => that.initHistoryData(nVal * 3));
+              }
             }
-        })
-        .catch(function (err) {
-            console.log("Error fetching history", err);
-        });
+          })
+          .catch((err) => {
+            console.log('Error fetching history', err);
+          });
       }
     }
   }

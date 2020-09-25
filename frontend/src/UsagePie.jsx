@@ -20,19 +20,19 @@ export default class UsagePie extends React.Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    const { runningData } = this.props
+    const { runningData } = this.props;
 
     for (let i = 0; i < runningData.length; i += 1) {
       if (runningData[i].username !== nextProps.runningData[i].username) {
-        return true
-      } else if (runningData[i].cpus !== nextProps.runningData[i].cpus) {
-        return true
-      } else if (runningData[i].jobs !== nextProps.runningData[i].jobs) {
-        return true
+        return true;
+      } if (runningData[i].cpus !== nextProps.runningData[i].cpus) {
+        return true;
+      } if (runningData[i].jobs !== nextProps.runningData[i].jobs) {
+        return true;
       }
     }
 
-    return false
+    return false;
   }
 
   handleResize = () => {
