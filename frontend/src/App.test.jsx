@@ -8,6 +8,7 @@ const testHistory = require('../test/history.json')
 const testBackfill = require('../test/history.json')
 
 fetchMock.get('end:bobdata.py', testData);
+fetchMock.get('glob:*bobdata.py?time=*', testData);
 fetchMock.get('end:bobhistory.py', testHistory);
 fetchMock.get('end:bobbackfill.py', testBackfill);
 
