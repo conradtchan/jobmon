@@ -78,8 +78,7 @@ export function instantWarnings(data) {
         }
       }
 
-      // Cores per node: since jobs either use less than a whole node,
-      // or multiples of a whole node, nCores will accurately give the average cores per node
+      // Cores per node: since jobs use the same amount of cores per node, nCores is accurate
       const nCoresPerNode = nCores;
 
       // Memory that jobs can get for free
