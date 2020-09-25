@@ -10,24 +10,6 @@ import Queue from './Queue';
 import Backfill from './Backfill';
 
 class App extends React.PureComponent {
-  static extractGpuLayout(data) {
-    // The GPU mapping always needs to be the current one,
-    // because it may not have been properly determined in the past
-    const layout = {};
-    const jobIds = Object.keys(data.jobs);
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jid = jobIds[i];
-      if (data.jobs[jid].nGpus > 0) {
-        layout[jid] = {};
-        const gpuHosts = Object.keys(data.jobs[jid].gpuLayout);
-        for (let j = 0; j < gpuHosts.length; j += 1) {
-          const host = gpuHosts[j];
-          layout[jid][host] = data.jobs[jid].gpuLayout[host];
-        }
-      }
-    }
-    return layout;
-  }
 
   constructor(props) {
     super(props);
@@ -985,17 +967,39 @@ class App extends React.PureComponent {
           that.cleanState(data)
           that.setState({
               apiData: data,
-              gpuLayout: App.extractGpuLayout(data),
               snapshotTime: new Date(data.timestamp * 1000),
               lastFetchAttempt: new Date(),
               gotData: true,
-          }, () => that.updateHistoryData());
+          },
+          () => that.setState({gpuLayout: that.extractGpuLayout()},
+          () => that.updateHistoryData()
+          ));
           setTimeout(() => {that.fetchLatest()}, 10000) // 10 seconds
       })
       .catch(function (err) {
           console.log("Error fetching latest data", err);
       });
     }
+  }
+
+  extractGpuLayout() {
+    // The GPU mapping always needs to be the current one,
+    // because it may not have been properly determined in the past
+    const { apiData } = this.state
+    const layout = {};
+    const jobIds = Object.keys(apiData.jobs);
+    for (let i = 0; i < jobIds.length; i += 1) {
+      const jid = jobIds[i];
+      if (apiData.jobs[jid].nGpus > 0) {
+        layout[jid] = {};
+        const gpuHosts = Object.keys(apiData.jobs[jid].gpuLayout);
+        for (let j = 0; j < gpuHosts.length; j += 1) {
+          const host = gpuHosts[j];
+          layout[jid][host] = apiData.jobs[jid].gpuLayout[host];
+        }
+      }
+    }
+    return layout;
   }
 
   fetchBackfill() {
