@@ -67,14 +67,14 @@ export function instantWarnings(data) {
         if (doUtilCheck) {
           if (cpuUsage / nCores < warnUtil) {
             // Score = percentage wasted * number of cores
-            warnings[jobNodeName].jobs[jobId].cpuUtil = nCores * (warnUtil - cpuUsage);
+            warnings[jobNodeName].jobs[jobId].cpuUtil = (nCores * warnUtil) - cpuUsage;
           }
         }
 
         // If spending significant time waiting
         if (cpuWait / nCores > warnWait) {
           // Score = percentage waiting * number of cores
-          warnings[jobNodeName].jobs[jobId].cpuWait = nCores * (cpuWait - warnWait);
+          warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - (nCores * warnWait);
         }
       }
 
