@@ -13,6 +13,7 @@ export function instantWarnings(data) {
 
   const warnings = {};
 
+  // Node type warnings
   const nodeNames = Object.keys(data.nodes);
   for (let i = 0; i < nodeNames.length; i += 1) {
     const nodeName = nodeNames[i];
@@ -30,12 +31,17 @@ export function instantWarnings(data) {
   }
 
   const jobIds = Object.keys(data.jobs);
+  // For each job
   for (let i = 0; i < jobIds.length; i += 1) {
     const jobId = jobIds[i];
     const job = data.jobs[jobId];
+
     if (job.state === 'RUNNING' && job.runTime > graceTime) {
       const jobNodeNames = Object.keys(job.layout);
-      for (let j = 0; j < jobNodeNames.length; j += 1) {
+      const nNodes = jobNodeNames.length;
+      let nCores = 0;
+      // For each node in the job
+      for (let j = 0; j < nNodes; j += 1) {
         const jobNodeName = jobNodeNames[j];
         const node = data.nodes[jobNodeName];
         warnings[jobNodeName].jobs[jobId] = {};
@@ -44,7 +50,8 @@ export function instantWarnings(data) {
         let cpuUsage = 0;
         let cpuWait = 0;
         const layoutNumbers = Object.keys(job.layout[jobNodeName]);
-        for (let k = 1; k < layoutNumbers.length; k += 1) {
+        nCores = layoutNumbers.length; // Number of cores used on this node
+        for (let k = 1; k < nCores; k += 1) {
           const iLayout = layoutNumbers[k];
           cpuUsage += node.cpu.coreC[iLayout][cpuKeys.user]
             + node.cpu.coreC[iLayout][cpuKeys.system]
@@ -52,35 +59,38 @@ export function instantWarnings(data) {
           cpuWait += node.cpu.coreC[iLayout][cpuKeys.wait];
         }
 
+        // Only perform CPU utilisation check if the job uses more than 1 core
+        // and if it is not a GPU job
+        const doUtilCheck = (nCores > 1) || (job.nGpus === 0);
+
         // If below utilisation
-        if (
-          cpuUsage / job.layout[jobNodeName].length < warnUtil
-            && (
-              job.layout[jobNodeName].length > 1
-              || job.Gpu === 0
-            )
-        ) {
-          // Score = percentage wasted * number of cores
-          warnings[jobNodeName].jobs[jobId].cpuUtil = (job.layout[jobNodeName].length * warnUtil)
-                - cpuUsage;
+        if (doUtilCheck) {
+          if (cpuUsage / nCores < warnUtil) {
+            // Score = percentage wasted * number of cores
+            warnings[jobNodeName].jobs[jobId].cpuUtil = (nCores * warnUtil) - cpuUsage;
+          }
         }
 
-        if (cpuWait / job.layout[jobNodeName].length > warnWait) {
+        // If spending significant time waiting
+        if (cpuWait / nCores > warnWait) {
           // Score = percentage waiting * number of cores
           warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - warnWait;
         }
       }
 
-      // CPUs per node
-      const nCpus = job.nCpus / Object.keys(job.layout).length;
+      // Cores per node: since jobs either use less than a whole node,
+      // or multiples of a whole node, nCores will accurately give the average cores per node
+      const nCoresPerNode = nCores;
 
       // Memory that jobs can get for free
-      const freeMem = baseMem * (nCpus - 1.0) + baseMemSingle;
+      const freeMem = baseMem * (nCoresPerNode - 1.0) + baseMemSingle;
 
       // Factor for making it stricter for large requests
       const x = Math.max(0.0, (job.memReq - freeMem) / job.memReq);
 
+      // Memory warning criteria
       const criteria = (job.memReq - freeMem) * (1.0 - x) + x * (warnMem / 100.0) * job.memReq;
+
       if (job.memMax < criteria) {
         // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
         const memNodeNames = Object.keys(job.mem);
@@ -96,17 +106,12 @@ export function instantWarnings(data) {
   return warnings;
 }
 
-export function generateWarnings() {
+export default function generateWarnings(snapshotTime, historyData) {
   // Time window to check for warnings
   const warningWindow = 600;
 
   // If more than this fraction in the window is bad, then trigger warning
   const warningFraction = 0.5;
-
-  const {
-    snapshotTime,
-    historyData,
-  } = this.state;
 
   // Get the data snapshots that we check for warnings
   const now = snapshotTime / 1000;
