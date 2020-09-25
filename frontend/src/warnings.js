@@ -94,7 +94,7 @@ export function instantWarnings(data) {
       if (job.memMax < criteria) {
         // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
         const memNodeNames = Object.keys(job.mem);
-        for (let k = 1; k < memNodeNames.length; k += 1) {
+        for (let k = 0; k < memNodeNames.length; k += 1) {
           const memNodeName = memNodeNames[k];
           // Score = GB wasted
           warnings[memNodeName].jobs[jobId].memUtil = (criteria - job.memMax) / 1024;
