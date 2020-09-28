@@ -128,6 +128,7 @@ export default class NodePie extends React.PureComponent {
               outerRadius={`${110 + dRing}%`}
               startAngle={90}
               endAngle={450}
+              isAnimationActive={false}
             >
               <Label
                 position="center"

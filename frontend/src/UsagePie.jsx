@@ -147,6 +147,7 @@ export default class UsagePie extends React.Component {
               onClick={(data, index) => onPieClick(data, index)}
               onMouseEnter={(data, index) => this.pieMouseEnter(data, index)}
               onMouseLeave={(data, index) => this.pieMouseLeave(data, index)}
+              isAnimationActive={false}
             >
               {
                 runningData.map(
