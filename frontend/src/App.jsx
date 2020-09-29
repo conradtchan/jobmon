@@ -13,6 +13,7 @@ import config from './config';
 import arraysEqual from './utils';
 
 class App extends React.Component {
+  static whyDidYouRender = true
   constructor(props) {
     super(props);
     this.state = {
