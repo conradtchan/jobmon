@@ -63,7 +63,9 @@ export function getNodeUsage(jid, job, node, host, gpuLayout) {
     usage.cpu.system /= nCores;
     usage.cpu.wait /= nCores;
     usage.cpu.idle /= nCores;
-    usage.gpu.total /= nGpus;
+    if (nGpus > 0) {
+      usage.gpu.total /= nGpus;
+    }
   }
 
   return usage;
