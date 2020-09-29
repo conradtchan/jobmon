@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import config from './config';
 
 export default class UserString extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -40,13 +41,12 @@ export default class UserString extends React.Component {
       onClick,
       warning,
       badness,
-      terribleThreshold,
       nameSort,
     } = this.props;
 
     let nameClass = 'user-string';
     if (warning) {
-      if (badness > terribleThreshold && nameSort === 'badness') {
+      if (badness > config.terribleThreshold && nameSort === 'badness') {
         nameClass += ' terrible';
       } else {
         nameClass += ' warn';
@@ -112,7 +112,6 @@ UserString.propTypes = {
   onClick: PropTypes.func.isRequired,
   warning: PropTypes.bool.isRequired,
   badness: PropTypes.number.isRequired,
-  terribleThreshold: PropTypes.number.isRequired,
   nameSort: PropTypes.string.isRequired,
 };
 

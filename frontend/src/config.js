@@ -19,6 +19,25 @@ const config = {
 
   // Factor to increase chart resolution at each refinment
   historyResolutionMultiplier: 3,
+
+  // ===== Warning configuration ===== //
+
+  // Instantaneous warnings
+  warnSwap: 20, // If swap use % greater than
+  warnWait: 5, // If wait time % greater than
+  warnUtil: 80, // If CPU usage % less than
+  warnMem: 70, // If memory usage % less than
+  baseMem: 2048, // Megabytes of "free" memory per core not to warn
+  baseMemSingle: 4096, // Megabytes of memory for the first core
+  graceTime: 5, // Minutes: give jobs  time to get setup without warning
+
+  // Warnings over time
+  warningWindow: 600, // Time window to check for warnings
+  warningFraction: 0.5, // Trigger warning if over this fraction is bad
+
+  // Threshold for marking jobs as terrible
+  terribleThreshold: 1000,
+
 };
 
 export default config;

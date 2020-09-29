@@ -1,14 +1,6 @@
 import config from './config';
 
 export function instantWarnings(data) {
-  const warnSwap = 20; // If swap greater than
-  const warnWait = 5; // If waiting more than
-  const warnUtil = 80; // If CPU utilisation below
-  const warnMem = 70; // If memory used is less than
-  const baseMem = 2048; // Megabytes of "free" memory per core not to warn for
-  const baseMemSingle = 4096; // Megabytes of memory for the first core
-  const graceTime = 5; // (Minutes) give jobs some time to get setup
-
   const warnings = {};
 
   // Node type warnings
@@ -21,7 +13,7 @@ export function instantWarnings(data) {
     warnings[nodeName] = { node: { swapUse: 0 }, jobs: {} };
 
     // Score = percentage of swap used
-    if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
+    if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > config.warnSwap) {
       const score = 100 * (
         (node.swap.total - node.swap.free) / node.swap.total
       );
@@ -35,7 +27,7 @@ export function instantWarnings(data) {
     const jobId = jobIds[i];
     const job = data.jobs[jobId];
 
-    if (job.state === 'RUNNING' && job.runTime > graceTime) {
+    if (job.state === 'RUNNING' && job.runTime > config.graceTime) {
       const jobNodeNames = Object.keys(job.layout);
       const nNodes = jobNodeNames.length;
       let nCores = 0;
@@ -63,16 +55,16 @@ export function instantWarnings(data) {
 
         // If below utilisation
         if (doUtilCheck) {
-          if (cpuUsage / nCores < warnUtil) {
+          if (cpuUsage / nCores < config.warnUtil) {
             // Score = percentage wasted * number of cores
-            warnings[jobNodeName].jobs[jobId].cpuUtil = (nCores * warnUtil) - cpuUsage;
+            warnings[jobNodeName].jobs[jobId].cpuUtil = (nCores * config.warnUtil) - cpuUsage;
           }
         }
 
         // If spending significant time waiting
-        if (cpuWait / nCores > warnWait) {
+        if (cpuWait / nCores > config.warnWait) {
           // Score = percentage waiting * number of cores
-          warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - (nCores * warnWait);
+          warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - (nCores * config.warnWait);
         }
       }
 
@@ -80,13 +72,14 @@ export function instantWarnings(data) {
       const nCoresPerNode = nCores;
 
       // Memory that jobs can get for free
-      const freeMem = baseMem * (nCoresPerNode - 1.0) + baseMemSingle;
+      const freeMem = config.baseMem * (nCoresPerNode - 1.0) + config.baseMemSingle;
 
       // Factor for making it stricter for large requests
       const x = Math.max(0.0, (job.memReq - freeMem) / job.memReq);
 
       // Memory warning criteria
-      const criteria = (job.memReq - freeMem) * (1.0 - x) + x * (warnMem / 100.0) * job.memReq;
+      const criteria = (job.memReq - freeMem) * (1.0 - x)
+        + x * (config.warnMem / 100.0) * job.memReq;
 
       if (job.memMax < criteria) {
         // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
@@ -104,18 +97,12 @@ export function instantWarnings(data) {
 }
 
 export default function generateWarnings(snapshotTime, historyData) {
-  // Time window to check for warnings
-  const warningWindow = 600;
-
-  // If more than this fraction in the window is bad, then trigger warning
-  const warningFraction = 0.5;
-
   // Get the data snapshots that we check for warnings
   const now = snapshotTime / 1000;
   const warningDataIndex = [];
   for (let i = 0; i < historyData.length; i += 1) {
     const data = historyData[i];
-    if (now - data.timestamp < warningWindow) {
+    if (now - data.timestamp < config.warningWindow) {
       warningDataIndex.push(i);
     }
   }
@@ -123,7 +110,7 @@ export default function generateWarnings(snapshotTime, historyData) {
   const nSnapshots = warningDataIndex.length;
 
   // Threshold number of snapshots for triggering warning
-  const threshold = Math.floor(warningFraction * nSnapshots);
+  const threshold = Math.floor(config.warningFraction * nSnapshots);
 
   // Collate all the instantaneous warnings
   const warningSums = {}; // Number of times warned
