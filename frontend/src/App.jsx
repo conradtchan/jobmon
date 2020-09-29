@@ -613,10 +613,10 @@ class App extends React.Component {
         const now = new Date();
         const fetchAge = (now - lastFetchAttempt) / 1000;
         const snapAge = (now - snapshotTime) / 1000;
-        if (fetchAge > 300) {
+        if (fetchAge > config.fetchRetryTime) {
           this.fetchLatest();
           // If the backend copy is old, then maintenance is occuring
-        } else if ((snapAge > 600) && !(holdSnap)) {
+        } else if ((snapAge > config.maintenanceAge) && !(holdSnap)) {
           return (
             <div id="main-box">
               The job monitor is currently down for maintenance and will be back soon.
