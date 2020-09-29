@@ -158,6 +158,7 @@ export default class NodePie extends React.PureComponent {
               outerRadius={`${90 + dRing}%`}
               startAngle={90}
               endAngle={450}
+              isAnimationActive={false}
             >
               {
                 data.mem.reverse().map(
@@ -179,6 +180,7 @@ export default class NodePie extends React.PureComponent {
               outerRadius={`${75 + dRing}%`}
               startAngle={90}
               endAngle={450}
+              isAnimationActive={false}
             >
               {
                 data.gpu.reverse().map(
