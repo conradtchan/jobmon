@@ -466,13 +466,19 @@ class App extends React.Component {
 
   selectJob(jobId) {
     // Unselect job if it is already selected
-    const { job } = this.state;
+    const { apiData, job, nodeName } = this.state;
     if (job === jobId) {
       this.setState({ job: null });
       this.selectNode(null);
     } else {
       this.setState({ job: jobId },
         () => this.setUserToJob());
+
+      // Clear node selection if this job does not run on it
+      const nodes = Object.keys(apiData.jobs[jobId].layout)
+      if (!nodes.includes(nodeName)) {
+        this.setState({ nodeName: null})
+      }
     }
   }
 
