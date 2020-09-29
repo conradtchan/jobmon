@@ -10,7 +10,9 @@ export default class NodeDetails extends React.Component {
     const {
       name,
       selectedJobId,
-      timestamp
+      timestamp,
+      timeWindow,
+      historyData,
     } = this.props;
 
     if (nextProps.name !== name) {
@@ -19,9 +21,17 @@ export default class NodeDetails extends React.Component {
       return true
     } if (nextProps.timestamp !== timestamp) {
       return true
+    } if (nextProps.timeWindow !== timeWindow) {
+      return true
+    } if (this.getTimestampList(nextProps.historyData) !== this.getTimestampList(historyData)) {
+      return true
     }
 
     return false
+  }
+
+  getTimestampList(historyData) {
+    return historyData.map(a => a.timestamp)
   }
 
   getCorePies() {
