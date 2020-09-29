@@ -906,7 +906,7 @@ class App extends React.Component {
               </a>
             </div>
             <div id="page-title">
-              Job Monitor
+              {config.pageTitle}
             </div>
             <div id="header-right" />
           </div>

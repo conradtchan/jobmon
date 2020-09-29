@@ -6,6 +6,9 @@ const config = {
   // Address of API
   address: 'https://supercomputing.swin.edu.au/monitor/api/',
 
+  // Page title
+  pageTitle: 'Job Monitor',
+
   // Array indices for CPU usage
   cpuKeys: {
     user: 0, nice: 1, system: 2, wait: 3, idle: 4,
