@@ -4,7 +4,25 @@ import JobText from './JobText';
 import PropChart from './PropChart';
 import CorePie from './CorePie';
 
-export default class NodeDetails extends React.PureComponent {
+export default class NodeDetails extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    const {
+      name,
+      selectedJobId,
+      timestamp
+    } = this.props;
+
+    if (nextProps.name !== name) {
+      return true
+    } if (nextProps.selectedJobId !== selectedJobId) {
+      return true
+    } if (nextProps.timestamp !== timestamp) {
+      return true
+    }
+
+    return false
+  }
+
   getCorePies() {
     const {
       selectedJobId,

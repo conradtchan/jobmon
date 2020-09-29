@@ -240,6 +240,7 @@ class App extends React.PureComponent {
     } = this.state;
     return (
       <NodeDetails
+        timestamp={apiData.timestamp}
         name={nodeName}
         node={nodeName === null ? null : apiData.nodes[nodeName]}
         jobs={apiData.jobs}
