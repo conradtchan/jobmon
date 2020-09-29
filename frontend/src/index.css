@@ -119,6 +119,10 @@ div:focus {outline: 0px;}
   font-size: x-large;
 }
 
+#version {
+  color: var(--dark-shade)
+}
+
 .bad-job {
   text-align: center;
   color: var(--bad-job-color);

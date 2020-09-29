@@ -1,6 +1,12 @@
 import React from 'react';
+
+import { version } from '../package.json';
+
 import logo from './logo.png';
 import './App.css';
+
+import config from './config';
+import arraysEqual from './utils';
 
 import NodeDetails from './NodeDetails';
 import NodeOverview from './NodeOverview';
@@ -9,8 +15,6 @@ import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
 import generateWarnings from './warnings';
-import config from './config';
-import arraysEqual from './utils';
 
 class App extends React.Component {
   static whyDidYouRender = true
@@ -978,6 +982,9 @@ class App extends React.Component {
         </header>
         {this.getTimeMachine()}
         {this.show()}
+        <div id="version">
+          v{version}
+        </div>
 
       </div>
     );
