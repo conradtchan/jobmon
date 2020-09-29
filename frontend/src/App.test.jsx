@@ -23,7 +23,7 @@ it('one is one', () => {
   expect(1).toEqual(1);
 });
 
-it('test data format', () => {
+it('data format', () => {
   const keys = Object.keys(testData);
   expect(keys).toEqual(expect.arrayContaining(
     ['api', 'timestamp', 'nodes', 'jobs'],
