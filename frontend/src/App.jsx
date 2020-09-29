@@ -732,14 +732,24 @@ class App extends React.Component {
             lastFetchAttempt: new Date(),
             gotData: true,
           },
-          () => that.setState({ gpuLayout: that.extractGpuLayout() },
-            () => that.updateHistoryData()));
+          () => that.postFetch()
+          );
           setTimeout(() => { that.fetchLatest(); }, config.fetchFrequency * 1000);
         })
         .catch((err) => {
           console.log('Error fetching latest data', err);
         });
     }
+  }
+
+  postFetch() {
+    this.setGpuLayout()
+    this.updateHistoryData()
+  }
+
+  setGpuLayout() {
+    const layout = this.extractGpuLayout()
+    this.setState({gpuLayout: layout})
   }
 
   extractGpuLayout() {
