@@ -4,6 +4,7 @@ import JobText from './JobText';
 import PropChartMini from './PropChartMini';
 import NodePie from './NodePie';
 import { getWarnedJobs } from './warnings'
+import { getJobUsage, getNodeUsage } from './usage';
 import constants from './constants';
 
 export default class NodeOverview extends React.Component {
@@ -33,7 +34,7 @@ export default class NodeOverview extends React.Component {
       apiData,
       onRowClick,
       warnings,
-      getNodeUsage,
+      gpuLayout,
     } = this.props;
 
     const { jobs, nodes } = apiData;
@@ -83,6 +84,7 @@ export default class NodeOverview extends React.Component {
           job,
           nodes[nodeName],
           nodeName,
+          gpuLayout,
         ).cpu;
 
         // CPU percent is out of the requested memory
@@ -227,10 +229,7 @@ export default class NodeOverview extends React.Component {
   }
 
   getRunningJobChart(job, jobId) {
-    const {
-      historyData,
-      getJobUsage,
-    } = this.props;
+    const { historyData, gpuLayout } = this.props;
     const style = getComputedStyle(document.documentElement);
     const historyChart = [];
 
@@ -260,7 +259,7 @@ export default class NodeOverview extends React.Component {
         const { nodes } = data;
 
         // Job CPU usage for all nodes of job
-        const usage = getJobUsage(jobId, job, nodes);
+        const usage = getJobUsage(jobId, job, nodes, gpuLayout);
 
         const d = new Date(data.timestamp * 1000);
 
@@ -480,9 +479,7 @@ NodeOverview.propTypes = {
   apiData: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.object, PropTypes.number])).isRequired,
   onRowClick: PropTypes.func.isRequired,
   onJobClick: PropTypes.func.isRequired,
-  getJobUsage: PropTypes.func.isRequired,
   warnings: PropTypes.objectOf(PropTypes.object).isRequired,
-  getNodeUsage: PropTypes.func.isRequired,
   username: PropTypes.string,
   historyData: PropTypes.arrayOf(PropTypes.object).isRequired,
   warnedUsers: PropTypes.arrayOf(PropTypes.string).isRequired,

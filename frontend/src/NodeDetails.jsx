@@ -6,6 +6,7 @@ import CorePie from './CorePie';
 import config from './config';
 import constants from './constants';
 import arraysEqual from './utils'
+import { getNodeUsage } from './usage'
 
 export default class NodeDetails extends React.Component {
   static whyDidYouRender = true
@@ -158,8 +159,8 @@ export default class NodeDetails extends React.Component {
     const {
       name,
       selectedJobId,
-      getNodeUsage,
       historyData,
+      gpuLayout,
     } = this.props;
     const historyChart = [];
 
@@ -189,7 +190,7 @@ export default class NodeDetails extends React.Component {
       if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
         const job = data.jobs[selectedJobId];
 
-        const usage = getNodeUsage(selectedJobId, data.jobs[selectedJobId], nodeData, name);
+        const usage = getNodeUsage(selectedJobId, data.jobs[selectedJobId], nodeData, name, gpuLayout);
 
         // Memory usage
         if (Object.prototype.hasOwnProperty.call(job.mem, name)) {
@@ -598,7 +599,6 @@ NodeDetails.propTypes = {
   warnings: PropTypes.objectOf(PropTypes.object),
   onJobClick: PropTypes.func.isRequired,
   changeTimeWindow: PropTypes.func.isRequired,
-  getNodeUsage: PropTypes.func.isRequired,
   timeWindow: PropTypes.number.isRequired,
   historyData: PropTypes.arrayOf(PropTypes.object),
 };
