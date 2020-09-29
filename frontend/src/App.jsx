@@ -9,12 +9,12 @@ import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
 import generateWarnings from './warnings';
+import config from './config';
 
-class App extends React.PureComponent {
+class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      address: 'https://supercomputing.swin.edu.au/monitor/api/',
       apiData: null,
       gotData: false,
       username: null,
@@ -701,9 +701,8 @@ class App extends React.PureComponent {
   }
 
   fetchTime(time) {
-    const { address } = this.state;
     const that = this;
-    fetch(`${address}bobdata.py?time=${time.toString()}`)
+    fetch(`${config.address}bobdata.py?time=${time.toString()}`)
       .then((response) => response.json())
       .then((data) => {
         that.cleanState(data);
@@ -719,9 +718,8 @@ class App extends React.PureComponent {
   }
 
   fetchHistory() {
-    const { address } = this.state;
     const that = this;
-    fetch(`${address}bobhistory.py`)
+    fetch(`${config.address}bobhistory.py`)
       .then((response) => response.json())
       .then((data) => {
         that.setState({ history: data.history });
@@ -733,11 +731,11 @@ class App extends React.PureComponent {
   }
 
   fetchLatest() {
-    const { holdSnap, address } = this.state;
+    const { holdSnap } = this.state;
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
       const that = this;
-      fetch(`${address}bobdata.py`)
+      fetch(`${config.address}bobdata.py`)
         .then((response) => response.json())
         .then((data) => {
           that.cleanState(data);
@@ -778,9 +776,8 @@ class App extends React.PureComponent {
   }
 
   fetchBackfill() {
-    const { address } = this.state;
     const that = this;
-    fetch(`${address}bobbackfill.py`)
+    fetch(`${config.address}bobbackfill.py`)
       .then((response) => response.json())
       .then((data) => {
         that.setState({ backfill: data });
@@ -836,7 +833,6 @@ class App extends React.PureComponent {
       history,
       snapshotTime,
       historyDataWindow,
-      address,
     } = this.state;
 
     if (!(history === null)) {
@@ -869,7 +865,7 @@ class App extends React.PureComponent {
       const that = this;
       for (let i = 0; i < requestDataTimes.length; i += 1) {
         const time = requestDataTimes[i];
-        fetch(`${address}bobdata.py?time=${time.toString()}`)
+        fetch(`${config.address}bobdata.py?time=${time.toString()}`)
           .then((response) => response.json())
           .then((data) => {
             historyDataTemp.push(data);
