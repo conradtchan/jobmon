@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import UsagePie from './UsagePie';
 import UserString from './UserString';
 
-export default class UserPiePlot extends React.PureComponent {
+export default class UserPiePlot extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -13,6 +13,33 @@ export default class UserPiePlot extends React.PureComponent {
       nameSort: 'alpha',
       terribleThreshold: 1000,
     };
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const {
+      timestamp,
+    } = this.props;
+
+    const {
+      usagePieActiveIndex,
+      usagePieSelectedIndex,
+      activeSectorSize,
+      nameSort,
+    } = this.state
+
+    if (nextProps.timestamp !== timestamp) {
+      return true
+    } if (nextState.usagePieActiveIndex !== usagePieActiveIndex) {
+      return true
+    } if (nextState.usagePieSelectedIndex !== usagePieSelectedIndex) {
+      return true
+    } if (nextState.activeSectorSize !== activeSectorSize) {
+      return true
+    } if (nextState.nameSort !== nameSort) {
+      return true
+    }
+
+    return false
   }
 
   componentDidMount() {

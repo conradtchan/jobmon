@@ -5,7 +5,25 @@ import PropChartMini from './PropChartMini';
 import NodePie from './NodePie';
 import { getWarnedJobs } from './warnings'
 
-export default class NodeOverview extends React.PureComponent {
+export default class NodeOverview extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    const {
+      timestamp,
+      username,
+      jobId,
+    } = this.props;
+
+    if (nextProps.timestamp !== timestamp) {
+      return true
+    } if (nextProps.username !== username) {
+      return true
+    } if (nextProps.jobId!== jobId) {
+      return true
+    }
+
+    return false
+  }
+
   getNodePies() {
     const {
       nodeHasJob,

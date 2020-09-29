@@ -159,6 +159,7 @@ class App extends React.PureComponent {
 
     return (
       <UserPiePlot
+        timestamp={apiData.timestamp}
         runningData={runningData}
         runningCores={systemUsage.runningCores}
         availCores={systemUsage.availCores}
@@ -200,6 +201,7 @@ class App extends React.PureComponent {
     }
     return (
       <NodeOverview
+        timestamp={apiData.timestamp}
         username={username}
         jobId={job}
         nodeData={apiData.nodes}
