@@ -1,6 +1,12 @@
 import React from 'react';
+
+import { version } from '../package.json';
+
 import logo from './logo.png';
 import './App.css';
+
+import config from './config';
+import arraysEqual from './utils';
 
 import NodeDetails from './NodeDetails';
 import NodeOverview from './NodeOverview';
@@ -8,31 +14,13 @@ import UserPiePlot from './UserPiePlot';
 import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
+import generateWarnings from './warnings';
 
 class App extends React.Component {
-  static extractGpuLayout(data) {
-    // The GPU mapping always needs to be the current one,
-    // because it may not have been properly determined in the past
-    const layout = {};
-    const jobIds = Object.keys(data.jobs);
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jid = jobIds[i];
-      if (data.jobs[jid].nGpus > 0) {
-        layout[jid] = {};
-        const gpuHosts = Object.keys(data.jobs[jid].gpuLayout);
-        for (let j = 0; j < gpuHosts.length; j += 1) {
-          const host = gpuHosts[j];
-          layout[jid][host] = data.jobs[jid].gpuLayout[host];
-        }
-      }
-    }
-    return layout;
-  }
-
+  static whyDidYouRender = true
   constructor(props) {
     super(props);
     this.state = {
-      address: 'https://supercomputing.swin.edu.au/monitor/api/',
       apiData: null,
       gotData: false,
       username: null,
@@ -44,12 +32,8 @@ class App extends React.Component {
       history: null,
       historyData: [],
       historyDataWindow: 600, // seconds
-      historyDataCountInitial: 30,
       future: false,
       backfill: null,
-      cpuKeys: {
-        user: 0, nice: 1, system: 2, wait: 3, idle: 4,
-      },
       gpuLayout: null,
     };
 
@@ -177,6 +161,7 @@ class App extends React.Component {
 
     return (
       <UserPiePlot
+        timestamp={apiData.timestamp}
         runningData={runningData}
         runningCores={systemUsage.runningCores}
         availCores={systemUsage.availCores}
@@ -193,7 +178,6 @@ class App extends React.Component {
       username,
       job,
       historyData,
-      cpuKeys,
     } = this.state;
     const { jobs } = apiData;
 
@@ -218,17 +202,18 @@ class App extends React.Component {
     }
     return (
       <NodeOverview
+        timestamp={apiData.timestamp}
         username={username}
         jobId={job}
         nodeData={apiData.nodes}
         jobs={apiData.jobs}
+        apiData={apiData}
         nodeHasJob={nodeHasJob}
         onRowClick={(node) => this.selectNode(node)}
         warnings={warnings}
         warnedUsers={warnedUsers}
         onJobClick={(jobId) => this.selectJob(jobId)}
         historyData={historyData}
-        cpuKeys={cpuKeys}
         getJobUsage={(jid, job_, nodes) => this.getJobUsage(jid, job_, nodes)}
         getNodeUsage={(jid, job_, node, host) => this.getNodeUsage(jid, job_, node, host)}
         getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
@@ -252,11 +237,11 @@ class App extends React.Component {
       username,
       job,
       historyData,
-      cpuKeys,
       historyDataWindow,
     } = this.state;
     return (
       <NodeDetails
+        timestamp={apiData.timestamp}
         name={nodeName}
         node={nodeName === null ? null : apiData.nodes[nodeName]}
         jobs={apiData.jobs}
@@ -265,7 +250,6 @@ class App extends React.Component {
         onJobClick={(jobId) => this.selectJob(jobId)}
         warnings={warnings}
         historyData={historyData}
-        cpuKeys={cpuKeys}
         changeTimeWindow={(t) => this.changeTimeWindow(t)}
         timeWindow={historyDataWindow}
         getNodeUsage={(jid, job_, node, host) => this.getNodeUsage(jid, job_, node, host)}
@@ -498,10 +482,7 @@ class App extends React.Component {
 
   // Get the per job usage for a specific node
   getNodeUsage(jid, job, node, host) {
-    const {
-      cpuKeys,
-      gpuLayout,
-    } = this.state;
+    const { gpuLayout } = this.state;
     const usage = {
       cpu: {
         user: 0, system: 0, wait: 0, idle: 0,
@@ -514,14 +495,13 @@ class App extends React.Component {
 
     if (Object.prototype.hasOwnProperty.call(job.layout, host)) {
       const layout = job.layout[host];
-      const layoutNumbers = Object.keys(layout);
-      for (let i = 0; i < layoutNumbers.length; i += 1) {
-        const iLayout = layoutNumbers[i];
-        usage.cpu.user += node.cpu.coreC[iLayout][cpuKeys.user]
-          + node.cpu.coreC[iLayout][cpuKeys.nice];
-        usage.cpu.system += node.cpu.coreC[iLayout][cpuKeys.system];
-        usage.cpu.wait += node.cpu.coreC[iLayout][cpuKeys.wait];
-        usage.cpu.idle += node.cpu.coreC[iLayout][cpuKeys.idle];
+      for (let i = 0; i < layout.length; i += 1) {
+        const iLayout = layout[i];
+        usage.cpu.user += node.cpu.coreC[iLayout][config.cpuKeys.user]
+          + node.cpu.coreC[iLayout][config.cpuKeys.nice];
+        usage.cpu.system += node.cpu.coreC[iLayout][config.cpuKeys.system];
+        usage.cpu.wait += node.cpu.coreC[iLayout][config.cpuKeys.wait];
+        usage.cpu.idle += node.cpu.coreC[iLayout][config.cpuKeys.idle];
       }
       let nGpus = 0;
       // If thif is a GPU job
@@ -573,12 +553,11 @@ class App extends React.Component {
   }
 
   getTotalUsage(totalC) {
-    const { cpuKeys } = this.state;
     const total = {};
-    const categories = Object.kets(cpuKeys);
+    const categories = Object.keys(config.cpuKeys);
     for (let i = 0; i < categories.length; i += 1) {
       const key = categories[i];
-      total[key] = totalC[cpuKeys[key]];
+      total[key] = totalC[config.cpuKeys[key]];
     }
     return total;
   }
@@ -602,9 +581,8 @@ class App extends React.Component {
   }
 
   changeTimeWindow(t) {
-    const { historyDataCountInitial } = this.state;
     this.setState({ historyDataWindow: t },
-      () => this.initHistoryData(historyDataCountInitial));
+      () => this.initHistoryData(config.historyDataCountInitial));
   }
 
   selectJob(jobId) {
@@ -629,6 +607,7 @@ class App extends React.Component {
       gotData,
       lastFetchAttempt,
       snapshotTime,
+      historyData,
       holdSnap,
     } = this.state;
     if (!future) {
@@ -638,10 +617,10 @@ class App extends React.Component {
         const now = new Date();
         const fetchAge = (now - lastFetchAttempt) / 1000;
         const snapAge = (now - snapshotTime) / 1000;
-        if (fetchAge > 300) {
+        if (fetchAge > config.fetchRetryTime) {
           this.fetchLatest();
           // If the backend copy is old, then maintenance is occuring
-        } else if ((snapAge > 600) && !(holdSnap)) {
+        } else if ((snapAge > config.maintenanceAge) && !(holdSnap)) {
           return (
             <div id="main-box">
               The job monitor is currently down for maintenance and will be back soon.
@@ -652,7 +631,7 @@ class App extends React.Component {
             </div>
           );
         } else {
-          const warnings = this.generateWarnings();
+          const warnings = generateWarnings(snapshotTime, historyData);
           const warnedUsers = this.getWarnedUsers(warnings);
           const systemUsage = this.getSystemUsage();
           if (systemUsage.runningCores === 0) {
@@ -685,227 +664,6 @@ class App extends React.Component {
     return null;
   }
 
-  instantWarnings(data) {
-    const warnSwap = 20; // If swap greater than
-    const warnWait = 5; // If waiting more than
-    const warnUtil = 80; // If CPU utilisation below
-    const warnMem = 70; // If memory used is less than
-    const baseMem = 2048; // Megabytes of "free" memory per core not to warn for
-    const baseMemSingle = 4096; // Megabytes of memory for the first core
-    const graceTime = 5; // (Minutes) give jobs some time to get setup
-
-    const { cpuKeys } = this.state;
-
-    const warnings = {};
-
-    const nodeNames = Object.keys(data.nodes);
-    for (let i = 0; i < nodeNames.length; i += 1) {
-      const nodeName = nodeNames[i];
-      const node = data.nodes[nodeName];
-
-      // Default scores to zero
-      warnings[nodeName] = { node: { swapUse: 0 }, jobs: {} };
-
-      // Score = percentage of swap used
-      if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > warnSwap) {
-        warnings[nodeName].node.swapUse = 100 * (
-          (node.swap.total - node.swap.free) / node.swap.total
-        );
-      }
-    }
-
-    const jobIds = Object.keys(data.jobs);
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jobId = jobIds[i];
-      const job = data.jobs[jobId];
-      if (job.state === 'RUNNING' && job.runTime > graceTime) {
-        const jobNodeNames = Object.keys(job.layout);
-        for (let j = 0; j < jobNodeNames.length; j += 1) {
-          const jobNodeName = jobNodeNames[j];
-          const node = data.nodes[jobNodeName];
-          warnings[jobNodeName].jobs[jobId] = {};
-
-          // CPU use
-          let cpuUsage = 0;
-          let cpuWait = 0;
-          const layoutNumbers = Object.keys(job.layout[jobNodeName]);
-          for (let k = 1; k < layoutNumbers.length; k += 1) {
-            const iLayout = layoutNumbers[k];
-            cpuUsage += node.cpu.coreC[iLayout][cpuKeys.user]
-              + node.cpu.coreC[iLayout][cpuKeys.system]
-              + node.cpu.coreC[iLayout][cpuKeys.nice];
-            cpuWait += node.cpu.coreC[iLayout][cpuKeys.wait];
-          }
-
-          // If below utilisation
-          if (
-            cpuUsage / job.layout[jobNodeName].length < warnUtil
-            && (
-              job.layout[jobNodeName].length > 1
-              || job.Gpu === 0
-            )
-          ) {
-            // Score = percentage wasted * number of cores
-            warnings[jobNodeName].jobs[jobId].cpuUtil = (job.layout[jobNodeName].length * warnUtil)
-            - cpuUsage;
-          }
-
-          if (cpuWait / job.layout[jobNodeName].length > warnWait) {
-            // Score = percentage waiting * number of cores
-            warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - warnWait;
-          }
-        }
-
-        // CPUs per node
-        const nCpus = job.nCpus / Object.keys(job.layout).length;
-
-        // Memory that jobs can get for free
-        const freeMem = baseMem * (nCpus - 1.0) + baseMemSingle;
-
-        // Factor for making it stricter for large requests
-        const x = Math.max(0.0, (job.memReq - freeMem) / job.memReq);
-
-        const criteria = (job.memReq - freeMem) * (1.0 - x) + x * (warnMem / 100.0) * job.memReq;
-        if (job.memMax < criteria) {
-          // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
-          const memNodeNames = Object.keys(job.mem);
-          for (let k = 1; k < memNodeNames.length; k += 1) {
-            const memNodeName = memNodeNames[k];
-            // Score = GB wasted
-            warnings[memNodeName].jobs[jobId].memUtil = (criteria - job.memMax) / 1024;
-          }
-        }
-      }
-    }
-
-    return warnings;
-  }
-
-  generateWarnings() {
-    // Time window to check for warnings
-    const warningWindow = 600;
-
-    // If more than this fraction in the window is bad, then trigger warning
-    const warningFraction = 0.5;
-
-    const {
-      snapshotTime,
-      historyData,
-    } = this.state;
-
-    // Get the data snapshots that we check for warnings
-    const now = snapshotTime / 1000;
-    const warningDataIndex = [];
-    for (let i = 0; i < historyData.length; i += 1) {
-      const data = historyData[i];
-      if (now - data.timestamp < warningWindow) {
-        warningDataIndex.push(i);
-      }
-    }
-
-    // Threshold number of snapshots for triggering warning
-    const threshold = Math.floor(warningFraction * warningDataIndex.length);
-
-    // Collate all the instantaneous warnings
-    const warningSums = {};
-    const scoreSums = {};
-
-    // i is the index of the data
-    for (let i = 0; i < warningDataIndex.length; i += 1) {
-      const data = historyData[warningDataIndex[i]];
-      const warnings = this.instantWarnings(data);
-
-      // For each node
-      const nodeNames = Object.keys(warnings);
-      for (let j = 1; j < nodeNames.length; j += 1) {
-        const nodeName = nodeNames[j];
-        if (!(Object.prototype.hasOwnProperty.call(warningSums, nodeName))) {
-          warningSums[nodeName] = { node: {}, jobs: {} };
-          scoreSums[nodeName] = { node: {}, jobs: {} };
-        }
-
-        // Count node warnings
-        const warningNames = Object.keys(warnings);
-        for (let k = 0; k < warningNames.length; k += 1) {
-          const warningName = warningNames[k];
-          if (!(Object.prototype.hasOwnProperty.call(warningSums[nodeName].node, warningName))) {
-            warningSums[nodeName].node[warningName] = 0;
-            scoreSums[nodeName].node[warningName] = 0;
-          }
-          if (warnings[nodeName].node[warningName] > 0) {
-            warningSums[nodeName].node[warningName] += 1;
-            scoreSums[nodeName].node[warningName]
-              += Math.floor(warnings[nodeName].node[warningName]);
-          }
-        }
-
-        // Count job warnings
-        const jobIds = Object.keys(warnings[nodeName].jobs);
-        for (let k = 0; k < jobIds.length; k += 1) {
-          const jobId = jobIds[k];
-          if (!(Object.prototype.hasOwnProperty.call(warningSums[nodeName].jobs, jobId))) {
-            warningSums[nodeName].jobs[jobId] = {};
-            scoreSums[nodeName].jobs[jobId] = {};
-          }
-          const jobWarningNames = Object.keys(warnings[nodeName].jobs[jobId]);
-          for (let l = 0; l < jobWarningNames.length; l += 1) {
-            const jobWarningName = jobWarningNames[l];
-            if (!(
-              Object.prototype.hasOwnProperty.call(
-                warningSums[nodeName].jobs[jobId],
-                jobWarningName,
-              )
-            )) {
-              warningSums[nodeName].jobs[jobId][jobWarningName] = 0;
-              scoreSums[nodeName].jobs[jobId][jobWarningName] = 0;
-            }
-            if (warnings[nodeName].jobs[jobId][jobWarningName] > 0) {
-              warningSums[nodeName].jobs[jobId][jobWarningName] += 1;
-              scoreSums[nodeName].jobs[jobId][jobWarningName]
-                += Math.floor(warnings[nodeName].jobs[jobId][jobWarningName]);
-            }
-          }
-        }
-      }
-    }
-
-    // Set jobs below the threshold to score = 0
-    const nodeNames = Object.keys(warningSums);
-    for (let i = 0; i < nodeNames.length; i += 1) {
-      const nodeName = nodeNames[i];
-      const warningNames = Object.keys(warningSums[nodeName].node);
-      for (let j = 0; j < warningNames.length; j += 1) {
-        const warningName = warningNames[j];
-        if (warningSums[nodeName].node[warningName] > threshold) {
-          // convert to integer
-          scoreSums[nodeName].node[warningName] = Math.floor(
-            scoreSums[nodeName].node[warningName] / warningDataIndex.length,
-          );
-        } else {
-          scoreSums[nodeName].node[warningName] = 0;
-        }
-      }
-      const jobIds = Object.keys(warningSums[nodeName].jobs);
-      for (let j = 0; j < jobIds.length; j += 1) {
-        const jobId = jobIds[j];
-        const jobWarningNames = warningSums[nodeName].jobs[jobId];
-        for (let k = 0; k < jobWarningNames.length; k += 1) {
-          const jobWarningName = jobWarningNames[k];
-          if (warningSums[nodeName].jobs[jobId][jobWarningName] > threshold) {
-            // convert to integer
-            scoreSums[nodeName].jobs[jobId][jobWarningName] = Math.floor(
-              scoreSums[nodeName].jobs[jobId][jobWarningName] / warningDataIndex.length,
-            );
-          } else {
-            scoreSums[nodeName].jobs[jobId][jobWarningName] = 0;
-          }
-        }
-      }
-    }
-
-    return scoreSums;
-  }
-
   cleanState(newData) {
     const {
       job,
@@ -913,103 +671,171 @@ class App extends React.Component {
       username,
     } = this.state;
     // If a job is gone
-    if (!(Object.keys(newData.jobs).includes(job))) {
-      this.setState({ job: null });
+    if (job !== null) {
+      if (!(Object.keys(newData.jobs).includes(job))) {
+        this.setState({ job: null });
+      }
     }
 
     // If a node is gone (unlikely)
-    if (!(Object.keys(newData.nodes).includes(nodeName))) {
-      this.setState({ nodeName: null });
+    if (nodeName !== null) {
+      if (!(Object.keys(newData.nodes).includes(nodeName))) {
+        this.setState({ nodeName: null });
+      }
     }
 
     // If a user is gone
-    let hasUser = false;
-    const jobIds = Object.keys(newData.jobs);
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jobId = jobIds[i];
-      if (newData.jobs[jobId].username === username) {
-        hasUser = true;
-        break;
+    if (username !== null) {
+      let hasUser = false;
+      const jobIds = Object.keys(newData.jobs);
+      for (let i = 0; i < jobIds.length; i += 1) {
+        const jobId = jobIds[i];
+        if (newData.jobs[jobId].username === username) {
+          hasUser = true;
+          break;
+        }
       }
+      if (!(hasUser)) this.setState({ nodeName: null });
     }
-    if (!(hasUser)) this.setState({ nodeName: null });
+
   }
 
   fetchTime(time) {
-    const { address } = this.state;
-    this.setState({ holdSnap: true });
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        const jsonData = JSON.parse(xhr.responseText);
-        this.cleanState(jsonData);
-        this.setState({
-          apiData: jsonData,
-          snapshotTime: new Date(jsonData.timestamp * 1000),
+    const that = this;
+    fetch(`${config.address}bobdata.py?time=${time.toString()}`)
+      .then((response) => response.json())
+      .then((data) => {
+        that.cleanState(data);
+        that.setState({
+          apiData: data,
+          snapshotTime: new Date(data.timestamp * 1000),
           gotData: true,
-        }, () => this.historyTimeJump());
-      }
-    };
-    xhr.open('GET', `${address}bobdata.py?time=${time.toString()}`, true);
-    xhr.send();
+        }, () => that.historyTimeJump());
+      })
+      .catch((err) => {
+        console.log('Error fetching history', err);
+      });
   }
 
   fetchHistory() {
-    const { address } = this.state;
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        const jsonData = JSON.parse(xhr.responseText);
-        this.setState({ history: jsonData.history });
-        setTimeout(() => { this.fetchHistory(); }, 100000); // 100 seconds
-      }
-    };
-    xhr.open('GET', `${address}bobhistory.py`, true);
-    xhr.send();
+    const that = this;
+    fetch(`${config.address}bobhistory.py`)
+      .then((response) => response.json())
+      .then((data) => {
+        that.setState({ history: data.history });
+        setTimeout(() => { that.fetchHistory(); }, config.fetchHistoryFrequency * 1000);
+      })
+      .catch((err) => {
+        console.log('Error fetching history', err);
+      });
   }
 
   fetchLatest() {
-    const { holdSnap, address } = this.state;
+    const { holdSnap } = this.state;
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
-      const xhr = new XMLHttpRequest();
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          const jsonData = JSON.parse(xhr.responseText);
-          this.cleanState(jsonData);
-          this.setState({
-            apiData: jsonData,
-            gpuLayout: App.extractGpuLayout(jsonData),
-            snapshotTime: new Date(jsonData.timestamp * 1000),
+      const that = this;
+      fetch(`${config.address}bobdata.py`)
+        .then((response) => response.json())
+        .then((data) => {
+          that.cleanState(data);
+          that.setState({
+            apiData: data,
+            snapshotTime: new Date(data.timestamp * 1000),
             lastFetchAttempt: new Date(),
             gotData: true,
-          }, () => this.updateHistoryData());
-          setTimeout(() => { this.fetchLatest(); }, 10000); // 10 seconds
-        }
-      };
-      xhr.open('GET', `${address}bobdata.py`, true);
-      xhr.send();
+          },
+          () => that.postFetch()
+          );
+          setTimeout(() => { that.fetchLatest(); }, config.fetchFrequency * 1000);
+        })
+        .catch((err) => {
+          console.log('Error fetching latest data', err);
+        });
     }
   }
 
-  fetchBackfill() {
-    const { address } = this.state;
-    const xhr = new XMLHttpRequest();
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        const jsonData = JSON.parse(xhr.responseText);
-        this.setState({ backfill: jsonData });
-        setTimeout(() => { this.fetchBackfill(); }, 100000); // 100 seconds
+  postFetch() {
+    this.setGpuLayout()
+    this.updateHistoryData()
+  }
+
+  setGpuLayout() {
+    const layout = this.extractGpuLayout()
+    if (layout !== null) {
+      this.setState({gpuLayout: layout})
+    }
+  }
+
+  extractGpuLayout() {
+    // The GPU mapping always needs to be the current one,
+    // because it may not have been properly determined in the past
+    const { apiData, gpuLayout } = this.state;
+    const layout = {};
+    const jobIds = Object.keys(apiData.jobs);
+
+    let changed = false
+
+    let oldJobs = []
+    if (gpuLayout !== null) {
+      oldJobs = Object.keys(gpuLayout)
+    }
+
+    for (let i = 0; i < jobIds.length; i += 1) {
+      const jid = jobIds[i];
+
+      if (apiData.jobs[jid].nGpus > 0) {
+
+        if (!changed) {
+          // If job id wasn't in the previous layout
+          if (!oldJobs.includes(jid)) {
+            changed = true
+          }
+        }
+
+        layout[jid] = {};
+        const gpuHosts = Object.keys(apiData.jobs[jid].gpuLayout);
+        for (let j = 0; j < gpuHosts.length; j += 1) {
+          const host = gpuHosts[j];
+          const newLayout = apiData.jobs[jid].gpuLayout[host]
+
+          // Only perform check if a new job hasn't been introduced
+          if (!changed) {
+            // Check if the layout has changed
+            if (!arraysEqual(gpuLayout[jid][host],newLayout)) {
+              changed = true
+            }
+          }
+
+          layout[jid][host] = newLayout;
+        }
       }
-    };
-    xhr.open('GET', `${address}bobbackfill.py`, true);
-    xhr.send();
+    }
+
+    if (changed) {
+      return layout;
+    } else {
+      return null; // return null if the layout is unchanged
+    }
+
+  }
+
+  fetchBackfill() {
+    const that = this;
+    fetch(`${config.address}bobbackfill.py`)
+      .then((response) => response.json())
+      .then((data) => {
+        that.setState({ backfill: data });
+        setTimeout(() => { that.fetchBackfill(); }, config.fetchBackfillFrequency * 1000);
+      })
+      .catch((err) => {
+        console.log('Error fetching history', err);
+      });
   }
 
   historyTimeJump() {
-    const { historyDataCountInitial } = this.state;
     this.setState({ historyData: [] },
-      () => this.initHistoryData(historyDataCountInitial));
+      () => this.initHistoryData(config.historyDataCountInitial));
   }
 
   updateHistoryData() {
@@ -1023,6 +849,7 @@ class App extends React.Component {
     if (historyData.length < 3) {
       this.historyTimeJump();
     } else {
+      // This may be the current time, or the time set in the time machine
       const observerNow = snapshotTime / 1000;
 
       const newHistoryData = [];
@@ -1030,19 +857,29 @@ class App extends React.Component {
       for (let i = 0; i < historyData.length; i += 1) {
         const data = historyData[i];
         const timeDiff = observerNow - data.timestamp;
-        if ((timeDiff < historyDataWindow) && (timeDiff > 0)) {
+        if ((timeDiff <= historyDataWindow) && (timeDiff >= 0)) {
           newHistoryData.push(data);
           times.push(data.timestamp);
         }
       }
 
+      let changed = true
       // Add newest snapshot
-      if (!(times.includes(apiData.timestamp)) && !(apiData === null)) {
+      if (!times.includes(apiData.timestamp) && !(apiData === null)) {
         newHistoryData.push(apiData);
+      } else {
+        // Check if historydata is actually unchanged
+        // If the newest snapshot was not added, then the length
+        // will remain the same if the contents are unchanged
+        if (newHistoryData.length === historyData.length) {
+          changed = false
+        }
       }
 
       // Update, before putting past values in (if history is too short)
-      this.setState({ historyData: newHistoryData });
+      if (changed) {
+        this.setState({ historyData: newHistoryData });
+      }
     }
   }
 
@@ -1051,7 +888,6 @@ class App extends React.Component {
       history,
       snapshotTime,
       historyDataWindow,
-      address,
     } = this.state;
 
     if (!(history === null)) {
@@ -1081,27 +917,26 @@ class App extends React.Component {
 
       // Make requests, then push to list
       const historyDataTemp = [];
+      const that = this;
       for (let i = 0; i < requestDataTimes.length; i += 1) {
         const time = requestDataTimes[i];
-        const xhr = new XMLHttpRequest();
-        // eslint-disable-next-line
-                xhr.onreadystatechange = () => {
-          if (xhr.readyState === 4 && xhr.status === 200) {
-            const jsonData = JSON.parse(xhr.responseText);
-            historyDataTemp.push(jsonData);
+        fetch(`${config.address}bobdata.py?time=${time.toString()}`)
+          .then((response) => response.json())
+          .then((data) => {
+            historyDataTemp.push(data);
             if (historyDataTemp.length === requestDataTimes.length) {
               if (nVal > historyDataTimes.length) {
-                this.setState({ historyData: historyDataTemp });
+                that.setState({ historyData: historyDataTemp });
               } else if (nVal < 200) {
-                this.setState({
+                that.setState({
                   historyData: historyDataTemp,
-                }, () => this.initHistoryData(nVal * 3));
+                }, () => that.initHistoryData(nVal * config.historyResolutionMultiplier));
               }
             }
-          }
-        };
-        xhr.open('GET', `${address}bobdata.py?time=${time.toString()}`, true);
-        xhr.send();
+          })
+          .catch((err) => {
+            console.log('Error fetching history', err);
+          });
       }
     }
   }
@@ -1135,18 +970,21 @@ class App extends React.Component {
         <header className="App-header">
           <div id="header">
             <div id="logo">
-              <a href="https://supercomputing.swin.edu.au/">
+              <a href={config.homepage}>
                 <img src={logo} className="App-logo" alt="logo" />
               </a>
             </div>
             <div id="page-title">
-              Job Monitor
+              {config.pageTitle}
             </div>
             <div id="header-right" />
           </div>
         </header>
         {this.getTimeMachine()}
         {this.show()}
+        <div id="version">
+          v{version}
+        </div>
 
       </div>
     );

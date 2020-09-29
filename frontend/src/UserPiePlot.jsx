@@ -2,8 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import UsagePie from './UsagePie';
 import UserString from './UserString';
+import config from './config';
 
 export default class UserPiePlot extends React.Component {
+  static whyDidYouRender = true
   constructor(props) {
     super(props);
     this.state = {
@@ -11,8 +13,34 @@ export default class UserPiePlot extends React.Component {
       usagePieSelectedIndex: null,
       activeSectorSize: 'small',
       nameSort: 'alpha',
-      terribleThreshold: 1000,
     };
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    const {
+      timestamp,
+    } = this.props;
+
+    const {
+      usagePieActiveIndex,
+      usagePieSelectedIndex,
+      activeSectorSize,
+      nameSort,
+    } = this.state
+
+    if (nextProps.timestamp !== timestamp) {
+      return true
+    } if (nextState.usagePieActiveIndex !== usagePieActiveIndex) {
+      return true
+    } if (nextState.usagePieSelectedIndex !== usagePieSelectedIndex) {
+      return true
+    } if (nextState.activeSectorSize !== activeSectorSize) {
+      return true
+    } if (nextState.nameSort !== nameSort) {
+      return true
+    }
+
+    return false
   }
 
   componentDidMount() {
@@ -57,7 +85,6 @@ export default class UserPiePlot extends React.Component {
         usagePieActiveIndex,
         activeSectorSize,
         nameSort,
-        terribleThreshold,
       } = this.state;
 
       const userStrings = [];
@@ -75,7 +102,6 @@ export default class UserPiePlot extends React.Component {
             onClick={() => this.updateSelectedUsername(user.index, user.username)}
             warning={warnedUsers.includes(user.username)}
             badness={badness[user.username]}
-            terribleThreshold={terribleThreshold}
             nameSort={nameSort}
           />,
         );
@@ -145,7 +171,7 @@ export default class UserPiePlot extends React.Component {
             activeIndex={usagePieActiveIndex}
             activeSectorSize={activeSectorSize}
           />
-          {(maxBadness > terribleThreshold && nameSort === 'badness')
+          {(maxBadness > config.terribleThreshold && nameSort === 'badness')
                     && (
                     <div className="terrible-job">
                       Highlighted users are severely underutilizing resources

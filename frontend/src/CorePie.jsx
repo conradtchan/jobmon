@@ -32,6 +32,7 @@ export default class CorePie extends React.PureComponent {
               outerRadius="100%"
               startAngle={90}
               endAngle={450}
+              isAnimationActive={false}
             >
               {
                 data.reverse().map(
@@ -56,6 +57,7 @@ export default class CorePie extends React.PureComponent {
               fill="#222222"
               paddingAngle={0}
               stroke="none"
+              isAnimationActive={false}
             />
           </PieChart>
         </ResponsiveContainer>

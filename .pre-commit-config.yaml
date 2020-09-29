@@ -34,6 +34,7 @@ repos:
     rev: 'v7.9.0'
     hooks:
       - id: eslint
+        args: ['--fix']
         additional_dependencies:
           - babel-eslint@10.1.0
           - eslint@7.8.1

@@ -19,6 +19,30 @@ export default class UsagePie extends React.Component {
     window.removeEventListener('resize', this.handleResize);
   }
 
+  shouldComponentUpdate(nextProps) {
+    const {
+      runningData,
+      activeIndex,
+      activeSectorSize,
+    } = this.props;
+
+    for (let i = 0; i < runningData.length; i += 1) {
+      if (activeIndex !== nextProps.activeIndex) {
+        return true
+      } if (activeSectorSize !== nextProps.activeSectorSize) {
+        return true
+      } if (runningData[i].username !== nextProps.runningData[i].username) {
+        return true;
+      } if (runningData[i].cpus !== nextProps.runningData[i].cpus) {
+        return true;
+      } if (runningData[i].jobs !== nextProps.runningData[i].jobs) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   handleResize = () => {
     this.forceUpdate();
   };
@@ -131,6 +155,7 @@ export default class UsagePie extends React.Component {
               onClick={(data, index) => onPieClick(data, index)}
               onMouseEnter={(data, index) => this.pieMouseEnter(data, index)}
               onMouseLeave={(data, index) => this.pieMouseLeave(data, index)}
+              isAnimationActive={false}
             >
               {
                 runningData.map(

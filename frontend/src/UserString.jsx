@@ -1,7 +1,36 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import config from './config';
 
-export default class UserString extends React.PureComponent {
+export default class UserString extends React.Component {
+  shouldComponentUpdate(nextProps) {
+    const {
+      user,
+      availCores,
+      hoveredIndex,
+      warning,
+      badness,
+    } = this.props;
+    if (nextProps.user.username !== user.username) {
+      return true;
+    } if (nextProps.user.index !== user.index) {
+      return true;
+    } if (nextProps.user.cpus !== user.cpus) {
+      return true;
+    } if (nextProps.user.jobs !== user.jobs) {
+      return true;
+    } if (nextProps.availCores !== availCores) {
+      return true;
+    } if (nextProps.hoveredIndex !== hoveredIndex) {
+      return true;
+    } if (nextProps.warning !== warning) {
+      return true;
+    } if (nextProps.badness !== badness) {
+      return true;
+    }
+    return false;
+  }
+
   render() {
     const {
       user,
@@ -12,13 +41,12 @@ export default class UserString extends React.PureComponent {
       onClick,
       warning,
       badness,
-      terribleThreshold,
       nameSort,
     } = this.props;
 
     let nameClass = 'user-string';
     if (warning) {
-      if (badness > terribleThreshold && nameSort === 'badness') {
+      if (badness > config.terribleThreshold && nameSort === 'badness') {
         nameClass += ' terrible';
       } else {
         nameClass += ' warn';
@@ -84,7 +112,6 @@ UserString.propTypes = {
   onClick: PropTypes.func.isRequired,
   warning: PropTypes.bool.isRequired,
   badness: PropTypes.number.isRequired,
-  terribleThreshold: PropTypes.number.isRequired,
   nameSort: PropTypes.string.isRequired,
 };
 

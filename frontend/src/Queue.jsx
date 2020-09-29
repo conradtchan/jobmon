@@ -33,9 +33,13 @@ export default class Queue extends React.PureComponent {
           {(queueTotal.size !== 1) ? 's' : ''}
           {' '}
           for
+          {' '}
           {queueTotal.cpuHours.toFixed(0)}
           {' '}
-          cpu-h (
+          cpu-h
+        </div>
+        <div>
+          (
           {(queueTotal.cpuHours / availCores).toFixed(0)}
           {' '}
           machine-h)

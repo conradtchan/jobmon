@@ -3,14 +3,45 @@ import PropTypes from 'prop-types';
 import JobText from './JobText';
 import PropChart from './PropChart';
 import CorePie from './CorePie';
+import config from './config';
+import constants from './constants';
+import arraysEqual from './utils'
 
 export default class NodeDetails extends React.Component {
+  static whyDidYouRender = true
+  shouldComponentUpdate(nextProps) {
+    const {
+      name,
+      selectedJobId,
+      timestamp,
+      timeWindow,
+      historyData,
+    } = this.props;
+
+    if (nextProps.name !== name) {
+      return true
+    } if (nextProps.selectedJobId !== selectedJobId) {
+      return true
+    } if (nextProps.timestamp !== timestamp) {
+      return true
+    } if (nextProps.timeWindow !== timeWindow) {
+      return true
+    } if (!arraysEqual(this.getTimestampList(nextProps.historyData), this.getTimestampList(historyData))) {
+      return true
+    }
+
+    return false
+  }
+
+  getTimestampList(historyData) {
+    return historyData.map(a => a.timestamp)
+  }
+
   getCorePies() {
     const {
       selectedJobId,
       name,
       node,
-      cpuKeys,
       jobs,
     } = this.props;
     // Cores belonging to selected job
@@ -34,10 +65,10 @@ export default class NodeDetails extends React.Component {
           key={i}
           type="cpu"
           data={[
-            { name: 'user', data: core[cpuKeys.user] + core[cpuKeys.nice] },
-            { name: 'wait', data: core[cpuKeys.wait] },
-            { name: 'system', data: core[cpuKeys.system] },
-            { name: 'idle', data: core[cpuKeys.idle] },
+            { name: 'user', data: core[config.cpuKeys.user] + core[config.cpuKeys.nice] },
+            { name: 'wait', data: core[config.cpuKeys.wait] },
+            { name: 'system', data: core[config.cpuKeys.system] },
+            { name: 'idle', data: core[config.cpuKeys.idle] },
           ]}
           selected={coreSelected}
         />,
@@ -128,7 +159,6 @@ export default class NodeDetails extends React.Component {
       name,
       selectedJobId,
       getNodeUsage,
-      cpuKeys,
       historyData,
     } = this.props;
     const historyChart = [];
@@ -191,17 +221,17 @@ export default class NodeDetails extends React.Component {
       const x = {
         time: data.timestamp,
         timeString: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
-        user: nodeData.cpu.totalC[cpuKeys.user] + nodeData.cpu.totalC[cpuKeys.nice],
-        system: nodeData.cpu.totalC[cpuKeys.system],
-        wait: nodeData.cpu.totalC[cpuKeys.wait],
-        mem: nodeData.mem.used * 1024 ** 2, // mb
+        user: nodeData.cpu.totalC[config.cpuKeys.user] + nodeData.cpu.totalC[config.cpuKeys.nice],
+        system: nodeData.cpu.totalC[config.cpuKeys.system],
+        wait: nodeData.cpu.totalC[config.cpuKeys.wait],
+        mem: nodeData.mem.used * constants.mb,
         job_user: jobUser,
         job_system: jobSystem,
         job_wait: jobWait,
-        job_mem: jobMem * 1024 ** 2, // mb
-        job_mem_max: jobMemMax * 1024 ** 2, // mb
-        job_mem_requested: jobMemRequested * 1024 ** 2, // mb
-        swap: (nodeData.swap.total - nodeData.swap.free) * 1024 ** 2, // mb
+        job_mem: jobMem * constants.mb,
+        job_mem_max: jobMemMax * constants.mb,
+        job_mem_requested: jobMemRequested * constants.mb,
+        swap: (nodeData.swap.total - nodeData.swap.free) *constants.mb,
         infiniband_in: ibBytesIn,
         infiniband_out: ibBytesOut,
         infiniband_pkts_in: ibPktsIn,
@@ -265,7 +295,7 @@ export default class NodeDetails extends React.Component {
             'fill',
           ]}
           unit="B"
-          dataMax={node.mem.total * 1024 ** 2}
+          dataMax={node.mem.total * constants.mb}
           stacked={false}
         />
         <PropChart
@@ -279,7 +309,7 @@ export default class NodeDetails extends React.Component {
             'fill',
           ]}
           unit="B"
-          dataMax={node.swap.total * 1024 ** 2}
+          dataMax={node.swap.total * constants.mb}
           stacked={false}
         />
         <PropChart
@@ -564,7 +594,6 @@ NodeDetails.propTypes = {
   node: PropTypes.objectOf(
     PropTypes.oneOfType([PropTypes.object, PropTypes.bool, PropTypes.number]),
   ),
-  cpuKeys: PropTypes.objectOf(PropTypes.number).isRequired,
   jobs: PropTypes.objectOf(PropTypes.object),
   warnings: PropTypes.objectOf(PropTypes.object),
   onJobClick: PropTypes.func.isRequired,

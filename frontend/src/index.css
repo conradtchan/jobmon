@@ -119,6 +119,10 @@ div:focus {outline: 0px;}
   font-size: x-large;
 }
 
+#version {
+  color: var(--dark-shade)
+}
+
 .bad-job {
   text-align: center;
   color: var(--bad-job-color);
@@ -584,10 +588,6 @@ div:focus {outline: 0px;}
 
 .circle.gpu {
   background: var(--piecolor-gpu);
-}
-
-#ganglia-link {
-  margin-top: 1em;
 }
 
 .switch-parent {

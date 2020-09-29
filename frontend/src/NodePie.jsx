@@ -8,7 +8,7 @@ import {
 } from 'recharts';
 import PropTypes from 'prop-types';
 
-export default class NodePie extends React.Component {
+export default class NodePie extends React.PureComponent {
   constructor(props) {
     super(props);
     this.state = { expanded: false };
@@ -128,6 +128,7 @@ export default class NodePie extends React.Component {
               outerRadius={`${110 + dRing}%`}
               startAngle={90}
               endAngle={450}
+              isAnimationActive={false}
             >
               <Label
                 position="center"
@@ -157,6 +158,7 @@ export default class NodePie extends React.Component {
               outerRadius={`${90 + dRing}%`}
               startAngle={90}
               endAngle={450}
+              isAnimationActive={false}
             >
               {
                 data.mem.reverse().map(
@@ -178,6 +180,7 @@ export default class NodePie extends React.Component {
               outerRadius={`${75 + dRing}%`}
               startAngle={90}
               endAngle={450}
+              isAnimationActive={false}
             >
               {
                 data.gpu.reverse().map(

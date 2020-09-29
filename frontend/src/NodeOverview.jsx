@@ -3,19 +3,40 @@ import PropTypes from 'prop-types';
 import JobText from './JobText';
 import PropChartMini from './PropChartMini';
 import NodePie from './NodePie';
+import { getWarnedJobs } from './warnings'
+import constants from './constants';
 
 export default class NodeOverview extends React.Component {
+  static whyDidYouRender = true
+  shouldComponentUpdate(nextProps) {
+    const {
+      timestamp,
+      username,
+      jobId,
+    } = this.props;
+
+    if (nextProps.timestamp !== timestamp) {
+      return true
+    } if (nextProps.username !== username) {
+      return true
+    } if (nextProps.jobId!== jobId) {
+      return true
+    }
+
+    return false
+  }
+
   getNodePies() {
     const {
       nodeHasJob,
       jobId,
-      jobs,
-      nodeData,
-      gangliaURL,
+      apiData,
       onRowClick,
       warnings,
       getNodeUsage,
     } = this.props;
+
+    const { jobs, nodes } = apiData;
 
     const nodePies = [];
 
@@ -60,32 +81,32 @@ export default class NodeOverview extends React.Component {
         const cpuUsage = getNodeUsage(
           jobId,
           job,
-          nodeData[nodeName],
+          nodes[nodeName],
           nodeName,
         ).cpu;
 
         // CPU percent is out of the requested memory
         let memPercent = 0.0;
-        if (!(nodeData[nodeName].mem === null)) {
+        if (!(nodes[nodeName].mem === null)) {
           memPercent = 100 * (job.mem[nodeName] / job.memReq);
         }
 
         let diskPercent = 0.0;
-        if (!(nodeData[nodeName].disk === null)) {
-          diskPercent = 100 * (1.0 - nodeData[nodeName].disk.free / nodeData[nodeName].disk.total);
+        if (!(nodes[nodeName].disk === null)) {
+          diskPercent = 100 * (1.0 - nodes[nodeName].disk.free / nodes[nodeName].disk.total);
         }
         let swapPercent = 0.0;
-        if (!(nodeData[nodeName].swap === null)) {
-          swapPercent = 100 * (1.0 - nodeData[nodeName].swap.free / nodeData[nodeName].swap.total);
+        if (!(nodes[nodeName].swap === null)) {
+          swapPercent = 100 * (1.0 - nodes[nodeName].swap.free / nodes[nodeName].swap.total);
         }
         let gpuPercent = 0.0;
-        if (!(nodeData[nodeName].gpus === null)) {
+        if (!(nodes[nodeName].gpus === null)) {
           let nGpus = 0;
           if (Object.prototype.hasOwnProperty.call(job.gpuLayout, nodeName)) {
             for (let j = 0; j < job.gpuLayout[nodeName].length; j += 1) {
               const gpuIndex = job.gpuLayout[nodeName][j];
               nGpus += 1;
-              gpuPercent += nodeData[nodeName].gpus['gpu'.concat(gpuIndex.toString())];
+              gpuPercent += nodes[nodeName].gpus['gpu'.concat(gpuIndex.toString())];
             }
           }
           gpuPercent /= nGpus;
@@ -100,7 +121,6 @@ export default class NodeOverview extends React.Component {
             disk={diskPercent}
             gpu={gpuPercent}
             swap={swapPercent}
-            gangliaURL={gangliaURL}
             onRowClick={(node) => onRowClick(node)}
             nodeWarn={warnings[nodeName]}
             isGpuJob={job.nGpus > 0}
@@ -111,66 +131,18 @@ export default class NodeOverview extends React.Component {
     return nodePies;
   }
 
-  getWarnedJobs() {
-    const {
-      warnings,
-    } = this.props;
-
-    const warnedJobs = [];
-
-    // For each node in warnings
-    const warnedNodes = Object.keys(warnings);
-    for (let i = 0; i < warnedNodes.length; i += 1) {
-      const nodeName = warnedNodes[i];
-      const nodeWarnings = warnings[nodeName];
-
-      if (Object.prototype.hasOwnProperty.call(warnings, 'jobs')) {
-        // For each job on each node
-        const warnedJobIds = Object.keys(warnings.jobs);
-        let jobWarned = false;
-        for (let j = 0; j < warnedJobs.length; j += 1) {
-          const jobId = warnedJobIds[j];
-          if (!(warnedJobs.includes(jobId))) {
-            // Job type warnings
-            const jobTypeWarnIds = Object.keys(warnings.jobs[jobId]);
-            for (let k = 0; k < jobTypeWarnIds.length; k += 1) {
-              const warning = jobTypeWarnIds[k];
-              if (nodeWarnings.jobs[jobId][warning]) {
-                warnedJobs.push(jobId);
-                jobWarned = true;
-                break;
-              }
-            }
-
-            // Check for node type warnings if there are no job type warnings
-            if (!(jobWarned)) {
-              // Node type warnings
-              const nodeTypeWarnIds = Object.keys(warnings.node);
-              for (let k = 0; k < nodeTypeWarnIds.length; k += 1) {
-                const warning = nodeTypeWarnIds[k];
-                if (nodeWarnings.node[warning]) {
-                  warnedJobs.push(jobId);
-                  jobWarned = true;
-                  break;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return warnedJobs;
-  }
-
   getUserJobList() {
     const {
-      jobs,
+      apiData,
       username,
       onJobClick,
       jobId,
+      warnings,
     } = this.props;
 
-    const warnedJobs = this.getWarnedJobs();
+    const { jobs } = apiData;
+
+    const warnedJobs = getWarnedJobs(warnings);
 
     const jobList = {
       running: [],
@@ -280,7 +252,7 @@ export default class NodeOverview extends React.Component {
       nSkip = Math.floor(sortedHistory.length / chartRes);
     }
 
-    const memRequested = job.memReq * 1024 ** 2 * Object.keys(job.layout).length;
+    const memRequested = job.memReq * constants.mb * Object.keys(job.layout).length;
 
     for (let i = 0; i < sortedHistory.length; i += 1) {
       if (i % nSkip === 0) {
@@ -297,8 +269,8 @@ export default class NodeOverview extends React.Component {
           user: usage.cpu.user,
           system: usage.cpu.system,
           wait: usage.cpu.wait,
-          used: usage.mem.used * 1024 ** 2, // mb
-          max: usage.mem.max * 1024 ** 2, // mb
+          used: usage.mem.used * constants.mb,
+          max: usage.mem.max * constants.mb,
           request: memRequested, // used = memory used, request = memory requested
           gpu: usage.gpu.total,
         });
@@ -505,9 +477,7 @@ export default class NodeOverview extends React.Component {
 NodeOverview.propTypes = {
   nodeHasJob: PropTypes.objectOf(PropTypes.object).isRequired,
   jobId: PropTypes.string,
-  jobs: PropTypes.objectOf(PropTypes.object).isRequired,
-  nodeData: PropTypes.objectOf(PropTypes.object).isRequired,
-  gangliaURL: PropTypes.string,
+  apiData: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.object, PropTypes.number])).isRequired,
   onRowClick: PropTypes.func.isRequired,
   onJobClick: PropTypes.func.isRequired,
   getJobUsage: PropTypes.func.isRequired,
@@ -520,6 +490,5 @@ NodeOverview.propTypes = {
 
 NodeOverview.defaultProps = {
   jobId: null,
-  gangliaURL: null,
   username: null,
 };
