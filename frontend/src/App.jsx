@@ -901,7 +901,7 @@ class App extends React.Component {
         <header className="App-header">
           <div id="header">
             <div id="logo">
-              <a href="https://supercomputing.swin.edu.au/">
+              <a href={config.homepage}>
                 <img src={logo} className="App-logo" alt="logo" />
               </a>
             </div>

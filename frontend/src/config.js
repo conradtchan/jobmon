@@ -1,5 +1,8 @@
 const config = {
 
+  // Homepage
+  homepage: 'https://supercomputing.swin.edu.au/',
+
   // Address of API
   address: 'https://supercomputing.swin.edu.au/monitor/api/',
 
