@@ -10,6 +10,7 @@ import Queue from './Queue';
 import Backfill from './Backfill';
 import generateWarnings from './warnings';
 import config from './config';
+import arraysEqual from './utils';
 
 class App extends React.Component {
   constructor(props) {
@@ -665,26 +666,33 @@ class App extends React.Component {
       username,
     } = this.state;
     // If a job is gone
-    if (!(Object.keys(newData.jobs).includes(job))) {
-      this.setState({ job: null });
+    if (job !== null) {
+      if (!(Object.keys(newData.jobs).includes(job))) {
+        this.setState({ job: null });
+      }
     }
 
     // If a node is gone (unlikely)
-    if (!(Object.keys(newData.nodes).includes(nodeName))) {
-      this.setState({ nodeName: null });
+    if (nodeName !== null) {
+      if (!(Object.keys(newData.nodes).includes(nodeName))) {
+        this.setState({ nodeName: null });
+      }
     }
 
     // If a user is gone
-    let hasUser = false;
-    const jobIds = Object.keys(newData.jobs);
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jobId = jobIds[i];
-      if (newData.jobs[jobId].username === username) {
-        hasUser = true;
-        break;
+    if (username !== null) {
+      let hasUser = false;
+      const jobIds = Object.keys(newData.jobs);
+      for (let i = 0; i < jobIds.length; i += 1) {
+        const jobId = jobIds[i];
+        if (newData.jobs[jobId].username === username) {
+          hasUser = true;
+          break;
+        }
       }
+      if (!(hasUser)) this.setState({ nodeName: null });
     }
-    if (!(hasUser)) this.setState({ nodeName: null });
+
   }
 
   fetchTime(time) {
@@ -749,27 +757,62 @@ class App extends React.Component {
 
   setGpuLayout() {
     const layout = this.extractGpuLayout()
-    this.setState({gpuLayout: layout})
+    if (layout !== null) {
+      this.setState({gpuLayout: layout})
+    }
   }
 
   extractGpuLayout() {
     // The GPU mapping always needs to be the current one,
     // because it may not have been properly determined in the past
-    const { apiData } = this.state;
+    const { apiData, gpuLayout } = this.state;
     const layout = {};
     const jobIds = Object.keys(apiData.jobs);
+
+    let changed = false
+
+    let oldJobs = []
+    if (gpuLayout !== null) {
+      oldJobs = Object.keys(gpuLayout)
+    }
+
     for (let i = 0; i < jobIds.length; i += 1) {
       const jid = jobIds[i];
+
       if (apiData.jobs[jid].nGpus > 0) {
+
+        if (!changed) {
+          // If job id wasn't in the previous layout
+          if (!oldJobs.includes(jid)) {
+            changed = true
+          }
+        }
+
         layout[jid] = {};
         const gpuHosts = Object.keys(apiData.jobs[jid].gpuLayout);
         for (let j = 0; j < gpuHosts.length; j += 1) {
           const host = gpuHosts[j];
-          layout[jid][host] = apiData.jobs[jid].gpuLayout[host];
+          const newLayout = apiData.jobs[jid].gpuLayout[host]
+
+          // Only perform check if a new job hasn't been introduced
+          if (!changed) {
+            // Check if the layout has changed
+            if (!arraysEqual(gpuLayout[jid][host],newLayout)) {
+              changed = true
+            }
+          }
+
+          layout[jid][host] = newLayout;
         }
       }
     }
-    return layout;
+
+    if (changed) {
+      return layout;
+    } else {
+      return null; // return null if the layout is unchanged
+    }
+
   }
 
   fetchBackfill() {
@@ -801,6 +844,7 @@ class App extends React.Component {
     if (historyData.length < 3) {
       this.historyTimeJump();
     } else {
+      // This may be the current time, or the time set in the time machine
       const observerNow = snapshotTime / 1000;
 
       const newHistoryData = [];
@@ -808,7 +852,7 @@ class App extends React.Component {
       for (let i = 0; i < historyData.length; i += 1) {
         const data = historyData[i];
         const timeDiff = observerNow - data.timestamp;
-        if ((timeDiff < historyDataWindow) && (timeDiff > 0)) {
+        if ((timeDiff <= historyDataWindow) && (timeDiff >= 0)) {
           newHistoryData.push(data);
           times.push(data.timestamp);
         }
