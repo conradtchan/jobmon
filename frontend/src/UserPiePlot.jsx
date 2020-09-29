@@ -5,6 +5,7 @@ import UserString from './UserString';
 import config from './config';
 
 export default class UserPiePlot extends React.Component {
+  static whyDidYouRender = true
   constructor(props) {
     super(props);
     this.state = {

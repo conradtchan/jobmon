@@ -7,6 +7,7 @@ import config from './config';
 import constants from './constants';
 
 export default class NodeDetails extends React.Component {
+  static whyDidYouRender = true
   shouldComponentUpdate(nextProps) {
     const {
       name,

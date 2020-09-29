@@ -7,6 +7,7 @@ import { getWarnedJobs } from './warnings'
 import constants from './constants';
 
 export default class NodeOverview extends React.Component {
+  static whyDidYouRender = true
   shouldComponentUpdate(nextProps) {
     const {
       timestamp,
