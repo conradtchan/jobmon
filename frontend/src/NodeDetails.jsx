@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import JobText from './JobText';
 import PropChart from './PropChart';
 import CorePie from './CorePie';
+import config from './config';
 
 export default class NodeDetails extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -28,7 +29,6 @@ export default class NodeDetails extends React.Component {
       selectedJobId,
       name,
       node,
-      cpuKeys,
       jobs,
     } = this.props;
     // Cores belonging to selected job
@@ -52,10 +52,10 @@ export default class NodeDetails extends React.Component {
           key={i}
           type="cpu"
           data={[
-            { name: 'user', data: core[cpuKeys.user] + core[cpuKeys.nice] },
-            { name: 'wait', data: core[cpuKeys.wait] },
-            { name: 'system', data: core[cpuKeys.system] },
-            { name: 'idle', data: core[cpuKeys.idle] },
+            { name: 'user', data: core[config.cpuKeys.user] + core[config.cpuKeys.nice] },
+            { name: 'wait', data: core[config.cpuKeys.wait] },
+            { name: 'system', data: core[config.cpuKeys.system] },
+            { name: 'idle', data: core[config.cpuKeys.idle] },
           ]}
           selected={coreSelected}
         />,
@@ -146,7 +146,6 @@ export default class NodeDetails extends React.Component {
       name,
       selectedJobId,
       getNodeUsage,
-      cpuKeys,
       historyData,
     } = this.props;
     const historyChart = [];
@@ -209,9 +208,9 @@ export default class NodeDetails extends React.Component {
       const x = {
         time: data.timestamp,
         timeString: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
-        user: nodeData.cpu.totalC[cpuKeys.user] + nodeData.cpu.totalC[cpuKeys.nice],
-        system: nodeData.cpu.totalC[cpuKeys.system],
-        wait: nodeData.cpu.totalC[cpuKeys.wait],
+        user: nodeData.cpu.totalC[config.cpuKeys.user] + nodeData.cpu.totalC[config.cpuKeys.nice],
+        system: nodeData.cpu.totalC[config.cpuKeys.system],
+        wait: nodeData.cpu.totalC[config.cpuKeys.wait],
         mem: nodeData.mem.used * 1024 ** 2, // mb
         job_user: jobUser,
         job_system: jobSystem,
@@ -582,7 +581,6 @@ NodeDetails.propTypes = {
   node: PropTypes.objectOf(
     PropTypes.oneOfType([PropTypes.object, PropTypes.bool, PropTypes.number]),
   ),
-  cpuKeys: PropTypes.objectOf(PropTypes.number).isRequired,
   jobs: PropTypes.objectOf(PropTypes.object),
   warnings: PropTypes.objectOf(PropTypes.object),
   onJobClick: PropTypes.func.isRequired,

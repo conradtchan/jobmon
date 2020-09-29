@@ -1,3 +1,5 @@
+import config from './config';
+
 export function instantWarnings(data) {
   const warnSwap = 20; // If swap greater than
   const warnWait = 5; // If waiting more than
@@ -6,10 +8,6 @@ export function instantWarnings(data) {
   const baseMem = 2048; // Megabytes of "free" memory per core not to warn for
   const baseMemSingle = 4096; // Megabytes of memory for the first core
   const graceTime = 5; // (Minutes) give jobs some time to get setup
-
-  const cpuKeys = {
-    user: 0, nice: 1, system: 2, wait: 3, idle: 4,
-  };
 
   const warnings = {};
 
@@ -54,10 +52,10 @@ export function instantWarnings(data) {
         nCores = layout.length; // Number of cores used on this node
         for (let k = 0; k < nCores; k += 1) {
           const iLayout = layout[k];
-          cpuUsage += node.cpu.coreC[iLayout][cpuKeys.user]
-            + node.cpu.coreC[iLayout][cpuKeys.system]
-            + node.cpu.coreC[iLayout][cpuKeys.nice];
-          cpuWait += node.cpu.coreC[iLayout][cpuKeys.wait];
+          cpuUsage += node.cpu.coreC[iLayout][config.cpuKeys.user]
+            + node.cpu.coreC[iLayout][config.cpuKeys.system]
+            + node.cpu.coreC[iLayout][config.cpuKeys.nice];
+          cpuWait += node.cpu.coreC[iLayout][config.cpuKeys.wait];
         }
 
         // Perform util check unless this is a single-core GPU job

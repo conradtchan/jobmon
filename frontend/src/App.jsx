@@ -29,9 +29,6 @@ class App extends React.Component {
       historyDataCountInitial: 30,
       future: false,
       backfill: null,
-      cpuKeys: {
-        user: 0, nice: 1, system: 2, wait: 3, idle: 4,
-      },
       gpuLayout: null,
     };
 
@@ -176,7 +173,6 @@ class App extends React.Component {
       username,
       job,
       historyData,
-      cpuKeys,
     } = this.state;
     const { jobs } = apiData;
 
@@ -213,7 +209,6 @@ class App extends React.Component {
         warnedUsers={warnedUsers}
         onJobClick={(jobId) => this.selectJob(jobId)}
         historyData={historyData}
-        cpuKeys={cpuKeys}
         getJobUsage={(jid, job_, nodes) => this.getJobUsage(jid, job_, nodes)}
         getNodeUsage={(jid, job_, node, host) => this.getNodeUsage(jid, job_, node, host)}
         getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
@@ -237,7 +232,6 @@ class App extends React.Component {
       username,
       job,
       historyData,
-      cpuKeys,
       historyDataWindow,
     } = this.state;
     return (
@@ -251,7 +245,6 @@ class App extends React.Component {
         onJobClick={(jobId) => this.selectJob(jobId)}
         warnings={warnings}
         historyData={historyData}
-        cpuKeys={cpuKeys}
         changeTimeWindow={(t) => this.changeTimeWindow(t)}
         timeWindow={historyDataWindow}
         getNodeUsage={(jid, job_, node, host) => this.getNodeUsage(jid, job_, node, host)}
@@ -484,10 +477,7 @@ class App extends React.Component {
 
   // Get the per job usage for a specific node
   getNodeUsage(jid, job, node, host) {
-    const {
-      cpuKeys,
-      gpuLayout,
-    } = this.state;
+    const { gpuLayout } = this.state;
     const usage = {
       cpu: {
         user: 0, system: 0, wait: 0, idle: 0,
@@ -502,11 +492,11 @@ class App extends React.Component {
       const layout = job.layout[host];
       for (let i = 0; i < layout.length; i += 1) {
         const iLayout = layout[i];
-        usage.cpu.user += node.cpu.coreC[iLayout][cpuKeys.user]
-          + node.cpu.coreC[iLayout][cpuKeys.nice];
-        usage.cpu.system += node.cpu.coreC[iLayout][cpuKeys.system];
-        usage.cpu.wait += node.cpu.coreC[iLayout][cpuKeys.wait];
-        usage.cpu.idle += node.cpu.coreC[iLayout][cpuKeys.idle];
+        usage.cpu.user += node.cpu.coreC[iLayout][config.cpuKeys.user]
+          + node.cpu.coreC[iLayout][config.cpuKeys.nice];
+        usage.cpu.system += node.cpu.coreC[iLayout][config.cpuKeys.system];
+        usage.cpu.wait += node.cpu.coreC[iLayout][config.cpuKeys.wait];
+        usage.cpu.idle += node.cpu.coreC[iLayout][config.cpuKeys.idle];
       }
       let nGpus = 0;
       // If thif is a GPU job
@@ -558,12 +548,11 @@ class App extends React.Component {
   }
 
   getTotalUsage(totalC) {
-    const { cpuKeys } = this.state;
     const total = {};
-    const categories = Object.kets(cpuKeys);
+    const categories = Object.keys(config.cpuKeys);
     for (let i = 0; i < categories.length; i += 1) {
       const key = categories[i];
-      total[key] = totalC[cpuKeys[key]];
+      total[key] = totalC[config.cpuKeys[key]];
     }
     return total;
   }
