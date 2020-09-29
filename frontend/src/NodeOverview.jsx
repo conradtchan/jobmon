@@ -4,6 +4,7 @@ import JobText from './JobText';
 import PropChartMini from './PropChartMini';
 import NodePie from './NodePie';
 import { getWarnedJobs } from './warnings'
+import constants from './constants';
 
 export default class NodeOverview extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -250,7 +251,7 @@ export default class NodeOverview extends React.Component {
       nSkip = Math.floor(sortedHistory.length / chartRes);
     }
 
-    const memRequested = job.memReq * 1024 ** 2 * Object.keys(job.layout).length;
+    const memRequested = job.memReq * constants.mb * Object.keys(job.layout).length;
 
     for (let i = 0; i < sortedHistory.length; i += 1) {
       if (i % nSkip === 0) {
@@ -267,8 +268,8 @@ export default class NodeOverview extends React.Component {
           user: usage.cpu.user,
           system: usage.cpu.system,
           wait: usage.cpu.wait,
-          used: usage.mem.used * 1024 ** 2, // mb
-          max: usage.mem.max * 1024 ** 2, // mb
+          used: usage.mem.used * constants.mb,
+          max: usage.mem.max * constants.mb,
           request: memRequested, // used = memory used, request = memory requested
           gpu: usage.gpu.total,
         });

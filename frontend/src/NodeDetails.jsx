@@ -4,6 +4,7 @@ import JobText from './JobText';
 import PropChart from './PropChart';
 import CorePie from './CorePie';
 import config from './config';
+import constants from './constants';
 
 export default class NodeDetails extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -221,14 +222,14 @@ export default class NodeDetails extends React.Component {
         user: nodeData.cpu.totalC[config.cpuKeys.user] + nodeData.cpu.totalC[config.cpuKeys.nice],
         system: nodeData.cpu.totalC[config.cpuKeys.system],
         wait: nodeData.cpu.totalC[config.cpuKeys.wait],
-        mem: nodeData.mem.used * 1024 ** 2, // mb
+        mem: nodeData.mem.used * constants.mb,
         job_user: jobUser,
         job_system: jobSystem,
         job_wait: jobWait,
-        job_mem: jobMem * 1024 ** 2, // mb
-        job_mem_max: jobMemMax * 1024 ** 2, // mb
-        job_mem_requested: jobMemRequested * 1024 ** 2, // mb
-        swap: (nodeData.swap.total - nodeData.swap.free) * 1024 ** 2, // mb
+        job_mem: jobMem * constants.mb,
+        job_mem_max: jobMemMax * constants.mb,
+        job_mem_requested: jobMemRequested * constants.mb,
+        swap: (nodeData.swap.total - nodeData.swap.free) *constants.mb,
         infiniband_in: ibBytesIn,
         infiniband_out: ibBytesOut,
         infiniband_pkts_in: ibPktsIn,
@@ -292,7 +293,7 @@ export default class NodeDetails extends React.Component {
             'fill',
           ]}
           unit="B"
-          dataMax={node.mem.total * 1024 ** 2}
+          dataMax={node.mem.total * constants.mb}
           stacked={false}
         />
         <PropChart
@@ -306,7 +307,7 @@ export default class NodeDetails extends React.Component {
             'fill',
           ]}
           unit="B"
-          dataMax={node.swap.total * 1024 ** 2}
+          dataMax={node.swap.total * constants.mb}
           stacked={false}
         />
         <PropChart

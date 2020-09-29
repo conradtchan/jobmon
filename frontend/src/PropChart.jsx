@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import constants from './constants';
 
 import {
   ResponsiveContainer,
@@ -98,14 +99,14 @@ export default class PropChart extends React.PureComponent {
     let factor;
     let scale;
     const thresh = 1;
-    if (maxVal > thresh * 1073741824) {
-      factor = 1073741824;
+    if (maxVal > thresh * constants.gb) {
+      factor = constants.gb;
       scale = 'G';
-    } else if (maxVal > thresh * 1048576) {
-      factor = 1048576;
+    } else if (maxVal > thresh * constants.mb) {
+      factor = constants.mb;
       scale = 'M';
-    } else if (maxVal > thresh * 1024) {
-      factor = 1024;
+    } else if (maxVal > thresh * constants.kb) {
+      factor = constants.kb;
       scale = 'K';
     } else {
       factor = 1;
