@@ -5,6 +5,7 @@ import PropChart from './PropChart';
 import CorePie from './CorePie';
 import config from './config';
 import constants from './constants';
+import arraysEqual from './utils'
 
 export default class NodeDetails extends React.Component {
   static whyDidYouRender = true
@@ -25,7 +26,7 @@ export default class NodeDetails extends React.Component {
       return true
     } if (nextProps.timeWindow !== timeWindow) {
       return true
-    } if (this.getTimestampList(nextProps.historyData) !== this.getTimestampList(historyData)) {
+    } if (!arraysEqual(this.getTimestampList(nextProps.historyData), this.getTimestampList(historyData))) {
       return true
     }
 
