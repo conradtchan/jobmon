@@ -719,7 +719,7 @@ class App extends React.Component {
       .then((response) => response.json())
       .then((data) => {
         that.setState({ history: data.history });
-        setTimeout(() => { that.fetchHistory(); }, 100000); // 100 seconds
+        setTimeout(() => { that.fetchHistory(); }, config.fetchHistoryFrequency * 1000); // 100 seconds
       })
       .catch((err) => {
         console.log('Error fetching history', err);
