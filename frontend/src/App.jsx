@@ -814,13 +814,23 @@ class App extends React.Component {
         }
       }
 
+      let changed = true
       // Add newest snapshot
-      if (!(times.includes(apiData.timestamp)) && !(apiData === null)) {
+      if (!times.includes(apiData.timestamp) && !(apiData === null)) {
         newHistoryData.push(apiData);
+      } else {
+        // Check if historydata is actually unchanged
+        // If the newest snapshot was not added, then the length
+        // will remain the same if the contents are unchanged
+        if (newHistoryData.length === historyData.length) {
+          changed = false
+        }
       }
 
       // Update, before putting past values in (if history is too short)
-      this.setState({ historyData: newHistoryData });
+      if (changed) {
+        this.setState({ historyData: newHistoryData });
+      }
     }
   }
 
