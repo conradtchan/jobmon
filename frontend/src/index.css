@@ -586,10 +586,6 @@ div:focus {outline: 0px;}
   background: var(--piecolor-gpu);
 }
 
-#ganglia-link {
-  margin-top: 1em;
-}
-
 .switch-parent {
   width: 100%;
   height: 100%;

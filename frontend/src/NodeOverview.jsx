@@ -29,7 +29,6 @@ export default class NodeOverview extends React.Component {
       nodeHasJob,
       jobId,
       apiData,
-      gangliaURL,
       onRowClick,
       warnings,
       getNodeUsage,
@@ -120,7 +119,6 @@ export default class NodeOverview extends React.Component {
             disk={diskPercent}
             gpu={gpuPercent}
             swap={swapPercent}
-            gangliaURL={gangliaURL}
             onRowClick={(node) => onRowClick(node)}
             nodeWarn={warnings[nodeName]}
             isGpuJob={job.nGpus > 0}
@@ -478,7 +476,6 @@ NodeOverview.propTypes = {
   nodeHasJob: PropTypes.objectOf(PropTypes.object).isRequired,
   jobId: PropTypes.string,
   apiData: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.object, PropTypes.number])).isRequired,
-  gangliaURL: PropTypes.string,
   onRowClick: PropTypes.func.isRequired,
   onJobClick: PropTypes.func.isRequired,
   getJobUsage: PropTypes.func.isRequired,
@@ -491,6 +488,5 @@ NodeOverview.propTypes = {
 
 NodeOverview.defaultProps = {
   jobId: null,
-  gangliaURL: null,
   username: null,
 };
