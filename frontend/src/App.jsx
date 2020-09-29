@@ -26,7 +26,6 @@ class App extends React.Component {
       history: null,
       historyData: [],
       historyDataWindow: 600, // seconds
-      historyDataCountInitial: 30,
       future: false,
       backfill: null,
       gpuLayout: null,
@@ -576,9 +575,8 @@ class App extends React.Component {
   }
 
   changeTimeWindow(t) {
-    const { historyDataCountInitial } = this.state;
     this.setState({ historyDataWindow: t },
-      () => this.initHistoryData(historyDataCountInitial));
+      () => this.initHistoryData(config.historyDataCountInitial));
   }
 
   selectJob(jobId) {
@@ -778,9 +776,8 @@ class App extends React.Component {
   }
 
   historyTimeJump() {
-    const { historyDataCountInitial } = this.state;
     this.setState({ historyData: [] },
-      () => this.initHistoryData(historyDataCountInitial));
+      () => this.initHistoryData(config.historyDataCountInitial));
   }
 
   updateHistoryData() {
@@ -864,7 +861,7 @@ class App extends React.Component {
               } else if (nVal < 200) {
                 that.setState({
                   historyData: historyDataTemp,
-                }, () => that.initHistoryData(nVal * 3));
+                }, () => that.initHistoryData(nVal * config.historyResolutionMultiplier));
               }
             }
           })
