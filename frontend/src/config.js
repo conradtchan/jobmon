@@ -9,6 +9,9 @@ const config = {
   // Page title
   pageTitle: 'Job Monitor',
 
+  // Frequency to fetch data (seconds)
+  fetchFrequency: 30,
+
   // Array indices for CPU usage
   cpuKeys: {
     user: 0, nice: 1, system: 2, wait: 3, idle: 4,

@@ -734,7 +734,7 @@ class App extends React.Component {
           },
           () => that.setState({ gpuLayout: that.extractGpuLayout() },
             () => that.updateHistoryData()));
-          setTimeout(() => { that.fetchLatest(); }, 10000); // 10 seconds
+          setTimeout(() => { that.fetchLatest(); }, config.fetchFrequency * 1000);
         })
         .catch((err) => {
           console.log('Error fetching latest data', err);
