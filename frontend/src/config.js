@@ -15,6 +15,9 @@ const config = {
   // Frequency to fetch history array (seconds)
   fetchHistoryFrequency: 100,
 
+  // Frequency to fetch backfill (seconds)
+  fetchBackfillFrequency: 100,
+
   // Array indices for CPU usage
   cpuKeys: {
     user: 0, nice: 1, system: 2, wait: 3, idle: 4,
