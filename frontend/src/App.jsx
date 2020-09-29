@@ -6,7 +6,6 @@ import logo from './logo.png';
 import './App.css';
 
 import config from './config';
-import arraysEqual from './utils';
 
 import NodeDetails from './NodeDetails';
 import NodeOverview from './NodeOverview';
@@ -15,6 +14,7 @@ import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
 import generateWarnings from './warnings';
+import extractGpuLayout from './gpuLayout';
 
 class App extends React.Component {
   static whyDidYouRender = true
@@ -646,63 +646,11 @@ class App extends React.Component {
   }
 
   setGpuLayout() {
-    const layout = this.extractGpuLayout()
-    if (layout !== null) {
-      this.setState({gpuLayout: layout})
+    const { apiData, gpuLayout } = this.state
+    const newLayout = extractGpuLayout(apiData, gpuLayout)
+    if (newLayout !== null) {
+      this.setState({gpuLayout: newLayout})
     }
-  }
-
-  extractGpuLayout() {
-    // The GPU mapping always needs to be the current one,
-    // because it may not have been properly determined in the past
-    const { apiData, gpuLayout } = this.state;
-    const layout = {};
-    const jobIds = Object.keys(apiData.jobs);
-
-    let changed = false
-
-    let oldJobs = []
-    if (gpuLayout !== null) {
-      oldJobs = Object.keys(gpuLayout)
-    }
-
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jid = jobIds[i];
-
-      if (apiData.jobs[jid].nGpus > 0) {
-
-        if (!changed) {
-          // If job id wasn't in the previous layout
-          if (!oldJobs.includes(jid)) {
-            changed = true
-          }
-        }
-
-        layout[jid] = {};
-        const gpuHosts = Object.keys(apiData.jobs[jid].gpuLayout);
-        for (let j = 0; j < gpuHosts.length; j += 1) {
-          const host = gpuHosts[j];
-          const newLayout = apiData.jobs[jid].gpuLayout[host]
-
-          // Only perform check if a new job hasn't been introduced
-          if (!changed) {
-            // Check if the layout has changed
-            if (!arraysEqual(gpuLayout[jid][host],newLayout)) {
-              changed = true
-            }
-          }
-
-          layout[jid][host] = newLayout;
-        }
-      }
-    }
-
-    if (changed) {
-      return layout;
-    } else {
-      return null; // return null if the layout is unchanged
-    }
-
   }
 
   fetchBackfill() {
