@@ -590,12 +590,16 @@ class App extends React.Component {
     fetch(`${config.address}data.py?time=${time.toString()}`)
       .then((response) => response.json())
       .then((data) => {
-        that.cleanState(data);
-        that.setState({
-          apiData: data,
-          snapshotTime: new Date(data.timestamp * 1000),
-          gotData: true,
-        }, () => that.historyTimeJump());
+
+        if (data.api === config.apiVersion) {
+          that.cleanState(data);
+          that.setState({
+            apiData: data,
+            snapshotTime: new Date(data.timestamp * 1000),
+            gotData: true,
+          }, () => that.historyTimeJump());
+        }
+
       })
       .catch((err) => {
         console.log('Error fetching history', err);
@@ -624,14 +628,18 @@ class App extends React.Component {
         .then((response) => response.json())
         .then((data) => {
           that.cleanState(data);
-          that.setState({
-            apiData: data,
-            snapshotTime: new Date(data.timestamp * 1000),
-            lastFetchAttempt: new Date(),
-            gotData: true,
-          },
-          () => that.postFetch()
-          );
+
+          if (data.api === config.apiVersion) {
+            that.setState({
+              apiData: data,
+              snapshotTime: new Date(data.timestamp * 1000),
+              lastFetchAttempt: new Date(),
+              gotData: true,
+            },
+            () => that.postFetch()
+            );
+          }
+
           setTimeout(() => { that.fetchLatest(); }, config.fetchFrequency * 1000);
         })
         .catch((err) => {
@@ -756,8 +764,13 @@ class App extends React.Component {
         fetch(`${config.address}data.py?time=${time.toString()}`)
           .then((response) => response.json())
           .then((data) => {
-            historyDataTemp.push(data);
-            if (historyDataTemp.length === requestDataTimes.length) {
+
+            if (data.api === config.apiVersion) {
+              historyDataTemp.push(data);
+            }
+
+            // If the last snapshot has been read
+            if (i === requestDataTimes.length - 1) {
               if (nVal > historyDataTimes.length) {
                 that.setState({ historyData: historyDataTemp });
               } else if (nVal < 200) {
