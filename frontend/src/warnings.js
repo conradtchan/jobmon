@@ -10,7 +10,7 @@ export function instantWarnings(data) {
     const node = data.nodes[nodeName];
 
     // Default scores to zero
-    warnings[nodeName] = { node: { swapUse: 0 }, jobs: {} };
+    warnings[nodeName] = { node: {}, jobs: {} };
 
     // Score = percentage of swap used
     if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > config.warnSwap) {
