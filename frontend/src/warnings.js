@@ -258,6 +258,7 @@ export function getWarnedJobs(warnings) {
             const nodeTypeWarnings = Object.keys(nodeWarnings.node);
             for (let k = 0; k < nodeTypeWarnings.length; k += 1) {
               const warning = nodeTypeWarnings[k];
+
               if (nodeWarnings.node[warning]) {
                 warnedJobs.push(jobId);
                 jobWarned = true;

@@ -1,4 +1,4 @@
-import generateWarnings, { instantWarnings } from '../warnings';
+import { generateWarnings, instantWarnings } from '../warnings';
 
 const testData = require('./test_data.json');
 const instantRef = require('./reference_instantWarnings.json');
