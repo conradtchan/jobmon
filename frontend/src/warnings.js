@@ -278,6 +278,7 @@ export function getWarnedJobs(warnings) {
 export function getWarnedUsers(warnings, jobs) {
   const warnedUsers = [];
   const nodeNames = Object.keys(warnings);
+  const activeJobIds = Object.keys(jobs);
 
   for (let i = 0; i < nodeNames.length; i += 1) {
     const nodeName = nodeNames[i];
@@ -285,7 +286,6 @@ export function getWarnedUsers(warnings, jobs) {
 
     for (let j = 0; j < jobIds.length; j += 1) {
       const jobId = jobIds[j];
-      const activeJobIds = Object.keys(jobs);
 
       if (activeJobIds.includes(jobId)) {
         const { username } = jobs[jobId];
@@ -323,5 +323,6 @@ export function getWarnedUsers(warnings, jobs) {
       }
     }
   }
+
   return warnedUsers;
 }
