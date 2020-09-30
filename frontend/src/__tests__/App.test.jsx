@@ -28,7 +28,3 @@ it('data format', () => {
     ['api', 'timestamp', 'nodes', 'jobs'],
   ));
 });
-
-// it('live API version', () => {
-//   const container = shallow(<App />);
-// });
