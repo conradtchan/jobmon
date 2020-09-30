@@ -215,7 +215,7 @@ class App extends React.Component {
         warnedUsers={warnedUsers}
         onJobClick={(jobId) => this.selectJob(jobId)}
         historyData={historyData}
-        getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
+        getTotalUsage={(total) => this.getTotalUsage(total)}
         gpuLayout={gpuLayout}
       />
     );
@@ -431,12 +431,12 @@ class App extends React.Component {
     return badness;
   }
 
-  getTotalUsage(totalC) {
+  getTotalUsage(totalArray) {
     const total = {};
     const categories = Object.keys(config.cpuKeys);
     for (let i = 0; i < categories.length; i += 1) {
       const key = categories[i];
-      total[key] = totalC[config.cpuKeys[key]];
+      total[key] = totalArray[config.cpuKeys[key]];
     }
     return total;
   }
@@ -587,15 +587,19 @@ class App extends React.Component {
 
   fetchTime(time) {
     const that = this;
-    fetch(`${config.address}bobdata.py?time=${time.toString()}`)
+    fetch(`${config.address}data.py?time=${time.toString()}`)
       .then((response) => response.json())
       .then((data) => {
-        that.cleanState(data);
-        that.setState({
-          apiData: data,
-          snapshotTime: new Date(data.timestamp * 1000),
-          gotData: true,
-        }, () => that.historyTimeJump());
+
+        if (data.api === config.apiVersion) {
+          that.cleanState(data);
+          that.setState({
+            apiData: data,
+            snapshotTime: new Date(data.timestamp * 1000),
+            gotData: true,
+          }, () => that.historyTimeJump());
+        }
+
       })
       .catch((err) => {
         console.log('Error fetching history', err);
@@ -604,7 +608,7 @@ class App extends React.Component {
 
   fetchHistory() {
     const that = this;
-    fetch(`${config.address}bobhistory.py`)
+    fetch(`${config.address}history.py`)
       .then((response) => response.json())
       .then((data) => {
         that.setState({ history: data.history });
@@ -620,18 +624,22 @@ class App extends React.Component {
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
       const that = this;
-      fetch(`${config.address}bobdata.py`)
+      fetch(`${config.address}data.py`)
         .then((response) => response.json())
         .then((data) => {
           that.cleanState(data);
-          that.setState({
-            apiData: data,
-            snapshotTime: new Date(data.timestamp * 1000),
-            lastFetchAttempt: new Date(),
-            gotData: true,
-          },
-          () => that.postFetch()
-          );
+
+          if (data.api === config.apiVersion) {
+            that.setState({
+              apiData: data,
+              snapshotTime: new Date(data.timestamp * 1000),
+              lastFetchAttempt: new Date(),
+              gotData: true,
+            },
+            () => that.postFetch()
+            );
+          }
+
           setTimeout(() => { that.fetchLatest(); }, config.fetchFrequency * 1000);
         })
         .catch((err) => {
@@ -655,7 +663,7 @@ class App extends React.Component {
 
   fetchBackfill() {
     const that = this;
-    fetch(`${config.address}bobbackfill.py`)
+    fetch(`${config.address}backfill.py`)
       .then((response) => response.json())
       .then((data) => {
         that.setState({ backfill: data });
@@ -753,11 +761,16 @@ class App extends React.Component {
       const that = this;
       for (let i = 0; i < requestDataTimes.length; i += 1) {
         const time = requestDataTimes[i];
-        fetch(`${config.address}bobdata.py?time=${time.toString()}`)
+        fetch(`${config.address}data.py?time=${time.toString()}`)
           .then((response) => response.json())
           .then((data) => {
-            historyDataTemp.push(data);
-            if (historyDataTemp.length === requestDataTimes.length) {
+
+            if (data.api === config.apiVersion) {
+              historyDataTemp.push(data);
+            }
+
+            // If the last snapshot has been read
+            if (i === requestDataTimes.length - 1) {
               if (nVal > historyDataTimes.length) {
                 that.setState({ historyData: historyDataTemp });
               } else if (nVal < 200) {
