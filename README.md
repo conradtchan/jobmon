@@ -23,6 +23,8 @@ cp backend/* /usr/lib/jobmon
 
 ## Frontend
 
+Configure the backend using `frontend/config.js`
+
 Build the optimised production frontend
 ```
 cd frontend
