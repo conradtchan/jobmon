@@ -1,11 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import fetchMock from 'fetch-mock';
-import App from './App';
+import App from '../App';
 
-const testData = require('../test/test_data.json');
-const testHistory = require('../test/test_history.json');
-const testBackfill = require('../test/test_backfill.json');
+const testData = require('./test_data.json');
+const testHistory = require('./test_history.json');
+const testBackfill = require('./test_backfill.json');
 
 fetchMock.get('end:data.py', testData);
 fetchMock.get('glob:*data.py?time=*', testData);
@@ -15,7 +15,6 @@ fetchMock.get('end:backfill.py', testBackfill);
 it('renders without crashing', () => {
   const div = document.createElement('div');
   ReactDOM.render(<App />, div);
-  // ReactDOM.unmountComponentAtNode(div);
 });
 
 // sanity check
@@ -29,3 +28,7 @@ it('data format', () => {
     ['api', 'timestamp', 'nodes', 'jobs'],
   ));
 });
+
+// it('live API version', () => {
+//   const container = shallow(<App />);
+// });

@@ -1,10 +1,10 @@
-import { getJobUsage, getNodeUsage } from './usage';
+import { getJobUsage, getNodeUsage } from '../usage';
 
-const testData = require('../test/test_data.json');
-const gpuLayout = require('../test/reference_gpuLayout.json');
+const testData = require('./test_data.json');
+const gpuLayout = require('./reference_gpuLayout.json');
 
-const nodeUsageRef = require('../test/reference_nodeUsage.json');
-const jobUsageRef = require('../test/reference_jobUsage.json');
+const nodeUsageRef = require('./reference_nodeUsage.json');
+const jobUsageRef = require('./reference_jobUsage.json');
 
 it('per-job resource usage for a specific node', () => {
   const jobIds = Object.keys(testData.jobs);
