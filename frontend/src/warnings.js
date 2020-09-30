@@ -96,7 +96,7 @@ export function instantWarnings(data) {
   return warnings;
 }
 
-export default function generateWarnings(snapshotTime, historyData) {
+export function generateWarnings(snapshotTime, historyData) {
   // Get the data snapshots that we check for warnings
   const now = snapshotTime / 1000;
   const warningDataIndex = [];
@@ -271,4 +271,55 @@ export function getWarnedJobs(warnings) {
   }
 
   return warnedJobs;
+}
+
+export function getWarnedUsers(warnings, jobs) {
+  const warnedUsers = [];
+  const nodeNames = Object.keys(warnings);
+
+  for (let i = 0; i < nodeNames.length; i += 1) {
+    const nodeName = nodeNames[i];
+    const jobIds = Object.keys(warnings[nodeName].jobs);
+
+    for (let j = 0; j < jobIds.length; j += 1) {
+      const jobId = jobIds[j];
+      const activeJobIds = Object.keys(jobs);
+
+      if (activeJobIds.includes(jobId)) {
+        const { username } = jobs[jobId];
+
+        if (!warnedUsers.includes(username)) {
+          let userWarned = false;
+
+          // Node type warnings
+          const nodeWarnings = Object.keys(warnings[nodeName].node);
+          for (let k = 0; k < nodeWarnings.length; k += 1) {
+            const warning = nodeWarnings[k];
+            if (!(warnedUsers.includes(username))) {
+              if (warnings[nodeName].node[warning]) {
+                warnedUsers.push(username);
+                userWarned = true;
+                break;
+              }
+            }
+          }
+
+          // Job type warnings
+          if (!userWarned) {
+            const jobWarnings = Object.keys(warnings[nodeName].jobs[jobId]);
+            for (let k = 0; k < jobWarnings.length; k += 1) {
+              const warning = jobWarnings[k];
+              if (warnings[nodeName].jobs[jobId][warning]) {
+                if (!(warnedUsers.includes(username))) {
+                  warnedUsers.push(username);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  return warnedUsers;
 }
