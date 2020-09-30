@@ -215,7 +215,7 @@ class App extends React.Component {
         warnedUsers={warnedUsers}
         onJobClick={(jobId) => this.selectJob(jobId)}
         historyData={historyData}
-        getTotalUsage={(totalC) => this.getTotalUsage(totalC)}
+        getTotalUsage={(total) => this.getTotalUsage(total)}
         gpuLayout={gpuLayout}
       />
     );
@@ -431,12 +431,12 @@ class App extends React.Component {
     return badness;
   }
 
-  getTotalUsage(totalC) {
+  getTotalUsage(totalArray) {
     const total = {};
     const categories = Object.keys(config.cpuKeys);
     for (let i = 0; i < categories.length; i += 1) {
       const key = categories[i];
-      total[key] = totalC[config.cpuKeys[key]];
+      total[key] = totalArray[config.cpuKeys[key]];
     }
     return total;
   }

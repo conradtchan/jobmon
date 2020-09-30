@@ -16,11 +16,11 @@ export function getNodeUsage(jid, job, node, host, gpuLayout) {
     const layout = job.layout[host];
     for (let i = 0; i < layout.length; i += 1) {
       const iLayout = layout[i];
-      usage.cpu.user += node.cpu.coreC[iLayout][config.cpuKeys.user]
-              + node.cpu.coreC[iLayout][config.cpuKeys.nice];
-      usage.cpu.system += node.cpu.coreC[iLayout][config.cpuKeys.system];
-      usage.cpu.wait += node.cpu.coreC[iLayout][config.cpuKeys.wait];
-      usage.cpu.idle += node.cpu.coreC[iLayout][config.cpuKeys.idle];
+      usage.cpu.user += node.cpu.core[iLayout][config.cpuKeys.user]
+              + node.cpu.core[iLayout][config.cpuKeys.nice];
+      usage.cpu.system += node.cpu.core[iLayout][config.cpuKeys.system];
+      usage.cpu.wait += node.cpu.core[iLayout][config.cpuKeys.wait];
+      usage.cpu.idle += node.cpu.core[iLayout][config.cpuKeys.idle];
     }
     let nGpus = 0;
     // If thif is a GPU job

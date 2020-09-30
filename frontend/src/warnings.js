@@ -44,10 +44,10 @@ export function instantWarnings(data) {
         nCores = layout.length; // Number of cores used on this node
         for (let k = 0; k < nCores; k += 1) {
           const iLayout = layout[k];
-          cpuUsage += node.cpu.coreC[iLayout][config.cpuKeys.user]
-            + node.cpu.coreC[iLayout][config.cpuKeys.system]
-            + node.cpu.coreC[iLayout][config.cpuKeys.nice];
-          cpuWait += node.cpu.coreC[iLayout][config.cpuKeys.wait];
+          cpuUsage += node.cpu.core[iLayout][config.cpuKeys.user]
+            + node.cpu.core[iLayout][config.cpuKeys.system]
+            + node.cpu.core[iLayout][config.cpuKeys.nice];
+          cpuWait += node.cpu.core[iLayout][config.cpuKeys.wait];
         }
 
         // Perform util check unless this is a single-core GPU job
