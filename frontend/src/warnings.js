@@ -233,11 +233,11 @@ export function getWarnedJobs(warnings) {
 
     if (Object.keys(nodeWarnings).includes('jobs')) {
       const jobIds = Object.keys(nodeWarnings.jobs);
-      let jobWarned = false;
 
       // For each job on the node
       for (let j = 0; j < jobIds.length; j += 1) {
         const jobId = jobIds[j];
+        let jobWarned = false;
 
         // If the job hasn't already been added to the list
         if (!(warnedJobs.includes(jobId))) {
@@ -245,7 +245,7 @@ export function getWarnedJobs(warnings) {
           const jobTypeWarnIds = Object.keys(nodeWarnings.jobs[jobId]);
           for (let k = 0; k < jobTypeWarnIds.length; k += 1) {
             const warning = jobTypeWarnIds[k];
-            if (nodeWarnings.jobs[jobId][warning]) {
+            if (nodeWarnings.jobs[jobId][warning] > 0) {
               warnedJobs.push(jobId);
               jobWarned = true;
               break;
@@ -256,10 +256,11 @@ export function getWarnedJobs(warnings) {
           if (!(jobWarned)) {
             // Node type warnings
             const nodeTypeWarnings = Object.keys(nodeWarnings.node);
+
             for (let k = 0; k < nodeTypeWarnings.length; k += 1) {
               const warning = nodeTypeWarnings[k];
 
-              if (nodeWarnings.node[warning]) {
+              if (nodeWarnings.node[warning] > 0) {
                 warnedJobs.push(jobId);
                 jobWarned = true;
                 break;
