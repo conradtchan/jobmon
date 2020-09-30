@@ -10,17 +10,17 @@ from datetime import datetime
 from glob import glob
 from os import path, remove
 
-import bobmon_config as config
-import bobmon_ganglia as ganglia
 import influx_config
+import jobmon_config as config
+import jobmon_ganglia as ganglia
 import pyslurm
 import showbf
-from bobmon_gpu_mapping import GPUmapping
+from constants import KB
 from file_utils import write_data
 from influxdb import InfluxDBClient
+from jobmon_gpu_mapping import GPUmapping
 
-API_VERSION = 12
-KB = 1024
+API_VERSION = 13
 
 
 class Backend:
@@ -62,7 +62,7 @@ class Backend:
                 "idle": float(data["cpu_idle"]),
             }
 
-            totalC = [math.floor(total[x]) for x in config.CPU_KEYS]
+            total_array = [math.floor(total[x]) for x in config.CPU_KEYS]
 
             core = []
             for i in range(config.MULTICPU_MAX):
@@ -95,11 +95,11 @@ class Backend:
                         core_right += [x]
                 core = core_left + core_right
 
-            coreC = [[math.floor(c[x]) for x in config.CPU_KEYS] for c in core]
+            core_array = [[math.floor(c[x]) for x in config.CPU_KEYS] for c in core]
 
-            # totalC: compact total, coreC: compact core
-            # return {'total': total, 'core': core, 'totalC': totalC, 'coreC': coreC}
-            return {"totalC": totalC, "coreC": coreC}
+            # total_array and core_array are more memory efficient formats
+            return {"total": total_array, "core": core_array}
+
         except KeyError:
             print(name, "cpu user/nice/system/wio/idle not in ganglia")
 
@@ -561,7 +561,6 @@ class Backend:
             if job["state"] == "RUNNING":
                 if id not in self.mem_max:
                     self.mem_max[id] = 0
-                print(self.mem_max[id], job["memMax"])
                 self.mem_max[id] = int(max(self.mem_max[id], job["memMax"]))
                 n += 1
 
@@ -668,7 +667,7 @@ if __name__ == "__main__":
         if test:
             nohist = True
 
-    print("Starting bobMon2 backend")
+    print("Starting jobmon backend")
     b = Backend(no_history=nohist)
 
     if test:

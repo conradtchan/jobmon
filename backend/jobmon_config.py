@@ -1,6 +1,6 @@
 # Location to output JSON
-DATA_PATH = "/var/spool/bobMon2/"
-FILE_NAME_PATTERN = "bobData{:}.json.gz"
+DATA_PATH = "/var/spool/jobmon/"
+FILE_NAME_PATTERN = "data{:}.json.gz"
 FILE_NAME_HISTORY = "history.json.gz"
 FILE_NAME_BACKFILL = "backfill.json.gz"
 
@@ -8,8 +8,8 @@ FILE_NAME_BACKFILL = "backfill.json.gz"
 UPDATE_INTERVAL = 30
 
 # Non-standard data in ganglia that we want to harvest and use
-# NOTE: there needs to be server code in bobMon.py to insert these into the xml
-#       and client side code in bobMon.js to display them.
+# NOTE: there needs to be server code in jobmon.py to insert these into the xml
+#       and client side code in jobmon.js to display them.
 #       so this line isn't all that is required to enable these features
 EXTRA_GANGLIA_METRICS = [
     "ib_bytes_in",

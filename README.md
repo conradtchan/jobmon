@@ -6,7 +6,7 @@ Originally forked from https://github.com/plaguedbypenguins/bobMonitor, but now 
 
 Make the data directory where JSON output is written to
 ```
-mkdir /var/spool/bobMon2
+mkdir /var/spool/jobmon
 ```
 
 Install the cgi-bin Python scripts
@@ -14,11 +14,11 @@ Install the cgi-bin Python scripts
 cp cgi-bin/* /var/www/cgi-bin/
 ```
 
-Configure the backend using `backend/bobmon_config.py`
+Configure the backend using `backend/jobmon_config.py`
 
 Install the backend
 ```
-cp backend/* /usr/lib/bobMon2
+cp backend/* /usr/lib/jobmon
 ```
 
 ## Frontend
@@ -31,9 +31,9 @@ yarn build
 
 Install the frontend
 ```
-cp build/* /var/www/html/bobMon2
+cp build/* /var/www/html/jobmon
 ```
 
 # Running
 
-Run `/usr/lib/bobMon2/bobmon.py`, which generates gzip'd JSON at `/var/spool/bobMon2`, which is read by the web app.
+Run `/usr/lib/jobmon/jobmon.py`, which generates gzip'd JSON at `/var/spool/jobmon`, which is read by the web app.

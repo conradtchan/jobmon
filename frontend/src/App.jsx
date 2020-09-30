@@ -587,7 +587,7 @@ class App extends React.Component {
 
   fetchTime(time) {
     const that = this;
-    fetch(`${config.address}bobdata.py?time=${time.toString()}`)
+    fetch(`${config.address}data.py?time=${time.toString()}`)
       .then((response) => response.json())
       .then((data) => {
         that.cleanState(data);
@@ -604,7 +604,7 @@ class App extends React.Component {
 
   fetchHistory() {
     const that = this;
-    fetch(`${config.address}bobhistory.py`)
+    fetch(`${config.address}history.py`)
       .then((response) => response.json())
       .then((data) => {
         that.setState({ history: data.history });
@@ -620,7 +620,7 @@ class App extends React.Component {
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
       const that = this;
-      fetch(`${config.address}bobdata.py`)
+      fetch(`${config.address}data.py`)
         .then((response) => response.json())
         .then((data) => {
           that.cleanState(data);
@@ -655,7 +655,7 @@ class App extends React.Component {
 
   fetchBackfill() {
     const that = this;
-    fetch(`${config.address}bobbackfill.py`)
+    fetch(`${config.address}backfill.py`)
       .then((response) => response.json())
       .then((data) => {
         that.setState({ backfill: data });
@@ -753,7 +753,7 @@ class App extends React.Component {
       const that = this;
       for (let i = 0; i < requestDataTimes.length; i += 1) {
         const time = requestDataTimes[i];
-        fetch(`${config.address}bobdata.py?time=${time.toString()}`)
+        fetch(`${config.address}data.py?time=${time.toString()}`)
           .then((response) => response.json())
           .then((data) => {
             historyDataTemp.push(data);

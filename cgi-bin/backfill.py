@@ -6,7 +6,7 @@ from sys import stdout
 
 cgitb.enable()
 
-DATA_PATH = "/var/spool/bobMon2/"
+DATA_PATH = "/var/spool/jobmon/"
 FILE_NAME = "backfill.json.gz"
 
 # Return compressed JSON object

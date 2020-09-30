@@ -1,6 +1,6 @@
 import socket
 
-import bobmon_config as config
+import jobmon_config as config
 
 
 class Stats:

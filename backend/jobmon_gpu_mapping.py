@@ -8,7 +8,7 @@ import gzip
 import json
 from os import path
 
-import bobmon_config as config
+import jobmon_config as config
 import pyslurm
 from file_utils import write_data
 

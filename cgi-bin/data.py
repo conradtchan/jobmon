@@ -8,8 +8,8 @@ from sys import stdout
 
 cgitb.enable()
 
-DATA_PATH = "/var/spool/bobMon2/"
-FILE_NAME_PATTERN = "bobData{:}.json.gz"
+DATA_PATH = "/var/spool/jobmon/"
+FILE_NAME_PATTERN = "data{:}.json.gz"
 
 # GET arguments
 arguments = cgi.FieldStorage()
