@@ -1,10 +1,10 @@
 import generateWarnings, { instantWarnings } from './warnings';
 
-const testData = require('../test/bobData_test.json');
-const instantRef = require('../test/instantWarnings_reference.json');
+const testData = require('../test/test_data.json');
+const instantRef = require('../test/reference_instantWarnings.json');
 
-const testHistoryData = require('../test/historyData_test.json');
-const scoreRef = require('../test/warningSums_reference.json');
+const testHistoryData = require('../test/test_historyData.json');
+const scoreRef = require('../test/reference_warningSums.json');
 
 it('instantaneous warnings', () => {
   const w = instantWarnings(testData);
