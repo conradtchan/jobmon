@@ -447,7 +447,6 @@ class App extends React.Component {
 
   show() {
     const {
-      apiData,
       future,
       gotData,
       lastFetchAttempt,
