@@ -608,21 +608,26 @@ class App extends React.Component {
   }
 
   postFetch() {
+    this.setGpuLayout()
+    this.updateHistoryData()
+    this.setState({
+      systemUsage: this.getSystemUsage(),
+    })
+  }
+
+  getWarnings() {
     const {
       apiData,
       snapshotTime,
-      historyData,
+      historyData
     } = this.state
 
-    this.setGpuLayout()
-    this.updateHistoryData()
-
     const warnings = generateWarnings(snapshotTime, historyData)
+    const warnedUsers = getWarnedUsers(warnings, apiData.jobs)
 
     this.setState({
       warnings: warnings,
-      warnedUsers: getWarnedUsers(warnings, apiData.jobs),
-      systemUsage: this.getSystemUsage(),
+      warnedUsers: warnedUsers,
     })
 
   }
@@ -660,7 +665,6 @@ class App extends React.Component {
       historyDataWindow,
       apiData,
     } = this.state;
-
     if (historyData.length < 3) {
       this.historyTimeJump();
     } else {
@@ -693,7 +697,9 @@ class App extends React.Component {
 
       // Update, before putting past values in (if history is too short)
       if (changed) {
-        this.setState({ historyData: newHistoryData });
+        this.setState({ historyData: newHistoryData },
+          () => this.getWarnings()
+          );
       }
     }
   }
@@ -746,7 +752,9 @@ class App extends React.Component {
             // If the last snapshot has been read
             if (i === requestDataTimes.length - 1) {
               if (nVal > historyDataTimes.length) {
-                that.setState({ historyData: historyDataTemp });
+                that.setState({ historyData: historyDataTemp },
+                  () => this.getWarnings()
+                  );
               } else if (nVal < 200) {
                 that.setState({
                   historyData: historyDataTemp,
