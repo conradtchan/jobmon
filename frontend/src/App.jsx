@@ -35,6 +35,9 @@ class App extends React.Component {
       future: false,
       backfill: null,
       gpuLayout: null,
+      warnings: {},
+      warnedUsers: [],
+      systemUsage: null,
     };
 
     this.fetchHistory();
@@ -117,8 +120,8 @@ class App extends React.Component {
     );
   }
 
-  getUserPiePlot(warnings, warnedUsers, systemUsage) {
-    const { apiData } = this.state;
+  getUserPiePlot() {
+    const { apiData, warnings, warnedUsers, systemUsage } = this.state;
     let runningData = {};
 
     // Sum usage
@@ -172,13 +175,15 @@ class App extends React.Component {
     );
   }
 
-  getNodeOverview(warnings, warnedUsers) {
+  getNodeOverview() {
     const {
       apiData,
       username,
       job,
       historyData,
       gpuLayout,
+      warnings,
+      warnedUsers,
     } = this.state;
     const { jobs } = apiData;
 
@@ -230,7 +235,7 @@ class App extends React.Component {
     }
   }
 
-  getNodeDetails(warnings) {
+  getNodeDetails() {
     const {
       nodeName,
       apiData,
@@ -239,6 +244,7 @@ class App extends React.Component {
       historyData,
       historyDataWindow,
       gpuLayout,
+      warnings,
     } = this.state;
     return (
       <NodeDetails
@@ -492,8 +498,8 @@ class App extends React.Component {
       gotData,
       lastFetchAttempt,
       snapshotTime,
-      historyData,
       holdSnap,
+      systemUsage,
     } = this.state;
     if (!future) {
       if (gotData) {
@@ -516,23 +522,23 @@ class App extends React.Component {
             </div>
           );
         } else {
-          const warnings = generateWarnings(snapshotTime, historyData);
-          const warnedUsers = this.getWarnedUsers(warnings);
-          const systemUsage = this.getSystemUsage();
-          if (systemUsage.runningCores === 0) {
-            return (
-              <div id="main-box">
-                OzSTAR is currently down for maintenance and will be back soon.
-                {' '}
-                <br />
-              </div>
-            );
+          if (systemUsage !== null) {
+            if (systemUsage.runningCores === 0) {
+              return (
+                <div id="main-box">
+                  OzSTAR is currently down for maintenance and will be back soon.
+                  {' '}
+                  <br />
+                </div>
+              );
+            }
           }
+
           return (
             <div id="main-box">
-              {this.getUserPiePlot(warnings, warnedUsers, systemUsage)}
-              {this.getNodeOverview(warnings, warnedUsers)}
-              {this.getNodeDetails(warnings)}
+              {systemUsage !== null && this.getUserPiePlot()}
+              {this.getNodeOverview()}
+              {this.getNodeDetails()}
             </div>
           );
         }
@@ -649,8 +655,23 @@ class App extends React.Component {
   }
 
   postFetch() {
+    const {
+      apiData,
+      snapshotTime,
+      historyData,
+    } = this.state
+
     this.setGpuLayout()
     this.updateHistoryData()
+
+    const warnings = generateWarnings(snapshotTime, historyData)
+
+    this.setState({
+      warnings: warnings,
+      warnedUsers: getWarnedUsers(warnings, apiData.jobs),
+      systemUsage: this.getSystemUsage(),
+    })
+
   }
 
   setGpuLayout() {

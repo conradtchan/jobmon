@@ -65,7 +65,7 @@ export default class NodePie extends React.PureComponent {
 
     // Make label red if warning
     let doWarn = false;
-    if (nodeWarn) {
+    if (Object.keys(nodeWarn).length > 0) {
       const nodes = Object.keys(nodeWarn.node);
       for (let i = 0; i < nodes.length; i += 1) {
         const w = nodes[i];
