@@ -25,7 +25,7 @@ const config = {
   fetchRetryTime: 300,
 
   // If snapshots are old by this amount, trigger maintenace message
-  maintenanceAge: 600,
+  maintenanceAge: 1200,
 
   // Array indices for CPU usage
   cpuKeys: {

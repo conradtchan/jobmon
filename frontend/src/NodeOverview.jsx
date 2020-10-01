@@ -114,6 +114,11 @@ export default class NodeOverview extends React.Component {
           gpuPercent /= nGpus;
         }
 
+        let nodeWarn = {}
+        if (Object.keys(warnings).includes(nodeName)) {
+          nodeWarn = warnings[nodeName]
+        }
+
         nodePies.push(
           <NodePie
             key={nodeName}
@@ -124,7 +129,7 @@ export default class NodeOverview extends React.Component {
             gpu={gpuPercent}
             swap={swapPercent}
             onRowClick={(node) => onRowClick(node)}
-            nodeWarn={warnings[nodeName]}
+            nodeWarn={nodeWarn}
             isGpuJob={job.nGpus > 0}
           />,
         );

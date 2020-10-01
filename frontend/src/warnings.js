@@ -10,7 +10,7 @@ export function instantWarnings(data) {
     const node = data.nodes[nodeName];
 
     // Default scores to zero
-    warnings[nodeName] = { node: { swapUse: 0 }, jobs: {} };
+    warnings[nodeName] = { node: {}, jobs: {} };
 
     // Score = percentage of swap used
     if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > config.warnSwap) {
@@ -96,7 +96,7 @@ export function instantWarnings(data) {
   return warnings;
 }
 
-export default function generateWarnings(snapshotTime, historyData) {
+export function generateWarnings(snapshotTime, historyData) {
   // Get the data snapshots that we check for warnings
   const now = snapshotTime / 1000;
   const warningDataIndex = [];
@@ -233,11 +233,11 @@ export function getWarnedJobs(warnings) {
 
     if (Object.keys(nodeWarnings).includes('jobs')) {
       const jobIds = Object.keys(nodeWarnings.jobs);
-      let jobWarned = false;
 
       // For each job on the node
       for (let j = 0; j < jobIds.length; j += 1) {
         const jobId = jobIds[j];
+        let jobWarned = false;
 
         // If the job hasn't already been added to the list
         if (!(warnedJobs.includes(jobId))) {
@@ -245,7 +245,7 @@ export function getWarnedJobs(warnings) {
           const jobTypeWarnIds = Object.keys(nodeWarnings.jobs[jobId]);
           for (let k = 0; k < jobTypeWarnIds.length; k += 1) {
             const warning = jobTypeWarnIds[k];
-            if (nodeWarnings.jobs[jobId][warning]) {
+            if (nodeWarnings.jobs[jobId][warning] > 0) {
               warnedJobs.push(jobId);
               jobWarned = true;
               break;
@@ -256,9 +256,11 @@ export function getWarnedJobs(warnings) {
           if (!(jobWarned)) {
             // Node type warnings
             const nodeTypeWarnings = Object.keys(nodeWarnings.node);
+
             for (let k = 0; k < nodeTypeWarnings.length; k += 1) {
               const warning = nodeTypeWarnings[k];
-              if (nodeWarnings.node[warning]) {
+
+              if (nodeWarnings.node[warning] > 0) {
                 warnedJobs.push(jobId);
                 jobWarned = true;
                 break;
@@ -271,4 +273,56 @@ export function getWarnedJobs(warnings) {
   }
 
   return warnedJobs;
+}
+
+export function getWarnedUsers(warnings, jobs) {
+  const warnedUsers = [];
+  const nodeNames = Object.keys(warnings);
+  const activeJobIds = Object.keys(jobs);
+
+  for (let i = 0; i < nodeNames.length; i += 1) {
+    const nodeName = nodeNames[i];
+    const jobIds = Object.keys(warnings[nodeName].jobs);
+
+    for (let j = 0; j < jobIds.length; j += 1) {
+      const jobId = jobIds[j];
+
+      if (activeJobIds.includes(jobId)) {
+        const { username } = jobs[jobId];
+
+        if (!warnedUsers.includes(username)) {
+          let userWarned = false;
+
+          // Node type warnings
+          const nodeWarnings = Object.keys(warnings[nodeName].node);
+          for (let k = 0; k < nodeWarnings.length; k += 1) {
+            const warning = nodeWarnings[k];
+            if (!(warnedUsers.includes(username))) {
+              if (warnings[nodeName].node[warning]) {
+                warnedUsers.push(username);
+                userWarned = true;
+                break;
+              }
+            }
+          }
+
+          // Job type warnings
+          if (!userWarned) {
+            const jobWarnings = Object.keys(warnings[nodeName].jobs[jobId]);
+            for (let k = 0; k < jobWarnings.length; k += 1) {
+              const warning = jobWarnings[k];
+              if (warnings[nodeName].jobs[jobId][warning]) {
+                if (!(warnedUsers.includes(username))) {
+                  warnedUsers.push(username);
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return warnedUsers;
 }
