@@ -608,20 +608,22 @@ class App extends React.Component {
   }
 
   postFetch() {
+    this.setGpuLayout()
+    this.updateHistoryData()
+  }
+
+  getWarnings() {
     const {
       apiData,
       snapshotTime,
-      historyData,
+      historyData
     } = this.state
 
-    this.setGpuLayout()
-    this.updateHistoryData()
-
     const warnings = generateWarnings(snapshotTime, historyData)
-
+    const warnedUsers = getWarnedUsers(warnings, apiData.jobs)
     this.setState({
       warnings: warnings,
-      warnedUsers: getWarnedUsers(warnings, apiData.jobs),
+      warnedUsers: warnedUsers,
       systemUsage: this.getSystemUsage(),
     })
 
@@ -693,7 +695,9 @@ class App extends React.Component {
 
       // Update, before putting past values in (if history is too short)
       if (changed) {
-        this.setState({ historyData: newHistoryData });
+        this.setState({ historyData: newHistoryData },
+          () => this.getWarnings()
+          );
       }
     }
   }
