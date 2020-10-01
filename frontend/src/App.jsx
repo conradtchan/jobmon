@@ -13,7 +13,7 @@ import UserPiePlot from './UserPiePlot';
 import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
-import generateWarnings from './warnings';
+import { generateWarnings, getWarnedUsers} from './warnings';
 import extractGpuLayout from './gpuLayout';
 
 class App extends React.Component {
@@ -341,53 +341,6 @@ class App extends React.Component {
     return usage;
   }
 
-  getWarnedUsers(warnings) {
-    const { apiData } = this.state;
-    const warnedUsers = [];
-    const { jobs } = apiData;
-    const nodeNames = Object.keys(warnings);
-    for (let i = 0; i < nodeNames.length; i += 1) {
-      const nodeName = nodeNames[i];
-      const jobIds = Object.keys(warnings[nodeName].jobs);
-      for (let j = 0; j < jobIds.length; j += 1) {
-        const jobId = jobIds[j];
-        if (Object.prototype.hasOwnProperty.call(jobs, jobId)) {
-          const { username } = jobs[jobId];
-          if (!warnedUsers.includes(username)) {
-            let nodeWarned = false;
-            // Node type warnings
-            const nodeWarnings = Object.keys(warnings[nodeName].node);
-            for (let k = 0; k < nodeWarnings.length; k += 1) {
-              const warning = nodeWarnings[k];
-              if (!(warnedUsers.includes(username))) {
-                if (warnings[nodeName].node[warning]) {
-                  warnedUsers.push(username);
-                  nodeWarned = true;
-                  break;
-                }
-              }
-            }
-
-            // Job type warnings
-            if (!nodeWarned) {
-              const jobWarnings = Object.keys(warnings[nodeName].jobs[jobId]);
-              for (let k = 0; k < jobWarnings.length; k += 1) {
-                const warning = jobWarnings[k];
-                if (warnings[nodeName].jobs[jobId][warning]) {
-                  if (!(warnedUsers.includes(username))) {
-                    warnedUsers.push(username);
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    return warnedUsers;
-  }
-
   getUserBadness(scoreSums, users) {
     const { apiData } = this.state;
     const badness = {};
@@ -494,6 +447,7 @@ class App extends React.Component {
 
   show() {
     const {
+      apiData,
       future,
       gotData,
       lastFetchAttempt,
