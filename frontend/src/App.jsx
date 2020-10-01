@@ -610,6 +610,9 @@ class App extends React.Component {
   postFetch() {
     this.setGpuLayout()
     this.updateHistoryData()
+    this.setState({
+      systemUsage: this.getSystemUsage(),
+    })
   }
 
   getWarnings() {
@@ -621,10 +624,10 @@ class App extends React.Component {
 
     const warnings = generateWarnings(snapshotTime, historyData)
     const warnedUsers = getWarnedUsers(warnings, apiData.jobs)
+
     this.setState({
       warnings: warnings,
       warnedUsers: warnedUsers,
-      systemUsage: this.getSystemUsage(),
     })
 
   }
