@@ -665,7 +665,6 @@ class App extends React.Component {
       historyDataWindow,
       apiData,
     } = this.state;
-
     if (historyData.length < 3) {
       this.historyTimeJump();
     } else {
@@ -753,7 +752,9 @@ class App extends React.Component {
             // If the last snapshot has been read
             if (i === requestDataTimes.length - 1) {
               if (nVal > historyDataTimes.length) {
-                that.setState({ historyData: historyDataTemp });
+                that.setState({ historyData: historyDataTemp },
+                  () => this.getWarnings()
+                  );
               } else if (nVal < 200) {
                 that.setState({
                   historyData: historyDataTemp,
