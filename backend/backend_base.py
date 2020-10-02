@@ -21,7 +21,7 @@ from jobmon_gpu_mapping import GPUmapping
 API_VERSION = 13
 
 
-class Backend:
+class BackendBase:
     def __init__(self, no_history):
         # Data
         self.data = {}
@@ -51,195 +51,116 @@ class Backend:
 
     @staticmethod
     def cpu_usage(data, name):
-        try:
-            total = {
-                "user": float(data["cpu_user"]),
-                "nice": float(data["cpu_nice"]),
-                "system": float(data["cpu_system"]),
-                "wait": float(data["cpu_wio"]),
-                "idle": float(data["cpu_idle"]),
-            }
+        """
+        Returns the CPU usage percentage for the node
+            {"total": total_array, "core": core_array}
 
-            total_array = [math.floor(total[x]) for x in config.CPU_KEYS]
+        For compactness, data is returnd as an array rather than a dictionary
+        in the layout:
+            [user, nice, sys, wait, idle]
 
-            core = []
-            for i in range(config.MULTICPU_MAX):
-                try:
-                    vals = {
-                        "user": float(data["multicpu_user{:}".format(i)]),
-                        "nice": float(data["multicpu_nice{:}".format(i)]),
-                        "system": float(data["multicpu_system{:}".format(i)]),
-                        "wait": float(data["multicpu_wio{:}".format(i)]),
-                        "idle": float(data["multicpu_idle{:}".format(i)]),
-                    }
-                    core += [vals]
-                except KeyError:
-                    continue
+        Values should add to 100
 
-            # Some machines report cores with a different numbering, so we map to that
-            # Could generalize for n sockets
-            core_swap = False
-            for prefix in config.COLUMN_ORDER_CPUS:
-                if prefix in name:
-                    core_swap = True
+        Examples:
+            total_array = [90, 0, 0, 0, 10]
+            core_array = [
+                [90, 0, 0, 0, 10],
+                [90, 0, 0, 0, 10],
+                [90, 0, 0, 0, 10],
+                [90, 0, 0, 0, 10],
+            ]
 
-            if core_swap:
-                core_left = []
-                core_right = []
-                for i, x in enumerate(core):
-                    if i % 2 == 0:
-                        core_left += [x]
-                    else:
-                        core_right += [x]
-                core = core_left + core_right
+        """
 
-            core_array = [[math.floor(c[x]) for x in config.CPU_KEYS] for c in core]
-
-            # total_array and core_array are more memory efficient formats
-            return {"total": total_array, "core": core_array}
-
-        except KeyError:
-            print(name, "cpu user/nice/system/wio/idle not in ganglia")
+        return {}
 
     @staticmethod
     def mem(data, name):
-        try:
-            used = (
-                float(data["mem_total"])
-                - float(data["mem_buffers"])
-                - float(data["mem_cached"])
-                - float(data["mem_free"])
-            )
+        """
+        Returns the memory usage for the node
+        (in megabytes)
 
-            # convert to MB
-            return {
-                "used": math.ceil(used / KB),
-                "total": math.ceil(float(data["mem_total"]) / KB),
-            }
+        Example:
+            {"used": 1000, "total": 4000}
+        """
 
-        except KeyError:
-            now = time.time()
-            if now - data["reported"] < config.NODE_DEAD_TIMEOUT:
-                print(name, "mem gmond data is incomplete")
+        return {}
 
     @staticmethod
     def swap(data, name):
-        try:
-            # convert to MB
-            return {
-                "free": math.ceil(float(data["swap_free"]) / KB),
-                "total": math.ceil(float(data["swap_total"]) / KB),
-            }
-        except KeyError:
-            print(name, "swap not in ganglia")
+        """
+        Returns the swap usage for the node
+        (in megabytes)
+
+        Example:
+            {"free": 1000, "total": 4000}
+        """
+
+        return {}
 
     @staticmethod
     def disk(data, name):
-        try:
-            return {
-                "free": math.ceil(float(data["disk_free"])),
-                "total": math.ceil(float(data["disk_total"])),
-            }
-        except KeyError:
-            print(name, "disk not in ganglia")
+        """
+        Returns the disk usage for the node
+        (in megabytes)
 
-    @staticmethod
-    def temps(data):
-        t = {}
-        if "cpu1_temp" in data.keys():
-            t["cpu1"] = int(data["cpu1_temp"].split(".")[0])
-            if "cpu2_temp" in data.keys():
-                t["cpu2"] = int(data["cpu2_temp"].split(".")[0])
-            else:
-                t["cpu2"] = t["cpu1"]
+        Example:
+            {"free": 1000, "total": 4000}
+        """
 
-        if "front_temp" in data.keys():
-            t["front"] = int(data["front_temp"].split(".")[0])
-            if "rear_temp" in data.keys():
-                t["rear"] = int(data["rear_temp"].split(".")[0])
-            else:
-                t["rear"] = t["front"]
-
-        if "chassis_temp" in data.keys():
-            t["chassis"] = int(data["chassis_temp"].split(".")[0])
-
-        if len(t.keys()) > 0:
-            return t
-
-    @staticmethod
-    def power(data):
-        p = {}
-        if "node_power" in data.keys():
-            p["node"] = int(data["node_power"].split(".")[0])
-        if "cmm_power_in" in data.keys():
-            p["blade_chassis"] = int(data["cmm_power_in"].split(".")[0])
-
-        if len(p.keys()) > 0:
-            return p
-
-    @staticmethod
-    def fans(data):
-        f = {}
-        if "fan_rms" in data.keys():
-            f["rms"] = int(data["fan_rms"].split(".")[0])
-
-        if len(f.keys()) > 0:
-            return f
+        return {}
 
     @staticmethod
     def gpus(data):
-        g = {}
-        gpu_count = 0
-        for i in range(7):
-            metric_name = "gpu{:d}_util".format(i)
-            if metric_name in data.keys():
-                gpu_count += 1
-                api_name = "gpu{:d}".format(i)
-                g[api_name] = float(data[metric_name])
+        """
+        Returns the GPU usage percentage for the node
 
-        return g
+        Example:
+            {"gpu0_util": 90, "gpu1_util": 100}
+        """
+
+        return {}
 
     @staticmethod
     def infiniband(data):
-        n = {}
-        if "ib_bytes_in" in data.keys():
-            n["bytes_in"] = math.ceil(float(data["ib_bytes_in"]))
+        """
+        Returns the infiniband usage for the node
+        (in bytes and packets)
 
-        if "ib_bytes_out" in data.keys():
-            n["bytes_out"] = math.ceil(float(data["ib_bytes_out"]))
+        Example:
+            {
+                "ib_bytes_in": 100,
+                "ib_bytes_out": 200,
+                "ib_pkts_in": 300,
+                "ib_pkts_out": 400,
+            }
+        """
 
-        if "ib_pkts_in" in data.keys():
-            n["pkts_in"] = math.ceil(float(data["ib_pkts_in"]))
-
-        if "ib_pkts_out" in data.keys():
-            n["pkts_out"] = math.ceil(float(data["ib_pkts_out"]))
-
-        if len(n.keys()) > 0:
-            return n
+        return {}
 
     @staticmethod
     def lustre(data):
-        lustre_data = {}
-        if "farnarkle_fred_read_bytes" in data.keys():
-            lustre_data["read"] = math.ceil(float(data["farnarkle_fred_read_bytes"]))
+        """
+        Returns the infiniband traffic for the node
+        (in bytes)
 
-        if "farnarkle_fred_write_bytes" in data.keys():
-            lustre_data["write"] = math.ceil(float(data["farnarkle_fred_write_bytes"]))
+        Example:
+            {"read": 100, "write": 200}
+        """
 
-        if len(lustre_data.keys()) > 0:
-            return lustre_data
+        return {}
 
     @staticmethod
     def jobfs(data):
-        j = {}
-        if "diskstat_sda_read_bytes_per_sec" in data.keys():
-            j["read"] = math.ceil(float(data["diskstat_sda_read_bytes_per_sec"]))
+        """
+        Returns the read/write stats on JOBFS for the node
+        (in bytes)
 
-        if "diskstat_sda_write_bytes_per_sec" in data.keys():
-            j["write"] = math.ceil(float(data["diskstat_sda_write_bytes_per_sec"]))
+        Example:
+            {"read": 100, "write": 200}
+        """
 
-        if len(j.keys()) > 0:
-            return j
+        return {}
 
     @classmethod
     def nodes(cls):
@@ -263,9 +184,6 @@ class Backend:
             nodes[host]["mem"] = cls.mem(all[host], host)
             nodes[host]["swap"] = cls.swap(all[host], host)
             nodes[host]["disk"] = cls.disk(all[host], host)
-            # nodes[host]['temps']        = cls.temps(all[host])
-            # nodes[host]['power']        = cls.power(all[host])
-            # nodes[host]['fans']         = cls.fans(all[host])
             nodes[host]["gpus"] = cls.gpus(all[host])
             nodes[host]["infiniband"] = cls.infiniband(all[host])
             nodes[host]["lustre"] = cls.lustre(all[host])
