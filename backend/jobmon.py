@@ -8,8 +8,12 @@ from backend import Backend
 
 if __name__ == "__main__":
 
+    # Test cycle
     test = False
+
+    # Skip history loading
     nohist = False
+
     if len(sys.argv) == 2:
         arg = sys.argv[1]
         nohist = arg == "nohist"
