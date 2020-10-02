@@ -2,7 +2,7 @@
 import sys
 import time
 
-from jobmon_config import config
+import jobmon_config as config
 
 from backend import Backend
 
