@@ -63,8 +63,6 @@ class BackendOzSTAR(BackendBase):
             if len(nodes) > 0:
                 count_stat += 1
 
-                mem_data[job_id] = {"hasMem": False}
-
                 mem_sum = {}
 
                 # Current memory usage
@@ -88,10 +86,14 @@ class BackendOzSTAR(BackendBase):
                     self.mem_max[job_id] = int(max(self.mem_max[job_id], mem_mb))
                     mem_sum[node_name] = mem_mb
 
-                mem_data["mem"] = mem_sum
-                mem_data["memMax"] = int(max(self.mem_max[job_id], mem_mb))
+                mem_data[job_id] = {
+                    "hasMem": False,
+                    "mem": mem_sum,
+                    "memMax": int(max(self.mem_max[job_id], mem_mb)),
+                }
 
             else:
+                mem_data[job_id] = {"hasMem": False, "mem": 0, "memMax": 0}
                 print(
                     "{:} ({:}) has no memory stats".format(job_id, self.id_map[job_id])
                 )
