@@ -1,21 +1,14 @@
 import gzip
 import json
-import math
-import pwd
 import re
 import time
 from datetime import datetime
 from glob import glob
 from os import path, remove
 
-import influx_config
 import jobmon_config as config
-import pyslurm
 import showbf
-from constants import KB
 from file_utils import write_data
-from influxdb import InfluxDBClient
-from jobmon_gpu_mapping import GPUmapping
 
 API_VERSION = 13
 
@@ -27,15 +20,6 @@ class BackendBase:
 
         # Backfill data
         self.backfill = {}
-
-        # Dict of username mappings
-        self.usernames = {}
-
-        # Initialise GPU mapping determination
-        self.ga = GPUmapping()
-
-        # Maximum memory usage of a job
-        self.mem_max = {}
 
         # Load usage from disk
         self.usage_cache = {"history": {}}
@@ -189,6 +173,9 @@ class BackendBase:
         return []
 
     def nodes(self):
+        """
+        Returns a dictionary of all of the node data
+        """
         nodes = {}
         for host in self.hostnames():
             nodes[host] = {}
@@ -208,235 +195,151 @@ class BackendBase:
 
         return nodes
 
-    def hide_username(self, name):
-        if name not in self.usernames.keys():
-            new_name = name[:3]
-            add_letters = 0
-            for long_name, short_name in self.usernames.items():
-                while short_name == new_name:
-                    add_letters += 1
-
-                    # Add a number if out of characters
-                    if 3 + add_letters > len(name):
-                        new_name = name + str(3 + add_letters - name)
-                    else:
-                        new_name = name[: 3 + add_letters]
-
-            self.usernames[name] = new_name
-
-        return self.usernames[name]
-
-    @classmethod
-    def expand_array(cls, r):
-        # ignore % 'run-at once'
-        if "%" in r:
-            r = r.split("%")[0]
-        # remember step
-        step = 1
-        if ":" in r:
-            i = r.split(":")
-            r = i[0]
-            step = int(i[1])
-        cc = cls.expand_array_range(r)
-        if step == 1:
-            return cc
-        c = []
-        for i in cc:
-            if i % step == 0:  # might not be correct. eg 1-8:4 vs. 0-7:4. whatevs
-                c.append(i)
-        return c
-
-    @classmethod
-    def expand_array_range(cls, r):
-        # "0,5-6,17,23-25" ->  [0,5,6,17,23,24,25]
-        c = []
-        for i in r.split(","):
-            ss = i.split("-")
-            if len(ss) > 1:  # found a range
-                # If range is truncated, just append first number
-                if ss[1] == "...":
-                    c.append(int(ss[0]))
-                else:
-                    for j in range(int(ss[0]), int(ss[1]) + 1):
-                        c.append(j)
-            else:  # found a single
-                c.append(int(i))
-        return c
-
-    @staticmethod
-    def cpu_layout(layout):
-        # Expand to HT core labelling if necessary
-        for node in layout.keys():
-            for ht_node in config.HT_NODES:
-                if ht_node[0] in node:
-                    extra_layout = []
-                    for i in range(1, ht_node[2]):
-                        extra_layout += [x + i * ht_node[1] for x in layout[node]]
-                    layout[node] += extra_layout
-
-        return layout
-
-    def job_info(self, slurm_job):
-        num_gpus = 0
-        if slurm_job["tres_alloc_str"] is not None:
-            if "gpu=" in slurm_job["tres_alloc_str"]:
-                num_gpus = int(slurm_job["tres_alloc_str"].split("gpu=")[1][0])
-
-        return {
-            "name": slurm_job["name"],
-            "username": self.hide_username(pwd.getpwuid(slurm_job["user_id"])[0]),
-            "nCpus": slurm_job["num_cpus"],
-            "state": slurm_job["job_state"],
-            "layout": self.cpu_layout(slurm_job["cpus_alloc_layout"]),
-            "timeLimit": slurm_job["time_limit"],  # minutes
-            "runTime": int(slurm_job["run_time"] / 60),  # minutes
-            "nGpus": num_gpus,
-            "mem": {},  # populate later
-            "memMax": {},  # populate later
-            "hasMem": False,
-            "memReq": self.requested_memory(slurm_job),  # mb
-        }
-
-    def add_job_mem_info(self, j, id_map):
-        print("Getting memory stats")
-        # InfluxDB client for memory stats
-        influx_client = InfluxDBClient(
-            host=influx_config.HOST,
-            port=influx_config.PORT,
-            username=influx_config.USERNAME,
-            password=influx_config.PASSWORD,
-        )
-        # Choose database
-        influx_client.switch_database("ozstar_slurm")
-
-        # Query all jobs for current memory usage
-        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host, task".format(
-            config.UPDATE_INTERVAL * 4
-        )
-        result = influx_client.query(query)
-
-        # Count jobs
-        active_slurm_jobs = []
-        for array_id in j:
-            if j[array_id]["state"] == "RUNNING":
-                active_slurm_jobs += [array_id]
-
-        count_stat = 0
-        for array_id in active_slurm_jobs:
-            key = ("RSS", {"job": str(id_map[array_id])})
-            nodes = list(result[key])
-
-            if len(nodes) > 0:
-                count_stat += 1
-                j[array_id]["hasMem"] = True
-
-                mem_sum = {}
-                # Current memory usage
-                for x in nodes:
-                    node_name = x["host"]
-                    mem = x["max"]
-
-                    # Sum up memory usage from different tasks
-                    if node_name in mem_sum:
-                        mem_sum[node_name] += mem
-                    else:
-                        mem_sum[node_name] = mem
-
-                # Determine max over time
-                if array_id not in self.mem_max:
-                    self.mem_max[array_id] = 0
-
-                # Convert KB to MB
-                for node_name in mem_sum:
-                    mem_mb = math.ceil(mem_sum[node_name] / KB)
-                    self.mem_max[array_id] = int(max(self.mem_max[array_id], mem_mb))
-                    mem_sum[node_name] = mem_mb
-
-                # Add to job dict
-                j[array_id]["mem"] = mem_sum
-                j[array_id]["memMax"] = self.mem_max[array_id]
-
-                if len(mem_sum) != len(j[array_id]["layout"]):
-                    print(
-                        "{:} has {:} mem nodes but {:} cpu nodes".format(
-                            array_id, len(nodes), len(j[array_id]["layout"])
-                        )
-                    )
-
-            else:
-                print(
-                    "{:} ({:}) has no memory stats".format(array_id, id_map[array_id])
-                )
-
-        print("Memory stats: {:} / {:}".format(count_stat, len(active_slurm_jobs)))
-
-    @staticmethod
-    def requested_memory(slurm_job):
-        if slurm_job["min_memory_cpu"] is not None:
-            return (
-                slurm_job["min_memory_cpu"]
-                * max(slurm_job["ntasks_per_node"], 1)
-                * max(slurm_job["cpus_per_task"], 1)
-            )
-        else:
-            return slurm_job["min_memory_node"]
-
-    def add_job_gpu_mapping(self, j):
-        # Update GPU mapping and determine
-        self.ga.update_jobs(j)
-        self.ga.determine()
-
-        # Give all jobs a gpuLayout entry
-        for jid in j:
-            j[jid]["gpuLayout"] = {}
-
-        # Populate GPU layout for GPU jobs
-        for jid in self.ga.mapping:
-            for host in self.ga.mapping[jid]:
-                j[jid]["gpuLayout"][host] = self.ga.mapping[jid][host]
-
     def jobs(self):
-        # Get job info from slurm
-        slurm_jobs = pyslurm.job().get()
+        """
+        Returns a dictionary of all of the job data
+        """
 
         j = {}
 
-        # Map between array syntax and job numbers
-        id_map = {}
+        for job_id in self.job_ids():
+            j[job_id] = {}
 
-        for job_id in slurm_jobs:
-            s = slurm_jobs[job_id]
-
-            if s["array_task_str"] is not None:  # queued array job(s)
-                # expand into separate sub jobs
-                for t in self.expand_array(s["array_task_str"]):
-                    jid = str(job_id) + "_" + str(t)
-                    j[jid] = self.job_info(s)
-
-            else:
-                if (
-                    s["array_task_id"] is not None and s["array_job_id"] is not None
-                ):  # running array task
-                    # change the jobid to be array syntax
-                    jid = str(s["array_job_id"]) + "_" + str(s["array_task_id"])
-                else:
-                    jid = str(job_id)
-
-                j[jid] = self.job_info(s)
-
-                id_map[jid] = job_id
-                #      array_id   integer
-
-        # Add memory information
-        self.add_job_mem_info(j, id_map)
-
-        # Prune max memory usage dict based on the current data
-        self.prune_mem_max(j)
-
-        # Add GPU mapping
-        self.add_job_gpu_mapping(j)
+            j[job_id]["name"] = self.job_name(job_id)
+            j[job_id]["username"] = self.job_username(job_id)
+            j[job_id]["nCpus"] = self.job_ncpus(job_id)
+            j[job_id]["nGpus"] = self.job_ngpus(job_id)
+            j[job_id]["state"] = self.job_state(job_id)
+            j[job_id]["layout"] = self.job_layout(job_id)
+            j[job_id]["gpuLayout"] = self.job_gpu_layout(job_id)
+            j[job_id]["timeLimit"] = self.job_time_limit(job_id)
+            j[job_id]["runTime"] = self.job_run_time(job_id)
+            j[job_id]["mem"] = self.job_mem(job_id)
+            j[job_id]["memMax"] = self.job_mem_max(job_id)
+            j[job_id]["hasMem"] = self.job_has_mem_stats(job_id)
+            j[job_id]["memReq"] = self.job_mem_request(job_id)
 
         return j
+
+    def job_ids(self):
+        """
+        Returns a list of job IDs
+        """
+
+        return []
+
+    def job_name(self, job_id):
+        """
+        Return the string name of the job
+        """
+
+        return ""
+
+    def job_username(self, job_id):
+        """
+        Return the string user running the job
+        """
+
+        return ""
+
+    def job_ncpus(self, job_id):
+        """
+        Return the number of CPU cores used by the job
+        """
+
+        return 0
+
+    def job_ngpus(self, job_id):
+        """
+        Return the number of GPUs used by the job
+        """
+
+        return 0
+
+    def job_state(self, job_id):
+        """
+        Return the string state of the job
+        E.g. "PENDING", "RUNNING", "SUSPENDED", "COMPLETING", "COMPLETED"
+        """
+
+        return ""
+
+    def job_layout(self, job_id):
+        """
+        Return a dictionary describing the CPU layout of the job
+
+        In the format
+        {hostname: core_array}
+
+        E.g.
+        {'john1': [0,1,2,3], 'john2': [11,12,13,14]}
+        """
+
+        return {}
+
+    def job_gpu_layout(self, job_id):
+        """
+        Return a dictionary describing the GPU layout of the job
+
+        In the format
+        {hostname: gpu_array}
+
+        E.g.
+        {'john1': [0,1]}
+        """
+
+        return {}
+
+    def job_time_limit(self, job_id):
+        """
+        Return the scheduled time limit of the job in minutes
+        """
+
+        return 0
+
+    def job_run_time(self, job_id):
+        """
+        Return the current run time of the job in minutes
+        """
+
+        return 0
+
+    def job_mem(self, job_id):
+        """
+        Return the current memory usage of the job in MB
+        """
+
+        return 0
+
+    def job_mem_max(self, job_id):
+        """
+        Return the max memory usage of the job in MB
+        """
+
+        return 0
+
+    def job_has_mem_stats(self, job_id):
+        """
+        Return True if the job has memory stats available
+        """
+
+        return False
+
+    def job_mem_request(self, job_id):
+        """
+        Return the requested memory allocation in MB
+        """
+
+        return 0
+
+    def pre_update(self):
+        """
+        Run an update step (optional)
+
+        For example, load data from other modules or APIs
+        """
+
+        return
 
     def update_data(self):
         """
@@ -449,15 +352,6 @@ class BackendBase:
         data["nodes"] = self.nodes()
         data["jobs"] = self.jobs()
         self.data = data
-
-    def pre_update(self):
-        """
-        Run an update step (optional)
-
-        For example, load data from other modules or APIs
-        """
-
-        return
 
     def update_core_usage(self, data=None):
         # For loading in usage from disk
