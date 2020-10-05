@@ -2,6 +2,8 @@ import math
 import time
 
 import jobmon_config as config
+import jobmon_ganglia as ganglia
+import pyslurm
 from backend_base import BackendBase
 from constants import KB
 
@@ -9,8 +11,13 @@ API_VERSION = 13
 
 
 class BackendOzSTAR(BackendBase):
-    @staticmethod
-    def cpu_usage(data, name):
+    def pre_update(self):
+        self.ganglia_data = ganglia.Stats(do_cpus=True).all
+        self.pyslurm_data = pyslurm.node().get()
+
+    def cpu_usage(self, name):
+        data = self.ganglia_data[name]
+
         try:
             total = {
                 "user": float(data["cpu_user"]),
@@ -61,8 +68,9 @@ class BackendOzSTAR(BackendBase):
         except KeyError:
             print(name, "cpu user/nice/system/wio/idle not in ganglia")
 
-    @staticmethod
-    def mem(data, name):
+    def mem(self, name):
+        data = self.ganglia_data[name]
+
         try:
             used = (
                 float(data["mem_total"])
@@ -82,8 +90,9 @@ class BackendOzSTAR(BackendBase):
             if now - data["reported"] < config.NODE_DEAD_TIMEOUT:
                 print(name, "mem gmond data is incomplete")
 
-    @staticmethod
-    def swap(data, name):
+    def swap(self, name):
+        data = self.ganglia_data[name]
+
         try:
             # convert to MB
             return {
@@ -93,8 +102,8 @@ class BackendOzSTAR(BackendBase):
         except KeyError:
             print(name, "swap not in ganglia")
 
-    @staticmethod
-    def disk(data, name):
+    def disk(self, name):
+        data = self.ganglia_data[name]
         try:
             return {
                 "free": math.ceil(float(data["disk_free"])),
@@ -103,51 +112,8 @@ class BackendOzSTAR(BackendBase):
         except KeyError:
             print(name, "disk not in ganglia")
 
-    @staticmethod
-    def temps(data):
-        t = {}
-        if "cpu1_temp" in data.keys():
-            t["cpu1"] = int(data["cpu1_temp"].split(".")[0])
-            if "cpu2_temp" in data.keys():
-                t["cpu2"] = int(data["cpu2_temp"].split(".")[0])
-            else:
-                t["cpu2"] = t["cpu1"]
-
-        if "front_temp" in data.keys():
-            t["front"] = int(data["front_temp"].split(".")[0])
-            if "rear_temp" in data.keys():
-                t["rear"] = int(data["rear_temp"].split(".")[0])
-            else:
-                t["rear"] = t["front"]
-
-        if "chassis_temp" in data.keys():
-            t["chassis"] = int(data["chassis_temp"].split(".")[0])
-
-        if len(t.keys()) > 0:
-            return t
-
-    @staticmethod
-    def power(data):
-        p = {}
-        if "node_power" in data.keys():
-            p["node"] = int(data["node_power"].split(".")[0])
-        if "cmm_power_in" in data.keys():
-            p["blade_chassis"] = int(data["cmm_power_in"].split(".")[0])
-
-        if len(p.keys()) > 0:
-            return p
-
-    @staticmethod
-    def fans(data):
-        f = {}
-        if "fan_rms" in data.keys():
-            f["rms"] = int(data["fan_rms"].split(".")[0])
-
-        if len(f.keys()) > 0:
-            return f
-
-    @staticmethod
-    def gpus(data):
+    def gpus(self, name):
+        data = self.ganglia_data[name]
         g = {}
         gpu_count = 0
         for i in range(7):
@@ -159,8 +125,8 @@ class BackendOzSTAR(BackendBase):
 
         return g
 
-    @staticmethod
-    def infiniband(data):
+    def infiniband(self, name):
+        data = self.ganglia_data[name]
         n = {}
         if "ib_bytes_in" in data.keys():
             n["bytes_in"] = math.ceil(float(data["ib_bytes_in"]))
@@ -177,8 +143,8 @@ class BackendOzSTAR(BackendBase):
         if len(n.keys()) > 0:
             return n
 
-    @staticmethod
-    def lustre(data):
+    def lustre(self, name):
+        data = self.ganglia_data[name]
         lustre_data = {}
         if "farnarkle_fred_read_bytes" in data.keys():
             lustre_data["read"] = math.ceil(float(data["farnarkle_fred_read_bytes"]))
@@ -189,8 +155,8 @@ class BackendOzSTAR(BackendBase):
         if len(lustre_data.keys()) > 0:
             return lustre_data
 
-    @staticmethod
-    def jobfs(data):
+    def jobfs(self, name):
+        data = self.ganglia_data[name]
         j = {}
         if "diskstat_sda_read_bytes_per_sec" in data.keys():
             j["read"] = math.ceil(float(data["diskstat_sda_read_bytes_per_sec"]))
@@ -201,35 +167,35 @@ class BackendOzSTAR(BackendBase):
         if len(j.keys()) > 0:
             return j
 
-    @staticmethod
-    def node_up(data):
+    def node_up(self, name):
+        data = self.ganglia_data[name]
         now = time.time()
         return now - data["reported"] < config.NODE_DEAD_TIMEOUT
 
-    @staticmethod
-    def is_counted(host, pyslurm_nodes):
-        if host in pyslurm_nodes.keys():
+    def is_counted(self, name):
+        if name in self.pyslurm_data.keys():
             for prefix in config.CORE_COUNT_NODES:
-                if prefix in host:
+                if prefix in name:
                     return True
 
         return False
 
-    @staticmethod
-    def n_cpus(host, pyslurm_nodes):
-        if host in pyslurm_nodes.keys():
-            return pyslurm_nodes[host]["cpus"]
+    def n_cpus(self, name):
+        if name in self.pyslurm_data.keys():
+            return self.pyslurm_data[name]["cpus"]
 
         return 0
 
-    @staticmethod
-    def n_gpus(host, pyslurm_nodes):
-        if host in pyslurm_nodes.keys():
+    def n_gpus(self, name):
+        if name in self.pyslurm_data.keys():
             n = 0
-            for gres in pyslurm_nodes[host]["gres"]:
+            for gres in self.pyslurm_data[name]["gres"]:
                 g = gres.split(":")
                 if g[0] == "gpu":
                     n += int(g[2][0])
             return n
 
         return 0
+
+    def hostnames(self):
+        return self.ganglia_data.keys()

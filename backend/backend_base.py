@@ -10,7 +10,6 @@ from os import path, remove
 
 import influx_config
 import jobmon_config as config
-import jobmon_ganglia as ganglia
 import pyslurm
 import showbf
 from constants import KB
@@ -49,8 +48,7 @@ class BackendBase:
         d = datetime.now()
         return int(time.mktime(d.timetuple()))
 
-    @staticmethod
-    def cpu_usage(data, name):
+    def cpu_usage(self, name):
         """
         Returns the CPU usage percentage for the node
             {"total": total_array, "core": core_array}
@@ -74,8 +72,7 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def mem(data, name):
+    def mem(self, name):
         """
         Returns the memory usage for the node
         (in megabytes)
@@ -86,8 +83,7 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def swap(data, name):
+    def swap(self, name):
         """
         Returns the swap usage for the node
         (in megabytes)
@@ -98,8 +94,7 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def disk(data, name):
+    def disk(self, name):
         """
         Returns the disk usage for the node
         (in megabytes)
@@ -110,8 +105,7 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def gpus(data):
+    def gpus(self, name):
         """
         Returns the GPU usage percentage for the node
 
@@ -121,8 +115,7 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def infiniband(data):
+    def infiniband(self, name):
         """
         Returns the infiniband usage for the node
         (in bytes and packets)
@@ -138,8 +131,7 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def lustre(data):
+    def lustre(self, name):
         """
         Returns the infiniband traffic for the node
         (in bytes)
@@ -150,8 +142,7 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def jobfs(data):
+    def jobfs(self, name):
         """
         Returns the read/write stats on JOBFS for the node
         (in bytes)
@@ -162,61 +153,58 @@ class BackendBase:
 
         return {}
 
-    @staticmethod
-    def node_up(data):
+    def node_up(self, name):
         """
         Returns True if the node is up, False if the node is down
         """
 
         return True
 
-    @staticmethod
-    def is_counted(host, pyslurm_nodes):
+    def is_counted(self, name):
         """
         Returns True if the node should be counted in the total cores
         """
 
         return True
 
-    @staticmethod
-    def n_cpus(host):
+    def n_cpus(self, name):
         """
         Returns the number of CPU cores on the node
         """
 
         return 0
 
-    @staticmethod
-    def n_gpus(host):
+    def n_gpus(self, name):
         """
         Returns the number of GPUs on the node
         """
 
         return 0
 
-    @classmethod
-    def nodes(cls):
-        all = ganglia.Stats(do_cpus=True).all
+    def hostnames(self):
+        """
+        Returns a list of node hostnames
+        """
 
-        pyslurm_nodes = pyslurm.node().get()
+        return []
 
+    def nodes(self):
         nodes = {}
-        for host in all.keys():
+        for host in self.hostnames():
             nodes[host] = {}
 
-            nodes[host]["up"] = cls.node_up(all[host])
-            nodes[host]["cpu"] = cls.cpu_usage(all[host], host)
-            nodes[host]["mem"] = cls.mem(all[host], host)
-            nodes[host]["swap"] = cls.swap(all[host], host)
-            nodes[host]["disk"] = cls.disk(all[host], host)
-            nodes[host]["gpus"] = cls.gpus(all[host])
-            nodes[host]["infiniband"] = cls.infiniband(all[host])
-            nodes[host]["lustre"] = cls.lustre(all[host])
-            nodes[host]["jobfs"] = cls.jobfs(all[host])
-
-            nodes[host]["isCounted"] = cls.is_counted(host, pyslurm_nodes)
-            nodes[host]["nCpus"] = cls.n_cpus(host, pyslurm_nodes)
-            nodes[host]["nGpus"] = cls.n_gpus(host, pyslurm_nodes)
+            nodes[host]["up"] = self.node_up(host)
+            nodes[host]["cpu"] = self.cpu_usage(host)
+            nodes[host]["mem"] = self.mem(host)
+            nodes[host]["swap"] = self.swap(host)
+            nodes[host]["disk"] = self.disk(host)
+            nodes[host]["gpus"] = self.gpus(host)
+            nodes[host]["infiniband"] = self.infiniband(host)
+            nodes[host]["lustre"] = self.lustre(host)
+            nodes[host]["jobfs"] = self.jobfs(host)
+            nodes[host]["isCounted"] = self.is_counted(host)
+            nodes[host]["nCpus"] = self.n_cpus(host)
+            nodes[host]["nGpus"] = self.n_gpus(host)
 
         return nodes
 
@@ -451,12 +439,25 @@ class BackendBase:
         return j
 
     def update_data(self):
+        """
+        Write all the data into a dictionary
+        """
+        self.pre_update()
         data = {}
         data["api"] = API_VERSION
         data["timestamp"] = self.timestamp()
         data["nodes"] = self.nodes()
         data["jobs"] = self.jobs()
         self.data = data
+
+    def pre_update(self):
+        """
+        Run an update step (optional)
+
+        For example, load data from other modules or APIs
+        """
+
+        return
 
     def update_core_usage(self, data=None):
         # For loading in usage from disk
