@@ -170,6 +170,30 @@ class BackendBase:
 
         return True
 
+    @staticmethod
+    def is_counted(host, pyslurm_nodes):
+        """
+        Returns True if the node should be counted in the total cores
+        """
+
+        return True
+
+    @staticmethod
+    def n_cpus(host):
+        """
+        Returns the number of CPU cores on the node
+        """
+
+        return 0
+
+    @staticmethod
+    def n_gpus(host):
+        """
+        Returns the number of GPUs on the node
+        """
+
+        return 0
+
     @classmethod
     def nodes(cls):
         all = ganglia.Stats(do_cpus=True).all
@@ -190,18 +214,9 @@ class BackendBase:
             nodes[host]["lustre"] = cls.lustre(all[host])
             nodes[host]["jobfs"] = cls.jobfs(all[host])
 
-            nodes[host]["isCounted"] = False
-            if host in pyslurm_nodes.keys():
-                for prefix in config.CORE_COUNT_NODES:
-                    if prefix in host:
-                        nodes[host]["isCounted"] = True
-                        break
-                nodes[host]["nCpus"] = pyslurm_nodes[host]["cpus"]
-                nodes[host]["nGpus"] = 0
-                for gres in pyslurm_nodes[host]["gres"]:
-                    g = gres.split(":")
-                    if g[0] == "gpu":
-                        nodes[host]["nGpus"] += int(g[2][0])
+            nodes[host]["isCounted"] = cls.is_counted(host, pyslurm_nodes)
+            nodes[host]["nCpus"] = cls.n_cpus(host, pyslurm_nodes)
+            nodes[host]["nGpus"] = cls.n_gpus(host, pyslurm_nodes)
 
         return nodes
 

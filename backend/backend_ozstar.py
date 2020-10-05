@@ -203,9 +203,33 @@ class BackendOzSTAR(BackendBase):
 
     @staticmethod
     def node_up(data):
-        """
-        Returns True if the node is up, False if the node is down
-        """
-
         now = time.time()
         return now - data["reported"] < config.NODE_DEAD_TIMEOUT
+
+    @staticmethod
+    def is_counted(host, pyslurm_nodes):
+        if host in pyslurm_nodes.keys():
+            for prefix in config.CORE_COUNT_NODES:
+                if prefix in host:
+                    return True
+
+        return False
+
+    @staticmethod
+    def n_cpus(host, pyslurm_nodes):
+        if host in pyslurm_nodes.keys():
+            return pyslurm_nodes[host]["cpus"]
+
+        return 0
+
+    @staticmethod
+    def n_gpus(host, pyslurm_nodes):
+        if host in pyslurm_nodes.keys():
+            n = 0
+            for gres in pyslurm_nodes[host]["gres"]:
+                g = gres.split(":")
+                if g[0] == "gpu":
+                    n += int(g[2][0])
+            return n
+
+        return 0
