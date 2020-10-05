@@ -50,8 +50,7 @@ class BackendOzSTAR(BackendBase):
         # Get all the active jobs
         active_slurm_jobs = []
         for job_id in self.job_ids():
-            job = self.pyslurm_job[self.id_map[job_id]]
-            if job["state"] == "RUNNING":
+            if self.job_state(job_id) == "RUNNING":
                 active_slurm_jobs += [job_id]
             else:
                 mem_data[job_id] = {"hasMem": False, "mem": 0, "memMax": 0}
@@ -340,7 +339,8 @@ class BackendOzSTAR(BackendBase):
             # Expand queued queued array jobs into sub jobs
             if job_entry["array_task_str"] is not None:
                 for sub_id in self.expand_array(job_entry["array_task_str"]):
-                    full_ids += str(job_id) + "_" + str(sub_id)
+                    full_ids += [str(job_id) + "_" + str(sub_id)]
+                    self.id_map[full_ids[-1]] = job_id
 
             else:
 
@@ -349,17 +349,17 @@ class BackendOzSTAR(BackendBase):
                     job_entry["array_task_id"] is not None
                     and job_entry["array_job_id"] is not None
                 ):
-                    full_ids += (
+                    full_ids += [
                         str(job_entry["array_job_id"])
                         + "_"
                         + str(job_entry["array_task_id"])
-                    )
+                    ]
 
                 # Regular running job
                 else:
-                    full_ids += str(job_id)
+                    full_ids += [str(job_id)]
 
-                # For running jobs, map between the full ID back to the original ID
+                # Map between the full ID back to the original ID
                 self.id_map[full_ids[-1]] = job_id
 
         return full_ids
