@@ -463,7 +463,10 @@ class BackendOzSTAR(BackendBase):
         return layout
 
     def job_gpu_layout(self, job_id):
-        return self.ga.mapping[job_id]
+        if self.job_ngpus(job_id) > 0:
+            return self.ga.mapping[job_id]
+
+        return {}
 
     def job_time_limit(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
