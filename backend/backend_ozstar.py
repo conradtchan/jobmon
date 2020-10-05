@@ -465,7 +465,7 @@ class BackendOzSTAR(BackendBase):
         return layout
 
     def job_gpu_layout(self, job_id):
-        if self.job_ngpus(job_id) > 0:
+        if self.job_ngpus(job_id) > 0 and job_id in self.ga.mapping.keys():
             return self.ga.mapping[job_id]
 
         return {}
