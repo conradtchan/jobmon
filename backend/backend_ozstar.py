@@ -200,3 +200,12 @@ class BackendOzSTAR(BackendBase):
 
         if len(j.keys()) > 0:
             return j
+
+    @staticmethod
+    def node_up(data):
+        """
+        Returns True if the node is up, False if the node is down
+        """
+
+        now = time.time()
+        return now - data["reported"] < config.NODE_DEAD_TIMEOUT

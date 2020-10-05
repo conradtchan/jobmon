@@ -162,11 +162,17 @@ class BackendBase:
 
         return {}
 
+    @staticmethod
+    def node_up(data):
+        """
+        Returns True if the node is up, False if the node is down
+        """
+
+        return True
+
     @classmethod
     def nodes(cls):
         all = ganglia.Stats(do_cpus=True).all
-
-        now = time.time()  # seconds since 1970
 
         pyslurm_nodes = pyslurm.node().get()
 
@@ -174,12 +180,7 @@ class BackendBase:
         for host in all.keys():
             nodes[host] = {}
 
-            # If node is up
-            if now - all[host]["reported"] < config.NODE_DEAD_TIMEOUT:
-                nodes[host]["up"] = True
-            else:
-                nodes[host]["up"] = False
-
+            nodes[host]["up"] = cls.node_up(all[host])
             nodes[host]["cpu"] = cls.cpu_usage(all[host], host)
             nodes[host]["mem"] = cls.mem(all[host], host)
             nodes[host]["swap"] = cls.swap(all[host], host)
