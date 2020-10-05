@@ -15,8 +15,8 @@ API_VERSION = 13
 
 
 class BackendOzSTAR(BackendBase):
-    def __init__(self):
-        super().__init__(self)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         # Dict of username mappings
         self.usernames = {}
