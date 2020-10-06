@@ -537,3 +537,36 @@ class BackendOzSTAR(BackendBase):
             )
         else:
             return job["min_memory_node"]
+
+    def core_usage(self, data):
+        usage = {"avail": 0, "running": 0}
+
+        # Count the available cores
+        for hostname, node in data["nodes"].items():
+            if node["isCounted"]:
+                usage["avail"] += node["nCpus"]
+
+        # Count the bonus cores (only get added to available when used)
+        bonus_nodes = []
+        n_bonus = 0
+
+        for i, job in data["jobs"].items():
+            if job["state"] == "RUNNING":
+                usage["running"] += job["nCpus"]
+
+                # if job is running on a bonus node then add the bonus node to avail
+                for hostname in job["layout"]:
+                    node = data["nodes"][hostname]
+                    if not node["isCounted"]:
+                        if hostname not in bonus_nodes:
+                            bonus_nodes += [hostname]
+                            usage["avail"] += node["nCpus"]
+                            n_bonus += node["nCpus"]
+
+        print(
+            "Core utilization: {:}/{:} ({:} bonus cores are active)".format(
+                usage["running"], usage["avail"], n_bonus
+            )
+        )
+
+        return usage

@@ -360,32 +360,27 @@ class BackendBase:
         self.data = data
 
     def update_core_usage(self, data=None):
+        """
+        Calculate the core utilization, then add to the history dict
+
+        Do not override this function
+        """
+
         # For loading in usage from disk
-        if data is not None:
-            self.data = data
+        if data is None:
+            data = self.data
 
-        usage = {"avail": 0, "running": 0}
-        for hostname, node in self.data["nodes"].items():
-            if node["isCounted"]:
-                usage["avail"] += node["nCpus"]
+        self.usage_cache["history"][data["timestamp"]] = self.core_usage(data)
 
-        bonus_nodes = []
-        n_bonus = 0
+    def core_usage(self, data):
+        """
+        Return the core utilization
 
-        for id, job in self.data["jobs"].items():
-            if job["state"] == "RUNNING":
-                usage["running"] += job["nCpus"]
+        Example:
+            usage = {"avail": 800, "running": 750}
+        """
 
-                # if job is running on a bonus node then add the bonus node to avail
-                for hostname in job["layout"]:
-                    node = self.data["nodes"][hostname]
-                    if not node["isCounted"]:
-                        if hostname not in bonus_nodes:
-                            bonus_nodes += [hostname]
-                            usage["avail"] += node["nCpus"]
-                            n_bonus += node["nCpus"]
-
-        self.usage_cache["history"][self.data["timestamp"]] = usage
+        return {"avail": 0, "running": 0}
 
     def usage_from_disk(self):
         filenames = config.FILE_NAME_PATTERN.format("*")
