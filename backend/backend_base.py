@@ -282,6 +282,16 @@ class BackendBase:
 
         return 0
 
+    def core_usage(self, data):
+        """
+        Return the core utilization
+
+        Example:
+            usage = {"avail": 800, "running": 750}
+        """
+
+        return {"avail": 0, "running": 0}
+
     def pre_update(self):
         """
         Run an update step (optional)
@@ -370,16 +380,6 @@ class BackendBase:
             data = self.data
 
         self.usage_cache["history"][data["timestamp"]] = self.core_usage(data)
-
-    def core_usage(self, data):
-        """
-        Return the core utilization
-
-        Example:
-            usage = {"avail": 800, "running": 750}
-        """
-
-        return {"avail": 0, "running": 0}
 
     def usage_from_disk(self):
         filenames = config.FILE_NAME_PATTERN.format("*")
