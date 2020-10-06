@@ -7,7 +7,6 @@ from glob import glob
 from os import path, remove
 
 import jobmon_config as config
-import showbf
 from file_utils import write_data
 
 API_VERSION = 13
@@ -421,29 +420,23 @@ class BackendBase:
         return h
 
     def update_backfill(self):
-        now = time.time()
-        data = showbf.do_all()
-        u, bcu = showbf.get_core_usage(data)
+        """
+        Update the backfill dictionary
 
-        bf = {}
+        Do not override
+        """
 
-        for node_type in config.BF_NODES:
-            bf[node_type] = {}
-            b = bcu[node_type]
+        self.backfill = self.calculate_backfill()
 
-            # b.bins(): core counts
-            # b.cnt(i): number of nodes with i available
-            # b.timesMax(i): max time available for slot
-            for i in sorted(b.bins()):
-                tmax = b.timesMax(i)
-                tmin = b.timesMin(i)
-                if tmax is not None:
-                    tmax -= now
-                if tmin is not None:
-                    tmin -= now
-                bf[node_type][i] = {"count": b.cnt(i), "tMax": tmax, "tMin": tmin}
+    def calculate_backfill(self):
+        """
+        Returns a dict of the backfill availability
 
-        self.backfill = bf
+        Format:
+            bf = {queue_name: {core_count: {"count": number_of_nodes, "tMax": max_time, "tMin", min_time}}}
+        """
+
+        return {}
 
     def write(self):
         output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(""))

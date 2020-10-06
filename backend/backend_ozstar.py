@@ -11,6 +11,7 @@ import influx_config
 import jobmon_config as config
 import jobmon_ganglia as ganglia
 import pyslurm
+import showbf
 from backend_base import BackendBase
 from constants import KB
 from influxdb import InfluxDBClient
@@ -570,3 +571,28 @@ class BackendOzSTAR(BackendBase):
         )
 
         return usage
+
+    def backfill(self):
+        now = time.time()
+        data = showbf.do_all()
+        u, bcu = showbf.get_core_usage(data)
+
+        bf = {}
+
+        for node_type in config.BF_NODES:
+            bf[node_type] = {}
+            b = bcu[node_type]
+
+            # b.bins(): core counts
+            # b.cnt(i): number of nodes with i available
+            # b.timesMax(i): max time available for slot
+            for i in sorted(b.bins()):
+                tmax = b.timesMax(i)
+                tmin = b.timesMin(i)
+                if tmax is not None:
+                    tmax -= now
+                if tmin is not None:
+                    tmin -= now
+                bf[node_type][i] = {"count": b.cnt(i), "tMax": tmax, "tMin": tmin}
+
+        return bf
