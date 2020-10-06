@@ -27,7 +27,6 @@ class App extends React.Component {
       nodeName: null,
       job: null,
       snapshotTime: new Date(0),
-      lastFetchAttempt: new Date(0),
       holdSnap: false,
       history: null,
       historyData: [],
@@ -449,7 +448,6 @@ class App extends React.Component {
     const {
       future,
       gotData,
-      lastFetchAttempt,
       snapshotTime,
       holdSnap,
       systemUsage,
@@ -459,12 +457,9 @@ class App extends React.Component {
         // If haven't fetched for a long time, then force a fetch
         // Usually happens when computer is waking from sleep
         const now = new Date();
-        const fetchAge = (now - lastFetchAttempt) / 1000;
         const snapAge = (now - snapshotTime) / 1000;
-        if (fetchAge > config.fetchRetryTime && !holdSnap) {
-          this.fetchLatest();
+        if ((snapAge > config.maintenanceAge) && !holdSnap) {
           // If the backend copy is old, then maintenance is occuring
-        } else if ((snapAge > config.maintenanceAge) && !holdSnap) {
           return (
             <div id="main-box">
               The job monitor is currently down for maintenance and will be back soon.
@@ -592,7 +587,6 @@ class App extends React.Component {
             that.setState({
               apiData: data,
               snapshotTime: new Date(data.timestamp * 1000),
-              lastFetchAttempt: new Date(),
               gotData: true,
             },
             () => that.postFetch()

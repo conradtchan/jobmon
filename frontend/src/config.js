@@ -21,9 +21,6 @@ const config = {
   // Frequency to fetch backfill (seconds)
   fetchBackfillFrequency: 100,
 
-  // Retry fetch if results haven't been updated in a while
-  fetchRetryTime: 300,
-
   // If snapshots are old by this amount, trigger maintenace message
   maintenanceAge: 1200,
 
