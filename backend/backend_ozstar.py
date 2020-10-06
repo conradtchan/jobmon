@@ -137,7 +137,8 @@ class BackendOzSTAR(BackendBase):
                     if job["state"] == "RUNNING":
                         if id not in self.mem_max:
                             self.mem_max[id] = 0
-                        self.mem_max[id] = int(max(self.mem_max[id], job["memMax"]))
+                        if type(job["memMax"]) is int:
+                            self.mem_max[id] = int(max(self.mem_max[id], job["memMax"]))
 
         else:
             print("No files found to load max memory data from")
