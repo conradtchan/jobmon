@@ -381,24 +381,6 @@ class BackendBase:
 
         self.usage_cache["history"][self.data["timestamp"]] = usage
 
-    def load_mem_max(self, data):
-        # Determining max memory usage of a job
-        n = 0
-        for id, job in data["jobs"].items():
-            if job["state"] == "RUNNING":
-                if id not in self.mem_max:
-                    self.mem_max[id] = 0
-                self.mem_max[id] = int(max(self.mem_max[id], job["memMax"]))
-                n += 1
-
-    def prune_mem_max(self, jobs):
-        n = 0
-        for jobid in list(self.mem_max.keys()):
-            if jobid not in jobs:
-                n += 1
-                del self.mem_max[jobid]
-        print("Pruned {:}/{:} old max memory records".format(n, len(self.mem_max)))
-
     def usage_from_disk(self):
         filenames = config.FILE_NAME_PATTERN.format("*")
         filepaths = path.join(config.DATA_PATH, filenames)
@@ -410,7 +392,6 @@ class BackendBase:
             if match is not None:
                 times += [match.group(1)]
 
-        t_latest = max(times)
         for t in times:
             print("Loading timestamp {:}".format(t))
             filename = config.FILE_NAME_PATTERN.format(t)
@@ -419,8 +400,6 @@ class BackendBase:
                 json_text = f.read().decode("utf-8")
                 data = json.loads(json_text)
                 self.update_core_usage(data=data)
-                if t == t_latest:
-                    self.load_mem_max(data)
 
     def history(self):
         now = self.timestamp()

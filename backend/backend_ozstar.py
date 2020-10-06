@@ -1,6 +1,11 @@
+import gzip
+import json
 import math
 import pwd
+import re
 import time
+from glob import glob
+from os import path
 
 import influx_config
 import jobmon_config as config
@@ -26,6 +31,9 @@ class BackendOzSTAR(BackendBase):
 
         # Maximum memory usage of a job
         self.mem_max = {}
+
+        # Load max usage
+        self.load_max_mem_usage()
 
     def pre_update(self):
         # Ganglia
@@ -101,6 +109,37 @@ class BackendOzSTAR(BackendBase):
         print("Memory stats: {:} / {:}".format(count_stat, len(active_slurm_jobs)))
 
         self.mem_data = mem_data
+
+    def load_max_mem_usage(self):
+        filenames = config.FILE_NAME_PATTERN.format("*")
+        filepaths = path.join(config.DATA_PATH, filenames)
+        data_files = glob(filepaths)
+        times = []
+        for x in data_files:
+            filename = path.basename(x)
+            match = re.search(config.FILE_NAME_PATTERN.format(r"(\d+)"), filename)
+            if match is not None:
+                times += [match.group(1)]
+
+        if len(times) > 0:
+            t_latest = max(times)
+
+            print("Loading max memory data from {:}".format(t_latest))
+
+            filename = config.FILE_NAME_PATTERN.format(t_latest)
+            filepath = path.join(config.DATA_PATH, filename)
+            with gzip.open(filepath, "r") as f:
+                json_text = f.read().decode("utf-8")
+                data = json.loads(json_text)
+
+                for id, job in data["jobs"].items():
+                    if job["state"] == "RUNNING":
+                        if id not in self.mem_max:
+                            self.mem_max[id] = 0
+                        self.mem_max[id] = int(max(self.mem_max[id], job["memMax"]))
+
+        else:
+            print("No files found to load max memory data from")
 
     @staticmethod
     def query_influx():
