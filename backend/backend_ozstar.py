@@ -440,8 +440,13 @@ class BackendOzSTAR(BackendBase):
                 else:
                     for j in range(int(ss[0]), int(ss[1]) + 1):
                         c.append(j)
-            else:  # found a single
-                c.append(int(i))
+            else:
+                if "..." in i:
+                    # Found an incomplete range, can't do anything
+                    continue
+                else:
+                    # found a single
+                    c.append(int(i))
         return c
 
     def job_name(self, job_id):
