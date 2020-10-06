@@ -133,12 +133,13 @@ class BackendOzSTAR(BackendBase):
                 json_text = f.read().decode("utf-8")
                 data = json.loads(json_text)
 
-                for id, job in data["jobs"].items():
+                for job_id, job in data["jobs"].items():
                     if job["state"] == "RUNNING":
                         if id not in self.mem_max:
-                            self.mem_max[id] = 0
-                        if type(job["memMax"]) is int:
-                            self.mem_max[id] = int(max(self.mem_max[id], job["memMax"]))
+                            self.mem_max[job_id] = 0
+                        self.mem_max[job_id] = int(
+                            max(self.mem_max[job_id], job["memMax"])
+                        )
 
         else:
             print("No files found to load max memory data from")
