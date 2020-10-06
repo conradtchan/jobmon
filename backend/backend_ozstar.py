@@ -96,7 +96,7 @@ class BackendOzSTAR(BackendBase):
                     mem_sum[node_name] = mem_mb
 
                 mem_data[job_id] = {
-                    "hasMem": False,
+                    "hasMem": True,
                     "mem": mem_sum,
                     "memMax": int(max(self.mem_max[job_id], mem_mb)),
                 }
