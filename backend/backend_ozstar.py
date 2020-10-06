@@ -22,8 +22,6 @@ API_VERSION = 13
 
 class BackendOzSTAR(BackendBase):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
         # Dict of username mappings
         self.usernames = {}
 
@@ -35,6 +33,8 @@ class BackendOzSTAR(BackendBase):
 
         # Load max usage
         self.load_max_mem_usage()
+
+        super().__init__(**kwargs)
 
     def pre_update(self):
         # Ganglia

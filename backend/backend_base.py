@@ -392,7 +392,19 @@ class BackendBase:
             if match is not None:
                 times += [match.group(1)]
 
+        time_start = self.timestamp()
+
         for t in times:
+            time_now = self.timestamp()
+            # If the loading time is longer than the usual update interval,
+            # then run a cycle before continuing to load
+            if time_now - time_start > config.UPDATE_INTERVAL:
+                self.update_data()
+                self.update_backfill()
+                # Write without squashing history data (not yet fully loaded)
+                self.write(no_history=True)
+                time_start = self.timestamp()
+
             print("Loading timestamp {:}".format(t))
             filename = config.FILE_NAME_PATTERN.format(t)
             filepath = path.join(config.DATA_PATH, filename)
@@ -438,7 +450,7 @@ class BackendBase:
 
         return {}
 
-    def write(self):
+    def write(self, no_history=False):
         output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(""))
         write_data(self.data, output_file)
 
@@ -447,9 +459,10 @@ class BackendBase:
         )
         write_data(self.data, record_file)
 
-        # Write history file
-        history_file = path.join(config.DATA_PATH, config.FILE_NAME_HISTORY)
-        write_data(self.history(), history_file)
+        if not no_history:
+            # Write history file
+            history_file = path.join(config.DATA_PATH, config.FILE_NAME_HISTORY)
+            write_data(self.history(), history_file)
 
         # Write backfill file
         backfill_file = path.join(config.DATA_PATH, config.FILE_NAME_BACKFILL)
