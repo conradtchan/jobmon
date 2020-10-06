@@ -172,55 +172,6 @@ class BackendBase:
 
         return []
 
-    def nodes(self):
-        """
-        Returns a dictionary of all of the node data
-        """
-        nodes = {}
-        for host in self.hostnames():
-            nodes[host] = {}
-
-            nodes[host]["up"] = self.node_up(host)
-            nodes[host]["cpu"] = self.cpu_usage(host)
-            nodes[host]["mem"] = self.mem(host)
-            nodes[host]["swap"] = self.swap(host)
-            nodes[host]["disk"] = self.disk(host)
-            nodes[host]["gpus"] = self.gpus(host)
-            nodes[host]["infiniband"] = self.infiniband(host)
-            nodes[host]["lustre"] = self.lustre(host)
-            nodes[host]["jobfs"] = self.jobfs(host)
-            nodes[host]["isCounted"] = self.is_counted(host)
-            nodes[host]["nCpus"] = self.n_cpus(host)
-            nodes[host]["nGpus"] = self.n_gpus(host)
-
-        return nodes
-
-    def jobs(self):
-        """
-        Returns a dictionary of all of the job data
-        """
-
-        j = {}
-
-        for job_id in self.job_ids():
-            j[job_id] = {}
-
-            j[job_id]["name"] = self.job_name(job_id)
-            j[job_id]["username"] = self.job_username(job_id)
-            j[job_id]["nCpus"] = self.job_ncpus(job_id)
-            j[job_id]["nGpus"] = self.job_ngpus(job_id)
-            j[job_id]["state"] = self.job_state(job_id)
-            j[job_id]["layout"] = self.job_layout(job_id)
-            j[job_id]["gpuLayout"] = self.job_gpu_layout(job_id)
-            j[job_id]["timeLimit"] = self.job_time_limit(job_id)
-            j[job_id]["runTime"] = self.job_run_time(job_id)
-            j[job_id]["mem"] = self.job_mem(job_id)
-            j[job_id]["memMax"] = self.job_mem_max(job_id)
-            j[job_id]["hasMem"] = self.job_has_mem_stats(job_id)
-            j[job_id]["memReq"] = self.job_mem_request(job_id)
-
-        return j
-
     def job_ids(self):
         """
         Returns a list of job IDs
@@ -341,9 +292,64 @@ class BackendBase:
 
         return
 
+    def nodes(self):
+        """
+        Returns a dictionary of all of the node data
+
+        Do not override this function
+        """
+        nodes = {}
+        for host in self.hostnames():
+            nodes[host] = {}
+
+            nodes[host]["up"] = self.node_up(host)
+            nodes[host]["cpu"] = self.cpu_usage(host)
+            nodes[host]["mem"] = self.mem(host)
+            nodes[host]["swap"] = self.swap(host)
+            nodes[host]["disk"] = self.disk(host)
+            nodes[host]["gpus"] = self.gpus(host)
+            nodes[host]["infiniband"] = self.infiniband(host)
+            nodes[host]["lustre"] = self.lustre(host)
+            nodes[host]["jobfs"] = self.jobfs(host)
+            nodes[host]["isCounted"] = self.is_counted(host)
+            nodes[host]["nCpus"] = self.n_cpus(host)
+            nodes[host]["nGpus"] = self.n_gpus(host)
+
+        return nodes
+
+    def jobs(self):
+        """
+        Returns a dictionary of all of the job data
+
+        Do not override this function
+        """
+
+        j = {}
+
+        for job_id in self.job_ids():
+            j[job_id] = {}
+
+            j[job_id]["name"] = self.job_name(job_id)
+            j[job_id]["username"] = self.job_username(job_id)
+            j[job_id]["nCpus"] = self.job_ncpus(job_id)
+            j[job_id]["nGpus"] = self.job_ngpus(job_id)
+            j[job_id]["state"] = self.job_state(job_id)
+            j[job_id]["layout"] = self.job_layout(job_id)
+            j[job_id]["gpuLayout"] = self.job_gpu_layout(job_id)
+            j[job_id]["timeLimit"] = self.job_time_limit(job_id)
+            j[job_id]["runTime"] = self.job_run_time(job_id)
+            j[job_id]["mem"] = self.job_mem(job_id)
+            j[job_id]["memMax"] = self.job_mem_max(job_id)
+            j[job_id]["hasMem"] = self.job_has_mem_stats(job_id)
+            j[job_id]["memReq"] = self.job_mem_request(job_id)
+
+        return j
+
     def update_data(self):
         """
         Write all the data into a dictionary
+
+        Do not override this function
         """
         self.pre_update()
         data = {}
