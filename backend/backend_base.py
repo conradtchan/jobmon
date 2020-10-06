@@ -398,7 +398,7 @@ class BackendBase:
             time_now = self.timestamp()
             # If the loading time is longer than the usual update interval,
             # then run a cycle before continuing to load
-            if time_now - time_start > config.UPDATE_INTERVAL:
+            if time_now - time_start > config.UPDATE_INTERVAL * 4:
                 self.update_data()
                 self.update_backfill()
                 # Write without squashing history data (not yet fully loaded)
