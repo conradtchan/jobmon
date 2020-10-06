@@ -579,7 +579,7 @@ class BackendOzSTAR(BackendBase):
 
         return usage
 
-    def backfill(self):
+    def calculate_backfill(self):
         now = time.time()
         data = showbf.do_all()
         u, bcu = showbf.get_core_usage(data)
