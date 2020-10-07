@@ -459,7 +459,7 @@ export default class NodeDetails extends React.Component {
 
     for (let i = 0; i < historyData.length; i += 1) {
       const data = historyData[i];
-      if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
+      if (Object.keys(data.jobs).includes(selectedJobId)) {
         if (data.jobs[selectedJobId].hasMem) {
           return true;
         }

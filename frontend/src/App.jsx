@@ -27,7 +27,6 @@ class App extends React.Component {
       nodeName: null,
       job: null,
       snapshotTime: new Date(0),
-      lastFetchAttempt: new Date(0),
       holdSnap: false,
       history: null,
       historyData: [],
@@ -44,6 +43,19 @@ class App extends React.Component {
     this.fetchLatest();
     this.fetchBackfill();
   }
+
+  componentDidMount() {
+    this.intervalFetch = setInterval(() => this.fetchLatest(), config.fetchFrequency * 1000);
+    this.intervalHistory = setInterval(() => this.fetchHistory(), config.fetchHistoryFrequency * 1000);
+    this.intervalBackfill = setInterval(() => this.fetchBackfill(), config.fetchBackfillFrequency * 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalFetch);
+    clearInterval(this.intervalHistory);
+    clearInterval(this.intervalBackfill);
+  }
+
 
   getTimeMachine() {
     const {
@@ -449,7 +461,6 @@ class App extends React.Component {
     const {
       future,
       gotData,
-      lastFetchAttempt,
       snapshotTime,
       holdSnap,
       systemUsage,
@@ -459,12 +470,9 @@ class App extends React.Component {
         // If haven't fetched for a long time, then force a fetch
         // Usually happens when computer is waking from sleep
         const now = new Date();
-        const fetchAge = (now - lastFetchAttempt) / 1000;
         const snapAge = (now - snapshotTime) / 1000;
-        if (fetchAge > config.fetchRetryTime && !holdSnap) {
-          this.fetchLatest();
+        if ((snapAge > config.maintenanceAge) && !holdSnap) {
           // If the backend copy is old, then maintenance is occuring
-        } else if ((snapAge > config.maintenanceAge) && !holdSnap) {
           return (
             <div id="main-box">
               The job monitor is currently down for maintenance and will be back soon.
@@ -571,7 +579,6 @@ class App extends React.Component {
       .then((response) => response.json())
       .then((data) => {
         that.setState({ history: data.history });
-        setTimeout(() => { that.fetchHistory(); }, config.fetchHistoryFrequency * 1000);
       })
       .catch((err) => {
         console.log('Error fetching history', err);
@@ -579,27 +586,33 @@ class App extends React.Component {
   }
 
   fetchLatest() {
-    const { holdSnap } = this.state;
+    const { holdSnap, apiData } = this.state;
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
       const that = this;
       fetch(`${config.address}data.py`)
         .then((response) => response.json())
         .then((data) => {
+
+          // Only update if data is new
+          if (apiData !== null) {
+            if (data.timestamp === apiData.timestamp) {
+              return
+            }
+
+          }
+
           that.cleanState(data);
 
           if (data.api === config.apiVersion) {
             that.setState({
               apiData: data,
               snapshotTime: new Date(data.timestamp * 1000),
-              lastFetchAttempt: new Date(),
               gotData: true,
             },
             () => that.postFetch()
             );
           }
-
-          setTimeout(() => { that.fetchLatest(); }, config.fetchFrequency * 1000);
         })
         .catch((err) => {
           console.log('Error fetching latest data', err);
@@ -646,7 +659,6 @@ class App extends React.Component {
       .then((response) => response.json())
       .then((data) => {
         that.setState({ backfill: data });
-        setTimeout(() => { that.fetchBackfill(); }, config.fetchBackfillFrequency * 1000);
       })
       .catch((err) => {
         console.log('Error fetching history', err);
