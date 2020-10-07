@@ -35,6 +35,11 @@ export default class TimeMachine extends React.Component {
 
   componentDidMount() {
     this.getTimeAgo();
+    this.intervalClock = setInterval(() => this.getTimeAgo(), 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalClock)
   }
 
   getTimeAgo() {
@@ -42,7 +47,6 @@ export default class TimeMachine extends React.Component {
     this.setState({
       timeAgo: ((new Date() - snapshotTime) / 1000).toFixed(0),
     });
-    setTimeout(() => { this.getTimeAgo(); }, 1000);
   }
 
   getSelector() {
