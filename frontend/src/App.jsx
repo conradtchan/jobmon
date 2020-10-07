@@ -586,13 +586,22 @@ class App extends React.Component {
   }
 
   fetchLatest() {
-    const { holdSnap } = this.state;
+    const { holdSnap, apiData } = this.state;
     // Only update if the user doesn't want to hold onto a snap
     if (!(holdSnap)) {
       const that = this;
       fetch(`${config.address}data.py`)
         .then((response) => response.json())
         .then((data) => {
+
+          // Only update if data is new
+          if (apiData !== null) {
+            if (data.timestamp === apiData.timestamp) {
+              return
+            }
+
+          }
+
           that.cleanState(data);
 
           if (data.api === config.apiVersion) {
