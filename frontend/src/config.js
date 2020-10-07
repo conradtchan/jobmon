@@ -13,7 +13,7 @@ const config = {
   pageTitle: 'Job Monitor',
 
   // Frequency to fetch data (seconds)
-  fetchFrequency: 30,
+  fetchFrequency: 15,
 
   // Frequency to fetch history array (seconds)
   fetchHistoryFrequency: 100,
