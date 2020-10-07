@@ -44,6 +44,19 @@ class App extends React.Component {
     this.fetchBackfill();
   }
 
+  componentDidMount() {
+    this.intervalFetch = setInterval(() => this.fetchLatest(), config.fetchFrequency * 1000);
+    this.intervalHistory = setInterval(() => this.fetchHistory(), config.fetchHistoryFrequency * 1000);
+    this.intervalBackfill = setInterval(() => this.fetchBackfill(), config.fetchBackfillFrequency * 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalFetch);
+    clearInterval(this.intervalHistory);
+    clearInterval(this.intervalBackfill);
+  }
+
+
   getTimeMachine() {
     const {
       history,
@@ -566,7 +579,6 @@ class App extends React.Component {
       .then((response) => response.json())
       .then((data) => {
         that.setState({ history: data.history });
-        setTimeout(() => { that.fetchHistory(); }, config.fetchHistoryFrequency * 1000);
       })
       .catch((err) => {
         console.log('Error fetching history', err);
@@ -592,8 +604,6 @@ class App extends React.Component {
             () => that.postFetch()
             );
           }
-
-          setTimeout(() => { that.fetchLatest(); }, config.fetchFrequency * 1000);
         })
         .catch((err) => {
           console.log('Error fetching latest data', err);
@@ -640,7 +650,6 @@ class App extends React.Component {
       .then((response) => response.json())
       .then((data) => {
         that.setState({ backfill: data });
-        setTimeout(() => { that.fetchBackfill(); }, config.fetchBackfillFrequency * 1000);
       })
       .catch((err) => {
         console.log('Error fetching history', err);
