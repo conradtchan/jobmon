@@ -7,9 +7,9 @@ import time
 from glob import glob
 from os import path
 
+import ganglia
 import influx_config
 import jobmon_config as config
-import jobmon_ganglia as ganglia
 import pyslurm
 import showbf
 from backend_base import BackendBase

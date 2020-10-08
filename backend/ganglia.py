@@ -1,6 +1,6 @@
 import socket
 
-import jobmon_config as config
+import ganglia_config
 
 
 class Stats:
@@ -49,10 +49,10 @@ class Stats:
             )
 
         # extra metrics defined in config
-        metrics.extend(config.EXTRA_GANGLIA_METRICS)
+        metrics.extend(ganglia_config.EXTRA_GANGLIA_METRICS)
 
         gmond_count = 0
-        for host, port, url in config.GMONDS:
+        for host, port, url in ganglia_config.GMONDS:
             xml = self.read(host, port)
 
             if xml is None:
@@ -60,7 +60,7 @@ class Stats:
                 continue
 
             # cpu_num = self.parse_xml(xml, ncpus_only = True)
-            cpu_num = config.MULTICPU_MAX
+            cpu_num = ganglia_config.MULTICPU_MAX
             multicpu_metrics = []
             for i in range(cpu_num):
                 multicpu_metrics += ["multicpu_user{:}".format(i)]
