@@ -1,6 +1,6 @@
 {
   "name": "jobmon",
-  "version": "0.5.0",
+  "version": "0.5.4",
   "private": true,
   "license": "GPL",
   "dependencies": {

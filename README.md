@@ -1,4 +1,4 @@
-Originally forked from https://github.com/plaguedbypenguins/bobMonitor, but now heavily rewritten with an emphasis on providing information to users.
+Originally forked from https://github.com/plaguedbypenguins/bobMonitor, but now rewritten from the ground up, with an emphasis on providing information to users.
 
 # Installation
 
