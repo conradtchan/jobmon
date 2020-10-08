@@ -201,18 +201,21 @@ class Backend(BackendBase):
             total_array = [math.floor(total[x]) for x in config.CPU_KEYS]
 
             core = []
-            for i in range(config.MULTICPU_MAX):
+            i = 0
+            while True:
                 try:
-                    vals = {
-                        "user": float(data["multicpu_user{:}".format(i)]),
-                        "nice": float(data["multicpu_nice{:}".format(i)]),
-                        "system": float(data["multicpu_system{:}".format(i)]),
-                        "wait": float(data["multicpu_wio{:}".format(i)]),
-                        "idle": float(data["multicpu_idle{:}".format(i)]),
-                    }
-                    core += [vals]
+                    core += [
+                        {
+                            "user": float(data["multicpu_user{:}".format(i)]),
+                            "nice": float(data["multicpu_nice{:}".format(i)]),
+                            "system": float(data["multicpu_system{:}".format(i)]),
+                            "wait": float(data["multicpu_wio{:}".format(i)]),
+                            "idle": float(data["multicpu_idle{:}".format(i)]),
+                        }
+                    ]
+                    i += 1
                 except KeyError:
-                    continue
+                    break
 
             # Some machines report cores with a different numbering, so we map to that
             # Could generalize for n sockets
