@@ -13,24 +13,6 @@ API_VERSION = 13
 
 
 class BackendBase:
-    def __init__(self, no_history):
-        # Data
-        self.data = {}
-
-        # Backfill data
-        self.backfill = {}
-
-        # Load usage from disk
-        self.usage_cache = {"history": {}}
-        if not no_history:
-            self.usage_from_disk()
-
-    @classmethod
-    def timestamp(cls):
-        # Seconds since epoch
-        d = datetime.now()
-        return int(time.mktime(d.timetuple()))
-
     def cpu_usage(self, name):
         """
         Returns the CPU usage percentage for the node
@@ -310,6 +292,24 @@ class BackendBase:
         """
 
         return {}
+
+    def __init__(self, no_history):
+        # Data
+        self.data = {}
+
+        # Backfill data
+        self.backfill = {}
+
+        # Load usage from disk
+        self.usage_cache = {"history": {}}
+        if not no_history:
+            self.usage_from_disk()
+
+    @staticmethod
+    def timestamp():
+        # Seconds since epoch
+        d = datetime.now()
+        return int(time.mktime(d.timetuple()))
 
     def nodes(self):
         """
