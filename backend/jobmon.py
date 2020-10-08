@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
+import importlib
 import sys
 import time
 
 import jobmon_config as config
-from backend_ozstar import BackendOzSTAR
+
+backend = importlib.import_module("backend_{:}".format(config.BACKEND))
 
 if __name__ == "__main__":
 
@@ -20,8 +22,8 @@ if __name__ == "__main__":
         if test:
             nohist = True
 
-    print("Starting jobmon backend")
-    b = BackendOzSTAR(no_history=nohist)
+    print("Starting jobmon backend: {:}".format(config.BACKEND))
+    b = backend.Backend(no_history=nohist)
 
     if test:
         print("Testing backend, not writing any data")

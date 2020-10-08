@@ -13,24 +13,6 @@ API_VERSION = 13
 
 
 class BackendBase:
-    def __init__(self, no_history):
-        # Data
-        self.data = {}
-
-        # Backfill data
-        self.backfill = {}
-
-        # Load usage from disk
-        self.usage_cache = {"history": {}}
-        if not no_history:
-            self.usage_from_disk()
-
-    @classmethod
-    def timestamp(cls):
-        # Seconds since epoch
-        d = datetime.now()
-        return int(time.mktime(d.timetuple()))
-
     def cpu_usage(self, name):
         """
         Returns the CPU usage percentage for the node
@@ -301,6 +283,34 @@ class BackendBase:
 
         return
 
+    def calculate_backfill(self):
+        """
+        Returns a dict of the backfill availability
+
+        Format:
+            bf = {queue_name: {core_count: {"count": number_of_nodes, "tMax": max_time, "tMin", min_time}}}
+        """
+
+        return {}
+
+    def __init__(self, no_history):
+        # Data
+        self.data = {}
+
+        # Backfill data
+        self.backfill = {}
+
+        # Load usage from disk
+        self.usage_cache = {"history": {}}
+        if not no_history:
+            self.usage_from_disk()
+
+    @staticmethod
+    def timestamp():
+        # Seconds since epoch
+        d = datetime.now()
+        return int(time.mktime(d.timetuple()))
+
     def nodes(self):
         """
         Returns a dictionary of all of the node data
@@ -382,6 +392,11 @@ class BackendBase:
         self.usage_cache["history"][data["timestamp"]] = self.core_usage(data)
 
     def usage_from_disk(self):
+        """
+        Load the past system usage from disk
+
+        Do not override this function
+        """
         filenames = config.FILE_NAME_PATTERN.format("*")
         filepaths = path.join(config.DATA_PATH, filenames)
         data_files = glob(filepaths)
@@ -414,6 +429,11 @@ class BackendBase:
                 self.update_core_usage(data=data)
 
     def history(self):
+        """
+        Add new entry to history and remove old entries.
+
+        Do not override this function
+        """
         now = self.timestamp()
 
         h = {"history": {}}
@@ -435,22 +455,17 @@ class BackendBase:
         """
         Update the backfill dictionary
 
-        Do not override
+        Do not override this funciton
         """
 
         self.backfill = self.calculate_backfill()
 
-    def calculate_backfill(self):
-        """
-        Returns a dict of the backfill availability
-
-        Format:
-            bf = {queue_name: {core_count: {"count": number_of_nodes, "tMax": max_time, "tMin", min_time}}}
-        """
-
-        return {}
-
     def write(self, no_history=False):
+        """
+        Write data to disk
+
+        Do not override this function
+        """
         output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(""))
         write_data(self.data, output_file)
 

@@ -7,9 +7,9 @@ import time
 from glob import glob
 from os import path
 
+import ganglia
 import influx_config
 import jobmon_config as config
-import jobmon_ganglia as ganglia
 import pyslurm
 import showbf
 from backend_base import BackendBase
@@ -20,7 +20,7 @@ from jobmon_gpu_mapping import GPUmapping
 API_VERSION = 13
 
 
-class BackendOzSTAR(BackendBase):
+class Backend(BackendBase):
     def __init__(self, **kwargs):
         # Dict of username mappings
         self.usernames = {}
@@ -201,18 +201,21 @@ class BackendOzSTAR(BackendBase):
             total_array = [math.floor(total[x]) for x in config.CPU_KEYS]
 
             core = []
-            for i in range(config.MULTICPU_MAX):
+            i = 0
+            while True:
                 try:
-                    vals = {
-                        "user": float(data["multicpu_user{:}".format(i)]),
-                        "nice": float(data["multicpu_nice{:}".format(i)]),
-                        "system": float(data["multicpu_system{:}".format(i)]),
-                        "wait": float(data["multicpu_wio{:}".format(i)]),
-                        "idle": float(data["multicpu_idle{:}".format(i)]),
-                    }
-                    core += [vals]
+                    core += [
+                        {
+                            "user": float(data["multicpu_user{:}".format(i)]),
+                            "nice": float(data["multicpu_nice{:}".format(i)]),
+                            "system": float(data["multicpu_system{:}".format(i)]),
+                            "wait": float(data["multicpu_wio{:}".format(i)]),
+                            "idle": float(data["multicpu_idle{:}".format(i)]),
+                        }
+                    ]
+                    i += 1
                 except KeyError:
-                    continue
+                    break
 
             # Some machines report cores with a different numbering, so we map to that
             # Could generalize for n sockets
