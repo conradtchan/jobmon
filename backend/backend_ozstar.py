@@ -20,7 +20,7 @@ from jobmon_gpu_mapping import GPUmapping
 API_VERSION = 13
 
 
-class BackendOzSTAR(BackendBase):
+class Backend(BackendBase):
     def __init__(self, **kwargs):
         # Dict of username mappings
         self.usernames = {}

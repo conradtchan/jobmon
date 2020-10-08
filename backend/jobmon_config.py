@@ -1,3 +1,6 @@
+# Backend subclass
+BACKEND = "ozstar"
+
 # Location to output JSON
 DATA_PATH = "/var/spool/jobmon/"
 FILE_NAME_PATTERN = "data{:}.json.gz"
