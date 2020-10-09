@@ -1,5 +1,7 @@
 Originally forked from https://github.com/plaguedbypenguins/bobMonitor, but now rewritten from the ground up, with an emphasis on providing information to users.
 
+A Python script runs periodically on the management node to collect statistics and write them to a JSON file, which is served to the browser by a minimal backend. Most of the processing is performed in the browser, which will allow user customisation further down the track.
+
 # Setup
 Jobmon is designed for use on the OzSTAR supercomputer (http://supercomputing.swin.edu.au), but it can be adapted for any computing cluster.
 
@@ -48,9 +50,49 @@ class Backend(BackendBase):
     
 ```
 
-`backend/jobmon_config.py` defines the configuration options for the back end. If you've created `backend/backend_jarvis.py`, then you will need to set `BACKEND = "jarvis"`. You will also need to adjust the options to suit your needs.
+`backend/jobmon_config.py` defines the configuration options for the back end. For example, if you've created `backend/backend_jarvis.py`, then you will need to set `BACKEND = "jarvis"`. 
 
+## Backend configuration
+- `DATA_PATH`: Location to write JSON files
+- `FILE_NAME_PATTERN`: File name pattern of snapshots (must include `{:}` for the timestamp)
+- `FILE_NAME_HISTORY`: File name of the history data file
+- `FILE_NAME_BACKFILL`: File name of the backfill data file
+- `UPDATE_INTERVAL`: Time between updating snapshots (seconds)
+- `NODE_DEAD_TIMEOUT`: How long a node should be non-responsive before marking as down
+- `HISTORY_LENGTH`: How much history to return in a list (seconds)
+- `HISTORY_DELETE_AGE`: The purge age for old history records (seconds)
+- `CORE_COUNT_NODES`: Which nodes contribute to the total count
+- `COLUMN_ORDER_CPUS`: CPUs that have column-ordered cores (row-ordered by default)
+- `HT_NODES`: Nodes with hyperthreading, and the layout
+- `BF_NODES`: Queues to display backfill for
+- `CPU_KEYS`: Map of CPU usage types to an array index
+
+## Frontend configuration
 `frontend/src/config.js` contains the configuration options for the front end. You'll also want to use your own logo image: `frontend/src/logo.png`.
+
+- `homepage`: URL to the webpage of your computing cluster
+- `address`: Address of the API (script serving the JSON files)
+- `apiVersion`: Version number of the API
+- `pageTitle`: Title displayed at the top of the job monitor
+- `fetchFrequency`: How often to fetch data (should be the same as the backend update frequency)
+- `fetchHistoryFrequency`: How often to update the history array (used for displaying past statistics)
+- `fetchBackfillFrequency`: How often to update the backfill data
+- `maintenanceAge`: Trigger a maintenance message if snapshots are older than this amount of time
+- `cpuKeys`: Map of CPU usage types to an array index
+- `historyDataCountInitial`: Number of data points to load initially to generate charts
+- `historyResolutionMultiplier`: Factor to increase resolution by in successive refinements of chart data
+
+The thresholds for warnings can be tweaked:
+- `warnSwap`: Percentage of swap use
+- `warnWait`: Percentage of CPU wait time
+- `warnUtil`: Percentage of CPU utilisation (less than)
+- `warnMem`: Percentage of requested memory used
+- `baseMem`: Megabytes of memory per core not to count towards warning
+- `baseMemSingle`: Same as `baseMem`, but for the first core of the job
+- `graceTime`: Minutes to give jobs to get set up without warning
+- `warningWindow`: Seconds to scan for warnings
+- `warningFraction`: Only trigger a warning if greater than this fraction in the `warningWindow` have problems
+- `terribleThreshold`: Warning score threshold to mark jobs as "terrible"
 
 # Installation
 
