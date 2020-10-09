@@ -56,6 +56,8 @@ class Backend(BackendBase):
 
 ## Backend
 
+Python 3 (3.4 or higher) is required on the machine running the back end.
+
 Make the data directory where JSON output is written to (set in the backend config)
 ```
 mkdir /var/spool/jobmon
