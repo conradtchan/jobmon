@@ -1,3 +1,4 @@
+import copy
 import gzip
 import json
 import math
@@ -501,7 +502,7 @@ class Backend(BackendBase):
     def job_layout(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 
-        layout = job["cpus_alloc_layout"]
+        layout = copy.deepcopy(job["cpus_alloc_layout"])
 
         # Expand to HT core labelling if necessary
         for node in layout.keys():
