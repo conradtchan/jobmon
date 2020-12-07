@@ -42,12 +42,18 @@ export function instantWarnings(data) {
         let cpuWait = 0;
         const layout = job.layout[jobNodeName];
         nCores = layout.length; // Number of cores used on this node
-        for (let k = 0; k < nCores; k += 1) {
-          const iLayout = layout[k];
-          cpuUsage += node.cpu.core[iLayout][config.cpuKeys.user]
-            + node.cpu.core[iLayout][config.cpuKeys.system]
-            + node.cpu.core[iLayout][config.cpuKeys.nice];
-          cpuWait += node.cpu.core[iLayout][config.cpuKeys.wait];
+        if (node.cpu.core.length > 0) {
+          for (let k = 0; k < nCores; k += 1) {
+            const iLayout = layout[k];
+            cpuUsage += node.cpu.core[iLayout][config.cpuKeys.user]
+              + node.cpu.core[iLayout][config.cpuKeys.system]
+              + node.cpu.core[iLayout][config.cpuKeys.nice];
+            cpuWait += node.cpu.core[iLayout][config.cpuKeys.wait];
+          }
+        } else {
+          // Set usage to 100 if per-core usage is not reported
+          // to prevent false alarm
+          cpuUsage += 100;
         }
 
         // Perform util check unless this is a single-core GPU job
