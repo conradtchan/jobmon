@@ -14,14 +14,19 @@ export function getNodeUsage(jid, job, node, host, gpuLayout) {
 
   if (Object.prototype.hasOwnProperty.call(job.layout, host)) {
     const layout = job.layout[host];
-    for (let i = 0; i < layout.length; i += 1) {
-      const iLayout = layout[i];
-      usage.cpu.user += node.cpu.core[iLayout][config.cpuKeys.user]
-              + node.cpu.core[iLayout][config.cpuKeys.nice];
-      usage.cpu.system += node.cpu.core[iLayout][config.cpuKeys.system];
-      usage.cpu.wait += node.cpu.core[iLayout][config.cpuKeys.wait];
-      usage.cpu.idle += node.cpu.core[iLayout][config.cpuKeys.idle];
+
+    // If multicpu stats are not reported, leave them at 0
+    if (node.cpu.core.length > 0) {
+      for (let i = 0; i < layout.length; i += 1) {
+        const iLayout = layout[i];
+        usage.cpu.user += node.cpu.core[iLayout][config.cpuKeys.user]
+                + node.cpu.core[iLayout][config.cpuKeys.nice];
+        usage.cpu.system += node.cpu.core[iLayout][config.cpuKeys.system];
+        usage.cpu.wait += node.cpu.core[iLayout][config.cpuKeys.wait];
+        usage.cpu.idle += node.cpu.core[iLayout][config.cpuKeys.idle];
+      }
     }
+
     let nGpus = 0;
     // If thif is a GPU job
     if (job.nGpus > 0) {
@@ -55,8 +60,10 @@ export function getNodeUsage(jid, job, node, host, gpuLayout) {
       usage.infiniband.bytes_out = 0.0;
     }
 
-    usage.lustre.read = node.lustre.read;
-    usage.lustre.write = node.lustre.write;
+    if (node.lustre !== null) {
+      usage.lustre.read = node.lustre.read;
+      usage.lustre.write = node.lustre.write;
+    }
 
     const nCores = layout.length;
     usage.cpu.user /= nCores;

@@ -205,19 +205,6 @@ export default class NodeDetails extends React.Component {
         jobWait = usage.cpu.wait;
       }
 
-      // IB usage
-      let ibBytesIn = 0.0;
-      let ibBytesOut = 0.0;
-      let ibPktsIn = 0.0;
-      let ibPktsOut = 0.0;
-
-      if (nodeData.infiniband !== null) {
-        ibBytesIn = nodeData.infiniband.bytes_in;
-        ibBytesOut = nodeData.infiniband.bytes_out;
-        ibPktsIn = nodeData.infiniband.pkts_in;
-        ibPktsOut = nodeData.infiniband.pkts_out;
-      }
-
       const d = new Date(data.timestamp * 1000);
       const x = {
         time: data.timestamp,
@@ -233,19 +220,30 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
         swap: (nodeData.swap.total - nodeData.swap.free) *constants.mb,
-        infiniband_in: ibBytesIn,
-        infiniband_out: ibBytesOut,
-        infiniband_pkts_in: ibPktsIn,
-        infiniband_pkts_out: ibPktsOut,
-        lustre_read: nodeData.lustre.read,
-        lustre_write: nodeData.lustre.write,
-        jobfs_read: nodeData.jobfs.read,
-        jobfs_write: nodeData.jobfs.write,
       };
+
+      if (nodeData.infiniband !== null) {
+        x.infiniband_in = nodeData.infiniband.bytes_in;
+        x.infiniband_out = nodeData.infiniband.bytes_out;
+        x.infiniband_pkts_in = nodeData.infiniband.pkts_in;
+        x.infiniband_pkts_out = nodeData.infiniband.pkts_out;
+      }
+
+      if (nodeData.lustre !== null) {
+        x.lustre_read = nodeData.lustre.read;
+        x.lustre_write = nodeData.lustre.write;
+      }
+
+      if (nodeData.jobfs !== null) {
+        x.jobfs_read = nodeData.jobfs.read;
+        x.jobfs_write = nodeData.jobfs.write;
+      }
+
       for (let j = 0; j < nodeData.nGpus; j += 1) {
         const gpuName = `gpu${j.toString()}`;
         x[gpuName] = nodeData.gpus[gpuName];
       }
+
       historyChart.push(x);
     }
     return historyChart;
