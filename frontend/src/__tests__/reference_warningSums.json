@@ -370,9 +370,7 @@
         }
     },
     "farnarkle2": {
-        "node": {
-            "swapUse": 53
-        },
+        "node": {},
         "jobs": {}
     },
     "gstar052": {
@@ -540,9 +538,7 @@
         }
     },
     "transom1": {
-        "node": {
-            "swapUse": 77
-        },
+        "node": {},
         "jobs": {}
     },
     "sstar015": {
