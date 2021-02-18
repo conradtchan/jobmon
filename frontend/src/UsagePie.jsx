@@ -26,6 +26,10 @@ export default class UsagePie extends React.Component {
       activeSectorSize,
     } = this.props;
 
+    if (runningData.length !== nextProps.runningData.length) {
+      return true
+    }
+
     for (let i = 0; i < runningData.length; i += 1) {
       if (activeIndex !== nextProps.activeIndex) {
         return true
