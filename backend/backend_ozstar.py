@@ -514,11 +514,8 @@ class Backend(BackendBase):
                     r"RES=gpu:.*\d\(IDX:(.{1,3})\)", process.stdout.decode()
                 )
                 if match is not None:
-                    range_string = match.group(0)
-                    if len(range_string) == 1:
-                        layout[host] = [int(range_string)]
-                    else:
-                        layout[host] = [0, 1]
+                    range_string = match.group(1)
+                    layout[host] = [int(x) for x in range_string.split("-")]
 
         return layout
 
