@@ -4,6 +4,7 @@ import json
 import math
 import pwd
 import re
+import subprocess
 import time
 from glob import glob
 from os import path
@@ -16,7 +17,6 @@ import showbf
 from backend_base import BackendBase
 from constants import KB
 from influxdb import InfluxDBClient
-from jobmon_gpu_mapping import GPUmapping
 
 API_VERSION = 13
 
@@ -25,9 +25,6 @@ class Backend(BackendBase):
     def __init__(self, **kwargs):
         # Dict of username mappings
         self.usernames = {}
-
-        # Initialise GPU mapping determination
-        self.ga = GPUmapping()
 
         # Maximum memory usage of a job
         self.mem_max = {}
@@ -48,9 +45,6 @@ class Backend(BackendBase):
         # Influx
         self.update_mem_data()
         self.prune_mem_max()
-
-        # GPU mapping
-        self.update_gpu_mapping()
 
     def update_mem_data(self):
         influx_result = self.query_influx()
@@ -172,20 +166,6 @@ class Backend(BackendBase):
                 n += 1
                 del self.mem_max[job_id]
         print("Pruned {:}/{:} old max memory records".format(n, len(self.mem_max)))
-
-    def update_gpu_mapping(self):
-        # Because job dict is not created yet in the main module,
-        # a minimal version is created here for GPU mapping
-
-        j = {}
-        for job_id in self.job_ids():
-            j[job_id] = {}
-            j[job_id]["state"] = self.job_state(job_id)
-            j[job_id]["nGpus"] = self.job_ngpus(job_id)
-            j[job_id]["layout"] = self.job_layout(job_id)
-
-        self.ga.update_jobs(j)
-        self.ga.determine()
 
     def cpu_usage(self, name):
         data = self.ganglia_data[name]
@@ -516,10 +496,28 @@ class Backend(BackendBase):
         return layout
 
     def job_gpu_layout(self, job_id):
-        if self.job_ngpus(job_id) > 0 and job_id in self.ga.mapping.keys():
-            return self.ga.mapping[job_id]
+        layout = {}
 
-        return {}
+        # Only works for single node jobs (up to 2 GPUs)
+        if 0 < self.job_ngpus(job_id) <= 2:
+
+            # Get first (and only host)
+            hostlist = list(self.job_layout(job_id).keys())
+            if len(hostlist) == 1:
+                host = hostlist[0]
+                process = subprocess.run(
+                    "/apps/slurm/latest/bin/scontrol show job -d {:}".format(job_id),
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                )
+                match = re.search(
+                    r"RES=gpu:.*\d\(IDX:(.{1,3})\)", process.stdout.decode()
+                )
+                if match is not None:
+                    range_string = match.group(1)
+                    layout[host] = [int(x) for x in range_string.split("-")]
+
+        return layout
 
     def job_time_limit(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
