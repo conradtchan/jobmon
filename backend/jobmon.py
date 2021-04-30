@@ -65,4 +65,4 @@ if __name__ == "__main__":
             sleep_time = config.UPDATE_INTERVAL
 
         print("Sleeping for {:} seconds".format(sleep_time))
-        time.sleep(config.UPDATE_INTERVAL)
+        time.sleep(sleep_time)

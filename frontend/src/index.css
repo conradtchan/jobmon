@@ -243,7 +243,9 @@ div:focus {outline: 0px;}
 }
 
 .cohab-job {
+  width: 48%;
   cursor: pointer;
+  margin-right: var(--inter-item-spacing);
   margin-bottom: var(--inter-item-spacing);
   background-color: var(--medium-shade);
   border-radius: var(--rounding-radius);
