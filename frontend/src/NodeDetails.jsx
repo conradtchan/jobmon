@@ -125,7 +125,7 @@ export default class NodeDetails extends React.Component {
     const {
       jobs,
       name,
-      username,
+      selectedJobId,
       warnings,
       onJobClick,
     } = this.props;
@@ -134,7 +134,7 @@ export default class NodeDetails extends React.Component {
     for (let i = 0; i < jobIds.length; i += 1) {
       const jobId = jobIds[i];
       if (Object.prototype.hasOwnProperty.call(jobs[jobId].layout, name)) {
-        if (!(jobs[jobId].username === username)) {
+        if (!(jobId === selectedJobId)) {
           let warnJob = false;
           if (Object.keys(warnings).length > 0) {
             warnJob = Object.prototype.hasOwnProperty.call(warnings[name].jobs, jobId);
