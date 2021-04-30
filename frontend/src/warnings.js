@@ -13,7 +13,6 @@ export function instantWarnings(data) {
     warnings[nodeName] = { node: {}, jobs: {} };
 
     // Score = percentage of swap used
-    console.log(node.swap);
     if (node.swap !== null) {
       if (100 * ((node.swap.total - node.swap.free) / node.swap.total) > config.warnSwap) {
         const score = 100 * (
@@ -33,6 +32,7 @@ export function instantWarnings(data) {
     if (job.state === 'RUNNING' && job.runTime > config.graceTime) {
       const jobNodeNames = Object.keys(job.layout);
       const nNodes = jobNodeNames.length;
+      let wholeNode = false;
       let nCores = 0;
       // For each node in the job
       for (let j = 0; j < nNodes; j += 1) {
@@ -75,6 +75,11 @@ export function instantWarnings(data) {
           // Score = percentage waiting * number of cores
           warnings[jobNodeName].jobs[jobId].cpuWait = cpuWait - (nCores * config.warnWait);
         }
+
+        // If job occupies the entire node, let it request however much memory it wants
+        if (nCores >= node.cpu.core.length) {
+          wholeNode = true;
+        }
       }
 
       // Cores per node: since jobs use the same amount of cores per node, nCores is accurate
@@ -90,7 +95,7 @@ export function instantWarnings(data) {
       const criteria = (job.memReq - freeMem) * (1.0 - x)
         + x * (config.warnMem / 100.0) * job.memReq;
 
-      if (job.memMax < criteria) {
+      if (job.memMax < criteria && !wholeNode) {
         // Max is over all nodes - only warn if all nodes are below threshold (quite generous)
         const memNodeNames = Object.keys(job.mem);
         for (let k = 0; k < memNodeNames.length; k += 1) {
