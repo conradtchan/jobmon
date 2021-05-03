@@ -117,7 +117,7 @@ cp backend/* /usr/lib/jobmon
 
 ## Frontend
 
-Yarn (https://classic.yarnpkg.com/en/docs/getting-started) is required to build the front end on the development machine. Note: Yarn only needs to be installed on the development machine to build the frontend - it does not need to be installed on the web server. Once the .js files have been built, simply copy them to the web server.
+Yarn (https://yarnpkg.com) is required to build the front end on the development machine. Note: Yarn only needs to be installed on the development machine to build the frontend - it does not need to be installed on the web server. Once the .js files have been built, simply copy them to the web server.
 
 Navigate to the frontend directory
 ```
