@@ -136,7 +136,7 @@ yarn build
 
 Install the frontend by copying the contents of the build directory to the web server
 ```
-cp build/* /var/www/html/jobmon
+cp -r build/* /var/www/html/jobmon
 ```
 
 # Running
