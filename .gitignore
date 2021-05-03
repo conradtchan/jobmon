@@ -6,3 +6,5 @@
 backend/influx_config.py
 
 .vscode/
+
+frontend/.yarn/*
