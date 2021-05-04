@@ -94,6 +94,8 @@ The thresholds for warnings can be tweaked:
 - `warningFraction`: Only trigger a warning if greater than this fraction in the `warningWindow` have problems
 - `terribleThreshold`: Warning score threshold to mark jobs as "terrible"
 
+The `"homepage"` property in `package.json` should be set to the URL of the job monitor page (which is most likely not the same as the computing cluster homepage).
+
 # Installation
 
 ## Backend
