@@ -458,7 +458,10 @@ class BackendBase:
         Do not override this funciton
         """
 
-        self.backfill = self.calculate_backfill()
+        if config.BACKFILL:
+            self.backfill = self.calculate_backfill()
+        else:
+            self.backfill = {}
 
     def write(self, no_history=False):
         """
