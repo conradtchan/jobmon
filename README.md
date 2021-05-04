@@ -141,4 +141,6 @@ cp -r build/* /var/www/html/jobmon
 
 # Running
 
-Run `/usr/lib/jobmon/jobmon.py`, which generates gzip'd JSON files at `/var/spool/jobmon`. These JSON files are read by the web app. You may install `jobmon.py` as a service.
+Run `backend/jobmon.sh`, which manages the backend script `jobmon.py`. Set the `JOBMON_DIR` and `LOCKFILE` in `jobmon.sh`. Alternatively, run `python jobmon.py` directly. The backend generates gzip'd JSON files at `/var/spool/jobmon`. These JSON files are read by the web app.
+
+
