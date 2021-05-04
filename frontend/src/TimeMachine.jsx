@@ -159,7 +159,7 @@ export default class TimeMachine extends React.Component {
           </ResponsiveContainer>
         </div>
         <div className="instruction">
-          View the previous state of OzSTAR by selecting a time
+          View a previous state of the system by selecting a time
         </div>
       </div>
     );

@@ -33,3 +33,6 @@ BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]
 
 # CPU keys
 CPU_KEYS = ["user", "nice", "system", "wait", "idle"]
+
+# Enable backfill
+BACKFILL = True

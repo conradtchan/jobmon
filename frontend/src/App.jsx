@@ -483,17 +483,6 @@ class App extends React.Component {
             </div>
           );
         } else {
-          if (systemUsage !== null) {
-            if (systemUsage.runningCores === 0) {
-              return (
-                <div id="main-box">
-                  OzSTAR is currently down for maintenance and will be back soon.
-                  {' '}
-                  <br />
-                </div>
-              );
-            }
-          }
 
           return (
             <div id="main-box">
