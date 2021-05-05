@@ -8,3 +8,9 @@ backend/influx_config.py
 .vscode/
 
 frontend/.yarn/*
+!frontend/.yarn/patches
+!frontend/.yarn/releases
+!frontend/.yarn/plugins
+!frontend/.yarn/sdks
+!frontend/.yarn/versions
+frontend/.pnp.*
