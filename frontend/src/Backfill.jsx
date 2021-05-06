@@ -12,10 +12,6 @@ import {
 import PropTypes from 'prop-types';
 
 export default class Backfill extends React.PureComponent {
-  constructor(props) {
-    super(props);
-  }
-
   timeString(num) {
     const hours = Math.floor(num / 3600);
     const minutes = Math.floor((num % 3600) / 60);
