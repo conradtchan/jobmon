@@ -92,11 +92,11 @@ export default class Backfill extends React.PureComponent {
     return (
       <div className="main-item center-right">
         <div className="heading">
-          Available Resources
+          Available Resources (Backfill)
         </div>
         <div className="instruction">
-          Jobs times shorter than the longest slot (mouseover) may be able to start instantly,
-          subject to memory constraints.
+          Jobs with time requests shorter than the longest slot (mouseover) may be able to start instantly,
+          subject to memory constraints. Jobs that request time beyond what is available in backfill will be scheduled to start in the future.
           <br />
           <br />
         </div>
