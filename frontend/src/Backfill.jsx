@@ -86,7 +86,7 @@ export default class Backfill extends React.PureComponent {
                 />
                 <YAxis
                   type="number"
-                  // domain={[0, (48 * config.tMaxRes) / (24 * 7)]}
+                  domain={[0, dataMax => Math.min(dataMax, config.tMaxRes)]}
                   allowDataOverflow
                   tickFormatter={(value) => this.timeString(value)}
                 />
