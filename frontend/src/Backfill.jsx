@@ -17,9 +17,6 @@ export default class Backfill extends React.PureComponent {
   }
 
   timeString(num) {
-    if (num === config.tMaxRes) {
-      return 'Unlimited';
-    }
     const hours = Math.floor(num / 3600);
     const minutes = Math.floor((num % 3600) / 60);
     return `${hours}:${(`0${minutes}`).slice(-2)}`;
@@ -40,11 +37,23 @@ export default class Backfill extends React.PureComponent {
         for (let j = 0; j < coreCounts.length; j += 1) {
           const cores = coreCounts[j];
           let { tMin, tMax } = backfillData[partition][cores];
+
           if (tMax == null) {
             tMax = config.tMaxRes;
           }
           if (tMin == null) {
             tMin = tMax;
+          }
+
+          // If the backfill slot is longer than the max reservation time,
+          // don't display a value greater than the max because users cannot
+          // request that much anyway
+          if (tMin > config.tMaxRes) {
+            tMin = config.tMaxRes
+          }
+
+          if (tMax > config.tMaxRes) {
+            tMax = config.tMaxRes
           }
 
           data.push({
