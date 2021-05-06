@@ -91,7 +91,7 @@ export default class Backfill extends React.PureComponent {
                   tickFormatter={(value) => this.timeString(value)}
                 />
                 <Tooltip
-                  labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''})`}
+                  labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''} available)`}
                   formatter={(value) => this.timeString(value)}
                 />
                 <Bar dataKey="shortest" fill="#8884d8" />
