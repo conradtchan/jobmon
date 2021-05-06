@@ -1,4 +1,5 @@
 import React from 'react';
+import config from './config';
 
 import {
   ResponsiveContainer,
@@ -13,14 +14,10 @@ import PropTypes from 'prop-types';
 export default class Backfill extends React.PureComponent {
   constructor(props) {
     super(props);
-    this.state = {
-      tMaxRes: 7 * 24 * 3600, // Max reservable time
-    };
   }
 
   timeString(num) {
-    const { tMaxRes } = this.state;
-    if (num === tMaxRes / 60) {
+    if (num === config.tMaxRes / 60) {
       return 'Unlimited';
     }
     const hours = Math.floor(num / 60);
@@ -29,7 +26,6 @@ export default class Backfill extends React.PureComponent {
   }
 
   render() {
-    const { tMaxRes } = this.state;
     const { backfillData } = this.props;
 
     const backfillCharts = [];
@@ -45,7 +41,7 @@ export default class Backfill extends React.PureComponent {
           const cores = coreCounts[j];
           let { tMin, tMax } = backfillData[partition][cores];
           if (tMax == null) {
-            tMax = tMaxRes;
+            tMax = config.tMaxRes;
           }
           if (tMin == null) {
             tMin = tMax;
@@ -75,7 +71,7 @@ export default class Backfill extends React.PureComponent {
                 barGap={0}
               >
                 <XAxis dataKey="cores" unit={unit} interval={0} />
-                <YAxis hide type="number" domain={[0, (8 * tMaxRes) / (24 * 7)]} allowDataOverflow />
+                <YAxis type="number" domain={[0, (8 * config.tMaxRes) / (24 * 7)]} allowDataOverflow />
                 <Tooltip
                   labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''})`}
                   formatter={(value) => this.timeString(value / 60)}

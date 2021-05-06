@@ -53,6 +53,9 @@ const config = {
   // Threshold for marking jobs as terrible
   terribleThreshold: 1000,
 
+  // Maximum time that can be reserved by a job in seconds
+  tMaxRes: 604800, // 1 week
+
 };
 
 export default config;
