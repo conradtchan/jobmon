@@ -17,11 +17,11 @@ export default class Backfill extends React.PureComponent {
   }
 
   timeString(num) {
-    if (num === config.tMaxRes / 60) {
+    if (num === config.tMaxRes) {
       return 'Unlimited';
     }
-    const hours = Math.floor(num / 60);
-    const minutes = num % 60;
+    const hours = Math.floor(num / 3600);
+    const minutes = Math.floor((num % 3600) / 60);
     return `${hours}:${(`0${minutes}`).slice(-2)}`;
   }
 
@@ -70,11 +70,20 @@ export default class Backfill extends React.PureComponent {
                 barSize={20}
                 barGap={0}
               >
-                <XAxis dataKey="cores" unit={unit} interval={0} />
-                <YAxis type="number" domain={[0, (8 * config.tMaxRes) / (24 * 7)]} allowDataOverflow />
+                <XAxis
+                  dataKey="cores"
+                  unit={unit}
+                  interval={0}
+                />
+                <YAxis
+                  type="number"
+                  // domain={[0, (48 * config.tMaxRes) / (24 * 7)]}
+                  allowDataOverflow
+                  tickFormatter={(value) => this.timeString(value)}
+                />
                 <Tooltip
                   labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''})`}
-                  formatter={(value) => this.timeString(value / 60)}
+                  formatter={(value) => this.timeString(value)}
                 />
                 <Bar dataKey="shortest" fill="#8884d8" />
                 <Bar dataKey="longest" fill="#82ca9d" />
