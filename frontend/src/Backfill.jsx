@@ -1,4 +1,5 @@
 import React from 'react';
+import config from './config';
 
 import {
   ResponsiveContainer,
@@ -13,23 +14,15 @@ import PropTypes from 'prop-types';
 export default class Backfill extends React.PureComponent {
   constructor(props) {
     super(props);
-    this.state = {
-      tMaxRes: 7 * 24 * 3600, // Max reservable time
-    };
   }
 
   timeString(num) {
-    const { tMaxRes } = this.state;
-    if (num === tMaxRes / 60) {
-      return 'Unlimited';
-    }
-    const hours = Math.floor(num / 60);
-    const minutes = num % 60;
+    const hours = Math.floor(num / 3600);
+    const minutes = Math.floor((num % 3600) / 60);
     return `${hours}:${(`0${minutes}`).slice(-2)}`;
   }
 
   render() {
-    const { tMaxRes } = this.state;
     const { backfillData } = this.props;
 
     const backfillCharts = [];
@@ -44,11 +37,23 @@ export default class Backfill extends React.PureComponent {
         for (let j = 0; j < coreCounts.length; j += 1) {
           const cores = coreCounts[j];
           let { tMin, tMax } = backfillData[partition][cores];
+
           if (tMax == null) {
-            tMax = tMaxRes;
+            tMax = config.tMaxRes;
           }
           if (tMin == null) {
             tMin = tMax;
+          }
+
+          // If the backfill slot is longer than the max reservation time,
+          // don't display a value greater than the max because users cannot
+          // request that much anyway
+          if (tMin > config.tMaxRes) {
+            tMin = config.tMaxRes
+          }
+
+          if (tMax > config.tMaxRes) {
+            tMax = config.tMaxRes
           }
 
           data.push({
@@ -74,11 +79,20 @@ export default class Backfill extends React.PureComponent {
                 barSize={20}
                 barGap={0}
               >
-                <XAxis dataKey="cores" unit={unit} interval={0} />
-                <YAxis hide type="number" domain={[0, (8 * tMaxRes) / (24 * 7)]} allowDataOverflow />
+                <XAxis
+                  dataKey="cores"
+                  unit={unit}
+                  interval={0}
+                />
+                <YAxis
+                  type="number"
+                  domain={[0, dataMax => Math.min(dataMax, config.tMaxRes)]}
+                  allowDataOverflow
+                  tickFormatter={(value) => this.timeString(value)}
+                />
                 <Tooltip
-                  labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''})`}
-                  formatter={(value) => this.timeString(value / 60)}
+                  labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''} available)`}
+                  formatter={(value) => this.timeString(value)}
                 />
                 <Bar dataKey="shortest" fill="#8884d8" />
                 <Bar dataKey="longest" fill="#82ca9d" />
@@ -92,11 +106,11 @@ export default class Backfill extends React.PureComponent {
     return (
       <div className="main-item center-right">
         <div className="heading">
-          Available Resources
+          Available Resources (Backfill)
         </div>
         <div className="instruction">
-          Jobs times shorter than the longest slot (mouseover) may be able to start instantly,
-          subject to memory constraints.
+          Jobs with time requests shorter than the longest slot (mouseover) may be able to start instantly,
+          subject to memory constraints. Jobs that request time beyond what is available in backfill will be scheduled to start in the future.
           <br />
           <br />
         </div>
