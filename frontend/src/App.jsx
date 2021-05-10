@@ -135,6 +135,7 @@ class App extends React.Component {
   getUserPiePlot() {
     const { apiData, warnings, warnedUsers, systemUsage } = this.state;
     let runningData = {};
+    let usernames = new Set()
 
     // Sum usage
     const jobIds = Object.keys(apiData.jobs);
@@ -142,19 +143,23 @@ class App extends React.Component {
       const jobId = jobIds[i];
       const job = apiData.jobs[jobId];
       const { username } = job;
+
+      usernames.add(username);
+
+      if (!(Object.prototype.hasOwnProperty.call(runningData, username))) {
+        runningData[username] = {
+          cpus: 0,
+          jobs: 0,
+        };
+      }
+
       if (job.state === 'RUNNING') {
-        if (!(Object.prototype.hasOwnProperty.call(runningData, username))) {
-          runningData[username] = {
-            cpus: 0,
-            jobs: 0,
-          };
-        }
         runningData[username].cpus += job.nCpus;
         runningData[username].jobs += 1;
       }
     }
 
-    const usernames = Object.keys(runningData);
+    usernames = Array.from(usernames)
 
     // Convert to array
     const usageDataArray = [];

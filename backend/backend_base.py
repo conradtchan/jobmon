@@ -236,6 +236,13 @@ class BackendBase:
 
         return 0
 
+    def job_start_time(self, job_id):
+        """
+        Return the estimated start time of the job (timestamp)
+        """
+
+        return 0
+
     def job_mem(self, job_id):
         """
         Return the current memory usage of the job in MB
@@ -357,6 +364,7 @@ class BackendBase:
             j[job_id]["gpuLayout"] = self.job_gpu_layout(job_id)
             j[job_id]["timeLimit"] = self.job_time_limit(job_id)
             j[job_id]["runTime"] = self.job_run_time(job_id)
+            j[job_id]["startTime"] = self.job_start_time(job_id)
             j[job_id]["mem"] = self.job_mem(job_id)
             j[job_id]["memMax"] = self.job_mem_max(job_id)
             j[job_id]["hasMem"] = self.job_has_mem_stats(job_id)

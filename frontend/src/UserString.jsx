@@ -70,16 +70,28 @@ export default class UserString extends React.Component {
     } else {
       userDescription.push(
         <div className="user-string-percent" key="percent">
-          {((100 * user.cpus) / availCores).toFixed(1)}
-          %
+          {(user.jobs > 0) ?
+            <div>
+              {((100 * user.cpus) / availCores).toFixed(1)}
+              %
+            </div>
+            :
+            'pending'
+          }
         </div>,
       );
       userDescription.push(
         <div className="user-string-jobs" key="nJobs">
-          {user.jobs}
-          {' '}
-          job
-          {(user.jobs > 1) ? 's' : ''}
+          {(user.jobs > 0)
+          && (
+            <div>
+              {user.jobs}
+              {' '}
+              job
+              {(user.jobs > 1) ? 's' : ''}
+            </div>
+          )}
+
         </div>,
       );
     }

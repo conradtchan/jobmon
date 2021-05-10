@@ -12,6 +12,18 @@ export default class JobText extends React.PureComponent {
 
   render() {
     const { id, job } = this.props;
+
+    let eta = ''
+    if (job.startTime > 0) {
+      const startTime = new Date(job.startTime * 1000 + job.timeLimit * 60 * 1000)
+      eta = startTime.toLocaleString('default', { month: 'long' })
+      eta += ' ' + startTime.getDate()
+      eta += ', ' + startTime.getHours().toString().padStart(2, '0')
+      eta += ':' + startTime.getMinutes().toString().padStart(2, '0')
+    } else {
+      eta = 'unknown'
+    }
+
     return (
       <div className={this.getClass()}>
         <div className="job-name-title">
@@ -35,6 +47,9 @@ export default class JobText extends React.PureComponent {
           {job.name}
           {' '}
           {(job.nGpus > 0) ? '(GPU)' : ''}
+        </div>
+        <div>
+          ETA: {eta}
         </div>
       </div>
     );
