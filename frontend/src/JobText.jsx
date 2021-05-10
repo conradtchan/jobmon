@@ -13,11 +13,16 @@ export default class JobText extends React.PureComponent {
   render() {
     const { id, job } = this.props;
 
-    const startTime = new Date(job.startTime * 1000 + job.timeLimit * 60 * 1000)
-    let eta = startTime.toLocaleString('default', { month: 'long' })
-    eta += ' ' + startTime.getDate()
-    eta += ', ' + startTime.getHours().toString().padStart(2, '0')
-    eta += ':' + startTime.getMinutes().toString().padStart(2, '0')
+    let eta = ''
+    if (job.startTime > 0) {
+      const startTime = new Date(job.startTime * 1000 + job.timeLimit * 60 * 1000)
+      eta = startTime.toLocaleString('default', { month: 'long' })
+      eta += ' ' + startTime.getDate()
+      eta += ', ' + startTime.getHours().toString().padStart(2, '0')
+      eta += ':' + startTime.getMinutes().toString().padStart(2, '0')
+    } else {
+      eta = 'unknown'
+    }
 
     return (
       <div className={this.getClass()}>
