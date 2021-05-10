@@ -527,6 +527,10 @@ class Backend(BackendBase):
         job = self.pyslurm_job[self.id_map[job_id]]
         return int(job["run_time"] / 60)
 
+    def job_start_time(self, job_id):
+        job = self.pyslurm_job[self.id_map[job_id]]
+        return job["start_time"]
+
     def job_mem(self, job_id):
         return self.mem_data[job_id]["mem"]
 
