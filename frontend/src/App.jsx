@@ -37,6 +37,7 @@ class App extends React.Component {
       warnings: {},
       warnedUsers: [],
       systemUsage: null,
+      theme: "light",
     };
 
     this.fetchHistory();
@@ -48,6 +49,12 @@ class App extends React.Component {
     this.intervalFetch = setInterval(() => this.fetchLatest(), config.fetchFrequency * 1000);
     this.intervalHistory = setInterval(() => this.fetchHistory(), config.fetchHistoryFrequency * 1000);
     this.intervalBackfill = setInterval(() => this.fetchBackfill(), config.fetchBackfillFrequency * 1000);
+
+    // Load saved theme if running in a browser
+    if (typeof localStorage !== 'undefined' && localStorage.getItem("theme") === "dark") {
+      this.setState({theme: "dark"})
+    }
+
   }
 
   componentWillUnmount() {
@@ -61,6 +68,7 @@ class App extends React.Component {
     const {
       history,
       snapshotTime,
+      theme,
     } = this.state;
     return (
       <TimeMachine
@@ -70,15 +78,17 @@ class App extends React.Component {
         viewPresent={() => this.viewPresent()}
         viewFuture={() => this.viewFuture()}
         viewPast={() => this.viewPast()}
+        theme={theme}
       />
     );
   }
 
   getBackfill() {
-    const { backfill } = this.state;
+    const { backfill, theme } = this.state;
     return (
       <Backfill
         backfillData={backfill}
+        theme={theme}
       />
     );
   }
@@ -135,7 +145,6 @@ class App extends React.Component {
   getUserPiePlot() {
     const { apiData, warnings, warnedUsers, systemUsage } = this.state;
     let runningData = {};
-    let usernames = new Set()
 
     // Sum usage
     const jobIds = Object.keys(apiData.jobs);
@@ -143,23 +152,19 @@ class App extends React.Component {
       const jobId = jobIds[i];
       const job = apiData.jobs[jobId];
       const { username } = job;
-
-      usernames.add(username);
-
-      if (!(Object.prototype.hasOwnProperty.call(runningData, username))) {
-        runningData[username] = {
-          cpus: 0,
-          jobs: 0,
-        };
-      }
-
       if (job.state === 'RUNNING') {
+        if (!(Object.prototype.hasOwnProperty.call(runningData, username))) {
+          runningData[username] = {
+            cpus: 0,
+            jobs: 0,
+          };
+        }
         runningData[username].cpus += job.nCpus;
         runningData[username].jobs += 1;
       }
     }
 
-    usernames = Array.from(usernames)
+    const usernames = Object.keys(runningData);
 
     // Convert to array
     const usageDataArray = [];
@@ -262,6 +267,7 @@ class App extends React.Component {
       historyDataWindow,
       gpuLayout,
       warnings,
+      theme,
     } = this.state;
     return (
       <NodeDetails
@@ -277,6 +283,7 @@ class App extends React.Component {
         changeTimeWindow={(t) => this.changeTimeWindow(t)}
         timeWindow={historyDataWindow}
         gpuLayout={gpuLayout}
+        theme={theme}
       />
     );
   }
@@ -798,7 +805,27 @@ class App extends React.Component {
     this.freeze();
   }
 
+  changeTheme() {
+    const {
+      theme
+    } = this.state;
+
+    if (theme === "light") {
+      this.setState({theme: "dark"})
+      localStorage.setItem("theme", "dark");
+    } else {
+      this.setState({theme: "light"})
+      localStorage.setItem("theme", "light");
+    }
+  }
+
   render() {
+    const {
+      theme
+    } = this.state;
+
+    document.documentElement.setAttribute("data-theme", theme)
+
     return (
       <div className="App">
         <header className="App-header">
@@ -816,10 +843,18 @@ class App extends React.Component {
         </header>
         {this.getTimeMachine()}
         {this.show()}
+        <div id="theme-switch">
+          <input
+            name="darkTheme"
+            type="checkbox"
+            checked={theme === "dark"}
+            onChange={() => this.changeTheme()}
+          />
+          Dark mode
+        </div>
         <div id="version">
           v{version}
         </div>
-
       </div>
     );
   }

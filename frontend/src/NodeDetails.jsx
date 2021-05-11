@@ -17,6 +17,7 @@ export default class NodeDetails extends React.Component {
       timestamp,
       timeWindow,
       historyData,
+      theme,
     } = this.props;
 
     if (nextProps.name !== name) {
@@ -28,6 +29,8 @@ export default class NodeDetails extends React.Component {
     } if (nextProps.timeWindow !== timeWindow) {
       return true
     } if (!arraysEqual(this.getTimestampList(nextProps.historyData), this.getTimestampList(historyData))) {
+      return true
+    } if (nextProps.theme !== theme) {
       return true
     }
 
@@ -561,7 +564,7 @@ export default class NodeDetails extends React.Component {
         <div className="heading">
           Node resource usage
         </div>
-        <div>
+        <div className="label">
           CPU cores
         </div>
         <div className="core-grid">

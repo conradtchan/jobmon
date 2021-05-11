@@ -1,48 +1,10 @@
-:root {
-  --bad-job-color: #c21807;
-
-  /* Box colors */
-  --light-shade: #eee;
-  --medium-shade: #ddd;
-  --dark-shade: #ccc;
-
-  /* Hover-over colors */
-  --hover-outline-color: #555;
-  --hover-shade: #fff;
-  --hover-black: #000;
-
-  /* Pie colors */
-  --piecolor-blank: #ddd;
-  --piecolor-user: #637aff;
-  --piecolor-system: #17852d;
-  --piecolor-wait: #bf2b1a;
-  --piecolor-nice: var(--dark-shade);
-  --piecolor-mem: #e5b81f;
-  --piecolor-disk: #3a2cc2;
-  --piecolor-gpu: #9a3fc2;
-
-  /* Pie cycle colors */
-  --piecycle-1: #0088fe;
-  --piecycle-2: #00c49f;
-  --piecycle-3: #ffbb28;
-  --piecycle-4: #ff8042;
-  --transition-time: 0.2s;
-  --switch-width: 100;
-  --switch-widthpx: 100px;
-
-  --rounding-radius: 0.3em;
-  --box-padding: 1.0em;
-  --box-padding-inner: 0.6em;
-  --block-spacing: 1.0em;
-  --inter-item-spacing: 0.6em;
-
-  --border-width: 0.5px;
-}
+@import './colours.css';
 
 body {
   margin: 0;
   padding: 0;
   font-family: 'Rubik', sans-serif;
+  background-color: var(--background);
 }
 
 button {
@@ -119,6 +81,10 @@ div:focus {outline: 0px;}
   font-size: x-large;
 }
 
+#theme-switch {
+  color: var(--dark-shade)
+}
+
 #version {
   color: var(--dark-shade)
 }
@@ -153,6 +119,7 @@ div:focus {outline: 0px;}
 
 .other-job-row {
   margin-bottom: 5px;
+  color: var(--text-color);
 }
 
 .running-job-row {
@@ -178,6 +145,7 @@ div:focus {outline: 0px;}
   border-style: solid;
   border-width: var(--border-width);
   border-color: var(--dark-shade);
+  color: var(--text-color);
 }
 
 
@@ -336,6 +304,8 @@ div:focus {outline: 0px;}
   -moz-transition: var(--transition-time);
   -webkit-transition: var(--transition-time);
   transition: var(--transition-time);
+
+  color: var(--text-color);
 }
 
 .user-string.hovered {
@@ -394,6 +364,7 @@ div:focus {outline: 0px;}
 
 .queue-strings {
   width: 100%;
+  color: var(--text-color)
 }
 
 .queue-string {
@@ -445,11 +416,13 @@ div:focus {outline: 0px;}
 #username-title {
   font-size: x-large;
   text-align: center;
+  color: var(--text-color);
 }
 
 #nodename-title {
   font-size: x-large;
   text-align: center;
+  color: var(--text-color);
 }
 
 #nodename-subtitle {
@@ -460,10 +433,12 @@ div:focus {outline: 0px;}
   white-space: -pre-wrap;     /* Opera <7 */
   white-space: -o-pre-wrap;   /* Opera 7 */
   word-wrap: break-word;      /* IE */
+  color: var(--text-color);
 }
 
 .time-selector {
   text-align: center;
+  color: var(--text-color);
 }
 
 .core-grid {
@@ -503,6 +478,7 @@ div:focus {outline: 0px;}
 
 .prop-chart-group {
   width: max(180px,50%);
+  color: var(--text-color);
 }
 
 .prop-chart {
@@ -530,11 +506,13 @@ div:focus {outline: 0px;}
 .instruction {
   font-style: italic;
   text-align: center;
+  color: var(--text-color);
 }
 
 .heading {
   font-size: large;
   font-weight: 500;
+  color: var(--text-color);
 }
 
 #cpu-legend {
@@ -550,6 +528,7 @@ div:focus {outline: 0px;}
   border-style: solid;
   border-width: var(--border-width);
   border-color: var(--dark-shade);
+  color: var(--text-color);
 }
 
 .cpu-legend-item {
@@ -596,9 +575,9 @@ div:focus {outline: 0px;}
   width: 100%;
   height: 100%;
   display: inline-flex;
-  background: #fff;
   padding-top: var(--block-spacing);
   padding-bottom: var(--block-spacing);
+  color: var(--text-color);
 }
 
 .switch3ways {
@@ -648,4 +627,16 @@ div:focus {outline: 0px;}
 /* Render recharts tooltip on top */
 .recharts-tooltip-wrapper {
   z-index: 100;
+}
+
+.piechart-label {
+  fill: var(--text-color);
+}
+
+.label {
+  color: var(--text-color);
+}
+
+.sort-selector {
+  color: var(--text-color);
 }

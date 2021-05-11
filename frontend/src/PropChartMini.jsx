@@ -13,6 +13,9 @@ export default class PropChartMini extends PropChart {
     const d = this.scaledData();
     const areas = this.getAreas(d.scale);
 
+    const style = getComputedStyle(document.documentElement);
+    const textColor = style.getPropertyValue('--text-color-alt');
+
     let chartClass = 'prop-chart-mini-2';
     if (this.props.hasGpu) {
       chartClass = 'prop-chart-mini-3';
@@ -35,7 +38,7 @@ export default class PropChartMini extends PropChart {
               hide
               domain={[0, d.dataMax]}
             />
-            <Tooltip />
+            <Tooltip labelStyle={{color: textColor}} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
