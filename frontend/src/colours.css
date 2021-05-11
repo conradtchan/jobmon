@@ -7,8 +7,11 @@
     --medium-shade: #ddd;
     --dark-shade: #ccc;
 
+    /* Text colors */
     --text-color: #000;
     --text-color-alt: #000;
+
+    /* CPU core ring color */
     --core-ring: #000;
 
     /* Hover-over colors */
@@ -16,12 +19,12 @@
     --hover-shade: #fff;
     --hover-black: #000;
 
-    /* Pie colors */
+    /* Quantity colors */
     --piecolor-blank: #ddd;
     --piecolor-user: #637aff;
     --piecolor-system: #17852d;
     --piecolor-wait: #bf2b1a;
-    --piecolor-nice: var(--dark-shade);
+    --piecolor-nice: #ccc;
     --piecolor-mem: #e5b81f;
     --piecolor-disk: #3a2cc2;
     --piecolor-gpu: #9a3fc2;
@@ -35,7 +38,7 @@
     /* Transition time */
     --transition-time: 0.2s;
 
-    /* Sizes */
+    /* Standard gap sizes */
     --switch-width: 100;
     --switch-widthpx: 100px;
 
@@ -48,6 +51,7 @@
     --border-width: 0.5px;
   }
 
+  /* Modified colours for the dark theme */
 [data-theme="dark"] {
   --bad-job-color: #E05243;
 
