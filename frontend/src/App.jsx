@@ -68,6 +68,7 @@ class App extends React.Component {
     const {
       history,
       snapshotTime,
+      theme,
     } = this.state;
     return (
       <TimeMachine
@@ -77,15 +78,17 @@ class App extends React.Component {
         viewPresent={() => this.viewPresent()}
         viewFuture={() => this.viewFuture()}
         viewPast={() => this.viewPast()}
+        theme={theme}
       />
     );
   }
 
   getBackfill() {
-    const { backfill } = this.state;
+    const { backfill, theme } = this.state;
     return (
       <Backfill
         backfillData={backfill}
+        theme={theme}
       />
     );
   }
@@ -264,6 +267,7 @@ class App extends React.Component {
       historyDataWindow,
       gpuLayout,
       warnings,
+      theme,
     } = this.state;
     return (
       <NodeDetails
@@ -279,6 +283,7 @@ class App extends React.Component {
         changeTimeWindow={(t) => this.changeTimeWindow(t)}
         timeWindow={historyDataWindow}
         gpuLayout={gpuLayout}
+        theme={theme}
       />
     );
   }
