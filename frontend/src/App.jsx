@@ -50,8 +50,8 @@ class App extends React.Component {
     this.intervalHistory = setInterval(() => this.fetchHistory(), config.fetchHistoryFrequency * 1000);
     this.intervalBackfill = setInterval(() => this.fetchBackfill(), config.fetchBackfillFrequency * 1000);
 
-    // Load saved theme
-    if (localStorage.getItem("theme") == "dark") {
+    // Load saved theme if running in a browser
+    if (typeof localStorage !== 'undefined' && localStorage.getItem("theme") === "dark") {
       this.setState({theme: "dark"})
     }
 
