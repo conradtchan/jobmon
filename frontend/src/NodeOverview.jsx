@@ -421,18 +421,12 @@ export default class NodeOverview extends React.Component {
         {legend}
 
         <br />
-        {(jobList.running.length > 0)
-        && (
-          <div>
-            <div className="job-names heading">
-              Running
-            </div>
-            <div>
-              {jobList.running}
-            </div>
-            <br />
-          </div>
-        )}
+        <div className="heading">
+          Running
+        </div>
+        {jobList.running}
+        <br />
+
         <div className="job-names">
           {(jobList.pending.length > 0)
           && (
