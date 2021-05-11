@@ -184,6 +184,7 @@ div:focus {outline: 0px;}
   white-space: -pre-wrap;     /* Opera <7 */
   white-space: -o-pre-wrap;   /* Opera 7 */
   word-wrap: break-word;      /* IE */
+  color: var(--text-color);
 }
 
 .job-name.warn {
