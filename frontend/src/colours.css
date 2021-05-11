@@ -8,6 +8,7 @@
     --dark-shade: #ccc;
 
     --text-color: #000;
+    --text-color-alt: #000;
     --core-ring: #000;
 
     /* Hover-over colors */
@@ -56,6 +57,7 @@
   --dark-shade: #ddd;
 
   --text-color: #eee;
+  --text-color-alt: #333;
 
   --hover-outline-color: #555;
   --hover-shade: #000;

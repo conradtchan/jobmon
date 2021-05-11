@@ -148,6 +148,7 @@ export default class PropChart extends React.PureComponent {
 
     const style = getComputedStyle(document.documentElement);
     const tickColor = style.getPropertyValue('--text-color');
+    const textColor = style.getPropertyValue('--text-color-alt');
 
     const d = this.scaledData();
     const areas = this.getAreas(d.scale);
@@ -178,7 +179,7 @@ export default class PropChart extends React.PureComponent {
                 tick={{ fill: tickColor }}
               />
               {areas}
-              <Tooltip />
+              <Tooltip labelStyle={{color: textColor}} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
