@@ -88,7 +88,11 @@ export default class NodePie extends React.PureComponent {
       }
     }
     let nameColor = '';
-    if (doWarn) nameColor = style.getPropertyValue('--bad-job-color');
+    if (doWarn) {
+      nameColor = style.getPropertyValue('--bad-job-color');
+    } else {
+      nameColor = style.getPropertyValue('--text-color');
+    }
 
     function PieLabel({ viewBox, value1, value2 }) {
       const { cx, cy } = viewBox;
