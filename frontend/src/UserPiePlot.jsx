@@ -185,7 +185,7 @@ export default class UserPiePlot extends React.Component {
           <div className="heading">
             Running
           </div>
-          <div>
+          <div className="sort-selector">
             <label htmlFor="alpha">
               <input type="radio" id="alpha" name="nameSort" value="alpha" onChange={() => this.setState({ nameSort: 'alpha' })} checked={nameSort === 'alpha'} />
               Alphabetical &nbsp;&nbsp;

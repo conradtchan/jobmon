@@ -16,6 +16,7 @@ export default class CorePie extends React.PureComponent {
     pieColors.push(style.getPropertyValue('--piecolor-system'));
     pieColors.push(style.getPropertyValue('--piecolor-wait'));
     pieColors.push(style.getPropertyValue('--piecolor-user'));
+    const ringColor = style.getPropertyValue('--core-ring');
 
     let ring = 0;
     if (selected) ring = 100;
@@ -54,7 +55,7 @@ export default class CorePie extends React.PureComponent {
               outerRadius="130%"
               startAngle={90}
               endAngle={450}
-              fill="#222222"
+              fill={ringColor}
               paddingAngle={0}
               stroke="none"
               isAnimationActive={false}

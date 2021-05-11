@@ -37,6 +37,7 @@ class App extends React.Component {
       warnings: {},
       warnedUsers: [],
       systemUsage: null,
+      theme: "light",
     };
 
     this.fetchHistory();
@@ -48,6 +49,12 @@ class App extends React.Component {
     this.intervalFetch = setInterval(() => this.fetchLatest(), config.fetchFrequency * 1000);
     this.intervalHistory = setInterval(() => this.fetchHistory(), config.fetchHistoryFrequency * 1000);
     this.intervalBackfill = setInterval(() => this.fetchBackfill(), config.fetchBackfillFrequency * 1000);
+
+    // Load saved theme
+    if (localStorage.getItem("theme") == "dark") {
+      this.setState({theme: "dark"})
+    }
+
   }
 
   componentWillUnmount() {
@@ -793,7 +800,27 @@ class App extends React.Component {
     this.freeze();
   }
 
+  changeTheme() {
+    const {
+      theme
+    } = this.state;
+
+    if (theme === "light") {
+      this.setState({theme: "dark"})
+      localStorage.setItem("theme", "dark");
+    } else {
+      this.setState({theme: "light"})
+      localStorage.setItem("theme", "light");
+    }
+  }
+
   render() {
+    const {
+      theme
+    } = this.state;
+
+    document.documentElement.setAttribute("data-theme", theme)
+
     return (
       <div className="App">
         <header className="App-header">
@@ -811,10 +838,18 @@ class App extends React.Component {
         </header>
         {this.getTimeMachine()}
         {this.show()}
+        <div id="theme-switch">
+          <input
+            name="darkTheme"
+            type="checkbox"
+            checked={theme === "dark"}
+            onChange={() => this.changeTheme()}
+          />
+          Dark mode
+        </div>
         <div id="version">
           v{version}
         </div>
-
       </div>
     );
   }

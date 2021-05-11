@@ -122,7 +122,7 @@ export default class UsagePie extends React.Component {
     }) {
       const { cx, cy } = viewBox;
       return (
-        <text x={cx} y={cy} fill="#3d405c" className="recharts-text recharts-label" textAnchor="middle" dominantBaseline="central">
+        <text x={cx} y={cy} className="piechart-label" textAnchor="middle" dominantBaseline="central">
           <tspan alignmentBaseline="middle" x={cx} dy="-0.2em" fontSize={pieWidth / 6}>{value1}</tspan>
           <tspan alignmentBaseline="middle" x={cx} dy="1.7em" fontSize={pieWidth / 18}>{value2}</tspan>
           <tspan alignmentBaseline="middle" x={cx} dy="1.0em" fontSize={pieWidth / 21}>{value3}</tspan>

@@ -115,9 +115,12 @@ export default class TimeMachine extends React.Component {
       i += 1;
     }
 
+    const style = getComputedStyle(document.documentElement);
+    const tickColor = style.getPropertyValue('--text-color');
+
     return (
       <div>
-        <div>
+        <div className="label">
           <div>
             Showing data from
           </div>
@@ -138,8 +141,7 @@ export default class TimeMachine extends React.Component {
               barCategoryGap={0}
               barGap={0}
             >
-              <XAxis dataKey="timeString" />
-              {/* <Line type='monotone' dataKey='avail' stroke='#82ca9d' fill='#EEEEEE' /> */}
+              <XAxis dataKey="timeString" tick={{ fill: tickColor }}/>
               <Bar
                 dataKey="running"
                 fill="#8884d8"

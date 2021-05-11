@@ -561,7 +561,7 @@ export default class NodeDetails extends React.Component {
         <div className="heading">
           Node resource usage
         </div>
-        <div>
+        <div className="label">
           CPU cores
         </div>
         <div className="core-grid">

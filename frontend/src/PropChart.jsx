@@ -146,6 +146,9 @@ export default class PropChart extends React.PureComponent {
       unit,
     } = this.props;
 
+    const style = getComputedStyle(document.documentElement);
+    const tickColor = style.getPropertyValue('--text-color');
+
     const d = this.scaledData();
     const areas = this.getAreas(d.scale);
 
@@ -172,6 +175,7 @@ export default class PropChart extends React.PureComponent {
                 domain={[0, d.dataMax]}
                 unit={d.scale + unit}
                 interval={0}
+                tick={{ fill: tickColor }}
               />
               {areas}
               <Tooltip />

@@ -19,6 +19,9 @@ export default class Backfill extends React.PureComponent {
   }
 
   render() {
+    const style = getComputedStyle(document.documentElement);
+    const tickColor = style.getPropertyValue('--text-color');
+
     const { backfillData } = this.props;
 
     const backfillCharts = [];
@@ -66,7 +69,7 @@ export default class Backfill extends React.PureComponent {
         }
 
         backfillCharts.push(
-          <div key={partition}>
+          <div className="label" key={partition}>
             {partition}
             <ResponsiveContainer width="100%" height={100}>
               <BarChart
@@ -79,12 +82,14 @@ export default class Backfill extends React.PureComponent {
                   dataKey="cores"
                   unit={unit}
                   interval={0}
+                  tick={{ fill: tickColor }}
                 />
                 <YAxis
                   type="number"
                   domain={[0, dataMax => Math.min(dataMax, config.tMaxRes)]}
                   allowDataOverflow
                   tickFormatter={(value) => this.timeString(value)}
+                  tick={{ fill: tickColor }}
                 />
                 <Tooltip
                   labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''} available)`}

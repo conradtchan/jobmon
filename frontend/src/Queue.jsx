@@ -26,7 +26,7 @@ export default class Queue extends React.PureComponent {
         <div className="heading">
           Queue
         </div>
-        <div>
+        <div className="label">
           {queueTotal.size}
           {' '}
           job
@@ -38,7 +38,7 @@ export default class Queue extends React.PureComponent {
           {' '}
           cpu-h
         </div>
-        <div>
+        <div className="label">
           (
           {(queueTotal.cpuHours / availCores).toFixed(0)}
           {' '}
