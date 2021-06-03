@@ -495,6 +495,17 @@ class App extends React.Component {
             </div>
           );
         } else {
+          if (systemUsage !== null) {
+            if (systemUsage.runningCores === 0) {
+              return (
+                <div id="main-box">
+                  There are no jobs currently running.
+                  {' '}
+                  <br />
+                </div>
+              )
+            }
+          }
 
           return (
             <div id="main-box">

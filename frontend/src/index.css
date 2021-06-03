@@ -234,6 +234,7 @@ div:focus {outline: 0px;}
   margin: 0 auto;
   overflow: hidden;
   height: 100%;
+  color: var(--text-color);
 }
 
 .main-item {
