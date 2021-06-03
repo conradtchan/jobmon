@@ -469,6 +469,10 @@ export default class NodeDetails extends React.Component {
     return false;
   }
 
+  idCopy(id) {
+    navigator.clipboard.writeText(id)
+  }
+
   render() {
     const {
       name,
@@ -508,11 +512,14 @@ export default class NodeDetails extends React.Component {
     return (
       <div className="main-item right">
         <div id="nodename-title">
-          {selectedJobId}
-          {' '}
-          {(selectedJobId !== null) && 'on'}
-          {' '}
-          {name}
+          <button id="id-button" onClick={() => this.idCopy(selectedJobId)} type="button">
+            {selectedJobId}
+            {' '}
+            {(selectedJobId !== null) && 'on'}
+            {' '}
+            {name}
+          </button>
+
         </div>
         <div id="nodename-subtitle">
           {(selectedJobId !== null) && jobs[selectedJobId].name}

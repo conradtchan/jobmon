@@ -422,9 +422,18 @@ div:focus {outline: 0px;}
 }
 
 #nodename-title {
-  font-size: x-large;
   text-align: center;
+}
+
+#id-button {
+  all: unset;
+  font-size: x-large;
   color: var(--text-color);
+  cursor: pointer;
+}
+
+#id-button:hover {
+  color: var(--hover-outline-color);
 }
 
 #nodename-subtitle {
