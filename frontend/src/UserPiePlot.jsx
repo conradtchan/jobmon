@@ -20,6 +20,7 @@ export default class UserPiePlot extends React.Component {
     const {
       timestamp,
       warnedUsers,
+      systemUsage,
     } = this.props;
 
     const {
@@ -33,7 +34,9 @@ export default class UserPiePlot extends React.Component {
       return true
     } if (nextProps.warnedUsers !== warnedUsers) {
       return true
-    }if (nextState.usagePieActiveIndex !== usagePieActiveIndex) {
+    } if (nextProps.systemUsage !== systemUsage) {
+      return true
+    } if (nextState.usagePieActiveIndex !== usagePieActiveIndex) {
       return true
     } if (nextState.usagePieSelectedIndex !== usagePieSelectedIndex) {
       return true
