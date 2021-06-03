@@ -432,9 +432,20 @@ div:focus {outline: 0px;}
   cursor: pointer;
 }
 
-#id-button:hover {
-  color: var(--hover-outline-color);
+#id-button:active {
+  color: var(--hover-shade);
 }
+
+.copyhint {
+  font-style: italic;
+  color: var(--text-color);
+  display: none
+}
+
+#id-button:hover + .copyhint {
+  display: block;
+}
+
 
 #nodename-subtitle {
   text-align: center;
