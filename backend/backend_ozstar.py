@@ -256,6 +256,10 @@ class Backend(BackendBase):
             }
         except KeyError:
             print(name, "swap not in ganglia")
+            return {
+                "free": 0,
+                "total": 0,
+            }
 
     def disk(self, name):
         data = self.ganglia_data[name]
@@ -266,6 +270,10 @@ class Backend(BackendBase):
             }
         except KeyError:
             print(name, "disk not in ganglia")
+            return {
+                "free": 0,
+                "total": 0,
+            }
 
     def gpus(self, name):
         data = self.ganglia_data[name]
