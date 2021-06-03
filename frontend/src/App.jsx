@@ -678,7 +678,7 @@ class App extends React.Component {
   }
 
   historyTimeJump() {
-    this.setState({ historyData: [] },
+    this.setState({ historyData: [], systemUsage: this.getSystemUsage() },
       () => this.initHistoryData(config.historyDataCountInitial));
   }
 
