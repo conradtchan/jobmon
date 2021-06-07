@@ -6,6 +6,7 @@ import pwd
 import re
 import subprocess
 import time
+from functools import lru_cache
 from glob import glob
 from os import path
 
@@ -503,6 +504,12 @@ class Backend(BackendBase):
 
         return layout
 
+    # Minimise the number of scontrol calls by caching the results
+    # - Assume that GPU affinity is fixed for the lifetime of the job
+    # - scontrol should only be called once per job
+    # - Cache up to 10,000 jobs (there are typically 3000 jobs running on OzSTAR)
+
+    @lru_cache(maxsize=10000)
     def job_gpu_layout(self, job_id):
         layout = {}
 
