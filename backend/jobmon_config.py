@@ -14,7 +14,7 @@ UPDATE_INTERVAL = 30
 NODE_DEAD_TIMEOUT = 60
 
 # How much history to return in a list (in seconds)
-HISTORY_LENGTH = 43200
+HISTORY_LENGTH = 86400
 
 # When to delete old history (seconds old)
 HISTORY_DELETE_AGE = 86400
