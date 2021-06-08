@@ -1,12 +1,12 @@
-import { getJobUsage, getNodeUsage } from '../usage';
+import { getJobUsage, getNodeUsage } from "../usage";
 
-const testData = require('./test_data.json');
-const gpuLayout = require('./reference_gpuLayout.json');
+const testData = require("./test_data.json");
+const gpuLayout = require("./reference_gpuLayout.json");
 
-const nodeUsageRef = require('./reference_nodeUsage.json');
-const jobUsageRef = require('./reference_jobUsage.json');
+const nodeUsageRef = require("./reference_nodeUsage.json");
+const jobUsageRef = require("./reference_jobUsage.json");
 
-it('per-job resource usage for a specific node', () => {
+it("per-job resource usage for a specific node", () => {
   const jobIds = Object.keys(testData.jobs);
 
   // Make reference data
@@ -18,7 +18,7 @@ it('per-job resource usage for a specific node', () => {
     const job = testData.jobs[jid];
 
     // Test running jobs only
-    if (job.state === 'RUNNING') {
+    if (job.state === "RUNNING") {
       const hosts = Object.keys(job.layout);
 
       ref[jid] = {};
@@ -41,7 +41,7 @@ it('per-job resource usage for a specific node', () => {
   // console.log(JSON.stringify(ref))
 });
 
-it('per-job resource usage', () => {
+it("per-job resource usage", () => {
   const jobIds = Object.keys(testData.jobs);
 
   // Make reference data
@@ -53,7 +53,7 @@ it('per-job resource usage', () => {
     const job = testData.jobs[jid];
 
     // Test running jobs only
-    if (job.state === 'RUNNING') {
+    if (job.state === "RUNNING") {
       const usage = getJobUsage(jid, job, testData.nodes, gpuLayout);
 
       ref[jid] = usage;

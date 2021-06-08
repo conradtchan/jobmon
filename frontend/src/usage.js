@@ -1,4 +1,4 @@
-import config from './config';
+import config from "./config";
 
 // Get the per job usage for a specific node
 export function getNodeUsage(jid, job, node, host, gpuLayout) {
@@ -42,7 +42,7 @@ export function getNodeUsage(jid, job, node, host, gpuLayout) {
             const gpuNumbers = Object.keys(gpuLayout[jid][host]);
             for (let j = 0; j < gpuNumbers.length; j += 1) {
               const iGpu = gpuNumbers[j];
-              usage.gpu.total += node.gpus['gpu'.concat(iGpu.toString())];
+              usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
               nGpus += 1;
             }
           }

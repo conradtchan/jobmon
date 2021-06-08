@@ -12,5 +12,5 @@ parserOptions:
   sourceType: module
 plugins:
   - react
-rules: {}
+rules: {quotes: ["error", "double"]}
 parser: babel-eslint

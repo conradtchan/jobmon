@@ -1,4 +1,4 @@
-import config from './config';
+import config from "./config";
 
 export function instantWarnings(data) {
   const warnings = {};
@@ -29,7 +29,7 @@ export function instantWarnings(data) {
     const jobId = jobIds[i];
     const job = data.jobs[jobId];
 
-    if (job.state === 'RUNNING' && job.runTime > config.graceTime) {
+    if (job.state === "RUNNING" && job.runTime > config.graceTime) {
       const jobNodeNames = Object.keys(job.layout);
       const nNodes = jobNodeNames.length;
       let wholeNode = false;
@@ -245,7 +245,7 @@ export function getWarnedJobs(warnings) {
     const nodeName = warnedNodes[i];
     const nodeWarnings = warnings[nodeName];
 
-    if (Object.keys(nodeWarnings).includes('jobs')) {
+    if (Object.keys(nodeWarnings).includes("jobs")) {
       const jobIds = Object.keys(nodeWarnings.jobs);
 
       // For each job on the node

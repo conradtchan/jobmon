@@ -1,16 +1,16 @@
 const config = {
 
   // Homepage
-  homepage: 'https://supercomputing.swin.edu.au/',
+  homepage: "https://supercomputing.swin.edu.au/",
 
   // Address of API
-  address: 'https://supercomputing.swin.edu.au/monitor/api/',
+  address: "https://supercomputing.swin.edu.au/monitor/api/",
 
   // API version
   apiVersion: 13,
 
   // Page title
-  pageTitle: 'Job Monitor',
+  pageTitle: "Job Monitor",
 
   // Frequency to fetch data (seconds)
   fetchFrequency: 15,
