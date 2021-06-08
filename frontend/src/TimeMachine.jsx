@@ -8,6 +8,8 @@ import {
 } from 'recharts';
 import PropTypes from 'prop-types';
 import { timeString } from './timeFunctions';
+import moment from 'moment'
+import config from './config';
 
 export default class TimeMachine extends React.Component {
   constructor(props) {
@@ -96,18 +98,16 @@ export default class TimeMachine extends React.Component {
     } = this.props;
 
     const data = [];
-    const nBars = 200;
     const times = Object.keys(history);
     const historyLength = times.length;
     let nSkip = 1;
-    if (historyLength > nBars) {
-      nSkip = parseInt((historyLength / nBars).toFixed(0), 10);
+    if (historyLength > config.timeMachineBars) {
+      nSkip = parseInt((historyLength / config.timeMachineBars).toFixed(0), 10);
     }
 
     for (let i = 0; i < times.length; i += 1) {
       const time = times[i];
       if (i % nSkip === 0) {
-        const d = new Date(time * 1000);
 
         let running = history[time].running
 
@@ -118,13 +118,20 @@ export default class TimeMachine extends React.Component {
         }
 
         data.push({
-          time,
-          timeString: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+          time: time,
           running: running,
           free: history[time].avail - history[time].running,
         });
       }
       i += 1;
+    }
+
+    // Generate hourly tick marks
+    let hourlyTicks = []
+    let t = Math.ceil(parseInt(times[0], 10) / 3600) * 3600
+    while (t < parseInt(times[times.length-1], 10)) {
+      hourlyTicks.push(t)
+      t += 3600
     }
 
     const style = getComputedStyle(document.documentElement);
@@ -153,7 +160,16 @@ export default class TimeMachine extends React.Component {
               barCategoryGap={0}
               barGap={0}
             >
-              <XAxis dataKey="timeString" tick={{ fill: tickColor }}/>
+              <XAxis
+                dataKey="time"
+                tick={{ fill: tickColor }}
+                tickFormatter = {(unixTime) => moment.unix(unixTime).format('HH:mm')}
+                ticks={hourlyTicks}
+                interval={0}
+                scale="time"
+                type="number"
+                domain={['auto', 'auto']}
+              />
               <Bar
                 dataKey="running"
                 fill="#8884d8"
@@ -169,7 +185,7 @@ export default class TimeMachine extends React.Component {
                 cursor="pointer"
                 hide={userFilter !== ""} // Hide free bar if users are being filtered
               />
-              <Tooltip />
+              <Tooltip labelFormatter = {(unixTime) => moment.unix(unixTime).format('HH:mm dddd')}/>
             </ComposedChart>
           </ResponsiveContainer>
         </div>

@@ -35,6 +35,9 @@ const config = {
   // Factor to increase chart resolution at each refinment
   historyResolutionMultiplier: 3,
 
+  // Number of bars to show on the time machine
+  timeMachineBars: 300,
+
   // ===== Warning configuration ===== //
 
   // Instantaneous warnings
