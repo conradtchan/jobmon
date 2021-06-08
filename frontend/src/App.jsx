@@ -38,6 +38,9 @@ class App extends React.Component {
       warnedUsers: [],
       systemUsage: null,
       theme: "light",
+      userFilter: '',
+      defaultUserFilter: '',
+      runningData: {},
     };
 
     this.fetchHistory();
@@ -50,9 +53,21 @@ class App extends React.Component {
     this.intervalHistory = setInterval(() => this.fetchHistory(), config.fetchHistoryFrequency * 1000);
     this.intervalBackfill = setInterval(() => this.fetchBackfill(), config.fetchBackfillFrequency * 1000);
 
-    // Load saved theme if running in a browser
-    if (typeof localStorage !== 'undefined' && localStorage.getItem("theme") === "dark") {
-      this.setState({theme: "dark"})
+    // Load local storage if running in a browser
+    if (typeof localStorage !== 'undefined') {
+
+      // Theme
+      if (localStorage.getItem("theme") === "dark") {
+        this.setState({theme: "dark"})
+      }
+
+      // User filter
+      if (localStorage.getItem("userFilter") !== '') {
+        this.setState({
+          userFilter: localStorage.getItem("userFilter"),
+          defaultUserFilter: localStorage.getItem("userFilter")
+        })
+      }
     }
 
   }
@@ -79,6 +94,7 @@ class App extends React.Component {
         viewFuture={() => this.viewFuture()}
         viewPast={() => this.viewPast()}
         theme={theme}
+        userFilter={this.state.userFilter}
       />
     );
   }
@@ -142,12 +158,13 @@ class App extends React.Component {
     );
   }
 
-  getUserPiePlot() {
-    const { apiData, warnings, warnedUsers, systemUsage } = this.state;
+  getRunningData() {
+    const { apiData } = this.state;
+
     let runningData = {};
 
-    // Sum usage
     const jobIds = Object.keys(apiData.jobs);
+
     for (let i = 0; i < jobIds.length; i += 1) {
       const jobId = jobIds[i];
       const job = apiData.jobs[jobId];
@@ -164,6 +181,20 @@ class App extends React.Component {
       }
     }
 
+    this.setState({runningData: runningData})
+  }
+
+  getUserPiePlot() {
+    const {
+      apiData,
+      warnings,
+      warnedUsers,
+      systemUsage,
+      runningData,
+      userFilter,
+      defaultUserFilter,
+    } = this.state;
+
     const usernames = Object.keys(runningData);
 
     // Convert to array
@@ -176,23 +207,25 @@ class App extends React.Component {
         jobs: runningData[username].jobs,
       });
     }
-    runningData = usageDataArray;
 
     // Sort by usage
-    runningData.sort((a, b) => a.cpus - b.cpus);
-    for (let i = 0; i < runningData.length; i += 1) {
-      runningData[i].index = i;
+    usageDataArray.sort((a, b) => a.cpus - b.cpus);
+    for (let i = 0; i < usageDataArray.length; i += 1) {
+      usageDataArray[i].index = i;
     }
 
     return (
       <UserPiePlot
         timestamp={apiData.timestamp}
-        runningData={runningData}
+        runningData={usageDataArray}
         runningCores={systemUsage.runningCores}
         availCores={systemUsage.availCores}
         updateUsername={(name) => this.updateUsername(name)}
         warnedUsers={warnedUsers}
         badness={this.getUserBadness(warnings, usernames)}
+        userFilter={userFilter}
+        defaultUserFilter={defaultUserFilter}
+        updateUserFilter={(value) => this.updateUserFilter(value)}
       />
     );
   }
@@ -340,7 +373,7 @@ class App extends React.Component {
       }
     }
 
-    // if a "bonus" node us being wholy or partially used then count it as avail
+    // if a "bonus" node us being wholly or partially used then count it as avail
     for (let i = 0; i < runningNodeList.length; i += 1) {
       const host = runningNodeList[i];
       if (!(nodes[host].isCounted)) {
@@ -635,6 +668,7 @@ class App extends React.Component {
   postFetch() {
     this.setGpuLayout()
     this.updateHistoryData()
+    this.getRunningData()
     this.setState({
       systemUsage: this.getSystemUsage(),
     })
@@ -678,6 +712,7 @@ class App extends React.Component {
   }
 
   historyTimeJump() {
+    this.getRunningData()
     this.setState({ historyData: [], systemUsage: this.getSystemUsage() },
       () => this.initHistoryData(config.historyDataCountInitial));
   }
@@ -827,6 +862,16 @@ class App extends React.Component {
     } else {
       this.setState({theme: "light"})
       localStorage.setItem("theme", "light");
+    }
+  }
+
+  updateUserFilter(value) {
+    const safeValue = value.replace(/\W/g, '')
+    this.setState({userFilter: safeValue})
+
+    if (Object.keys(this.state.runningData).includes(safeValue) || safeValue === "") {
+      this.updateUsername(safeValue)
+      localStorage.setItem("userFilter", safeValue)
     }
   }
 

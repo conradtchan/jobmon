@@ -13,6 +13,7 @@ export default class NodeDetails extends React.Component {
   shouldComponentUpdate(nextProps) {
     const {
       name,
+      username,
       selectedJobId,
       timestamp,
       timeWindow,
@@ -21,6 +22,8 @@ export default class NodeDetails extends React.Component {
     } = this.props;
 
     if (nextProps.name !== name) {
+      return true
+    } if (nextProps.username !== username) {
       return true
     } if (nextProps.selectedJobId !== selectedJobId) {
       return true

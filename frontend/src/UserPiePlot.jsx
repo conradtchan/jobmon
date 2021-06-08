@@ -21,6 +21,7 @@ export default class UserPiePlot extends React.Component {
       timestamp,
       warnedUsers,
       systemUsage,
+      userFilter,
     } = this.props;
 
     const {
@@ -35,6 +36,8 @@ export default class UserPiePlot extends React.Component {
     } if (nextProps.warnedUsers !== warnedUsers) {
       return true
     } if (nextProps.systemUsage !== systemUsage) {
+      return true
+    } if (nextProps.userFilter !== userFilter) {
       return true
     } if (nextState.usagePieActiveIndex !== usagePieActiveIndex) {
       return true
@@ -85,6 +88,9 @@ export default class UserPiePlot extends React.Component {
         availCores,
         warnedUsers,
         badness,
+        userFilter,
+        defaultUserFilter,
+        updateUserFilter,
       } = this.props;
 
       const {
@@ -97,21 +103,24 @@ export default class UserPiePlot extends React.Component {
       let maxBadness = 0;
       for (let i = 0; i < runningData.length; i += 1) {
         const user = runningData[i];
-        userStrings.push(
-          <UserString
-            key={user.username}
-            user={user}
-            availCores={availCores}
-            hoveredIndex={usagePieActiveIndex}
-            mouseEnter={() => this.updateActive(user.index)}
-            mouseLeave={() => this.restoreSelected()}
-            onClick={() => this.updateSelectedUsername(user.index, user.username)}
-            warning={warnedUsers.includes(user.username)}
-            badness={badness[user.username]}
-            nameSort={nameSort}
-          />,
-        );
-        maxBadness = Math.max(maxBadness, badness[user.username]);
+        if (user.username === userFilter || userFilter === '') {
+          userStrings.push(
+            <UserString
+              key={user.username}
+              user={user}
+              availCores={availCores}
+              hoveredIndex={usagePieActiveIndex}
+              mouseEnter={() => this.updateActive(user.index)}
+              mouseLeave={() => this.restoreSelected()}
+              onClick={() => this.updateSelectedUsername(user.index, user.username)}
+              warning={warnedUsers.includes(user.username)}
+              badness={badness[user.username]}
+              nameSort={nameSort}
+            />,
+          );
+          maxBadness = Math.max(maxBadness, badness[user.username]);
+        }
+
       }
 
       if (nameSort === 'alpha') {
@@ -167,6 +176,17 @@ export default class UserPiePlot extends React.Component {
 
       return (
         <div className="main-item left">
+
+          <div className="input-box">
+            <input
+              type="text"
+              placeholder="Filter by username"
+              maxlength="6"
+              defaultValue={defaultUserFilter}
+              onChange={({ target: { value } }) => updateUserFilter(value)}
+            />
+          </div>
+
           <UsagePie
             runningData={runningData}
             runningCores={runningCores}

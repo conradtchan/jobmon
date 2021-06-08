@@ -19,8 +19,6 @@ from backend_base import BackendBase
 from constants import KB
 from influxdb import InfluxDBClient
 
-API_VERSION = 13
-
 
 class Backend(BackendBase):
     def __init__(self, **kwargs):
@@ -568,7 +566,7 @@ class Backend(BackendBase):
             return job["min_memory_node"]
 
     def core_usage(self, data):
-        usage = {"avail": 0, "running": 0}
+        usage = {"avail": 0, "running": 0, "users": {}}
 
         # Count the available cores
         for hostname, node in data["nodes"].items():
@@ -591,6 +589,12 @@ class Backend(BackendBase):
                             bonus_nodes += [hostname]
                             usage["avail"] += node["nCpus"]
                             n_bonus += node["nCpus"]
+
+                # Add to the individual user count
+                username = job["username"]
+                if username not in usage["users"]:
+                    usage["users"][username] = 0
+                usage["users"][username] += job["nCpus"]
 
         print(
             "Core utilization: {:}/{:} ({:} bonus cores are active)".format(

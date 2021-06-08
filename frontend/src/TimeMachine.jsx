@@ -92,6 +92,7 @@ export default class TimeMachine extends React.Component {
       history,
       snapshotTime,
       clickLoadTime,
+      userFilter,
     } = this.props;
 
     const data = [];
@@ -107,10 +108,19 @@ export default class TimeMachine extends React.Component {
       const time = times[i];
       if (i % nSkip === 0) {
         const d = new Date(time * 1000);
+
+        let running = history[time].running
+
+        if (Object.keys(history[time].users).includes(userFilter)) {
+          running = history[time].users[userFilter]
+        } else if (userFilter !== '') {
+          running = 0
+        }
+
         data.push({
           time,
           timeString: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
-          running: history[time].running,
+          running: running,
           free: history[time].avail - history[time].running,
         });
       }
@@ -157,6 +167,7 @@ export default class TimeMachine extends React.Component {
                 stackId="a"
                 onClick={(obj, index) => clickLoadTime(data[index].time)}
                 cursor="pointer"
+                hide={userFilter !== ""} // Hide free bar if users are being filtered
               />
               <Tooltip />
             </ComposedChart>
