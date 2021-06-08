@@ -9184,7 +9184,7 @@ fsevents@^1.2.7:
     moment: ^2.29.1
     node-fetch: ^2.6.1
     prop-types: ^15.7.2
-    react: ^16.2.0
+    react: ^17.0.2
     react-dom: ^16.2.0
     react-scripts: ^4.0.3
     react-test-renderer: ^16.13.1
@@ -12803,14 +12803,13 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"react@npm:^16.2.0":
-  version: 16.14.0
-  resolution: "react@npm:16.14.0"
+"react@npm:^17.0.2":
+  version: 17.0.2
+  resolution: "react@npm:17.0.2"
   dependencies:
     loose-envify: ^1.1.0
     object-assign: ^4.1.1
-    prop-types: ^15.6.2
-  checksum: 2769580b22952a52de3b5b2ea0f09cb904030b762d759739f49ab4da0b1f550e5c087ce3728c4be90f423d09481e0c075483c0c30b1ea9c549445c8b12020fd3
+  checksum: 7d0dfebafe1d297503157abb2e9acdb49852185deb8700c16f4a6faad87642f84903ab18cfc16f40b9a0dfe97540f99834982ee953e6d48b39c41608dc3e4b29
   languageName: node
   linkType: hard
 
