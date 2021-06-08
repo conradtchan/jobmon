@@ -579,8 +579,8 @@ class App extends React.Component {
           }, () => that.historyTimeJump());
         }
       })
-      .catch(() => {
-        // console.log("Error fetching history", err);
+      .catch((err) => {
+        console.log("Error fetching history", err); // eslint-disable-line no-console
       });
   }
 
@@ -591,8 +591,8 @@ class App extends React.Component {
       .then((data) => {
         that.setState({ history: data.history });
       })
-      .catch(() => {
-        // console.log("Error fetching history", err);
+      .catch((err) => {
+        console.log("Error fetching history", err); // eslint-disable-line no-console
       });
   }
 
@@ -622,8 +622,8 @@ class App extends React.Component {
             () => that.postFetch());
           }
         })
-        .catch(() => {
-          // console.log("Error fetching latest data", err);
+        .catch((err) => {
+          console.log("Error fetching latest data", err); // eslint-disable-line no-console
         });
     }
   }
@@ -688,8 +688,8 @@ class App extends React.Component {
       .then((data) => {
         that.setState({ backfill: data });
       })
-      .catch(() => {
-        // console.log("Error fetching history", err);
+      .catch((err) => {
+        console.log("Error fetching history", err); // eslint-disable-line no-console
       });
   }
 
@@ -798,8 +798,8 @@ class App extends React.Component {
               }
             }
           })
-          .catch(() => {
-            // console.log("Error fetching history", err);
+          .catch((err) => {
+            console.log("Error fetching history", err); // eslint-disable-line no-console
           });
       }
     }
