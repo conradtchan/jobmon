@@ -1,14 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import JobText from './JobText';
-import PropChartMini from './PropChartMini';
-import NodePie from './NodePie';
-import { getWarnedJobs } from './warnings'
-import { getJobUsage, getNodeUsage } from './usage';
-import constants from './constants';
+import React from "react";
+import PropTypes from "prop-types";
+import JobText from "./JobText";
+import PropChartMini from "./PropChartMini";
+import NodePie from "./NodePie";
+import { getWarnedJobs } from "./warnings";
+import { getJobUsage, getNodeUsage } from "./usage";
+import constants from "./constants";
 
 export default class NodeOverview extends React.Component {
   static whyDidYouRender = true
+
   shouldComponentUpdate(nextProps) {
     const {
       timestamp,
@@ -17,14 +18,14 @@ export default class NodeOverview extends React.Component {
     } = this.props;
 
     if (nextProps.timestamp !== timestamp) {
-      return true
+      return true;
     } if (nextProps.username !== username) {
-      return true
-    } if (nextProps.jobId!== jobId) {
-      return true
+      return true;
+    } if (nextProps.jobId !== jobId) {
+      return true;
     }
 
-    return false
+    return false;
   }
 
   getNodePies() {
@@ -34,7 +35,6 @@ export default class NodeOverview extends React.Component {
       apiData,
       onRowClick,
       warnings,
-      gpuLayout,
     } = this.props;
 
     const { jobs, nodes } = apiData;
@@ -53,11 +53,11 @@ export default class NodeOverview extends React.Component {
       let index = 0;
       if (!(numbers === null)) {
         if (numbers.length > maxNumLen) maxNumLen = numbers.length;
-        index += parseInt(numbers.join(''), 10);
+        index += parseInt(numbers.join(""), 10);
       }
       nameSorted.push({
         name,
-        sortIndex: name.replace(/\d/g, '') + index.toString().padStart(maxNumLen, '0'),
+        sortIndex: name.replace(/\d/g, "") + index.toString().padStart(maxNumLen, "0"),
       });
     }
     nameSorted.sort(
@@ -84,7 +84,6 @@ export default class NodeOverview extends React.Component {
           job,
           nodes[nodeName],
           nodeName,
-          gpuLayout,
         ).cpu;
 
         // CPU percent is out of the requested memory
@@ -108,15 +107,15 @@ export default class NodeOverview extends React.Component {
             for (let j = 0; j < job.gpuLayout[nodeName].length; j += 1) {
               const gpuIndex = job.gpuLayout[nodeName][j];
               nGpus += 1;
-              gpuPercent += nodes[nodeName].gpus['gpu'.concat(gpuIndex.toString())];
+              gpuPercent += nodes[nodeName].gpus["gpu".concat(gpuIndex.toString())];
             }
           }
           gpuPercent /= nGpus;
         }
 
-        let nodeWarn = {}
+        let nodeWarn = {};
         if (Object.keys(warnings).includes(nodeName)) {
-          nodeWarn = warnings[nodeName]
+          nodeWarn = warnings[nodeName];
         }
 
         nodePies.push(
@@ -167,7 +166,7 @@ export default class NodeOverview extends React.Component {
       const job = jobs[jid];
       if (job.username === username) {
         userJobs[jid] = job;
-        if (job.state === 'RUNNING') nRunningJobs += 1;
+        if (job.state === "RUNNING") nRunningJobs += 1;
       }
     }
 
@@ -175,7 +174,7 @@ export default class NodeOverview extends React.Component {
     for (let i = 0; i < userJobIds.length; i += 1) {
       const jid = userJobIds[i];
       const job = userJobs[jid];
-      if (job.state === 'RUNNING') {
+      if (job.state === "RUNNING") {
         const jobText = (
           <div key={jid}>
             <button
@@ -219,13 +218,13 @@ export default class NodeOverview extends React.Component {
             />
           </div>
         );
-        if (job.state === 'PENDING') {
+        if (job.state === "PENDING") {
           jobList.pending.push(jobText);
-        } else if (job.state === 'COMPLETED') {
+        } else if (job.state === "COMPLETED") {
           jobList.completed.push(jobText);
-        } else if (job.state === 'CANCELLED') {
+        } else if (job.state === "CANCELLED") {
           jobList.cancelled.push(jobText);
-        } else if (job.state === 'FAILED') {
+        } else if (job.state === "FAILED") {
           jobList.failed.push(jobText);
         }
       }
@@ -234,7 +233,7 @@ export default class NodeOverview extends React.Component {
   }
 
   getRunningJobChart(job, jobId) {
-    const { historyData, gpuLayout } = this.props;
+    const { historyData } = this.props;
     const style = getComputedStyle(document.documentElement);
     const historyChart = [];
 
@@ -264,12 +263,12 @@ export default class NodeOverview extends React.Component {
         const { nodes } = data;
 
         // Job CPU usage for all nodes of job
-        const usage = getJobUsage(jobId, job, nodes, gpuLayout);
+        const usage = getJobUsage(jobId, job, nodes);
 
         const d = new Date(data.timestamp * 1000);
 
         historyChart.push({
-          timeString: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+          timeString: `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`,
           user: usage.cpu.user,
           system: usage.cpu.system,
           wait: usage.cpu.wait,
@@ -286,16 +285,16 @@ export default class NodeOverview extends React.Component {
         <PropChartMini
           name="Job CPU usage"
           data={historyChart}
-          dataKeys={['user', 'system', 'wait']}
+          dataKeys={["user", "system", "wait"]}
           colors={[
-            style.getPropertyValue('--piecolor-user'),
-            style.getPropertyValue('--piecolor-system'),
-            style.getPropertyValue('--piecolor-wait'),
+            style.getPropertyValue("--piecolor-user"),
+            style.getPropertyValue("--piecolor-system"),
+            style.getPropertyValue("--piecolor-wait"),
           ]}
           lineStyle={[
-            'fill',
-            'fill',
-            'fill',
+            "fill",
+            "fill",
+            "fill",
           ]}
           unit="%"
           dataMax={100}
@@ -306,16 +305,16 @@ export default class NodeOverview extends React.Component {
           name="Job Memory usage"
           data={historyChart}
                     // dataKeys = {['used', 'max', 'request']}
-          dataKeys={['used', 'request']}
+          dataKeys={["used", "request"]}
           colors={[
-            style.getPropertyValue('--piecolor-mem'),
+            style.getPropertyValue("--piecolor-mem"),
             // style.getPropertyValue('--piecolor-mem'),
-            style.getPropertyValue('--piecolor-mem'),
+            style.getPropertyValue("--piecolor-mem"),
           ]}
           lineStyle={[
-            'fill',
+            "fill",
             // 'line',
-            'dashed',
+            "dashed",
           ]}
           unit="B"
           dataMax={memRequested}
@@ -326,12 +325,12 @@ export default class NodeOverview extends React.Component {
         <PropChartMini
           name="Job GPU usage"
           data={historyChart}
-          dataKeys={['gpu']}
+          dataKeys={["gpu"]}
           colors={[
-            style.getPropertyValue('--piecolor-gpu'),
+            style.getPropertyValue("--piecolor-gpu"),
           ]}
           lineStyle={[
-            'fill',
+            "fill",
           ]}
           unit="%"
           dataMax={100}
@@ -488,6 +487,7 @@ NodeOverview.propTypes = {
   username: PropTypes.string,
   historyData: PropTypes.arrayOf(PropTypes.object).isRequired,
   warnedUsers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  timestamp: PropTypes.number.isRequired,
 };
 
 NodeOverview.defaultProps = {

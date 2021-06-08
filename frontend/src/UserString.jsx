@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import config from './config';
+import React from "react";
+import PropTypes from "prop-types";
+import config from "./config";
 
 export default class UserString extends React.Component {
   shouldComponentUpdate(nextProps) {
@@ -44,16 +44,16 @@ export default class UserString extends React.Component {
       nameSort,
     } = this.props;
 
-    let nameClass = 'user-string';
+    let nameClass = "user-string";
     if (warning) {
-      if (badness > config.terribleThreshold && nameSort === 'badness') {
-        nameClass += ' terrible';
+      if (badness > config.terribleThreshold && nameSort === "badness") {
+        nameClass += " terrible";
       } else {
-        nameClass += ' warn';
+        nameClass += " warn";
       }
     }
     if (user.index === hoveredIndex) {
-      nameClass += ' hovered';
+      nameClass += " hovered";
     }
 
     // Check for badness param
@@ -61,7 +61,7 @@ export default class UserString extends React.Component {
     const params = new URLSearchParams(windowUrl);
 
     const userDescription = [];
-    if (params.has('golf')) {
+    if (params.has("golf")) {
       userDescription.push(
         <div className="user-string-percent" key="badness">
           {badness}
@@ -77,9 +77,9 @@ export default class UserString extends React.Component {
       userDescription.push(
         <div className="user-string-jobs" key="nJobs">
           {user.jobs}
-          {' '}
+          {" "}
           job
-          {(user.jobs > 1) ? 's' : ''}
+          {(user.jobs > 1) ? "s" : ""}
         </div>,
       );
     }

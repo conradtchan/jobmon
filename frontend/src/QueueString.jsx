@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 export default class QueueString extends React.PureComponent {
   render() {
@@ -13,15 +13,15 @@ export default class QueueString extends React.PureComponent {
         </div>
         <div className="queue-string-hours">
           {user.hours.toFixed(0)}
-          {' '}
+          {" "}
           cpu-h
         </div>
         <div className="queue-string-jobs">
           (
           {user.jobs}
-          {' '}
+          {" "}
           job
-          {(user.jobs > 1) ? 's' : ''}
+          {(user.jobs > 1) ? "s" : ""}
           )
         </div>
       </div>

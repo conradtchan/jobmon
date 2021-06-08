@@ -1,5 +1,4 @@
-import React from 'react';
-import config from './config';
+import React from "react";
 
 import {
   ResponsiveContainer,
@@ -8,20 +7,21 @@ import {
   YAxis,
   Tooltip,
   BarChart,
-} from 'recharts';
-import PropTypes from 'prop-types';
+} from "recharts";
+import PropTypes from "prop-types";
+import config from "./config";
+
+function timeString(num) {
+  const hours = Math.floor(num / 3600);
+  const minutes = Math.floor((num % 3600) / 60);
+  return `${hours}:${(`0${minutes}`).slice(-2)}`;
+}
 
 export default class Backfill extends React.PureComponent {
-  timeString(num) {
-    const hours = Math.floor(num / 3600);
-    const minutes = Math.floor((num % 3600) / 60);
-    return `${hours}:${(`0${minutes}`).slice(-2)}`;
-  }
-
   render() {
     const style = getComputedStyle(document.documentElement);
-    const tickColor = style.getPropertyValue('--text-color');
-    const textColor = style.getPropertyValue('--text-color-alt');
+    const tickColor = style.getPropertyValue("--text-color");
+    const textColor = style.getPropertyValue("--text-color-alt");
 
     const { backfillData } = this.props;
 
@@ -49,11 +49,11 @@ export default class Backfill extends React.PureComponent {
           // don't display a value greater than the max because users cannot
           // request that much anyway
           if (tMin > config.tMaxRes) {
-            tMin = config.tMaxRes
+            tMin = config.tMaxRes;
           }
 
           if (tMax > config.tMaxRes) {
-            tMax = config.tMaxRes
+            tMax = config.tMaxRes;
           }
 
           data.push({
@@ -64,9 +64,9 @@ export default class Backfill extends React.PureComponent {
           count[cores] = backfillData[partition][cores].count;
         }
 
-        let unit = '-core';
+        let unit = "-core";
         if (Object.keys(backfillData[partition]).length > 6) {
-          unit = '';
+          unit = "";
         }
 
         backfillCharts.push(
@@ -87,15 +87,15 @@ export default class Backfill extends React.PureComponent {
                 />
                 <YAxis
                   type="number"
-                  domain={[0, dataMax => Math.min(dataMax, config.tMaxRes)]}
+                  domain={[0, (dataMax) => Math.min(dataMax, config.tMaxRes)]}
                   allowDataOverflow
-                  tickFormatter={(value) => this.timeString(value)}
+                  tickFormatter={(value) => timeString(value)}
                   tick={{ fill: tickColor }}
                 />
                 <Tooltip
-                  labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? 's' : ''} available)`}
-                  formatter={(value) => this.timeString(value)}
-                  labelStyle={{color: textColor}}
+                  labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? "s" : ""} available)`}
+                  formatter={(value) => timeString(value)}
+                  labelStyle={{ color: textColor }}
                 />
                 <Bar dataKey="shortest" fill="#8884d8" />
                 <Bar dataKey="longest" fill="#82ca9d" />
@@ -112,8 +112,10 @@ export default class Backfill extends React.PureComponent {
           Available Resources (Backfill)
         </div>
         <div className="instruction">
-          Jobs with time requests shorter than the longest slot (mouseover) may be able to start instantly,
-          subject to memory constraints. Jobs that request time beyond what is available in backfill will be scheduled to start in the future.
+          Jobs with time requests shorter than the longest slot (mouseover)
+          may be able to start instantly, subject to memory constraints.
+          Jobs that request time beyond what is available in backfill will
+          be scheduled to start in the future.
           <br />
           <br />
         </div>

@@ -35,6 +35,8 @@ repos:
     hooks:
       - id: eslint
         args: ['--fix']
+        files: \.jsx?$
+        types: [file]
         additional_dependencies:
           - babel-eslint@10.1.0
           - eslint@7.8.1

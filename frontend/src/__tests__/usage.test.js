@@ -1,7 +1,6 @@
 import { getJobUsage, getNodeUsage } from "../usage";
 
 const testData = require("./test_data.json");
-const gpuLayout = require("./reference_gpuLayout.json");
 
 const nodeUsageRef = require("./reference_nodeUsage.json");
 const jobUsageRef = require("./reference_jobUsage.json");
@@ -27,7 +26,7 @@ it("per-job resource usage for a specific node", () => {
       for (let j = 0; j < hosts.length; j += 1) {
         const host = hosts[j];
         const node = testData.nodes[host];
-        const usage = getNodeUsage(jid, job, node, host, gpuLayout);
+        const usage = getNodeUsage(jid, job, node, host);
 
         ref[jid][host] = usage;
 
@@ -54,7 +53,7 @@ it("per-job resource usage", () => {
 
     // Test running jobs only
     if (job.state === "RUNNING") {
-      const usage = getJobUsage(jid, job, testData.nodes, gpuLayout);
+      const usage = getJobUsage(jid, job, testData.nodes);
 
       ref[jid] = usage;
 

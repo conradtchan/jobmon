@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import QueueString from './QueueString';
+import React from "react";
+import PropTypes from "prop-types";
+import QueueString from "./QueueString";
 
 export default class Queue extends React.PureComponent {
   render() {
@@ -28,20 +28,20 @@ export default class Queue extends React.PureComponent {
         </div>
         <div className="label">
           {queueTotal.size}
-          {' '}
+          {" "}
           job
-          {(queueTotal.size !== 1) ? 's' : ''}
-          {' '}
+          {(queueTotal.size !== 1) ? "s" : ""}
+          {" "}
           for
-          {' '}
+          {" "}
           {queueTotal.cpuHours.toFixed(0)}
-          {' '}
+          {" "}
           cpu-h
         </div>
         <div className="label">
           (
           {(queueTotal.cpuHours / availCores).toFixed(0)}
-          {' '}
+          {" "}
           machine-h)
           <br />
         </div>

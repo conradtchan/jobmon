@@ -1,7 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import constants from './constants';
-
+import React from "react";
+import PropTypes from "prop-types";
 import {
   ResponsiveContainer,
   Tooltip,
@@ -9,7 +7,8 @@ import {
   Area,
   XAxis,
   YAxis,
-} from 'recharts';
+} from "recharts";
+import constants from "./constants";
 
 export default class PropChart extends React.PureComponent {
   getAreas(scale) {
@@ -25,7 +24,7 @@ export default class PropChart extends React.PureComponent {
 
     // Make areas
     for (let i = 0; i < dataKeys.length; i += 1) {
-      if (lineStyle[i] === 'dashed') {
+      if (lineStyle[i] === "dashed") {
         items.push(
           <Area
             key={dataKeys[i]}
@@ -35,12 +34,12 @@ export default class PropChart extends React.PureComponent {
             stroke={colors[i]}
             fillOpacity={0}
             strokeDasharray="5 5"
-            stackId={stacked ? '2' : i}
+            stackId={stacked ? "2" : i}
             isAnimationActive={false}
             unit={scale + unit}
           />,
         );
-      } else if (lineStyle[i] === 'line') {
+      } else if (lineStyle[i] === "line") {
         items.push(
           <Area
             key={dataKeys[i]}
@@ -49,7 +48,7 @@ export default class PropChart extends React.PureComponent {
             dataKey={dataKeys[i]}
             stroke={colors[i]}
             fillOpacity={0}
-            stackId={stacked ? '2' : i}
+            stackId={stacked ? "2" : i}
             isAnimationActive={false}
             unit={scale + unit}
           />,
@@ -63,7 +62,7 @@ export default class PropChart extends React.PureComponent {
             dataKey={dataKeys[i]}
             stroke={colors[i]}
             fill={colors[i]}
-            stackId={stacked ? '1' : i}
+            stackId={stacked ? "1" : i}
             isAnimationActive={false}
             unit={scale + unit}
           />,
@@ -101,20 +100,20 @@ export default class PropChart extends React.PureComponent {
     const thresh = 1;
     if (maxVal > thresh * constants.gb) {
       factor = constants.gb;
-      scale = 'G';
+      scale = "G";
     } else if (maxVal > thresh * constants.mb) {
       factor = constants.mb;
-      scale = 'M';
+      scale = "M";
     } else if (maxVal > thresh * constants.kb) {
       factor = constants.kb;
-      scale = 'K';
+      scale = "K";
     } else {
       factor = 1;
-      scale = '';
+      scale = "";
     }
 
     // Scale max
-    if ((dataMax === parseInt(dataMax, 10)) && !(unit === '%')) {
+    if ((dataMax === parseInt(dataMax, 10)) && !(unit === "%")) {
       dataMax = Math.floor(dataMax / factor);
     }
 
@@ -147,8 +146,8 @@ export default class PropChart extends React.PureComponent {
     } = this.props;
 
     const style = getComputedStyle(document.documentElement);
-    const tickColor = style.getPropertyValue('--text-color');
-    const textColor = style.getPropertyValue('--text-color-alt');
+    const tickColor = style.getPropertyValue("--text-color");
+    const textColor = style.getPropertyValue("--text-color-alt");
 
     const d = this.scaledData();
     const areas = this.getAreas(d.scale);
@@ -179,7 +178,7 @@ export default class PropChart extends React.PureComponent {
                 tick={{ fill: tickColor }}
               />
               {areas}
-              <Tooltip labelStyle={{color: textColor}} />
+              <Tooltip labelStyle={{ color: textColor }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
