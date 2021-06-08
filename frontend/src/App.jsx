@@ -62,7 +62,7 @@ class App extends React.Component {
       }
 
       // User filter
-      if (localStorage.getItem("userFilter") !== '') {
+      if (localStorage.getItem("userFilter") !== null) {
         this.setState({
           userFilter: localStorage.getItem("userFilter"),
           defaultUserFilter: localStorage.getItem("userFilter")
