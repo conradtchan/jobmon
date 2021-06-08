@@ -34,7 +34,6 @@ export default class NodeOverview extends React.Component {
       apiData,
       onRowClick,
       warnings,
-      gpuLayout,
     } = this.props;
 
     const { jobs, nodes } = apiData;
@@ -84,7 +83,6 @@ export default class NodeOverview extends React.Component {
           job,
           nodes[nodeName],
           nodeName,
-          gpuLayout,
         ).cpu;
 
         // CPU percent is out of the requested memory
@@ -234,7 +232,7 @@ export default class NodeOverview extends React.Component {
   }
 
   getRunningJobChart(job, jobId) {
-    const { historyData, gpuLayout } = this.props;
+    const { historyData } = this.props;
     const style = getComputedStyle(document.documentElement);
     const historyChart = [];
 
@@ -264,7 +262,7 @@ export default class NodeOverview extends React.Component {
         const { nodes } = data;
 
         // Job CPU usage for all nodes of job
-        const usage = getJobUsage(jobId, job, nodes, gpuLayout);
+        const usage = getJobUsage(jobId, job, nodes);
 
         const d = new Date(data.timestamp * 1000);
 

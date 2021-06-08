@@ -1,7 +1,7 @@
 import config from "./config";
 
 // Get the per job usage for a specific node
-export function getNodeUsage(jid, job, node, host, gpuLayout) {
+export function getNodeUsage(jid, job, node, host) {
   const usage = {
     cpu: {
       user: 0, system: 0, wait: 0, idle: 0,
@@ -34,17 +34,15 @@ export function getNodeUsage(jid, job, node, host, gpuLayout) {
       usage.gpu.total = 0;
 
       // If the GPU mapping is known
-      if (Object.prototype.hasOwnProperty.call(gpuLayout, jid)) {
-        if (Object.prototype.hasOwnProperty.call(gpuLayout[jid], host)) {
-          if (gpuLayout[jid][host].length > 0) {
-            usage.gpu.total = 0;
-            nGpus = 0;
-            const gpuNumbers = Object.keys(gpuLayout[jid][host]);
-            for (let j = 0; j < gpuNumbers.length; j += 1) {
-              const iGpu = gpuNumbers[j];
-              usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
-              nGpus += 1;
-            }
+      if (Object.prototype.hasOwnProperty.call(job.gpuLayout, host)) {
+        if (job.gpuLayout[host].length > 0) {
+          usage.gpu.total = 0;
+          nGpus = 0;
+          const gpuNumbers = Object.keys(job.gpuLayout[host]);
+          for (let j = 0; j < gpuNumbers.length; j += 1) {
+            const iGpu = gpuNumbers[j];
+            usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
+            nGpus += 1;
           }
         }
       }
@@ -79,7 +77,7 @@ export function getNodeUsage(jid, job, node, host, gpuLayout) {
 }
 
 // Get the per job usage
-export function getJobUsage(jid, job, nodes, gpuLayout) {
+export function getJobUsage(jid, job, nodes) {
   const usage = {
     cpu: {
       user: 0, system: 0, wait: 0, idle: 0,
@@ -96,7 +94,7 @@ export function getJobUsage(jid, job, nodes, gpuLayout) {
   for (let i = 0; i < hosts.length; i += 1) {
     const host = hosts[i];
     if (host in nodes) {
-      const nodeUsage = getNodeUsage(jid, job, nodes[host], host, gpuLayout);
+      const nodeUsage = getNodeUsage(jid, job, nodes[host], host);
       const nCores = job.layout[host].length;
       usage.cpu.user += nodeUsage.cpu.user * nCores;
       usage.cpu.system += nodeUsage.cpu.system * nCores;

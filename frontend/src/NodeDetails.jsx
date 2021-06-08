@@ -1,15 +1,20 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import JobText from './JobText';
-import PropChart from './PropChart';
-import CorePie from './CorePie';
-import config from './config';
-import constants from './constants';
-import arraysEqual from './utils'
-import { getNodeUsage } from './usage'
+import React from "react";
+import PropTypes from "prop-types";
+import JobText from "./JobText";
+import PropChart from "./PropChart";
+import CorePie from "./CorePie";
+import config from "./config";
+import constants from "./constants";
+import arraysEqual from "./utils";
+import { getNodeUsage } from "./usage";
+
+function getTimestampList(historyData) {
+  return historyData.map((a) => a.timestamp);
+}
 
 export default class NodeDetails extends React.Component {
   static whyDidYouRender = true
+
   shouldComponentUpdate(nextProps) {
     const {
       name,
@@ -22,26 +27,25 @@ export default class NodeDetails extends React.Component {
     } = this.props;
 
     if (nextProps.name !== name) {
-      return true
+      return true;
     } if (nextProps.username !== username) {
-      return true
+      return true;
     } if (nextProps.selectedJobId !== selectedJobId) {
-      return true
+      return true;
     } if (nextProps.timestamp !== timestamp) {
-      return true
+      return true;
     } if (nextProps.timeWindow !== timeWindow) {
-      return true
-    } if (!arraysEqual(this.getTimestampList(nextProps.historyData), this.getTimestampList(historyData))) {
-      return true
+      return true;
+    } if (!arraysEqual(
+      getTimestampList(nextProps.historyData),
+      getTimestampList(historyData),
+    )) {
+      return true;
     } if (nextProps.theme !== theme) {
-      return true
+      return true;
     }
 
-    return false
-  }
-
-  getTimestampList(historyData) {
-    return historyData.map(a => a.timestamp)
+    return false;
   }
 
   getCorePies() {
@@ -72,10 +76,10 @@ export default class NodeDetails extends React.Component {
           key={i}
           type="cpu"
           data={[
-            { name: 'user', data: core[config.cpuKeys.user] + core[config.cpuKeys.nice] },
-            { name: 'wait', data: core[config.cpuKeys.wait] },
-            { name: 'system', data: core[config.cpuKeys.system] },
-            { name: 'idle', data: core[config.cpuKeys.idle] },
+            { name: "user", data: core[config.cpuKeys.user] + core[config.cpuKeys.nice] },
+            { name: "wait", data: core[config.cpuKeys.wait] },
+            { name: "system", data: core[config.cpuKeys.system] },
+            { name: "idle", data: core[config.cpuKeys.idle] },
           ]}
           selected={coreSelected}
         />,
@@ -94,19 +98,19 @@ export default class NodeDetails extends React.Component {
 
     if (Object.prototype.hasOwnProperty.call(warnings, name)) {
       if (warnings[name].node.swapUse) {
-        warningText.push('Node is using disk swap');
+        warningText.push("Node is using disk swap");
       }
 
       if (Object.prototype.hasOwnProperty.call(warnings[name].jobs, selectedJobId)) {
         const jobWarns = warnings[name].jobs[selectedJobId];
         if (jobWarns.cpuUtil) {
-          warningText.push('Job underutilizes requested CPUs');
+          warningText.push("Job underutilizes requested CPUs");
         }
         if (jobWarns.cpuWait) {
-          warningText.push('Job spends significant time waiting');
+          warningText.push("Job spends significant time waiting");
         }
         if (jobWarns.memUtil) {
-          warningText.push('Job underutilizes requested memory');
+          warningText.push("Job underutilizes requested memory");
         }
       }
     }
@@ -118,7 +122,7 @@ export default class NodeDetails extends React.Component {
         warningList.push(
           <div key={w} className="bad-job">
             Warning:
-            {' '}
+            {" "}
             {w}
           </div>,
         );
@@ -166,7 +170,6 @@ export default class NodeDetails extends React.Component {
       name,
       selectedJobId,
       historyData,
-      gpuLayout,
     } = this.props;
     const historyChart = [];
 
@@ -196,7 +199,7 @@ export default class NodeDetails extends React.Component {
       if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
         const job = data.jobs[selectedJobId];
 
-        const usage = getNodeUsage(selectedJobId, data.jobs[selectedJobId], nodeData, name, gpuLayout);
+        const usage = getNodeUsage(selectedJobId, data.jobs[selectedJobId], nodeData, name);
 
         // Memory usage
         if (Object.prototype.hasOwnProperty.call(job.mem, name)) {
@@ -214,7 +217,7 @@ export default class NodeDetails extends React.Component {
       const d = new Date(data.timestamp * 1000);
       const x = {
         time: data.timestamp,
-        timeString: `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+        timeString: `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`,
         user: nodeData.cpu.total[config.cpuKeys.user] + nodeData.cpu.total[config.cpuKeys.nice],
         system: nodeData.cpu.total[config.cpuKeys.system],
         wait: nodeData.cpu.total[config.cpuKeys.wait],
@@ -225,7 +228,7 @@ export default class NodeDetails extends React.Component {
         job_mem: jobMem * constants.mb,
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
-        swap: (nodeData.swap.total - nodeData.swap.free) *constants.mb,
+        swap: (nodeData.swap.total - nodeData.swap.free) * constants.mb,
       };
 
       if (nodeData.infiniband !== null) {
@@ -274,16 +277,16 @@ export default class NodeDetails extends React.Component {
         <PropChart
           name="CPU total"
           data={historyChart}
-          dataKeys={['user', 'system', 'wait']}
+          dataKeys={["user", "system", "wait"]}
           colors={[
-            style.getPropertyValue('--piecolor-user'),
-            style.getPropertyValue('--piecolor-system'),
-            style.getPropertyValue('--piecolor-wait'),
+            style.getPropertyValue("--piecolor-user"),
+            style.getPropertyValue("--piecolor-system"),
+            style.getPropertyValue("--piecolor-wait"),
           ]}
           lineStyle={[
-            'fill',
-            'fill',
-            'fill',
+            "fill",
+            "fill",
+            "fill",
           ]}
           unit="%"
           dataMax={100}
@@ -292,12 +295,12 @@ export default class NodeDetails extends React.Component {
         <PropChart
           name="Memory"
           data={historyChart}
-          dataKeys={['mem']}
+          dataKeys={["mem"]}
           colors={[
-            style.getPropertyValue('--piecolor-mem'),
+            style.getPropertyValue("--piecolor-mem"),
           ]}
           lineStyle={[
-            'fill',
+            "fill",
           ]}
           unit="B"
           dataMax={node.mem.total * constants.mb}
@@ -306,12 +309,12 @@ export default class NodeDetails extends React.Component {
         <PropChart
           name="Swap"
           data={historyChart}
-          dataKeys={['swap']}
+          dataKeys={["swap"]}
           colors={[
-            style.getPropertyValue('--piecolor-wait'),
+            style.getPropertyValue("--piecolor-wait"),
           ]}
           lineStyle={[
-            'fill',
+            "fill",
           ]}
           unit="B"
           dataMax={node.swap.total * constants.mb}
@@ -322,10 +325,10 @@ export default class NodeDetails extends React.Component {
           data={historyChart}
           dataKeys={gpuNames}
           colors={[
-            style.getPropertyValue('--piecolor-gpu'),
+            style.getPropertyValue("--piecolor-gpu"),
           ]}
           lineStyle={[
-            'fill',
+            "fill",
           ]}
           unit="%"
           dataMax={100}
@@ -334,14 +337,14 @@ export default class NodeDetails extends React.Component {
         <PropChart
           name="InfiniBand traffic"
           data={historyChart}
-          dataKeys={['infiniband_in', 'infiniband_out']}
+          dataKeys={["infiniband_in", "infiniband_out"]}
           colors={[
-            style.getPropertyValue('--piecycle-1'),
-            style.getPropertyValue('--piecycle-2'),
+            style.getPropertyValue("--piecycle-1"),
+            style.getPropertyValue("--piecycle-2"),
           ]}
           lineStyle={[
-            'fill',
-            'fill',
+            "fill",
+            "fill",
           ]}
           unit="B/s"
           dataMax="dataMax"
@@ -350,14 +353,14 @@ export default class NodeDetails extends React.Component {
         <PropChart
           name="InfiniBand packet rate"
           data={historyChart}
-          dataKeys={['infiniband_pkts_in', 'infiniband_pkts_out']}
+          dataKeys={["infiniband_pkts_in", "infiniband_pkts_out"]}
           colors={[
-            style.getPropertyValue('--piecycle-3'),
-            style.getPropertyValue('--piecycle-4'),
+            style.getPropertyValue("--piecycle-3"),
+            style.getPropertyValue("--piecycle-4"),
           ]}
           lineStyle={[
-            'fill',
-            'fill',
+            "fill",
+            "fill",
           ]}
           unit="/s"
           dataMax="dataMax"
@@ -366,14 +369,14 @@ export default class NodeDetails extends React.Component {
         <PropChart
           name="Lustre access"
           data={historyChart}
-          dataKeys={['lustre_read', 'lustre_write']}
+          dataKeys={["lustre_read", "lustre_write"]}
           colors={[
-            style.getPropertyValue('--piecycle-1'),
-            style.getPropertyValue('--piecycle-2'),
+            style.getPropertyValue("--piecycle-1"),
+            style.getPropertyValue("--piecycle-2"),
           ]}
           lineStyle={[
-            'fill',
-            'fill',
+            "fill",
+            "fill",
           ]}
           unit="B/s"
           dataMax="dataMax"
@@ -382,14 +385,14 @@ export default class NodeDetails extends React.Component {
         <PropChart
           name="JOBFS access"
           data={historyChart}
-          dataKeys={['jobfs_read', 'jobfs_write']}
+          dataKeys={["jobfs_read", "jobfs_write"]}
           colors={[
-            style.getPropertyValue('--piecycle-1'),
-            style.getPropertyValue('--piecycle-2'),
+            style.getPropertyValue("--piecycle-1"),
+            style.getPropertyValue("--piecycle-2"),
           ]}
           lineStyle={[
-            'fill',
-            'fill',
+            "fill",
+            "fill",
           ]}
           unit="B/s"
           dataMax="dataMax"
@@ -409,15 +412,15 @@ export default class NodeDetails extends React.Component {
         key="cpu"
         name="CPU"
         data={historyChart}
-        dataKeys={['job_user', 'job_system', 'job_wait']}
+        dataKeys={["job_user", "job_system", "job_wait"]}
         colors={[
-          style.getPropertyValue('--piecolor-user'),
-          style.getPropertyValue('--piecolor-system'),
-          style.getPropertyValue('--piecolor-wait'),
+          style.getPropertyValue("--piecolor-user"),
+          style.getPropertyValue("--piecolor-system"),
+          style.getPropertyValue("--piecolor-wait"),
         ]}
         lineStyle={[
-          'fill',
-          'fill',
+          "fill",
+          "fill",
         ]}
         unit="%"
         dataMax={100}
@@ -431,16 +434,16 @@ export default class NodeDetails extends React.Component {
           key="mem"
           name="Memory"
           data={historyChart}
-          dataKeys={['job_mem', 'job_mem_max', 'job_mem_requested']}
+          dataKeys={["job_mem", "job_mem_max", "job_mem_requested"]}
           colors={[
-            style.getPropertyValue('--piecolor-mem'),
-            style.getPropertyValue('--piecolor-mem'),
-            style.getPropertyValue('--piecolor-mem'),
+            style.getPropertyValue("--piecolor-mem"),
+            style.getPropertyValue("--piecolor-mem"),
+            style.getPropertyValue("--piecolor-mem"),
           ]}
           lineStyle={[
-            'fill',
-            'line',
-            'dashed',
+            "fill",
+            "line",
+            "dashed",
           ]}
           unit="B"
           stacked={false}
@@ -473,7 +476,7 @@ export default class NodeDetails extends React.Component {
   }
 
   idCopy(id) {
-    navigator.clipboard.writeText(id)
+    navigator.clipboard.writeText(id);
   }
 
   render() {
@@ -517,9 +520,9 @@ export default class NodeDetails extends React.Component {
         <div id="nodename-title">
           <button id="id-button" onClick={() => this.idCopy(selectedJobId)} type="button">
             {selectedJobId}
-            {' '}
-            {(selectedJobId !== null) && 'on'}
-            {' '}
+            {" "}
+            {(selectedJobId !== null) && "on"}
+            {" "}
             {name}
           </button>
           <div className="copyhint">
@@ -615,6 +618,8 @@ NodeDetails.propTypes = {
   changeTimeWindow: PropTypes.func.isRequired,
   timeWindow: PropTypes.number.isRequired,
   historyData: PropTypes.arrayOf(PropTypes.object),
+  timestamp: PropTypes.number.isRequired,
+  theme: PropTypes.string.isRequired,
 };
 
 NodeDetails.defaultProps = {
