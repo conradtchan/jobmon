@@ -14,7 +14,6 @@ import TimeMachine from './TimeMachine';
 import Queue from './Queue';
 import Backfill from './Backfill';
 import { generateWarnings, getWarnedUsers} from './warnings';
-import extractGpuLayout from './gpuLayout';
 
 class App extends React.Component {
   static whyDidYouRender = true
@@ -33,7 +32,6 @@ class App extends React.Component {
       historyDataWindow: 600, // seconds
       future: false,
       backfill: null,
-      gpuLayout: null,
       warnings: {},
       warnedUsers: [],
       systemUsage: null,
@@ -236,7 +234,6 @@ class App extends React.Component {
       username,
       job,
       historyData,
-      gpuLayout,
       warnings,
       warnedUsers,
     } = this.state;
@@ -276,7 +273,6 @@ class App extends React.Component {
         onJobClick={(jobId) => this.selectJob(jobId)}
         historyData={historyData}
         getTotalUsage={(total) => this.getTotalUsage(total)}
-        gpuLayout={gpuLayout}
       />
     );
   }
@@ -298,7 +294,6 @@ class App extends React.Component {
       job,
       historyData,
       historyDataWindow,
-      gpuLayout,
       warnings,
       theme,
     } = this.state;
@@ -315,7 +310,6 @@ class App extends React.Component {
         historyData={historyData}
         changeTimeWindow={(t) => this.changeTimeWindow(t)}
         timeWindow={historyDataWindow}
-        gpuLayout={gpuLayout}
         theme={theme}
       />
     );
@@ -603,7 +597,7 @@ class App extends React.Component {
       .then((response) => response.json())
       .then((data) => {
 
-        if (data.api === config.apiVersion) {
+        if (true) {
           that.cleanState(data);
           that.setState({
             apiData: data,
@@ -649,7 +643,7 @@ class App extends React.Component {
 
           that.cleanState(data);
 
-          if (data.api === config.apiVersion) {
+          if (true) {
             that.setState({
               apiData: data,
               snapshotTime: new Date(data.timestamp * 1000),
@@ -666,7 +660,6 @@ class App extends React.Component {
   }
 
   postFetch() {
-    this.setGpuLayout()
     this.updateHistoryData()
     this.getRunningData()
     this.setState({
@@ -689,14 +682,6 @@ class App extends React.Component {
       warnedUsers: warnedUsers,
     })
 
-  }
-
-  setGpuLayout() {
-    const { apiData, gpuLayout } = this.state
-    const newLayout = extractGpuLayout(apiData, gpuLayout)
-    if (newLayout !== null) {
-      this.setState({gpuLayout: newLayout})
-    }
   }
 
   fetchBackfill() {
@@ -804,9 +789,7 @@ class App extends React.Component {
           .then((response) => response.json())
           .then((data) => {
 
-            if (data.api === config.apiVersion) {
-              historyDataTemp.push(data);
-            }
+            historyDataTemp.push(data);
 
             // If the last snapshot has been read
             if (i === requestDataTimes.length - 1) {
