@@ -1,5 +1,5 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import React from "react";
+import PropTypes from "prop-types";
 
 import {
   ResponsiveContainer,
@@ -8,15 +8,11 @@ import {
   Sector,
   Cell,
   Label,
-} from 'recharts';
+} from "recharts";
 
 export default class UsagePie extends React.Component {
   componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
+    window.addEventListener("resize", this.handleResize);
   }
 
   shouldComponentUpdate(nextProps) {
@@ -27,14 +23,14 @@ export default class UsagePie extends React.Component {
     } = this.props;
 
     if (runningData.length !== nextProps.runningData.length) {
-      return true
+      return true;
     }
 
     for (let i = 0; i < runningData.length; i += 1) {
       if (activeIndex !== nextProps.activeIndex) {
-        return true
+        return true;
       } if (activeSectorSize !== nextProps.activeSectorSize) {
-        return true
+        return true;
       } if (runningData[i].username !== nextProps.runningData[i].username) {
         return true;
       } if (runningData[i].cpus !== nextProps.runningData[i].cpus) {
@@ -45,6 +41,10 @@ export default class UsagePie extends React.Component {
     }
 
     return false;
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("resize", this.handleResize);
   }
 
   handleResize = () => {
@@ -70,7 +70,7 @@ export default class UsagePie extends React.Component {
     const { activeSectorSize } = this.props;
 
     let growth = 0.0;
-    if (activeSectorSize === 'small') {
+    if (activeSectorSize === "small") {
       growth = 0.02;
     } else {
       growth = 0.04;
@@ -95,10 +95,10 @@ export default class UsagePie extends React.Component {
   render() {
     const style = getComputedStyle(document.documentElement);
     const pieColors = [
-      style.getPropertyValue('--piecycle-1'),
-      style.getPropertyValue('--piecycle-2'),
-      style.getPropertyValue('--piecycle-3'),
-      style.getPropertyValue('--piecycle-4'),
+      style.getPropertyValue("--piecycle-1"),
+      style.getPropertyValue("--piecycle-2"),
+      style.getPropertyValue("--piecycle-3"),
+      style.getPropertyValue("--piecycle-4"),
     ];
 
     const {
@@ -109,7 +109,7 @@ export default class UsagePie extends React.Component {
       onPieClick,
     } = this.props;
 
-    const pieDiv = document.getElementById('usage-pie');
+    const pieDiv = document.getElementById("usage-pie");
     let pieWidth;
     if (pieDiv) {
       pieWidth = pieDiv.offsetWidth;

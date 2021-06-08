@@ -12,6 +12,10 @@ function getTimestampList(historyData) {
   return historyData.map((a) => a.timestamp);
 }
 
+function idCopy(id) {
+  navigator.clipboard.writeText(id);
+}
+
 export default class NodeDetails extends React.Component {
   static whyDidYouRender = true
 
@@ -475,10 +479,6 @@ export default class NodeDetails extends React.Component {
     return false;
   }
 
-  idCopy(id) {
-    navigator.clipboard.writeText(id);
-  }
-
   render() {
     const {
       name,
@@ -518,7 +518,7 @@ export default class NodeDetails extends React.Component {
     return (
       <div className="main-item right">
         <div id="nodename-title">
-          <button id="id-button" onClick={() => this.idCopy(selectedJobId)} type="button">
+          <button id="id-button" onClick={() => idCopy(selectedJobId)} type="button">
             {selectedJobId}
             {" "}
             {(selectedJobId !== null) && "on"}

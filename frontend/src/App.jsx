@@ -1,22 +1,33 @@
-import React from 'react';
+import React from "react";
 
-import { version } from '../package.json';
+import { version } from "../package.json";
 
-import logo from './logo.png';
-import './App.css';
+import logo from "./logo.png";
+import "./App.css";
 
-import config from './config';
+import config from "./config";
 
-import NodeDetails from './NodeDetails';
-import NodeOverview from './NodeOverview';
-import UserPiePlot from './UserPiePlot';
-import TimeMachine from './TimeMachine';
-import Queue from './Queue';
-import Backfill from './Backfill';
-import { generateWarnings, getWarnedUsers} from './warnings';
+import NodeDetails from "./NodeDetails";
+import NodeOverview from "./NodeOverview";
+import UserPiePlot from "./UserPiePlot";
+import TimeMachine from "./TimeMachine";
+import Queue from "./Queue";
+import Backfill from "./Backfill";
+import { generateWarnings, getWarnedUsers } from "./warnings";
+
+function getTotalUsage(totalArray) {
+  const total = {};
+  const categories = Object.keys(config.cpuKeys);
+  for (let i = 0; i < categories.length; i += 1) {
+    const key = categories[i];
+    total[key] = totalArray[config.cpuKeys[key]];
+  }
+  return total;
+}
 
 class App extends React.Component {
   static whyDidYouRender = true
+
   constructor(props) {
     super(props);
     this.state = {
@@ -36,8 +47,8 @@ class App extends React.Component {
       warnedUsers: [],
       systemUsage: null,
       theme: "light",
-      userFilter: '',
-      defaultUserFilter: '',
+      userFilter: "",
+      defaultUserFilter: "",
       runningData: {},
     };
 
@@ -47,27 +58,31 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    this.intervalFetch = setInterval(() => this.fetchLatest(), config.fetchFrequency * 1000);
-    this.intervalHistory = setInterval(() => this.fetchHistory(), config.fetchHistoryFrequency * 1000);
-    this.intervalBackfill = setInterval(() => this.fetchBackfill(), config.fetchBackfillFrequency * 1000);
+    this.intervalFetch = setInterval(
+      () => this.fetchLatest(), config.fetchFrequency * 1000,
+    );
+    this.intervalHistory = setInterval(
+      () => this.fetchHistory(), config.fetchHistoryFrequency * 1000,
+    );
+    this.intervalBackfill = setInterval(
+      () => this.fetchBackfill(), config.fetchBackfillFrequency * 1000,
+    );
 
     // Load local storage if running in a browser
-    if (typeof localStorage !== 'undefined') {
-
+    if (typeof localStorage !== "undefined") {
       // Theme
       if (localStorage.getItem("theme") === "dark") {
-        this.setState({theme: "dark"})
+        this.setState({ theme: "dark" });
       }
 
       // User filter
       if (localStorage.getItem("userFilter") !== null) {
         this.setState({
           userFilter: localStorage.getItem("userFilter"),
-          defaultUserFilter: localStorage.getItem("userFilter")
-        })
+          defaultUserFilter: localStorage.getItem("userFilter"),
+        });
       }
     }
-
   }
 
   componentWillUnmount() {
@@ -76,12 +91,28 @@ class App extends React.Component {
     clearInterval(this.intervalBackfill);
   }
 
+  getWarnings() {
+    const {
+      apiData,
+      snapshotTime,
+      historyData,
+    } = this.state;
+
+    const warnings = generateWarnings(snapshotTime, historyData);
+    const warnedUsers = getWarnedUsers(warnings, apiData.jobs);
+
+    this.setState({
+      warnings,
+      warnedUsers,
+    });
+  }
 
   getTimeMachine() {
     const {
       history,
       snapshotTime,
       theme,
+      userFilter,
     } = this.state;
     return (
       <TimeMachine
@@ -92,7 +123,7 @@ class App extends React.Component {
         viewFuture={() => this.viewFuture()}
         viewPast={() => this.viewPast()}
         theme={theme}
-        userFilter={this.state.userFilter}
+        userFilter={userFilter}
       />
     );
   }
@@ -118,7 +149,7 @@ class App extends React.Component {
       const jobId = jobIds[i];
       const job = apiData.jobs[jobId];
       const { username } = job;
-      if (job.state === 'PENDING') {
+      if (job.state === "PENDING") {
         queueTotal.size += 1;
 
         // Time limit is given in minutes
@@ -159,7 +190,7 @@ class App extends React.Component {
   getRunningData() {
     const { apiData } = this.state;
 
-    let runningData = {};
+    const runningData = {};
 
     const jobIds = Object.keys(apiData.jobs);
 
@@ -167,7 +198,7 @@ class App extends React.Component {
       const jobId = jobIds[i];
       const job = apiData.jobs[jobId];
       const { username } = job;
-      if (job.state === 'RUNNING') {
+      if (job.state === "RUNNING") {
         if (!(Object.prototype.hasOwnProperty.call(runningData, username))) {
           runningData[username] = {
             cpus: 0,
@@ -179,7 +210,7 @@ class App extends React.Component {
       }
     }
 
-    this.setState({runningData: runningData})
+    this.setState({ runningData });
   }
 
   getUserPiePlot() {
@@ -245,7 +276,7 @@ class App extends React.Component {
     for (let i = 0; i < jobIds.length; i += 1) {
       const jobId = jobIds[i];
       // If job is running
-      if (jobs[jobId].state === 'RUNNING') {
+      if (jobs[jobId].state === "RUNNING") {
         // For each host that the job is running on
         const layoutHosts = Object.keys(jobs[jobId].layout);
         for (let j = 0; j < layoutHosts.length; j += 1) {
@@ -272,7 +303,7 @@ class App extends React.Component {
         warnedUsers={warnedUsers}
         onJobClick={(jobId) => this.selectJob(jobId)}
         historyData={historyData}
-        getTotalUsage={(total) => this.getTotalUsage(total)}
+        getTotalUsage={(total) => getTotalUsage(total)}
       />
     );
   }
@@ -350,7 +381,7 @@ class App extends React.Component {
     const jobIds = Object.keys(jobs);
     for (let i = 0; i < jobIds.length; i += 1) {
       const jobId = jobIds[i];
-      if (jobs[jobId].state === 'RUNNING') {
+      if (jobs[jobId].state === "RUNNING") {
         // Running cores
         usage.runningCores += jobs[jobId].nCpus;
         // Running nodes
@@ -441,61 +472,6 @@ class App extends React.Component {
     return badness;
   }
 
-  getTotalUsage(totalArray) {
-    const total = {};
-    const categories = Object.keys(config.cpuKeys);
-    for (let i = 0; i < categories.length; i += 1) {
-      const key = categories[i];
-      total[key] = totalArray[config.cpuKeys[key]];
-    }
-    return total;
-  }
-
-  updateUsername(name) {
-    const { job, apiData } = this.state;
-    // If this new user owns the job, then a cohab job was selected
-    // Don't clear
-    let clearJob = true;
-    if (job !== null) {
-      if (apiData.jobs[job].username === name) {
-        clearJob = false;
-      }
-    }
-
-    if (clearJob) {
-      this.setState({ username: name, nodeName: null, job: null });
-    } else {
-      this.setState({ username: name });
-    }
-  }
-
-  changeTimeWindow(t) {
-    this.setState({ historyDataWindow: t },
-      () => this.initHistoryData(config.historyDataCountInitial));
-  }
-
-  selectJob(jobId) {
-    // Unselect job if it is already selected
-    const { apiData, job, nodeName } = this.state;
-    if (job === jobId) {
-      this.setState({ job: null });
-      this.selectNode(null);
-    } else {
-      this.setState({ job: jobId },
-        () => this.setUserToJob());
-
-      // Clear node selection if this job does not run on it
-      const nodes = Object.keys(apiData.jobs[jobId].layout)
-      if (!nodes.includes(nodeName)) {
-        this.setState({ nodeName: null})
-      }
-    }
-  }
-
-  selectNode(node) {
-    this.setState({ nodeName: node });
-  }
-
   show() {
     const {
       future,
@@ -515,33 +491,32 @@ class App extends React.Component {
           return (
             <div id="main-box">
               The job monitor is currently down for maintenance and will be back soon.
-              {' '}
+              {" "}
               <br />
               Jobs will continue running and can still be inspected by logging
               in to the compute nodes directly.
             </div>
           );
-        } else {
-          if (systemUsage !== null) {
-            if (systemUsage.runningCores === 0) {
-              return (
-                <div id="main-box">
-                  There are no jobs currently running.
-                  {' '}
-                  <br />
-                </div>
-              )
-            }
-          }
-
-          return (
-            <div id="main-box">
-              {systemUsage !== null && this.getUserPiePlot()}
-              {this.getNodeOverview()}
-              {this.getNodeDetails()}
-            </div>
-          );
         }
+        if (systemUsage !== null) {
+          if (systemUsage.runningCores === 0) {
+            return (
+              <div id="main-box">
+                There are no jobs currently running.
+                {" "}
+                <br />
+              </div>
+            );
+          }
+        }
+
+        return (
+          <div id="main-box">
+            {systemUsage !== null && this.getUserPiePlot()}
+            {this.getNodeOverview()}
+            {this.getNodeDetails()}
+          </div>
+        );
       }
     } else {
       return (
@@ -588,7 +563,6 @@ class App extends React.Component {
       }
       if (!(hasUser)) this.setState({ nodeName: null });
     }
-
   }
 
   fetchTime(time) {
@@ -596,8 +570,7 @@ class App extends React.Component {
     fetch(`${config.address}data.py?time=${time.toString()}`)
       .then((response) => response.json())
       .then((data) => {
-
-        if (true) {
+        if (data.api === config.apiVersion) {
           that.cleanState(data);
           that.setState({
             apiData: data,
@@ -605,10 +578,9 @@ class App extends React.Component {
             gotData: true,
           }, () => that.historyTimeJump());
         }
-
       })
-      .catch((err) => {
-        console.log('Error fetching history', err);
+      .catch(() => {
+        // console.log("Error fetching history", err);
       });
   }
 
@@ -619,8 +591,8 @@ class App extends React.Component {
       .then((data) => {
         that.setState({ history: data.history });
       })
-      .catch((err) => {
-        console.log('Error fetching history', err);
+      .catch(() => {
+        // console.log("Error fetching history", err);
       });
   }
 
@@ -632,56 +604,81 @@ class App extends React.Component {
       fetch(`${config.address}data.py`)
         .then((response) => response.json())
         .then((data) => {
-
           // Only update if data is new
           if (apiData !== null) {
             if (data.timestamp === apiData.timestamp) {
-              return
+              return;
             }
-
           }
 
           that.cleanState(data);
 
-          if (true) {
+          if (data.api === config.apiVersion) {
             that.setState({
               apiData: data,
               snapshotTime: new Date(data.timestamp * 1000),
               gotData: true,
             },
-            () => that.postFetch()
-            );
+            () => that.postFetch());
           }
         })
-        .catch((err) => {
-          console.log('Error fetching latest data', err);
+        .catch(() => {
+          // console.log("Error fetching latest data", err);
         });
     }
   }
 
   postFetch() {
-    this.updateHistoryData()
-    this.getRunningData()
+    this.updateHistoryData();
+    this.getRunningData();
     this.setState({
       systemUsage: this.getSystemUsage(),
-    })
+    });
   }
 
-  getWarnings() {
-    const {
-      apiData,
-      snapshotTime,
-      historyData
-    } = this.state
+  selectNode(node) {
+    this.setState({ nodeName: node });
+  }
 
-    const warnings = generateWarnings(snapshotTime, historyData)
-    const warnedUsers = getWarnedUsers(warnings, apiData.jobs)
+  selectJob(jobId) {
+    // Unselect job if it is already selected
+    const { apiData, job, nodeName } = this.state;
+    if (job === jobId) {
+      this.setState({ job: null });
+      this.selectNode(null);
+    } else {
+      this.setState({ job: jobId },
+        () => this.setUserToJob());
 
-    this.setState({
-      warnings: warnings,
-      warnedUsers: warnedUsers,
-    })
+      // Clear node selection if this job does not run on it
+      const nodes = Object.keys(apiData.jobs[jobId].layout);
+      if (!nodes.includes(nodeName)) {
+        this.setState({ nodeName: null });
+      }
+    }
+  }
 
+  changeTimeWindow(t) {
+    this.setState({ historyDataWindow: t },
+      () => this.initHistoryData(config.historyDataCountInitial));
+  }
+
+  updateUsername(name) {
+    const { job, apiData } = this.state;
+    // If this new user owns the job, then a cohab job was selected
+    // Don't clear
+    let clearJob = true;
+    if (job !== null) {
+      if (apiData.jobs[job].username === name) {
+        clearJob = false;
+      }
+    }
+
+    if (clearJob) {
+      this.setState({ username: name, nodeName: null, job: null });
+    } else {
+      this.setState({ username: name });
+    }
   }
 
   fetchBackfill() {
@@ -691,13 +688,13 @@ class App extends React.Component {
       .then((data) => {
         that.setState({ backfill: data });
       })
-      .catch((err) => {
-        console.log('Error fetching history', err);
+      .catch(() => {
+        // console.log("Error fetching history", err);
       });
   }
 
   historyTimeJump() {
-    this.getRunningData()
+    this.getRunningData();
     this.setState({ historyData: [], systemUsage: this.getSystemUsage() },
       () => this.initHistoryData(config.historyDataCountInitial));
   }
@@ -726,24 +723,21 @@ class App extends React.Component {
         }
       }
 
-      let changed = true
+      let changed = true;
       // Add newest snapshot
       if (!times.includes(apiData.timestamp) && !(apiData === null)) {
         newHistoryData.push(apiData);
-      } else {
+      } else if (newHistoryData.length === historyData.length) {
         // Check if historydata is actually unchanged
         // If the newest snapshot was not added, then the length
         // will remain the same if the contents are unchanged
-        if (newHistoryData.length === historyData.length) {
-          changed = false
-        }
+        changed = false;
       }
 
       // Update, before putting past values in (if history is too short)
       if (changed) {
         this.setState({ historyData: newHistoryData },
-          () => this.getWarnings()
-          );
+          () => this.getWarnings());
       }
     }
   }
@@ -788,15 +782,15 @@ class App extends React.Component {
         fetch(`${config.address}data.py?time=${time.toString()}`)
           .then((response) => response.json())
           .then((data) => {
-
-            historyDataTemp.push(data);
+            if (data.api === config.apiVersion) {
+              historyDataTemp.push(data);
+            }
 
             // If the last snapshot has been read
             if (i === requestDataTimes.length - 1) {
               if (nVal > historyDataTimes.length) {
                 that.setState({ historyData: historyDataTemp },
-                  () => this.getWarnings()
-                  );
+                  () => this.getWarnings());
               } else if (nVal < 200) {
                 that.setState({
                   historyData: historyDataTemp,
@@ -804,8 +798,8 @@ class App extends React.Component {
               }
             }
           })
-          .catch((err) => {
-            console.log('Error fetching history', err);
+          .catch(() => {
+            // console.log("Error fetching history", err);
           });
       }
     }
@@ -836,34 +830,35 @@ class App extends React.Component {
 
   changeTheme() {
     const {
-      theme
+      theme,
     } = this.state;
 
     if (theme === "light") {
-      this.setState({theme: "dark"})
+      this.setState({ theme: "dark" });
       localStorage.setItem("theme", "dark");
     } else {
-      this.setState({theme: "light"})
+      this.setState({ theme: "light" });
       localStorage.setItem("theme", "light");
     }
   }
 
   updateUserFilter(value) {
-    const safeValue = value.replace(/\W/g, '')
-    this.setState({userFilter: safeValue})
+    const { runningData } = this.state;
+    const safeValue = value.replace(/\W/g, "");
+    this.setState({ userFilter: safeValue });
 
-    if (Object.keys(this.state.runningData).includes(safeValue) || safeValue === "") {
-      this.updateUsername(safeValue)
-      localStorage.setItem("userFilter", safeValue)
+    if (Object.keys(runningData).includes(safeValue) || safeValue === "") {
+      this.updateUsername(safeValue);
+      localStorage.setItem("userFilter", safeValue);
     }
   }
 
   render() {
     const {
-      theme
+      theme,
     } = this.state;
 
-    document.documentElement.setAttribute("data-theme", theme)
+    document.documentElement.setAttribute("data-theme", theme);
 
     return (
       <div className="App">
@@ -892,7 +887,8 @@ class App extends React.Component {
           Dark mode
         </div>
         <div id="version">
-          v{version}
+          v
+          {version}
         </div>
       </div>
     );

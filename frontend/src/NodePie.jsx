@@ -1,12 +1,12 @@
-import React from 'react';
+import React from "react";
 import {
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   Label,
-} from 'recharts';
-import PropTypes from 'prop-types';
+} from "recharts";
+import PropTypes from "prop-types";
 
 export default class NodePie extends React.PureComponent {
   constructor(props) {
@@ -30,36 +30,36 @@ export default class NodePie extends React.PureComponent {
     const style = getComputedStyle(document.documentElement);
 
     const cpuColors = [
-      style.getPropertyValue('--piecolor-blank'),
-      style.getPropertyValue('--piecolor-system'),
-      style.getPropertyValue('--piecolor-wait'),
-      style.getPropertyValue('--piecolor-user'),
+      style.getPropertyValue("--piecolor-blank"),
+      style.getPropertyValue("--piecolor-system"),
+      style.getPropertyValue("--piecolor-wait"),
+      style.getPropertyValue("--piecolor-user"),
     ];
 
     const memColors = [
-      style.getPropertyValue('--piecolor-blank'),
-      style.getPropertyValue('--piecolor-mem'),
+      style.getPropertyValue("--piecolor-blank"),
+      style.getPropertyValue("--piecolor-mem"),
     ];
 
     const gpuColors = [
-      style.getPropertyValue('--piecolor-blank'),
-      style.getPropertyValue('--piecolor-gpu'),
+      style.getPropertyValue("--piecolor-blank"),
+      style.getPropertyValue("--piecolor-gpu"),
     ];
 
     const data = {
       cpu: [
-        { name: 'user', data: cpuUsage.user },
-        { name: 'wait', data: cpuUsage.wait },
-        { name: 'system', data: cpuUsage.system },
-        { name: 'idle', data: cpuUsage.idle },
+        { name: "user", data: cpuUsage.user },
+        { name: "wait", data: cpuUsage.wait },
+        { name: "system", data: cpuUsage.system },
+        { name: "idle", data: cpuUsage.idle },
       ],
       mem: [
-        { name: 'mem', data: mem },
-        { name: 'free', data: 100 - mem },
+        { name: "mem", data: mem },
+        { name: "free", data: 100 - mem },
       ],
       gpu: [
-        { name: 'gpu', data: gpu },
-        { name: 'free', data: 100 - gpu },
+        { name: "gpu", data: gpu },
+        { name: "free", data: 100 - gpu },
       ],
     };
 
@@ -87,11 +87,11 @@ export default class NodePie extends React.PureComponent {
         }
       }
     }
-    let nameColor = '';
+    let nameColor = "";
     if (doWarn) {
-      nameColor = style.getPropertyValue('--bad-job-color');
+      nameColor = style.getPropertyValue("--bad-job-color");
     } else {
-      nameColor = style.getPropertyValue('--text-color');
+      nameColor = style.getPropertyValue("--text-color");
     }
 
     function PieLabel({ viewBox, value1, value2 }) {
@@ -110,7 +110,7 @@ export default class NodePie extends React.PureComponent {
       );
     }
 
-    const nodeLetters = nodeName.replace(/\d+/g, '');
+    const nodeLetters = nodeName.replace(/\d+/g, "");
     const nodeNumber = parseInt(nodeName.match(/\d+$/)[0], 10);
 
     let dRing = 0;

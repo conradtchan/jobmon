@@ -1,12 +1,12 @@
-import React from 'react';
+import React from "react";
 import {
   ResponsiveContainer,
   Tooltip,
   AreaChart,
   XAxis,
   YAxis,
-} from 'recharts';
-import PropChart from './PropChart';
+} from "recharts";
+import PropChart from "./PropChart";
 
 export default class PropChartMini extends PropChart {
   render() {
@@ -14,11 +14,11 @@ export default class PropChartMini extends PropChart {
     const areas = this.getAreas(d.scale);
 
     const style = getComputedStyle(document.documentElement);
-    const textColor = style.getPropertyValue('--text-color-alt');
+    const textColor = style.getPropertyValue("--text-color-alt");
 
-    let chartClass = 'prop-chart-mini-2';
+    let chartClass = "prop-chart-mini-2";
     if (this.props.hasGpu) {
-      chartClass = 'prop-chart-mini-3';
+      chartClass = "prop-chart-mini-3";
     }
 
     return (
@@ -38,7 +38,7 @@ export default class PropChartMini extends PropChart {
               hide
               domain={[0, d.dataMax]}
             />
-            <Tooltip labelStyle={{color: textColor}} />
+            <Tooltip labelStyle={{ color: textColor }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>

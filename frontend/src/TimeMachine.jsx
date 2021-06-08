@@ -1,15 +1,15 @@
-import React from 'react';
+import React from "react";
 import {
   ResponsiveContainer,
   ComposedChart,
   Bar,
   XAxis,
   Tooltip,
-} from 'recharts';
-import PropTypes from 'prop-types';
-import { timeString } from './timeFunctions';
-import moment from 'moment'
-import config from './config';
+} from "recharts";
+import PropTypes from "prop-types";
+import moment from "moment";
+import { timeString } from "./timeFunctions";
+import config from "./config";
 
 export default class TimeMachine extends React.Component {
   constructor(props) {
@@ -17,8 +17,13 @@ export default class TimeMachine extends React.Component {
     this.state = {
       timeAgo: 0,
       showTimeMachine: false,
-      period: 'present',
+      period: "present",
     };
+  }
+
+  componentDidMount() {
+    this.getTimeAgo();
+    this.intervalClock = setInterval(() => this.getTimeAgo(), 1000);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -32,18 +37,13 @@ export default class TimeMachine extends React.Component {
     } if (nextState.timeAgo !== timeAgo) {
       return true;
     } if (nextProps.theme !== theme) {
-      return true
+      return true;
     }
     return false;
   }
 
-  componentDidMount() {
-    this.getTimeAgo();
-    this.intervalClock = setInterval(() => this.getTimeAgo(), 1000);
-  }
-
   componentWillUnmount() {
-    clearInterval(this.intervalClock)
+    clearInterval(this.intervalClock);
   }
 
   getTimeAgo() {
@@ -56,25 +56,25 @@ export default class TimeMachine extends React.Component {
   getSelector() {
     const { period } = this.state;
     const style = getComputedStyle(document.documentElement);
-    const switchWidth = style.getPropertyValue('--switch-width');
+    const switchWidth = style.getPropertyValue("--switch-width");
 
     const divStyle = {};
     let text;
-    if (period === 'past') {
+    if (period === "past") {
       divStyle.left = 0;
       divStyle.width = `${switchWidth}px`;
-      divStyle.backgroundColor = style.getPropertyValue('--piecycle-1');
-      text = 'Past';
-    } else if (period === 'present') {
+      divStyle.backgroundColor = style.getPropertyValue("--piecycle-1");
+      text = "Past";
+    } else if (period === "present") {
       divStyle.left = `${switchWidth}px`;
       divStyle.width = `${switchWidth}px`;
-      divStyle.backgroundColor = style.getPropertyValue('--piecycle-2');
-      text = 'Present';
+      divStyle.backgroundColor = style.getPropertyValue("--piecycle-2");
+      text = "Present";
     } else {
       divStyle.left = `${2 * switchWidth + 1}px`;
       divStyle.width = `${switchWidth}px`;
-      divStyle.backgroundColor = style.getPropertyValue('--piecycle-3');
-      text = 'Future';
+      divStyle.backgroundColor = style.getPropertyValue("--piecycle-3");
+      text = "Future";
     }
 
     return (
@@ -108,18 +108,17 @@ export default class TimeMachine extends React.Component {
     for (let i = 0; i < times.length; i += 1) {
       const time = times[i];
       if (i % nSkip === 0) {
-
-        let running = history[time].running
+        let { running } = history[time];
 
         if (Object.keys(history[time].users).includes(userFilter)) {
-          running = history[time].users[userFilter]
-        } else if (userFilter !== '') {
-          running = 0
+          running = history[time].users[userFilter];
+        } else if (userFilter !== "") {
+          running = 0;
         }
 
         data.push({
-          time: time,
-          running: running,
+          time,
+          running,
           free: history[time].avail - history[time].running,
         });
       }
@@ -127,15 +126,15 @@ export default class TimeMachine extends React.Component {
     }
 
     // Generate hourly tick marks
-    let hourlyTicks = []
-    let t = Math.ceil(parseInt(times[0], 10) / 3600) * 3600
-    while (t < parseInt(times[times.length-1], 10)) {
-      hourlyTicks.push(t)
-      t += 3600
+    const hourlyTicks = [];
+    let t = Math.ceil(parseInt(times[0], 10) / 3600) * 3600;
+    while (t < parseInt(times[times.length - 1], 10)) {
+      hourlyTicks.push(t);
+      t += 3600;
     }
 
     const style = getComputedStyle(document.documentElement);
-    const tickColor = style.getPropertyValue('--text-color');
+    const tickColor = style.getPropertyValue("--text-color");
 
     return (
       <div>
@@ -149,7 +148,7 @@ export default class TimeMachine extends React.Component {
           <div>
             (
             {timeString(parseInt(timeAgo, 10))}
-            {' '}
+            {" "}
             ago)
           </div>
         </div>
@@ -163,12 +162,12 @@ export default class TimeMachine extends React.Component {
               <XAxis
                 dataKey="time"
                 tick={{ fill: tickColor }}
-                tickFormatter = {(unixTime) => moment.unix(unixTime).format('HH:mm')}
+                tickFormatter={(unixTime) => moment.unix(unixTime).format("HH:mm")}
                 ticks={hourlyTicks}
                 interval={0}
                 scale="time"
                 type="number"
-                domain={['auto', 'auto']}
+                domain={["auto", "auto"]}
               />
               <Bar
                 dataKey="running"
@@ -185,7 +184,7 @@ export default class TimeMachine extends React.Component {
                 cursor="pointer"
                 hide={userFilter !== ""} // Hide free bar if users are being filtered
               />
-              <Tooltip labelFormatter = {(unixTime) => moment.unix(unixTime).format('HH:mm dddd')}/>
+              <Tooltip labelFormatter={(unixTime) => moment.unix(unixTime).format("HH:mm dddd")} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -203,9 +202,9 @@ export default class TimeMachine extends React.Component {
   changeSwitch(period) {
     this.setState({ period });
 
-    if (period === 'past') {
+    if (period === "past") {
       this.viewPast();
-    } else if (period === 'present') {
+    } else if (period === "present") {
       this.viewPresent();
     } else {
       this.viewFuture();
@@ -257,8 +256,8 @@ export default class TimeMachine extends React.Component {
             <div
               id="past"
               className="switch past"
-              onClick={() => this.changeSwitch('past')}
-              onKeyDown={() => this.changeSwitch('past')}
+              onClick={() => this.changeSwitch("past")}
+              onKeyDown={() => this.changeSwitch("past")}
               role="button"
               tabIndex={0}
             >
@@ -267,8 +266,8 @@ export default class TimeMachine extends React.Component {
             <div
               id="present"
               className="switch present"
-              onClick={() => this.changeSwitch('present')}
-              onKeyDown={() => this.changeSwitch('present')}
+              onClick={() => this.changeSwitch("present")}
+              onKeyDown={() => this.changeSwitch("present")}
               role="button"
               tabIndex={0}
             >
@@ -277,8 +276,8 @@ export default class TimeMachine extends React.Component {
             <div
               id="future"
               className="switch future"
-              onClick={() => this.changeSwitch('future')}
-              onKeyDown={() => this.changeSwitch('future')}
+              onClick={() => this.changeSwitch("future")}
+              onKeyDown={() => this.changeSwitch("future")}
               role="button"
               tabIndex={0}
             >
@@ -306,6 +305,8 @@ TimeMachine.propTypes = {
   viewPast: PropTypes.func.isRequired,
   viewFuture: PropTypes.func.isRequired,
   timeAgo: PropTypes.number,
+  theme: PropTypes.string.isRequired,
+  userFilter: PropTypes.string.isRequired,
 };
 
 TimeMachine.defaultProps = {

@@ -1,22 +1,22 @@
-import React from 'react';
+import React from "react";
 import {
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
-import PropTypes from 'prop-types';
+} from "recharts";
+import PropTypes from "prop-types";
 
 export default class CorePie extends React.PureComponent {
   render() {
     const { data, selected } = this.props;
     const style = getComputedStyle(document.documentElement);
     const pieColors = [];
-    pieColors.push(style.getPropertyValue('--piecolor-blank'));
-    pieColors.push(style.getPropertyValue('--piecolor-system'));
-    pieColors.push(style.getPropertyValue('--piecolor-wait'));
-    pieColors.push(style.getPropertyValue('--piecolor-user'));
-    const ringColor = style.getPropertyValue('--core-ring');
+    pieColors.push(style.getPropertyValue("--piecolor-blank"));
+    pieColors.push(style.getPropertyValue("--piecolor-system"));
+    pieColors.push(style.getPropertyValue("--piecolor-wait"));
+    pieColors.push(style.getPropertyValue("--piecolor-user"));
+    const ringColor = style.getPropertyValue("--core-ring");
 
     let ring = 0;
     if (selected) ring = 100;
@@ -48,7 +48,7 @@ export default class CorePie extends React.PureComponent {
             </Pie>
             {/* Selector ring */}
             <Pie
-              data={[{ name: 'ring', ring }]}
+              data={[{ name: "ring", ring }]}
               nameKey="name"
               dataKey="ring"
               innerRadius="110%"
