@@ -1,4 +1,4 @@
-import arraysEqual from './utils';
+import arraysEqual from "./utils";
 
 export default function extractGpuLayout(data, oldGpuLayout) {
   // The GPU mapping always needs to be the current one,

@@ -1,16 +1,16 @@
 const config = {
 
   // Homepage
-  homepage: 'https://supercomputing.swin.edu.au/',
+  homepage: "https://supercomputing.swin.edu.au/",
 
   // Address of API
-  address: 'https://supercomputing.swin.edu.au/monitor/api/',
+  address: "https://supercomputing.swin.edu.au/monitor/api/",
 
   // API version
   apiVersion: 13,
 
   // Page title
-  pageTitle: 'Job Monitor',
+  pageTitle: "Job Monitor",
 
   // Frequency to fetch data (seconds)
   fetchFrequency: 15,
@@ -34,6 +34,9 @@ const config = {
 
   // Factor to increase chart resolution at each refinment
   historyResolutionMultiplier: 3,
+
+  // Number of bars to show on the time machine
+  timeMachineBars: 300,
 
   // ===== Warning configuration ===== //
 

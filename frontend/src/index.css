@@ -662,3 +662,18 @@ div:focus {outline: 0px;}
 .sort-selector {
   color: var(--text-color);
 }
+
+.input-box {
+  text-align: center
+}
+
+input[type=text] {
+  padding: var(--rounding-radius);
+  border-radius: var(--rounding-radius);
+  border: var(--border-width) solid var(--medium-shade);
+  background-color: var(--background);
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: medium;
+  text-align: center;
+}
