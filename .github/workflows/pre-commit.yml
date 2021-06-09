@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
 
+defaults:
+  run:
+    working-directory: frontend
+
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
