@@ -60,7 +60,7 @@ export function instantWarnings(data) {
         }
 
         // Perform util check unless this is a single-core GPU job
-        const doUtilCheck = !((nCores === 1) || (job.nGpus > 0));
+        const doUtilCheck = !((nCores === 1) && (job.nGpus > 0));
 
         // If below utilisation
         if (doUtilCheck) {
