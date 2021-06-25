@@ -110,6 +110,9 @@ export default class NodeDetails extends React.Component {
         if (jobWarns.cpuUtil) {
           warningText.push("Job underutilizes requested CPUs");
         }
+        if (jobWarns.cpuSys) {
+          warningText.push("Job spends significant time in sys calls");
+        }
         if (jobWarns.cpuWait) {
           warningText.push("Job spends significant time waiting");
         }
