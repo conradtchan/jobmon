@@ -42,6 +42,7 @@ const config = {
 
   // Instantaneous warnings
   warnSwap: 100, // If swap use % greater than
+  warnSys: 30, // If sys use % greater than
   warnWait: 5, // If wait time % greater than
   warnUtil: 80, // If CPU usage % less than
   warnMem: 70, // If memory usage % less than

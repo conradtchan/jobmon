@@ -42,6 +42,7 @@ export function instantWarnings(data) {
 
         // CPU use
         let cpuUsage = 0;
+        let cpuSys = 0;
         let cpuWait = 0;
         const layout = job.layout[jobNodeName];
         nCores = layout.length; // Number of cores used on this node
@@ -51,6 +52,7 @@ export function instantWarnings(data) {
             cpuUsage += node.cpu.core[iLayout][config.cpuKeys.user]
               + node.cpu.core[iLayout][config.cpuKeys.system]
               + node.cpu.core[iLayout][config.cpuKeys.nice];
+            cpuSys += node.cpu.core[iLayout][config.cpuKeys.system];
             cpuWait += node.cpu.core[iLayout][config.cpuKeys.wait];
           }
         } else {
@@ -67,6 +69,14 @@ export function instantWarnings(data) {
           if (cpuUsage / nCores < config.warnUtil) {
             // Score = percentage wasted * number of cores
             warnings[jobNodeName].jobs[jobId].cpuUtil = (nCores * config.warnUtil) - cpuUsage;
+          }
+        }
+
+        // If too much system time
+        if (doUtilCheck) {
+          if (cpuSys / nCores > config.warnSys) {
+            // Score = percentage sys * number of cores
+            warnings[jobNodeName].jobs[jobId].cpuSys = cpuSys - (nCores * config.warnSys);
           }
         }
 
