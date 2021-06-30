@@ -67,6 +67,13 @@ export default class NodeDetails extends React.Component {
         jobCores = jobLayout[name];
       }
     }
+
+    // // Calculate number of rows
+    const rows = Math.ceil(node.cpu.core.length / config.maxPiesPerRow);
+    // // Set the core pie div width to make the rows even
+    // // E.g. 2 rows of 18 instead of 20 and 16
+    const pieWidth = `${(rows * 100) / node.cpu.core.length}%`;
+
     const corePies = [];
     for (let i = 0; i < node.cpu.core.length; i += 1) {
       const core = node.cpu.core[i];
@@ -86,6 +93,7 @@ export default class NodeDetails extends React.Component {
             { name: "idle", data: core[config.cpuKeys.idle] },
           ]}
           selected={coreSelected}
+          percentWidth={pieWidth}
         />,
       );
     }

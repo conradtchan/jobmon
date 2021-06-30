@@ -9,7 +9,7 @@ import PropTypes from "prop-types";
 
 export default class CorePie extends React.PureComponent {
   render() {
-    const { data, selected } = this.props;
+    const { data, selected, percentWidth } = this.props;
     const style = getComputedStyle(document.documentElement);
     const pieColors = [];
     pieColors.push(style.getPropertyValue("--piecolor-blank"));
@@ -22,7 +22,7 @@ export default class CorePie extends React.PureComponent {
     if (selected) ring = 100;
 
     return (
-      <div className="core-pie">
+      <div className="core-pie" style={{ width: percentWidth }}>
         <ResponsiveContainer>
           <PieChart>
             <Pie
@@ -70,4 +70,5 @@ export default class CorePie extends React.PureComponent {
 CorePie.propTypes = {
   selected: PropTypes.bool.isRequired,
   data: PropTypes.arrayOf(PropTypes.object).isRequired,
+  percentWidth: PropTypes.string.isRequired,
 };

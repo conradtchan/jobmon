@@ -38,6 +38,9 @@ const config = {
   // Number of bars to show on the time machine
   timeMachineBars: 300,
 
+  // Maximum number of CPU cores to show per row
+  maxPiesPerRow: 20,
+
   // ===== Warning configuration ===== //
 
   // Instantaneous warnings
