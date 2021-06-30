@@ -34,9 +34,8 @@ EXTRA_GANGLIA_METRICS = [
 # These gmond's can provide the same data (gmonds in redundant config) or different data
 # (eg. compute ganglia and storage ganglia)
 #
-# host, port, url
-# url can be relative to this website or absolute. %h is expanded to the hostname
-GMONDS = [["transom1", 8649, "/ganglia/?c=farnarkle&h=%h"]]
+# host, port
+GMONDS = [["transom1", 8649]]
 
 # Max number for multicpu metric (set to maximum number of cores on system)
 MULTICPU_MAX = 272

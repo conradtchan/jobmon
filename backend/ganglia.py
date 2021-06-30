@@ -52,7 +52,7 @@ class Stats:
         metrics.extend(ganglia_config.EXTRA_GANGLIA_METRICS)
 
         gmond_count = 0
-        for host, port, url in ganglia_config.GMONDS:
+        for host, port in ganglia_config.GMONDS:
             xml = self.read(host, port)
 
             if xml is None:
