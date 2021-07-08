@@ -252,6 +252,7 @@ div:focus {outline: 0px;}
 }
 
 .main-item.left {
+  height: 74vh;
   position: relative;
   top: 0;
   bottom: 0;
