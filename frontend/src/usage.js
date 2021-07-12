@@ -33,17 +33,23 @@ export function getNodeUsage(jid, job, node, host) {
       // Zero if unknown
       usage.gpu.total = 0;
 
+      const gpuNumbers = [];
+
       // If the GPU mapping is known
       if (Object.prototype.hasOwnProperty.call(job.gpuLayout, host)) {
         if (job.gpuLayout[host].length > 0) {
           nGpus = 0;
-          const gpuNumbers = Object.keys(job.gpuLayout[host]);
-          for (let j = 0; j < gpuNumbers.length; j += 1) {
-            const iGpu = gpuNumbers[j];
-            usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
-            nGpus += 1;
-          }
+          gpuNumbers.push(Object.keys(job.gpuLayout[host]));
         }
+      // If both GPUs are used, then mapping doesn't matter
+      } else if (job.nGpus === 2) {
+        gpuNumbers.push(...[0, 1]);
+      }
+
+      for (let j = 0; j < gpuNumbers.length; j += 1) {
+        const iGpu = gpuNumbers[j];
+        usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
+        nGpus += 1;
       }
     }
     usage.mem.used = job.mem[host];
