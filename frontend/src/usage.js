@@ -36,7 +36,6 @@ export function getNodeUsage(jid, job, node, host) {
       // If the GPU mapping is known
       if (Object.prototype.hasOwnProperty.call(job.gpuLayout, host)) {
         if (job.gpuLayout[host].length > 0) {
-          usage.gpu.total = 0;
           nGpus = 0;
           const gpuNumbers = Object.keys(job.gpuLayout[host]);
           for (let j = 0; j < gpuNumbers.length; j += 1) {
