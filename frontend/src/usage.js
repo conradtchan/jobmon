@@ -27,31 +27,33 @@ export function getNodeUsage(jid, job, node, host) {
       }
     }
 
-    let nGpus = 0;
     // If thif is a GPU job
     if (job.nGpus > 0) {
       // Zero if unknown
       usage.gpu.total = 0;
+      let gpuNumbers = [];
 
-      const gpuNumbers = [];
+      // TODO: currently hardcoded to 2,
+      // but can make this general from the API
+      const nGpuMax = 2;
 
       // If the GPU mapping is known
       if (Object.prototype.hasOwnProperty.call(job.gpuLayout, host)) {
         if (job.gpuLayout[host].length > 0) {
-          nGpus = 0;
-          gpuNumbers.push(Object.keys(job.gpuLayout[host]));
+          gpuNumbers = Object.keys(job.gpuLayout[host]);
         }
       // If both GPUs are used, then mapping doesn't matter
-      } else if (job.nGpus === 2) {
-        gpuNumbers.push(...[0, 1]);
+      } else if (job.nGpus === nGpuMax) {
+        for (let j = 0; j < nGpuMax; j += 1) {
+          gpuNumbers.push(j);
+        }
       }
-
       for (let j = 0; j < gpuNumbers.length; j += 1) {
         const iGpu = gpuNumbers[j];
         usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
-        nGpus += 1;
       }
     }
+
     usage.mem.used = job.mem[host];
     usage.mem.max = job.memMax;
     usage.mem.total = node.mem.total;
@@ -73,8 +75,8 @@ export function getNodeUsage(jid, job, node, host) {
     usage.cpu.system /= nCores;
     usage.cpu.wait /= nCores;
     usage.cpu.idle /= nCores;
-    if (nGpus > 0) {
-      usage.gpu.total /= nGpus;
+    if (job.nGpus > 0) {
+      usage.gpu.total /= job.nGpus;
     }
   }
 
