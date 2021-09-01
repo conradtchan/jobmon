@@ -40,7 +40,7 @@ export function getNodeUsage(jid, job, node, host) {
       // If the GPU mapping is known
       if (Object.prototype.hasOwnProperty.call(job.gpuLayout, host)) {
         if (job.gpuLayout[host].length > 0) {
-          gpuNumbers = Object.keys(job.gpuLayout[host]);
+          gpuNumbers = job.gpuLayout[host];
         }
       // If both GPUs are used, then mapping doesn't matter
       } else if (job.nGpus === nGpuMax) {
