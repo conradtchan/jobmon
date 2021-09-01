@@ -86,6 +86,10 @@ export default class NodeOverview extends React.Component {
           nodeName,
         ).cpu;
 
+        // TODO: currently hardcoded to 2,
+        // but can make this general from the API
+        const nGpuMax = 2;
+
         // CPU percent is out of the requested memory
         let memPercent = 0.0;
         if (!(nodes[nodeName].mem === null)) {
@@ -103,11 +107,18 @@ export default class NodeOverview extends React.Component {
         let gpuPercent = 0.0;
         if (!(nodes[nodeName].gpus === null)) {
           let nGpus = 0;
+
           if (Object.prototype.hasOwnProperty.call(job.gpuLayout, nodeName)) {
             for (let j = 0; j < job.gpuLayout[nodeName].length; j += 1) {
               const gpuIndex = job.gpuLayout[nodeName][j];
               nGpus += 1;
               gpuPercent += nodes[nodeName].gpus["gpu".concat(gpuIndex.toString())];
+              console.log(gpuPercent, nodes[nodeName].gpus);
+            }
+          } else if (job.nGpus === nGpuMax) {
+            for (let j = 0; j < nGpuMax; j += 1) {
+              nGpus += 1;
+              gpuPercent += nodes[nodeName].gpus["gpu".concat(j.toString())];
             }
           }
           gpuPercent /= nGpus;
