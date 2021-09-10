@@ -113,7 +113,6 @@ export default class NodeOverview extends React.Component {
               const gpuIndex = job.gpuLayout[nodeName][j];
               nGpus += 1;
               gpuPercent += nodes[nodeName].gpus["gpu".concat(gpuIndex.toString())];
-              console.log(gpuPercent, nodes[nodeName].gpus);
             }
           } else if (job.nGpus === nGpuMax) {
             for (let j = 0; j < nGpuMax; j += 1) {
