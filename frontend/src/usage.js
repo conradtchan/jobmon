@@ -28,10 +28,10 @@ export function getNodeUsage(jid, job, node, host) {
     }
 
     // If thif is a GPU job
+    let gpuNumbers = [];
     if (job.nGpus > 0) {
       // Zero if unknown
       usage.gpu.total = 0;
-      let gpuNumbers = [];
 
       // TODO: currently hardcoded to 2,
       // but can make this general from the API
@@ -76,7 +76,7 @@ export function getNodeUsage(jid, job, node, host) {
     usage.cpu.wait /= nCores;
     usage.cpu.idle /= nCores;
     if (job.nGpus > 0) {
-      usage.gpu.total /= job.nGpus;
+      usage.gpu.total /= gpuNumbers.length;
     }
   }
 

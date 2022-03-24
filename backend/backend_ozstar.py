@@ -532,21 +532,26 @@ class Backend(BackendBase):
 
     def scontrol_gpu(self, job_id):
         layout = {}
+        hostlist = list(self.job_layout(job_id).keys())
 
-        # Only works for single node jobs (up to 2 GPUs)
-        if 0 < self.job_ngpus(job_id) <= 2:
+        if len(hostlist) > 0:
+            process = subprocess.run(
+                "/apps/slurm/latest/bin/scontrol show job -d {:}".format(job_id),
+                shell=True,
+                stdout=subprocess.PIPE,
+            )
+            output = process.stdout.decode()
 
-            # Get first (and only host)
-            hostlist = list(self.job_layout(job_id).keys())
-            if len(hostlist) == 1:
-                host = hostlist[0]
-                process = subprocess.run(
-                    "/apps/slurm/latest/bin/scontrol show job -d {:}".format(job_id),
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                )
+            # Iterate over hosts
+            for host in hostlist:
+                split_name = re.split(r"(\d+)", host)
+                host_base = split_name[0]
+                host_number = split_name[1]
+
                 match = re.search(
-                    r"RES=gpu:.*\d\(IDX:(.{1,3})\)", process.stdout.decode()
+                    f"Nodes={host_base}.*{host_number}"
+                    + r".*GRES=gpu:.*\d\(IDX:(.{1,3})\)",
+                    output,
                 )
                 if match is not None:
                     range_string = match.group(1)
