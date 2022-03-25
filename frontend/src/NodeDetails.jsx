@@ -621,14 +621,96 @@ NodeDetails.propTypes = {
   name: PropTypes.string,
   username: PropTypes.string,
   node: PropTypes.objectOf(
-    PropTypes.oneOfType([PropTypes.object, PropTypes.bool, PropTypes.number]),
+    PropTypes.oneOfType(
+      [
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.objectOf(
+          PropTypes.oneOfType(
+            [
+              PropTypes.number,
+              PropTypes.arrayOf(
+                PropTypes.number,
+              ),
+              PropTypes.arrayOf(
+                PropTypes.arrayOf(
+                  PropTypes.number,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PropTypes.bool,
+      ],
+    ),
   ),
-  jobs: PropTypes.objectOf(PropTypes.object),
-  warnings: PropTypes.objectOf(PropTypes.object),
+  jobs: PropTypes.objectOf(
+    PropTypes.objectOf(
+      PropTypes.oneOfType(
+        [
+          PropTypes.string,
+          PropTypes.number,
+          PropTypes.objectOf(
+            PropTypes.number,
+          ),
+          PropTypes.objectOf(
+            PropTypes.arrayOf(
+              PropTypes.number,
+            ),
+          ),
+          PropTypes.bool,
+        ],
+      ),
+    ),
+  ),
+  warnings: PropTypes.objectOf(
+    PropTypes.objectOf(
+      PropTypes.objectOf(
+        PropTypes.objectOf(
+          PropTypes.number,
+        ),
+      ),
+    ),
+  ).isRequired,
   onJobClick: PropTypes.func.isRequired,
   changeTimeWindow: PropTypes.func.isRequired,
   timeWindow: PropTypes.number.isRequired,
-  historyData: PropTypes.arrayOf(PropTypes.object),
+  historyData: PropTypes.arrayOf(
+    PropTypes.objectOf(
+      PropTypes.oneOfType(
+        [
+          PropTypes.string,
+          PropTypes.number,
+          PropTypes.objectOf(
+            PropTypes.objectOf(
+              PropTypes.oneOfType(
+                [
+                  PropTypes.string,
+                  PropTypes.number,
+                  PropTypes.objectOf(
+                    PropTypes.oneOfType(
+                      [
+                        PropTypes.number,
+                        PropTypes.arrayOf(
+                          PropTypes.number,
+                        ),
+                        PropTypes.arrayOf(
+                          PropTypes.arrayOf(
+                            PropTypes.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PropTypes.bool,
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ).isRequired,
   timestamp: PropTypes.number.isRequired,
   theme: PropTypes.string.isRequired,
 };
@@ -639,6 +721,4 @@ NodeDetails.defaultProps = {
   username: null,
   node: null,
   jobs: null,
-  warnings: null,
-  historyData: null,
 };

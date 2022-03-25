@@ -42,7 +42,7 @@ export function getNodeUsage(jid, job, node, host) {
         if (job.gpuLayout[host].length > 0) {
           gpuNumbers = job.gpuLayout[host];
         }
-      // If both GPUs are used, then mapping doesn't matter
+      // If both GPUs are used in a 2 GPU job, then mapping doesn't matter
       } else if (job.nGpus === nGpuMax) {
         for (let j = 0; j < nGpuMax; j += 1) {
           gpuNumbers.push(j);
@@ -76,7 +76,9 @@ export function getNodeUsage(jid, job, node, host) {
     usage.cpu.wait /= nCores;
     usage.cpu.idle /= nCores;
     if (job.nGpus > 0) {
-      usage.gpu.total /= gpuNumbers.length;
+      // Divide by the total number of GPUs on this node
+      // (minimum of 1, in case the mapping is unknown)
+      usage.gpu.total /= Math.max(gpuNumbers.length, 1);
     }
   }
 

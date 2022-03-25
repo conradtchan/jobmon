@@ -1,12 +1,12 @@
 {
   "name": "jobmon",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "private": true,
   "license": "GPL",
   "dependencies": {
     "@welldone-software/why-did-you-render": "^4.3.2",
     "moment": "^2.29.1",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-dom": "^16.2.0",

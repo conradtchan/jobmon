@@ -246,7 +246,6 @@ export default class NodeOverview extends React.Component {
     const { historyData } = this.props;
     const style = getComputedStyle(document.documentElement);
     const historyChart = [];
-
     const sortedHistory = historyData;
     sortedHistory.sort(
       (a, b) => {
@@ -488,14 +487,111 @@ export default class NodeOverview extends React.Component {
 }
 
 NodeOverview.propTypes = {
-  nodeHasJob: PropTypes.objectOf(PropTypes.object).isRequired,
+  nodeHasJob: PropTypes.objectOf(
+    PropTypes.objectOf(
+      PropTypes.objectOf(
+        PropTypes.oneOfType(
+          [
+            PropTypes.string,
+            PropTypes.number,
+            PropTypes.objectOf(
+              PropTypes.number,
+            ),
+            PropTypes.objectOf(
+              PropTypes.arrayOf(
+                PropTypes.number,
+              ),
+            ),
+            PropTypes.bool,
+          ],
+        ),
+      ),
+    ),
+  ).isRequired,
   jobId: PropTypes.string,
-  apiData: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.object, PropTypes.number])).isRequired,
+  apiData: PropTypes.objectOf(
+    PropTypes.oneOfType(
+      [
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.objectOf(
+          PropTypes.objectOf(
+            PropTypes.oneOfType(
+              [
+                PropTypes.string,
+                PropTypes.number,
+                PropTypes.objectOf(
+                  PropTypes.oneOfType(
+                    [
+                      PropTypes.number,
+                      PropTypes.arrayOf(
+                        PropTypes.number,
+                      ),
+                      PropTypes.arrayOf(
+                        PropTypes.arrayOf(
+                          PropTypes.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PropTypes.bool,
+              ],
+            ),
+          ),
+        ),
+
+      ],
+    ),
+  ).isRequired,
   onRowClick: PropTypes.func.isRequired,
   onJobClick: PropTypes.func.isRequired,
-  warnings: PropTypes.objectOf(PropTypes.object).isRequired,
+  warnings: PropTypes.objectOf(
+    PropTypes.objectOf(
+      PropTypes.objectOf(
+        PropTypes.objectOf(
+          PropTypes.number,
+        ),
+      ),
+    ),
+  ).isRequired,
   username: PropTypes.string,
-  historyData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  historyData: PropTypes.arrayOf(
+    PropTypes.objectOf(
+      PropTypes.oneOfType(
+        [
+          PropTypes.string,
+          PropTypes.number,
+          PropTypes.objectOf(
+            PropTypes.objectOf(
+              PropTypes.oneOfType(
+                [
+                  PropTypes.string,
+                  PropTypes.number,
+                  PropTypes.objectOf(
+                    PropTypes.oneOfType(
+                      [
+                        PropTypes.number,
+                        PropTypes.arrayOf(
+                          PropTypes.number,
+                        ),
+                        PropTypes.arrayOf(
+                          PropTypes.arrayOf(
+                            PropTypes.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PropTypes.bool,
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  ).isRequired,
   warnedUsers: PropTypes.arrayOf(PropTypes.string).isRequired,
   timestamp: PropTypes.number.isRequired,
 };

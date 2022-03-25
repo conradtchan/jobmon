@@ -299,7 +299,16 @@ export default class TimeMachine extends React.Component {
 
 TimeMachine.propTypes = {
   snapshotTime: PropTypes.instanceOf(Date).isRequired,
-  history: PropTypes.objectOf(PropTypes.object),
+  history: PropTypes.objectOf(
+    PropTypes.objectOf(
+      PropTypes.oneOfType(
+        [
+          PropTypes.number,
+          PropTypes.objectOf(PropTypes.number),
+        ],
+      ),
+    ),
+  ),
   clickLoadTime: PropTypes.func.isRequired,
   viewPresent: PropTypes.func.isRequired,
   viewPast: PropTypes.func.isRequired,

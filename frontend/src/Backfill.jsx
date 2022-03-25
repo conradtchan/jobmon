@@ -127,7 +127,13 @@ export default class Backfill extends React.PureComponent {
 }
 
 Backfill.propTypes = {
-  backfillData: PropTypes.objectOf(PropTypes.object),
+  backfillData: PropTypes.objectOf(
+    PropTypes.objectOf(
+      PropTypes.objectOf(
+        PropTypes.number,
+      ),
+    ),
+  ),
 };
 
 Backfill.defaultProps = {
