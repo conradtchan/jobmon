@@ -25,7 +25,6 @@ export default class UserPiePlot extends React.Component {
     const {
       timestamp,
       warnedUsers,
-      systemUsage,
       userFilter,
     } = this.props;
 
@@ -39,8 +38,6 @@ export default class UserPiePlot extends React.Component {
     if (nextProps.timestamp !== timestamp) {
       return true;
     } if (nextProps.warnedUsers !== warnedUsers) {
-      return true;
-    } if (nextProps.systemUsage !== systemUsage) {
       return true;
     } if (nextProps.userFilter !== userFilter) {
       return true;
@@ -234,10 +231,7 @@ UserPiePlot.propTypes = {
   warnedUsers: PropTypes.arrayOf(PropTypes.string).isRequired,
   badness: PropTypes.objectOf(PropTypes.number).isRequired,
   timestamp: PropTypes.number.isRequired,
-  systemUsage: PropTypes.objectOf(
-    PropTypes.oneOfType([PropTypes.object, PropTypes.number]),
-  ).isRequired,
-  userFilter: PropTypes.arrayOf(PropTypes.string).isRequired,
-  defaultUserFilter: PropTypes.arrayOf(PropTypes.string).isRequired,
+  userFilter: PropTypes.string.isRequired,
+  defaultUserFilter: PropTypes.string.isRequired,
   updateUserFilter: PropTypes.func.isRequired,
 };

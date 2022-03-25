@@ -9,7 +9,6 @@ export default class Queue extends React.PureComponent {
       queueTotal,
       availCores,
     } = this.props;
-
     const queueStrings = [];
     for (let i = 0; i < queueData.length; i += 1) {
       const user = queueData[i];
@@ -54,7 +53,16 @@ export default class Queue extends React.PureComponent {
 }
 
 Queue.propTypes = {
-  queueData: PropTypes.arrayOf(PropTypes.object).isRequired,
+  queueData: PropTypes.arrayOf(
+    PropTypes.objectOf(
+      PropTypes.oneOfType(
+        [
+          PropTypes.string,
+          PropTypes.number,
+        ],
+      ),
+    ),
+  ).isRequired,
   queueTotal: PropTypes.objectOf(PropTypes.number).isRequired,
   availCores: PropTypes.number.isRequired,
 };
