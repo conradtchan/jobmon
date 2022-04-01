@@ -458,13 +458,18 @@ class Backend(BackendBase):
         if name not in self.usernames.keys():
             new_name = name[:3]
             add_letters = 0
+            postfix = None
             for long_name, short_name in self.usernames.items():
                 while short_name == new_name:
                     add_letters += 1
 
                     # Add a number if out of characters
                     if 3 + add_letters > len(name):
-                        new_name = name + str(3 + add_letters - name)
+                        if postfix is None:
+                            postfix = str(3 + add_letters - len(name))
+                        else:
+                            postfix = str(int(postfix) + 1)
+                        new_name = name + postfix
                     else:
                         new_name = name[: 3 + add_letters]
 
