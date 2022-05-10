@@ -588,9 +588,9 @@ class Backend(BackendBase):
     def job_mem_request(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 
-        if job["min_memory_cpu"] is not None:
+        if job["min_memory_cp"] is not None:
             return (
-                job["min_memory_cpu"]
+                job["min_memory_cp"]
                 * max(job["ntasks_per_node"], 1)
                 * max(job["cpus_per_task"], 1)
             )
