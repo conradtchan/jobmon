@@ -48,6 +48,7 @@ if __name__ == "__main__":
             b.update_core_usage()
 
             # Calculate backfill
+            print("Calculating backfill")
             b.update_backfill()
 
             # Write data to disk

@@ -271,7 +271,7 @@ class BackendBase:
 
         return 0
 
-    def core_usage(self, data):
+    def core_usage(self, data, silent=False):
         """
         Return the core utilization
 
@@ -397,7 +397,10 @@ class BackendBase:
         if data is None:
             data = self.data
 
-        self.usage_cache["history"][data["timestamp"]] = self.core_usage(data)
+        # Suppress printout to log
+        self.usage_cache["history"][data["timestamp"]] = self.core_usage(
+            data, silent=True
+        )
 
     def usage_from_disk(self):
         """
@@ -412,6 +415,7 @@ class BackendBase:
         for x in data_files:
             filename = path.basename(x)
             match = re.search(config.FILE_NAME_PATTERN.format(r"(\d+)"), filename)
+
             if match is not None:
                 times += [match.group(1)]
 
