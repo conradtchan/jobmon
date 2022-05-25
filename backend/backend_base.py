@@ -431,10 +431,15 @@ class BackendBase:
             print("Loading timestamp {:}".format(t))
             filename = config.FILE_NAME_PATTERN.format(t)
             filepath = path.join(config.DATA_PATH, filename)
-            with gzip.open(filepath, "r") as f:
-                json_text = f.read().decode("utf-8")
-                data = json.loads(json_text)
-                self.update_core_usage(data=data)
+
+            # Try to open the file, but it may have been deleted already
+            try:
+                with gzip.open(filepath, "r") as f:
+                    json_text = f.read().decode("utf-8")
+                    data = json.loads(json_text)
+                    self.update_core_usage(data=data)
+            except FileNotFoundError:
+                print("File not found: it may have been deleted by another process")
 
     def history(self):
         """
