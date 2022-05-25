@@ -123,7 +123,6 @@ def jobs():
 
     for id, s in slurm_jobs.items():
 
-        # print(id,s)
         j[id] = {
             "nCpus": s["num_cpus"],
             "state": s["job_state"],
@@ -150,9 +149,6 @@ def jobs():
 
         if debug:
             if j[id]["startTime"] != 0 and j[id]["schedNodes"] is not None:
-                print(id, j[id])
-            if id in [2453709, 2405807, 2453086]:
-                print(id, s)
                 print(id, j[id])
 
     return j
