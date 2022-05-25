@@ -138,14 +138,15 @@ def jobs():
         # pyslurm 17
         # for gres in s['gres']:
         # pyslurm 18
-        for gres in s["tres_per_node"].split(","):
-            g = gres.split(":")
-            # print(id, gres, g, g[-1])
-            if g[0] == "gpu":  # eg. gpu:p100:2  gpu:2  gpu
-                try:
-                    j[id]["nGpus"] += int(g[-1])
-                except ValueError:
-                    j[id]["nGpus"] += 1
+        if s["tres_per_node"] is not None:
+            for gres in s["tres_per_node"].split(","):
+                g = gres.split(":")
+                # print(id, gres, g, g[-1])
+                if g[0] == "gpu":  # eg. gpu:p100:2  gpu:2  gpu
+                    try:
+                        j[id]["nGpus"] += int(g[-1])
+                    except ValueError:
+                        j[id]["nGpus"] += 1
 
         if debug:
             if j[id]["startTime"] != 0 and j[id]["schedNodes"] is not None:
