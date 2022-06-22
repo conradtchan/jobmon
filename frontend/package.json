@@ -1,6 +1,6 @@
 {
   "name": "jobmon",
-  "version": "0.12.4",
+  "version": "0.13.0",
   "private": true,
   "license": "GPL",
   "dependencies": {
@@ -10,6 +10,7 @@
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-dom": "^16.2.0",
+    "react-ga4": "^1.4.1",
     "react-scripts": "^4.0.3",
     "react-test-renderer": "^16.13.1",
     "recharts": "^2.0.9",

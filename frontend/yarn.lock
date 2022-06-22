@@ -9299,6 +9299,7 @@ fsevents@^1.2.7:
     prop-types: ^15.7.2
     react: ^17.0.2
     react-dom: ^16.2.0
+    react-ga4: ^1.4.1
     react-scripts: ^4.0.3
     react-test-renderer: ^16.13.1
     recharts: ^2.0.9
@@ -12722,6 +12723,13 @@ fsevents@^1.2.7:
   version: 6.0.10
   resolution: "react-error-overlay@npm:6.0.10"
   checksum: 1049735b4ecfa578966270b06913a32c711696f0cae19d19c2f84de9148a119f97e33bf1eea9ba0263164d6624236d81cd1920d9cfb4b9109069050675077619
+  languageName: node
+  linkType: hard
+
+"react-ga4@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "react-ga4@npm:1.4.1"
+  checksum: 65b07136cf9c7d2aee50dd515f4efe5c6a817aa5e851dccf0c5cb1f129e645f9356428f7f1829b604b2caea068c447898af94c943d0ae92480ebc78bcd690b17
   languageName: node
   linkType: hard
 

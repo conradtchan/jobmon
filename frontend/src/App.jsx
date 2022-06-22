@@ -1,4 +1,5 @@
 import React from "react";
+import ReactGA from "react-ga4";
 
 import { version } from "../package.json";
 
@@ -14,6 +15,9 @@ import TimeMachine from "./TimeMachine";
 import Queue from "./Queue";
 import Backfill from "./Backfill";
 import { generateWarnings, getWarnedUsers } from "./warnings";
+
+ReactGA.initialize("G-7ZCHJXP6QN");
+ReactGA.send("pageview");
 
 function getTotalUsage(totalArray) {
   const total = {};

@@ -597,7 +597,7 @@ class Backend(BackendBase):
         else:
             return job["min_memory_node"]
 
-    def core_usage(self, data):
+    def core_usage(self, data, silent=False):
         usage = {"avail": 0, "running": 0, "users": {}}
 
         # Count the available cores
@@ -628,11 +628,12 @@ class Backend(BackendBase):
                     usage["users"][username] = 0
                 usage["users"][username] += job["nCpus"]
 
-        print(
-            "Core utilization: {:}/{:} ({:} bonus cores are active)".format(
-                usage["running"], usage["avail"], n_bonus
+        if not silent:
+            print(
+                "Core utilization: {:}/{:} ({:} bonus cores are active)".format(
+                    usage["running"], usage["avail"], n_bonus
+                )
             )
-        )
 
         return usage
 
