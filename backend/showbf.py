@@ -15,6 +15,7 @@ PARTITIONS = {
     "sstar": ["sstar"],
     "gstar": ["gstar"],
     "knl": ["gina"],
+    "trevor": ["trevor"],
 }
 CORE_COUNT_NODES = PARTITIONS["skylake"]
 partitionResGpuCores = {
@@ -23,6 +24,7 @@ partitionResGpuCores = {
     "sstar": 0,
     "gstar": 0,
     "knl": 0,
+    "trevor": 0,
 }
 partitionMaxCpuCores = {
     "skylake": [32],
@@ -30,6 +32,7 @@ partitionMaxCpuCores = {
     "sstar": [32, 16],
     "gstar": [32, 12],
     "knl": [272],
+    "trevor": [12],
 }
 # arbitrary thresholds for what constitutes a low mem/core or low disk/core situation
 partitionLowMem = {
@@ -38,6 +41,7 @@ partitionLowMem = {
     "sstar": 1000,
     "gstar": 1000,
     "knl": 200,
+    "trevor": 1000,
 }  # MB per core
 partitionLowDisk = {
     "skylake": 3000,
@@ -45,6 +49,7 @@ partitionLowDisk = {
     "sstar": 3000,
     "gstar": 3000,
     "knl": 600,
+    "trevor": 3000,
 }
 # max allowed walltime
 TMAX = 24 * 7 * 3600
