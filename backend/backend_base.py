@@ -426,11 +426,13 @@ class BackendBase:
             # If the loading time is longer than the usual update interval,
             # then run a cycle before continuing to load
             if time_now - time_start > config.UPDATE_INTERVAL * 4:
+                print("Loading paused to update data")
                 self.update_data()
                 self.update_backfill()
                 # Write without squashing history data (not yet fully loaded)
                 self.write(no_history=True)
                 time_start = self.timestamp()
+                print("Loading continuing...")
 
             print("Loading timestamp {:}".format(t))
             filename = config.FILE_NAME_PATTERN.format(t)
