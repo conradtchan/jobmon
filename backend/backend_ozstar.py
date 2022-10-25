@@ -539,7 +539,10 @@ class Backend(BackendBase):
         layout = {}
         hostlist = list(self.job_layout(job_id).keys())
 
-        if len(hostlist) > 0:
+        # Only get GPU layout for jobs that:
+        # - have a host list
+        # - are actively running (otherwise scontrol will return an error)
+        if len(hostlist) > 0 and self.job_state(job_id) == "RUNNING":
             process = subprocess.run(
                 "/apps/slurm/latest/bin/scontrol show job -d {:}".format(job_id),
                 shell=True,
