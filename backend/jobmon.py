@@ -28,7 +28,10 @@ if __name__ == "__main__":
     if test:
         print("Testing backend, not writing any data")
 
+        print("Gathering data")
         b.update_data()
+
+        print("Updating backfill")
         b.update_backfill()
 
         print("Done!")
@@ -38,9 +41,9 @@ if __name__ == "__main__":
         time_start = b.timestamp()
 
         # Get all data
-        print("Gathering data")
         try:
             # Main data update
+            print("Gathering data")
             b.update_data()
 
             # Get core usage for new data
