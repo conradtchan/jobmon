@@ -22,6 +22,8 @@ from influxdb import InfluxDBClient
 
 class Backend(BackendBase):
     def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
         # Dict of username mappings
         self.usernames = {}
 
@@ -33,8 +35,6 @@ class Backend(BackendBase):
 
         # GPU_layout_cache
         self.gpu_layout_cache = OrderedDict()
-
-        super().__init__(**kwargs)
 
     def pre_update(self):
         # Ganglia
@@ -100,11 +100,13 @@ class Backend(BackendBase):
 
             else:
                 mem_data[job_id] = {"hasMem": False, "mem": 0, "memMax": 0}
-                print(
+                self.log.error(
                     "{:} ({:}) has no memory stats".format(job_id, self.id_map[job_id])
                 )
 
-        print("Memory stats: {:} / {:}".format(count_stat, len(active_slurm_jobs)))
+        self.log.info(
+            "Memory stats: {:} / {:}".format(count_stat, len(active_slurm_jobs))
+        )
 
         self.mem_data = mem_data
 
@@ -122,7 +124,7 @@ class Backend(BackendBase):
         if len(times) > 0:
             t_latest = max(times)
 
-            print("Loading max memory data from {:}".format(t_latest))
+            self.log.info("Loading max memory data from {:}".format(t_latest))
 
             filename = config.FILE_NAME_PATTERN.format(t_latest)
             filepath = path.join(config.DATA_PATH, filename)
@@ -139,11 +141,10 @@ class Backend(BackendBase):
                         )
 
         else:
-            print("No files found to load max memory data from")
+            self.log.error("No files found to load max memory data from")
 
-    @staticmethod
-    def query_influx():
-        print("Getting memory stats")
+    def query_influx(self):
+        self.log.info("Getting memory stats")
         # InfluxDB client for memory stats
         influx_client = InfluxDBClient(
             host=influx_config.HOST,
@@ -167,7 +168,9 @@ class Backend(BackendBase):
             if job_id not in self.id_map.keys():
                 n += 1
                 del self.mem_max[job_id]
-        print("Pruned {:}/{:} old max memory records".format(n, len(self.mem_max)))
+        self.log.info(
+            "Pruned {:}/{:} old max memory records".format(n, len(self.mem_max))
+        )
 
     def cpu_usage(self, name):
         data = self.ganglia_data[name]
@@ -223,7 +226,7 @@ class Backend(BackendBase):
             return {"total": total_array, "core": core_array}
 
         except KeyError:
-            print(name, "cpu user/nice/system/wio/idle not in ganglia")
+            self.log.error(f"{name} cpu user/nice/system/wio/idle not in ganglia")
 
     def mem(self, name):
         data = self.ganglia_data[name]
@@ -245,7 +248,7 @@ class Backend(BackendBase):
         except KeyError:
             now = time.time()
             if now - data["reported"] < config.NODE_DEAD_TIMEOUT:
-                print(name, "mem gmond data is incomplete")
+                self.log.error(f"{name} mem gmond data is incomplete")
 
     def swap(self, name):
         data = self.ganglia_data[name]
@@ -257,7 +260,7 @@ class Backend(BackendBase):
                 "total": math.ceil(float(data["swap_total"]) / KB),
             }
         except KeyError:
-            print(name, "swap not in ganglia")
+            self.log.error(f"{name} swap not in ganglia")
             return {
                 "free": 0,
                 "total": 0,
@@ -271,7 +274,7 @@ class Backend(BackendBase):
                 "total": math.ceil(float(data["disk_total"])),
             }
         except KeyError:
-            print(name, "disk not in ganglia")
+            self.log.error(f"{name} disk not in ganglia")
             return {
                 "free": 0,
                 "total": 0,
@@ -632,7 +635,7 @@ class Backend(BackendBase):
                 usage["users"][username] += job["nCpus"]
 
         if not silent:
-            print(
+            self.log.info(
                 "Core utilization: {:}/{:} ({:} bonus cores are active)".format(
                     usage["running"], usage["avail"], n_bonus
                 )

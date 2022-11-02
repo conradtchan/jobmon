@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 import importlib
+import logging
 import sys
 import time
 
 import jobmon_config as config
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 backend = importlib.import_module("backend_{:}".format(config.BACKEND))
 
 if __name__ == "__main__":
+    log = logging.getLogger("jobmon")
 
     # Test cycle
     test = False
@@ -22,19 +26,13 @@ if __name__ == "__main__":
         if test:
             nohist = True
 
-    print("Starting jobmon backend: {:}".format(config.BACKEND))
+    log.info("Starting jobmon backend: {:}".format(config.BACKEND))
     b = backend.Backend(no_history=nohist)
 
     if test:
-        print("Testing backend, not writing any data")
-
-        print("Gathering data")
+        log.info("Testing backend, not writing any data")
         b.update_data()
-
-        print("Updating backfill")
         b.update_backfill()
-
-        print("Done!")
         sys.exit()
 
     while True:
@@ -43,30 +41,26 @@ if __name__ == "__main__":
         # Get all data
         try:
             # Main data update
-            print("Gathering data")
             b.update_data()
 
             # Get core usage for new data
-            print("Updating history")
             b.update_core_usage()
 
             # Calculate backfill
-            print("Calculating backfill")
             b.update_backfill()
 
             # Write data to disk
-            print("Writing data")
             b.write()
 
             time_finish = b.timestamp()
             time_taken = time_finish - time_start
-            print("Done! Took {:} seconds".format(time_taken))
+            log.info("Done! Took {:} seconds".format(time_taken))
             sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
 
         except Exception as e:
-            print("Error:", e)
-            print("Trying again next cycle")
+            log.error("Error:", e)
+            log.error("Trying again next cycle")
             sleep_time = config.UPDATE_INTERVAL
 
-        print("Sleeping for {:} seconds".format(sleep_time))
+        log.info("Sleeping for {:} seconds".format(sleep_time))
         time.sleep(sleep_time)
