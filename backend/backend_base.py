@@ -302,7 +302,6 @@ class BackendBase:
         return {}
 
     def __init__(self, no_history):
-
         # Logging
         self.log = logging.getLogger("jobmon")
 
@@ -314,10 +313,19 @@ class BackendBase:
         # Backfill data
         self.backfill = {}
 
+        self.init()
+
         # Load usage from disk
         self.usage_cache = {"history": {}}
         if not no_history:
             self.usage_from_disk()
+
+    def init(self):
+        """
+        Additional init function to be run after the logger is initialised,
+        but before the usage is read from the disk
+        """
+        return
 
     @staticmethod
     def timestamp():

@@ -21,9 +21,7 @@ from influxdb import InfluxDBClient
 
 
 class Backend(BackendBase):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
+    def init(self):
         # Dict of username mappings
         self.usernames = {}
 
