@@ -516,27 +516,40 @@ class Backend(BackendBase):
         return layout
 
     def job_gpu_layout(self, job_id):
-        MAXSIZE = 10000
-        if job_id in self.gpu_layout_cache:
-            layout = self.gpu_layout_cache[job_id]
+        # Only get GPU layout for jobs that:
+        # - are a GPU job
+        # - are actively running (otherwise scontrol will return an error)
+        if self.job_ngpus(job_id) > 0 and self.job_state(job_id) == "RUNNING":
+            MAXSIZE = 10000
+            if job_id in self.gpu_layout_cache:
+                self.log.debug(f"Job {job_id} recalled from GPU layout cache")
+                layout = self.gpu_layout_cache[job_id]
+            else:
+                self.log.debug(
+                    f"Job {job_id} not in GPU layout cache; getting from scontrol"
+                )
+                layout = self.scontrol_gpu(job_id)
+
+            # Minimise the number of scontrol calls by caching the results
+            # - Assume that GPU affinity is fixed for the lifetime of the job
+            # - scontrol should only be called once per job
+            # - Cache up to 10,000 jobs (there are typically 3000 jobs running on OzSTAR)
+            # - Cannot use lru_cache because specific values cannot be cleared
+
+            # If expecting a layout but scontrol isn't returning it yet, don't cache
+            if layout is {} and self.job_ngpus(job_id) > 0:
+                return layout
+            else:
+                self.gpu_layout_cache[job_id] = layout
+
+            while len(self.gpu_layout_cache) > MAXSIZE:
+                self.log.warn(
+                    f"GPU layout cache size ({MAXSIZE}) exceeded; removing earliest item"
+                )
+                # Remove earliest item
+                self.gpu_layout_cache.popitem(last=False)
         else:
-            layout = self.scontrol_gpu(job_id)
-
-        # Minimise the number of scontrol calls by caching the results
-        # - Assume that GPU affinity is fixed for the lifetime of the job
-        # - scontrol should only be called once per job
-        # - Cache up to 10,000 jobs (there are typically 3000 jobs running on OzSTAR)
-        # - Cannot use lru_cache because specific values cannot be cleared
-
-        # If expecting a layout but scontrol isn't returning it yet, don't cache
-        if layout is {} and self.job_ngpus(job_id) > 0:
-            return layout
-        else:
-            self.gpu_layout_cache[job_id] = layout
-
-        while len(self.gpu_layout_cache) > MAXSIZE:
-            # Remove earliest item
-            self.gpu_layout_cache.popitem(last=False)
+            layout = {}
 
         return layout
 
@@ -544,10 +557,8 @@ class Backend(BackendBase):
         layout = {}
         hostlist = list(self.job_layout(job_id).keys())
 
-        # Only get GPU layout for jobs that:
-        # - have a host list
-        # - are actively running (otherwise scontrol will return an error)
-        if len(hostlist) > 0 and self.job_state(job_id) == "RUNNING":
+        # Don't call scontrol unless there is a hostlist
+        if len(hostlist) > 0:
             process = subprocess.run(
                 "/apps/slurm/latest/bin/scontrol show job -d {:}".format(job_id),
                 shell=True,
