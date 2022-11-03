@@ -331,6 +331,7 @@ class BackendBase:
 
         Do not override this function
         """
+        self.log.info("Parsing node data")
         nodes = {}
         for host in self.hostnames():
             nodes[host] = {}
@@ -356,7 +357,7 @@ class BackendBase:
 
         Do not override this function
         """
-
+        self.log.info("Parsing job data")
         j = {}
 
         for job_id in self.job_ids():
@@ -385,7 +386,6 @@ class BackendBase:
 
         Do not override this function
         """
-        self.log.info("Gathering data")
         self.pre_update()
         data = {}
         data["api"] = API_VERSION

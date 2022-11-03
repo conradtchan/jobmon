@@ -38,13 +38,16 @@ class Backend(BackendBase):
 
     def pre_update(self):
         # Ganglia
+        self.log.info("Getting Ganglia data")
         self.ganglia_data = ganglia.Stats(do_cpus=True).all
 
         # Slurm
+        self.log.info("Getting Slurm data")
         self.pyslurm_node = pyslurm.node().get()
         self.pyslurm_job = pyslurm.job().get()
 
         # Influx
+        self.log.info("Getting memory data from Influx")
         self.update_mem_data()
         self.prune_mem_max()
 
@@ -144,7 +147,6 @@ class Backend(BackendBase):
             self.log.error("No files found to load max memory data from")
 
     def query_influx(self):
-        self.log.info("Getting memory stats")
         # InfluxDB client for memory stats
         influx_client = InfluxDBClient(
             host=influx_config.HOST,

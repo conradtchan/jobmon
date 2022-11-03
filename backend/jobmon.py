@@ -6,7 +6,13 @@ import time
 
 import jobmon_config as config
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+# logging.getLogger("jobmon").setLevel(logging.DEBUG)
 
 backend = importlib.import_module("backend_{:}".format(config.BACKEND))
 
@@ -54,7 +60,6 @@ if __name__ == "__main__":
 
             time_finish = b.timestamp()
             time_taken = time_finish - time_start
-            log.info("Done! Took {:} seconds".format(time_taken))
             sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
 
         except Exception as e:
@@ -62,5 +67,7 @@ if __name__ == "__main__":
             log.error("Trying again next cycle")
             sleep_time = config.UPDATE_INTERVAL
 
-        log.info("Sleeping for {:} seconds".format(sleep_time))
+        log.info(
+            f"Cycle completed in {time_taken} seconds, now sleeping for {sleep_time} seconds...\n"
+        )
         time.sleep(sleep_time)
