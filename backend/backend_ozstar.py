@@ -161,9 +161,7 @@ class Backend(BackendBase):
         influx_client.switch_database("ozstar_slurm")
 
         # Query all jobs for current memory usage
-        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - {:}s  GROUP BY job, host, task".format(
-            config.UPDATE_INTERVAL * 2
-        )
+        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - 60s  GROUP BY job, host, task"
         return influx_client.query(query)
 
     def prune_mem_max(self):
