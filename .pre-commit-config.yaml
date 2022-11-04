@@ -2,25 +2,25 @@
 
 repos:
   - repo: https://github.com/ambv/black
-    rev: 22.3.0
+    rev: 22.10.0
     hooks:
       - id: black
         language_version: python3.7
         exclude: ^node_modules/
 
-  - repo: https://gitlab.com/PyCQA/flake8
-    rev: 3.9.2
+  - repo: https://github.com/PyCQA/flake8
+    rev: 5.0.4
     hooks:
       - id: flake8
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.26.3
+    rev: v1.28.0
     hooks:
       - id: yamllint
         args: ['-d relaxed']
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v4.3.0
     hooks:
       - id: check-json
       - id: check-merge-conflict
@@ -31,7 +31,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: 'v8.13.0'
+    rev: 'v8.26.0'
     hooks:
       - id: eslint
         args: ['--fix']

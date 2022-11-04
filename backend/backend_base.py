@@ -1,5 +1,6 @@
 import gzip
 import json
+import logging
 import re
 import time
 from datetime import datetime
@@ -301,16 +302,30 @@ class BackendBase:
         return {}
 
     def __init__(self, no_history):
+        # Logging
+        self.log = logging.getLogger("jobmon")
+
+        self.log.info("Initialising Job Monitor backend")
+
         # Data
         self.data = {}
 
         # Backfill data
         self.backfill = {}
 
+        self.init()
+
         # Load usage from disk
         self.usage_cache = {"history": {}}
         if not no_history:
             self.usage_from_disk()
+
+    def init(self):
+        """
+        Additional init function to be run after the logger is initialised,
+        but before the usage is read from the disk
+        """
+        return
 
     @staticmethod
     def timestamp():
@@ -324,6 +339,7 @@ class BackendBase:
 
         Do not override this function
         """
+        self.log.info("Parsing node data")
         nodes = {}
         for host in self.hostnames():
             nodes[host] = {}
@@ -349,7 +365,7 @@ class BackendBase:
 
         Do not override this function
         """
-
+        self.log.info("Parsing job data")
         j = {}
 
         for job_id in self.job_ids():
@@ -393,6 +409,7 @@ class BackendBase:
         Do not override this function
         """
 
+        self.log.info("Updating core usage history")
         # For loading in usage from disk
         if data is None:
             data = self.data
@@ -426,13 +443,15 @@ class BackendBase:
             # If the loading time is longer than the usual update interval,
             # then run a cycle before continuing to load
             if time_now - time_start > config.UPDATE_INTERVAL * 4:
+                self.log.info("Loading paused to update data")
                 self.update_data()
                 self.update_backfill()
                 # Write without squashing history data (not yet fully loaded)
                 self.write(no_history=True)
                 time_start = self.timestamp()
+                self.log.info("Loading continuing...")
 
-            print("Loading timestamp {:}".format(t))
+            self.log.info("Loading timestamp {:}".format(t))
             filename = config.FILE_NAME_PATTERN.format(t)
             filepath = path.join(config.DATA_PATH, filename)
 
@@ -443,7 +462,9 @@ class BackendBase:
                     data = json.loads(json_text)
                     self.update_core_usage(data=data)
             except FileNotFoundError:
-                print("File not found: it may have been deleted by another process")
+                self.log.info(
+                    "File not found: it may have been deleted by another process"
+                )
 
     def history(self):
         """
@@ -464,7 +485,9 @@ class BackendBase:
                     del self.usage_cache["history"][t]
                     remove(filepath)
                 except KeyError:
-                    print("Tried to remove {:}, but already deleted".format(filename))
+                    self.log.error(
+                        "Tried to remove {:}, but already deleted".format(filename)
+                    )
 
         return h
 
@@ -474,7 +497,7 @@ class BackendBase:
 
         Do not override this funciton
         """
-
+        self.log.info("Calculating backfill")
         if config.BACKFILL:
             self.backfill = self.calculate_backfill()
         else:
@@ -486,6 +509,7 @@ class BackendBase:
 
         Do not override this function
         """
+        self.log.info("Writing data to disk")
         output_file = path.join(config.DATA_PATH, config.FILE_NAME_PATTERN.format(""))
         write_data(self.data, output_file)
 

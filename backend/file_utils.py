@@ -1,5 +1,6 @@
 import gzip
 import json
+import logging
 import stat
 from os import chmod, rename, unlink
 
@@ -9,6 +10,8 @@ def mode644():
 
 
 def write_data(data, filename):
+    log = logging.getLogger("jobmon")
+
     # Write to a temporary file, because it takes time
     tmp_filename = filename + ".new"
     json_str = json.dumps(data)
@@ -22,9 +25,9 @@ def write_data(data, filename):
         rename(tmp_filename, filename)
     except OSError as error:
         err_num, err_str = error
-        print("write_data: renamed failed. OsError", error)
+        log.error("write_data: renamed failed. OsError", error)
         if err_num == 13:  # Permission denied
-            print("Permission denied (probably running as a user)")
+            log.error("Permission denied (probably running as a user)")
 
         # Unlink temp file
         unlink(tmp_filename)
