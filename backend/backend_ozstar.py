@@ -77,34 +77,35 @@ class Backend(BackendBase):
 
                 jobs_with_stats += [job_id]
 
-                mem_sum = {}
                 for values in series["values"]:
                     # 'columns': ['time', 'host', 'max']
                     node = values[1]
                     mem = values[2]
 
                     # Sum up memory usage from different tasks
-                    if node in mem_sum:
-                        mem_sum[node] += mem
-                    else:
-                        mem_sum[node] = mem
+                    if job_id not in mem_data:
+                        mem_data[job_id] = {"mem": {}, "memMax": 0}
 
-                # Initialise max memory record
-                if job_id not in self.mem_max:
-                    self.mem_max[job_id] = 0
+                    if node not in mem_data[job_id]["mem"]:
+                        mem_data[job_id]["mem"][node] = 0
 
-                for node in mem_sum:
-                    # Convert KB to MB
-                    mem_mb = math.ceil(mem_sum[node] / KB)
-                    mem_sum[node] = mem_mb
+                    mem_data[job_id]["mem"][node] += mem
 
-                    # Calculate max memory
-                    self.mem_max[job_id] = int(max(self.mem_max[job_id], mem_mb))
+        for job_id in mem_data:
 
-                mem_data[job_id] = {
-                    "mem": mem_sum,
-                    "memMax": self.mem_max[job_id],
-                }
+            # Initialise max memory record
+            if job_id not in self.mem_max:
+                self.mem_max[job_id] = 0
+
+            for node in mem_data[job_id]["mem"]:
+                # Convert KB to MB
+                mem_data[job_id]["mem"][node] = math.ceil(
+                    mem_data[job_id]["mem"][node] / KB
+                )
+                self.mem_max[job_id] = int(
+                    max(self.mem_max[job_id], mem_data[job_id]["mem"][node])
+                )
+                mem_data[job_id]["memMax"] = self.mem_max[job_id]
 
         # Turn list of jobs with memory stats into a set to remove duplicates
         jobs_with_stats = set(jobs_with_stats)
