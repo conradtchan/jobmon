@@ -3,7 +3,7 @@ Originally forked from https://github.com/plaguedbypenguins/bobMonitor, but now 
 A Python script runs periodically on the management node to collect statistics and write them to a JSON file, which is served to the browser by a minimal backend. Most of the processing is performed in the browser, which will allow user customisation further down the track.
 
 # Setup
-Jobmon is designed for use on the OzSTAR supercomputer (http://supercomputing.swin.edu.au), but it can be adapted for any computing cluster.
+Jobmon is designed for use on the OzSTAR supercomputer (http://supercomputing.swin.edu.au), but it can be adapted for any computing cluster. Please get in touch if you would like to run this on your cluster. There will most likely be a lot of tweaking required to adapt it to your needs and I'm happy to point you in the right direction.
 
 Every system is different, so some configuration is required to get jobmon to gather stats from your setup. `backend/backend_base.py` contains a base class, which should be used as a template to write a class to interfae with your system. `backend/backend_ozstar.py` defines a derived class that is specific to OzSTAR, which provides an example of how to set things up. OzSTAR uses the Slurm scheduler, plus ganglia and influx to gather stats from the nodes. 
 
