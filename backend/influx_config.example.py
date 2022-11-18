@@ -1,5 +1,5 @@
 # InfluxDB connection
-HOST = "influxdb"
-PORT = 8086
-USERNAME = "jobmon"
-PASSWORD = "XXXX"
+URL = "http://influxdb:8086"
+ORG = "org_name"
+BUCKET = "bucket_name"
+TOKEN = "token"

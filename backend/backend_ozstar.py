@@ -17,7 +17,7 @@ import pyslurm
 import showbf
 from backend_base import BackendBase
 from constants import KB
-from influxdb import InfluxDBClient
+from influxdb_client import InfluxDBClient
 
 
 class Backend(BackendBase):
@@ -64,11 +64,10 @@ class Backend(BackendBase):
         # Jobs with memory stats found
         jobs_with_stats = []
 
-        # Parse the JSON manually because ResultSet's generators are very slow
-        influx_json = influx_result.raw
+        for table in influx_result:
+            record = table.records[0]
 
-        for series in influx_json["series"]:
-            slurm_job_id = int(series["tags"]["job"])
+            slurm_job_id = int(record["job"])
 
             if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
 
@@ -77,19 +76,13 @@ class Backend(BackendBase):
 
                 jobs_with_stats += [job_id]
 
-                for values in series["values"]:
-                    # 'columns': ['time', 'host', 'max']
-                    node = values[1]
-                    mem = values[2]
+                node = record["host"]
+                mem = record["_value"]
 
-                    # Sum up memory usage from different tasks
-                    if job_id not in mem_data:
-                        mem_data[job_id] = {"mem": {}, "memMax": 0}
+                if job_id not in mem_data:
+                    mem_data[job_id] = {"mem": {}, "memMax": 0}
 
-                    if node not in mem_data[job_id]["mem"]:
-                        mem_data[job_id]["mem"][node] = 0
-
-                    mem_data[job_id]["mem"][node] += mem
+                mem_data[job_id]["mem"][node] = mem
 
         for job_id in mem_data:
 
@@ -151,19 +144,24 @@ class Backend(BackendBase):
 
     def query_influx(self):
         # InfluxDB client for memory stats
-        influx_client = InfluxDBClient(
-            host=influx_config.HOST,
-            port=influx_config.PORT,
-            username=influx_config.USERNAME,
-            password=influx_config.PASSWORD,
+        client = InfluxDBClient(
+            url=influx_config.URL,
+            org=influx_config.ORG,
+            token=influx_config.TOKEN,
         )
 
-        # Choose database
-        influx_client.switch_database("ozstar_slurm")
+        query_api = client.query_api()
 
-        # Query all jobs for current memory usage
-        query = "SELECT host, MAX(value) FROM RSS WHERE time > now() - 60s  GROUP BY job, host, task"
-        return influx_client.query(query)
+        # Sum up the memory usage of all tasks in a job using
+        # the last value of each task, and then group by job ID and host
+        query = f'from(bucket:"{influx_config.BUCKET}")\
+        |> range(start: -60s)\
+        |> filter(fn: (r) => r["_measurement"] == "RSS")\
+        |> last()\
+        |> group(columns: ["job", "host"])\
+        |> last()'
+
+        return query_api.query(query=query, org=influx_config.ORG)
 
     def prune_mem_max(self):
         n = 0
