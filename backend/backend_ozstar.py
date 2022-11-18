@@ -155,11 +155,11 @@ class Backend(BackendBase):
         # Sum up the memory usage of all tasks in a job using
         # the last value of each task, and then group by job ID and host
         query = f'from(bucket:"{influx_config.BUCKET}")\
-        |> range(start: -60s)\
+        |> range(start: -1m)\
         |> filter(fn: (r) => r["_measurement"] == "RSS")\
         |> last()\
         |> group(columns: ["job", "host"])\
-        |> last()'
+        |> sum()'
 
         return query_api.query(query=query, org=influx_config.ORG)
 
