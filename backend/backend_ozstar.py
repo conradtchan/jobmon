@@ -519,9 +519,8 @@ class Backend(BackendBase):
 
     def job_state(self, job_id=None, slurm_job_id=None):
         if job_id is not None:
-            slurm_id = self.id_map[job_id]
-            if slurm_id in self.pyslurm_job:
-                job = self.pyslurm_job[slurm_id]
+            if job_id in self.id_map:
+                job = self.pyslurm_job[self.id_map[job_id]]
             else:
                 job = None
         elif slurm_job_id is not None:
@@ -678,14 +677,9 @@ class Backend(BackendBase):
         for table in influx_result:
 
             # Every record in this table has the same ID, so just use the first
-            slurm_job_id = int(table.records[0]["job"])
+            job_id = table.records[0]["job"]
 
-            print(slurm_job_id, self.job_state(slurm_job_id=slurm_job_id))
-
-            if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
-
-                # Convert to full ID
-                job_id = self.full_id[slurm_job_id]
+            if self.job_state(job_id) == "RUNNING":
 
                 lustre_data[job_id] = {
                     "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
