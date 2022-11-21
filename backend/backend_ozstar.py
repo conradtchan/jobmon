@@ -69,10 +69,8 @@ class Backend(BackendBase):
         return n
 
     def update_mem_data(self):
-        self.log.info("Querying influx")
         influx_result = self.query_influx_memory()
 
-        self.log.info("Parsing influx data")
         mem_data = {}
 
         # Jobs with memory stats found
@@ -160,6 +158,7 @@ class Backend(BackendBase):
         return self.influx_query_api.query(query=query, org=influx_config.ORG)
 
     def query_influx_memory(self):
+        self.log.info("Querying Influx: memory")
         # Sum up the memory usage of all tasks in a job using
         # the last value of each task, and then group by job ID and host
         # Group by 1 minute range because Slurm updates every 30s
@@ -173,6 +172,7 @@ class Backend(BackendBase):
         return self.query_influx(query)
 
     def query_influx_lustre(self):
+        self.log.info("Querying Influx: lustre")
         # jobHarvest already reduces the data, so just query it by job
         query = f'from(bucket: "lustre-jobstats")\
         |> range(start: -{config.UPDATE_INTERVAL*2}s)\
@@ -679,6 +679,8 @@ class Backend(BackendBase):
 
             # Every record in this table has the same ID, so just use the first
             slurm_job_id = int(table.records[0]["job"])
+
+            print(slurm_job_id, self.job_state(slurm_job_id=slurm_job_id))
 
             if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
 
