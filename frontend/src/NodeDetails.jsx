@@ -213,8 +213,7 @@ export default class NodeDetails extends React.Component {
       // Only if the job has started running
       if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
         const job = data.jobs[selectedJobId];
-
-        const usage = getNodeUsage(selectedJobId, data.jobs[selectedJobId], nodeData, name);
+        const usage = getNodeUsage(selectedJobId, job, nodeData, name);
 
         // Memory usage
         if (Object.prototype.hasOwnProperty.call(job.mem, name)) {
@@ -244,6 +243,12 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
         swap: (nodeData.swap.total - nodeData.swap.free) * constants.mb,
+        job_oss_read: data.jobs[selectedJobId].lustre.oss.read_bytes,
+        job_oss_write: data.jobs[selectedJobId].lustre.oss.write_bytes,
+        job_oss_iops: data.jobs[selectedJobId].lustre.oss.iops,
+        job_mds_read: data.jobs[selectedJobId].lustre.mds.read_bytes,
+        job_mds_iops: data.jobs[selectedJobId].lustre.mds.iops,
+
       };
 
       if (nodeData.infiniband !== null) {
@@ -466,6 +471,78 @@ export default class NodeDetails extends React.Component {
       );
     }
 
+    charts.push(
+      <PropChart
+        key="lustre_oss_io"
+        name="Total Lustre OSS I/O"
+        data={historyChart}
+        dataKeys={["job_oss_read", "job_oss_write"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="lustre_mds_io"
+        name="Total Lustre MDS I/O"
+        data={historyChart}
+        dataKeys={["job_mds_read", "job_mds_write"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="lustre_oss_iops"
+        name="Total Lustre OSS IOPS"
+        data={historyChart}
+        dataKeys={["job_oss_iops"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+        ]}
+        lineStyle={[
+          "fill",
+        ]}
+        unit="/s"
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="lustre_mds_iops"
+        name="Total Lustre MDS IOPS"
+        data={historyChart}
+        dataKeys={["job_mds_iops"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+        ]}
+        lineStyle={[
+          "fill",
+        ]}
+        unit="/s"
+        stacked={false}
+      />,
+    );
+
     return (
       <div className="prop-charts">
         {charts}
@@ -659,6 +736,11 @@ NodeDetails.propTypes = {
             ),
           ),
           PropTypes.bool,
+          PropTypes.objectOf(
+            PropTypes.objectOf(
+              PropTypes.number,
+            ),
+          ),
         ],
       ),
     ),
@@ -703,6 +785,11 @@ NodeDetails.propTypes = {
                     ),
                   ),
                   PropTypes.bool,
+                  PropTypes.objectOf(
+                    PropTypes.objectOf(
+                      PropTypes.number,
+                    ),
+                  ),
                 ],
               ),
             ),

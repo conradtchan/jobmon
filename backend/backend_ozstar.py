@@ -662,7 +662,10 @@ class Backend(BackendBase):
         if job_id in self.lustre_data:
             return self.lustre_data[job_id]
         else:
-            return {}
+            return {
+                "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
+                "oss": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
+            }
 
     def update_lustre_jobstats(self):
         influx_result = self.query_influx_lustre()

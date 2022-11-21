@@ -503,6 +503,11 @@ NodeOverview.propTypes = {
               ),
             ),
             PropTypes.bool,
+            PropTypes.objectOf(
+              PropTypes.objectOf(
+                PropTypes.number,
+              ),
+            ),
           ],
         ),
       ),
@@ -536,6 +541,11 @@ NodeOverview.propTypes = {
                   ),
                 ),
                 PropTypes.bool,
+                PropTypes.objectOf(
+                  PropTypes.objectOf(
+                    PropTypes.number,
+                  ),
+                ),
               ],
             ),
           ),
@@ -584,6 +594,11 @@ NodeOverview.propTypes = {
                     ),
                   ),
                   PropTypes.bool,
+                  PropTypes.objectOf(
+                    PropTypes.objectOf(
+                      PropTypes.number,
+                    ),
+                  ),
                 ],
               ),
             ),
