@@ -278,8 +278,8 @@ class BackendBase:
         """
 
         return {
-            "mds": {"read": 0, "write": 0, "iops": 0},
-            "oss": {"read": 0, "write": 0, "iops": 0},
+            "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
+            "oss": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
         }
 
     def core_usage(self, data, silent=False):

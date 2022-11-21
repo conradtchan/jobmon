@@ -683,8 +683,8 @@ class Backend(BackendBase):
                 job_id = self.full_id[slurm_job_id]
 
                 lustre_data[job_id] = {
-                    "mds": {"read": 0, "write": 0, "iops": 0},
-                    "oss": {"read": 0, "write": 0, "iops": 0},
+                    "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
+                    "oss": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
                 }
 
                 jobs_with_stats += [job_id]
