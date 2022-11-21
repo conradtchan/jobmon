@@ -34,6 +34,14 @@ class Backend(BackendBase):
         # GPU_layout_cache
         self.gpu_layout_cache = OrderedDict()
 
+        # InfluxDB client query API
+        self.influx_client = InfluxDBClient(
+            url=influx_config.URL,
+            org=influx_config.ORG,
+            token=influx_config.TOKEN,
+        )
+        self.influx_query_api = self.influx_client.query_api()
+
     def pre_update(self):
         # Ganglia
         self.log.info("Getting Ganglia data")
@@ -143,15 +151,6 @@ class Backend(BackendBase):
             self.log.error("No files found to load max memory data from")
 
     def query_influx(self):
-        # InfluxDB client for memory stats
-        client = InfluxDBClient(
-            url=influx_config.URL,
-            org=influx_config.ORG,
-            token=influx_config.TOKEN,
-        )
-
-        query_api = client.query_api()
-
         # Sum up the memory usage of all tasks in a job using
         # the last value of each task, and then group by job ID and host
         query = f'from(bucket:"{influx_config.BUCKET}")\
@@ -161,7 +160,7 @@ class Backend(BackendBase):
         |> group(columns: ["job", "host"])\
         |> sum()'
 
-        return query_api.query(query=query, org=influx_config.ORG)
+        return self.influx_query_api.query(query=query, org=influx_config.ORG)
 
     def prune_mem_max(self):
         n = 0
