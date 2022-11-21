@@ -52,19 +52,25 @@ class Backend(BackendBase):
         self.pyslurm_node = pyslurm.node().get()
         self.pyslurm_job = pyslurm.job().get()
 
+        # Get active jobs (and call job_ids which generates full ID mapping)
+        self.n_running_jobs = self.count_running_jobs()
+
         # Influx
         self.log.info("Getting memory data")
         self.update_mem_data()
         self.prune_mem_max()
+        self.update_lustre_jobstats()
+
+    def count_running_jobs(self):
+        n = len(
+            [job_id for job_id in self.job_ids() if self.job_state(job_id) == "RUNNING"]
+        )
+        self.log.info(f"Counted {n} running jobs")
+        return n
 
     def update_mem_data(self):
         self.log.info("Querying influx")
-        influx_result = self.query_influx()
-
-        # Get active jobs (and call job_ids which generates full ID mapping)
-        running_jobs = [
-            job_id for job_id in self.job_ids() if self.job_state(job_id) == "RUNNING"
-        ]
+        influx_result = self.query_influx_memory()
 
         self.log.info("Parsing influx data")
         mem_data = {}
@@ -112,7 +118,7 @@ class Backend(BackendBase):
         jobs_with_stats = set(jobs_with_stats)
 
         self.log.info(
-            f"Memory stats found for {len(jobs_with_stats)}/{len(running_jobs)} jobs"
+            f"Memory stats found for {len(jobs_with_stats)}/{self.n_running_jobs} jobs"
         )
 
         self.mem_data = mem_data
@@ -150,17 +156,31 @@ class Backend(BackendBase):
         else:
             self.log.error("No files found to load max memory data from")
 
-    def query_influx(self):
+    def query_influx(self, query):
+        return self.influx_query_api.query(query=query, org=influx_config.ORG)
+
+    def query_influx_memory(self):
         # Sum up the memory usage of all tasks in a job using
         # the last value of each task, and then group by job ID and host
-        query = f'from(bucket:"{influx_config.BUCKET}")\
+        # Group by 1 minute range because Slurm updates every 30s
+        query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
         |> range(start: -1m)\
         |> filter(fn: (r) => r["_measurement"] == "RSS")\
         |> last()\
         |> group(columns: ["job", "host"])\
         |> sum()'
 
-        return self.influx_query_api.query(query=query, org=influx_config.ORG)
+        return self.query_influx(query)
+
+    def query_influx_lustre(self):
+        # jobHarvest already reduces the data, so just query it by job
+        query = f'from(bucket: "lustre-jobstats")\
+        |> range(start: -{config.UPDATE_INTERVAL*2}s)\
+        |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes")\
+        |> last()\
+        |> group(columns: ["job"])'
+
+        return self.query_influx(query)
 
     def prune_mem_max(self):
         n = 0
@@ -499,10 +519,21 @@ class Backend(BackendBase):
 
     def job_state(self, job_id=None, slurm_job_id=None):
         if job_id is not None:
-            job = self.pyslurm_job[self.id_map[job_id]]
+            slurm_id = self.id_map[job_id]
+            if slurm_id in self.pyslurm_job:
+                job = self.pyslurm_job[slurm_id]
+            else:
+                job = None
         elif slurm_job_id is not None:
-            job = self.pyslurm_job[slurm_job_id]
-        return job["job_state"]
+            if slurm_job_id in self.pyslurm_job:
+                job = self.pyslurm_job[slurm_job_id]
+            else:
+                job = None
+
+        if job is None:
+            return None
+        else:
+            return job["job_state"]
 
     def job_layout(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
@@ -626,6 +657,49 @@ class Backend(BackendBase):
             )
         else:
             return job["min_memory_node"]
+
+    def job_lustre(self, job_id):
+        if job_id in self.lustre_data:
+            return self.lustre_data[job_id]
+        else:
+            return {}
+
+    def update_lustre_jobstats(self):
+        influx_result = self.query_influx_lustre()
+
+        lustre_data = {}
+
+        # Jobs with lustre stats found
+        jobs_with_stats = []
+
+        for table in influx_result:
+
+            # Every record in this table has the same ID, so just use the first
+            slurm_job_id = int(table.records[0]["job"])
+
+            if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
+
+                # Convert to full ID
+                job_id = self.full_id[slurm_job_id]
+
+                lustre_data[job_id] = {
+                    "mds": {"read": 0, "write": 0, "iops": 0},
+                    "oss": {"read": 0, "write": 0, "iops": 0},
+                }
+
+                jobs_with_stats += [job_id]
+
+                # Unpack values
+                for record in table.records:
+                    lustre_data[job_id][record.get_measurement()][
+                        record.get_field()
+                    ] = record.get_value()
+
+        self.log.info(
+            f"Lustre stats found for {len(jobs_with_stats)}/{self.n_running_jobs} jobs"
+        )
+
+        self.lustre_data = lustre_data
 
     def core_usage(self, data, silent=False):
         usage = {"avail": 0, "running": 0, "users": {}}

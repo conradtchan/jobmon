@@ -272,6 +272,16 @@ class BackendBase:
 
         return 0
 
+    def job_lustre(self, job_id):
+        """
+        Return the lustre jobstats
+        """
+
+        return {
+            "mds": {"read": 0, "write": 0, "iops": 0},
+            "oss": {"read": 0, "write": 0, "iops": 0},
+        }
+
     def core_usage(self, data, silent=False):
         """
         Return the core utilization
@@ -384,7 +394,7 @@ class BackendBase:
             j[job_id]["mem"] = self.job_mem(job_id)
             j[job_id]["memMax"] = self.job_mem_max(job_id)
             j[job_id]["hasMem"] = self.job_has_mem_stats(job_id)
-            j[job_id]["memReq"] = self.job_mem_request(job_id)
+            j[job_id]["lustre"] = self.job_lustre(job_id)
 
         return j
 
