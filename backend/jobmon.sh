@@ -15,6 +15,6 @@ export RRDCACHED_ADDRESS=unix:/mnt/rrd/var_lib/ganglia/rrds/rrdcached.sock
 flock -n 9 || exit 1
 
 cd $JOBMON_DIR
-/usr/bin/python3 jobmon.py
+/usr/bin/python3 jobmon.py > jobmon.log
 
 ) 9>$LOCKFILE
