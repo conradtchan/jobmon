@@ -5,7 +5,6 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import PropTypes from "prop-types";
 
 export default class CorePie extends React.PureComponent {
   render() {
@@ -66,18 +65,3 @@ export default class CorePie extends React.PureComponent {
     );
   }
 }
-
-CorePie.propTypes = {
-  selected: PropTypes.bool.isRequired,
-  data: PropTypes.arrayOf(
-    PropTypes.objectOf(
-      PropTypes.oneOfType(
-        [
-          PropTypes.string,
-          PropTypes.number,
-        ],
-      ),
-    ),
-  ).isRequired,
-  percentWidth: PropTypes.string.isRequired,
-};

@@ -9296,7 +9296,6 @@ fsevents@^1.2.7:
     fetch-mock: ^9.10.7
     moment: ^2.29.4
     node-fetch: ^2.6.7
-    prop-types: ^15.7.2
     react: ^17.0.2
     react-dom: ^16.2.0
     react-ga4: ^1.4.1
@@ -12445,7 +12444,7 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.6.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:

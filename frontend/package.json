@@ -7,7 +7,6 @@
     "@welldone-software/why-did-you-render": "^4.3.2",
     "moment": "^2.29.4",
     "node-fetch": "^2.6.7",
-    "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-dom": "^16.2.0",
     "react-ga4": "^1.4.1",

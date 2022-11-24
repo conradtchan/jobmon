@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import UsagePie from "./UsagePie";
 import UserString from "./UserString";
 import config from "./config";
@@ -220,18 +219,3 @@ export default class UserPiePlot extends React.Component {
       );
     }
 }
-
-UserPiePlot.propTypes = {
-  runningData: PropTypes.arrayOf(
-    PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
-  ).isRequired,
-  runningCores: PropTypes.number.isRequired,
-  availCores: PropTypes.number.isRequired,
-  updateUsername: PropTypes.func.isRequired,
-  warnedUsers: PropTypes.arrayOf(PropTypes.string).isRequired,
-  badness: PropTypes.objectOf(PropTypes.number).isRequired,
-  timestamp: PropTypes.number.isRequired,
-  userFilter: PropTypes.string.isRequired,
-  defaultUserFilter: PropTypes.string.isRequired,
-  updateUserFilter: PropTypes.func.isRequired,
-};

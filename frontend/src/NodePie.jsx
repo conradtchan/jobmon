@@ -6,7 +6,6 @@ import {
   Cell,
   Label,
 } from "recharts";
-import PropTypes from "prop-types";
 
 export default class NodePie extends React.PureComponent {
   constructor(props) {
@@ -204,15 +203,3 @@ export default class NodePie extends React.PureComponent {
     );
   }
 }
-
-NodePie.propTypes = {
-  cpuUsage: PropTypes.objectOf(PropTypes.number).isRequired,
-  mem: PropTypes.number.isRequired,
-  gpu: PropTypes.number.isRequired,
-  nodeWarn: PropTypes.objectOf(
-    PropTypes.objectOf(PropTypes.oneOfType([PropTypes.number, PropTypes.number, PropTypes.object])),
-  ).isRequired,
-  nodeName: PropTypes.string.isRequired,
-  onRowClick: PropTypes.func.isRequired,
-  isGpuJob: PropTypes.bool.isRequired,
-};

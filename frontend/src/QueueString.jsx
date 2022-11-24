@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 
 export default class QueueString extends React.PureComponent {
   render() {
@@ -28,7 +27,3 @@ export default class QueueString extends React.PureComponent {
     );
   }
 }
-
-QueueString.propTypes = {
-  user: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])).isRequired,
-};
