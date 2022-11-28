@@ -177,7 +177,7 @@ class Backend(BackendBase):
         query = f'from(bucket: "lustre-jobstats")\
         |> range(start: -{config.UPDATE_INTERVAL*2}s)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
-        |> derivative(nonNegative: true, unit: {config.UPDATE_INTERVAL})\
+        |> derivative(nonNegative: true, unit: {config.UPDATE_INTERVAL}s)\
         |> last()\
         |> group(columns: ["job", "fs", "server"])'
 
