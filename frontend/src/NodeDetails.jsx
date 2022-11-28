@@ -206,9 +206,22 @@ export default class NodeDetails extends React.Component {
       let jobMem = 0.0;
       let jobMemMax = 0.0;
       let jobMemRequested = 0.0;
+
       let jobUser = 0.0;
       let jobSystem = 0.0;
       let jobWait = 0.0;
+
+      let fredOssRead = 0.0;
+      let fredOssWrite = 0.0;
+      let fredMdsIops = 0.0;
+      let homeOssRead = 0.0;
+      let homeOssWrite = 0.0;
+      let homeMdsIops = 0.0;
+      let appsOssRead = 0.0;
+      let appsMdsIops = 0.0;
+      let imagesOssRead = 0.0;
+      let imagesMdsIops = 0.0;
+
       // Only if the job has started running
       if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
         const job = data.jobs[selectedJobId];
@@ -225,6 +238,30 @@ export default class NodeDetails extends React.Component {
         jobUser = usage.cpu.user;
         jobSystem = usage.cpu.system;
         jobWait = usage.cpu.wait;
+
+        // Lustre job stats
+        if (Object.keys(data.jobs[selectedJobId].lustre).length > 0) {
+          const jobLustre = data.jobs[selectedJobId].lustre;
+
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "dagg")) {
+            fredOssRead = jobLustre.dagg.oss.read_bytes;
+            fredOssWrite = jobLustre.dagg.oss.write_bytes;
+            fredMdsIops = jobLustre.dagg.mds.iops;
+          }
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "apps")) {
+            appsOssRead = jobLustre.apps.oss.read_bytes;
+            appsMdsIops = jobLustre.apps.mds.iops;
+          }
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "images")) {
+            imagesOssRead = jobLustre.images.oss.read_bytes;
+            imagesMdsIops = jobLustre.images.mds.iops;
+          }
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "home")) {
+            homeOssRead = jobLustre.home.oss.read_bytes;
+            homeOssWrite = jobLustre.home.oss.write_bytes;
+            homeMdsIops = jobLustre.home.mds.iops;
+          }
+        }
       }
 
       const d = new Date(data.timestamp * 1000);
@@ -242,12 +279,16 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
         swap: (nodeData.swap.total - nodeData.swap.free) * constants.mb,
-        job_oss_read: data.jobs[selectedJobId].lustre.oss.read_bytes,
-        job_oss_write: data.jobs[selectedJobId].lustre.oss.write_bytes,
-        job_oss_iops: data.jobs[selectedJobId].lustre.oss.iops,
-        job_mds_read: data.jobs[selectedJobId].lustre.mds.read_bytes,
-        job_mds_iops: data.jobs[selectedJobId].lustre.mds.iops,
-
+        fred_read: fredOssRead,
+        fred_write: fredOssWrite,
+        fred_iops: fredMdsIops,
+        home_read: homeOssRead,
+        home_write: homeOssWrite,
+        home_iops: homeMdsIops,
+        apps_read: appsOssRead,
+        apps_iops: appsMdsIops,
+        images_read: imagesOssRead,
+        images_iops: imagesMdsIops,
       };
 
       if (nodeData.infiniband !== null) {
@@ -472,10 +513,33 @@ export default class NodeDetails extends React.Component {
 
     charts.push(
       <PropChart
-        key="lustre_oss_io"
-        name="Total Lustre OSS I/O"
+        key="job_lustre_read"
+        name="Lustre read"
         data={historyChart}
-        dataKeys={["job_oss_read", "job_oss_write"]}
+        dataKeys={["fred_read", "home_read", "apps_read", "images_read"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+          style.getPropertyValue("--piecycle-3"),
+          style.getPropertyValue("--piecycle-4"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        stacked
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="job_lustre_write"
+        name="Lustre write"
+        data={historyChart}
+        dataKeys={["fred_write", "home_write"]}
         colors={[
           style.getPropertyValue("--piecycle-1"),
           style.getPropertyValue("--piecycle-2"),
@@ -485,60 +549,30 @@ export default class NodeDetails extends React.Component {
           "fill",
         ]}
         unit="B/s"
-        stacked={false}
+        stacked
       />,
     );
 
     charts.push(
       <PropChart
-        key="lustre_mds_io"
-        name="Total Lustre MDS I/O"
+        key="job_lustre_iops"
+        name="Lustre IOPS"
         data={historyChart}
-        dataKeys={["job_mds_read", "job_mds_write"]}
+        dataKeys={["fred_iops", "home_iops", "apps_iops", "images_iops"]}
         colors={[
           style.getPropertyValue("--piecycle-1"),
           style.getPropertyValue("--piecycle-2"),
+          style.getPropertyValue("--piecycle-3"),
+          style.getPropertyValue("--piecycle-4"),
         ]}
         lineStyle={[
           "fill",
           "fill",
-        ]}
-        unit="B/s"
-        stacked={false}
-      />,
-    );
-
-    charts.push(
-      <PropChart
-        key="lustre_oss_iops"
-        name="Total Lustre OSS IOPS"
-        data={historyChart}
-        dataKeys={["job_oss_iops"]}
-        colors={[
-          style.getPropertyValue("--piecycle-1"),
-        ]}
-        lineStyle={[
+          "fill",
           "fill",
         ]}
         unit="/s"
-        stacked={false}
-      />,
-    );
-
-    charts.push(
-      <PropChart
-        key="lustre_mds_iops"
-        name="Total Lustre MDS IOPS"
-        data={historyChart}
-        dataKeys={["job_mds_iops"]}
-        colors={[
-          style.getPropertyValue("--piecycle-1"),
-        ]}
-        lineStyle={[
-          "fill",
-        ]}
-        unit="/s"
-        stacked={false}
+        stacked
       />,
     );
 
