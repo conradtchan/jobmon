@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import { timeConvert } from "./timeFunctions";
 
 export default class JobText extends React.PureComponent {
@@ -41,17 +40,3 @@ export default class JobText extends React.PureComponent {
     );
   }
 }
-
-JobText.propTypes = {
-  warn: PropTypes.bool.isRequired,
-  id: PropTypes.string.isRequired,
-  job: PropTypes.objectOf(PropTypes.oneOfType(
-    [
-      PropTypes.number,
-      PropTypes.string,
-      PropTypes.objectOf(PropTypes.arrayOf(PropTypes.number)),
-      PropTypes.objectOf(PropTypes.number),
-      PropTypes.bool,
-    ],
-  )).isRequired,
-};

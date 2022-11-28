@@ -6,7 +6,6 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
-import PropTypes from "prop-types";
 import moment from "moment";
 import { timeString } from "./timeFunctions";
 import config from "./config";
@@ -296,29 +295,3 @@ export default class TimeMachine extends React.Component {
     );
   }
 }
-
-TimeMachine.propTypes = {
-  snapshotTime: PropTypes.instanceOf(Date).isRequired,
-  history: PropTypes.objectOf(
-    PropTypes.objectOf(
-      PropTypes.oneOfType(
-        [
-          PropTypes.number,
-          PropTypes.objectOf(PropTypes.number),
-        ],
-      ),
-    ),
-  ),
-  clickLoadTime: PropTypes.func.isRequired,
-  viewPresent: PropTypes.func.isRequired,
-  viewPast: PropTypes.func.isRequired,
-  viewFuture: PropTypes.func.isRequired,
-  timeAgo: PropTypes.number,
-  theme: PropTypes.string.isRequired,
-  userFilter: PropTypes.string.isRequired,
-};
-
-TimeMachine.defaultProps = {
-  history: null,
-  timeAgo: null,
-};

@@ -7,13 +7,14 @@ JOBMON_DIR=/home/cchan/backend
 LOCKFILE=/tmp/.jobmon.lockfile
 
 # Dependencies
-export PYTHONPATH=$PYTHONPATH:/apps/pyslurm/20.02.6/lib64/python3.6/site-packages
+export PYTHONPATH=/apps/pyslurm/21.08.7-8febf210-py3/lib64/python3.6/site-packages:/apps/influxdb-client/1.34.0-py3/lib64/python3.6/site-packages:$PYTHONPATH
+
 export RRDCACHED_ADDRESS=unix:/mnt/rrd/var_lib/ganglia/rrds/rrdcached.sock
 
 (
 flock -n 9 || exit 1
 
 cd $JOBMON_DIR
-/usr/bin/python3 jobmon.py
+/usr/bin/python3 jobmon.py > jobmon.log
 
 ) 9>$LOCKFILE

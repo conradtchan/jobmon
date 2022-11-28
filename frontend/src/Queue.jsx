@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import QueueString from "./QueueString";
 
 export default class Queue extends React.PureComponent {
@@ -51,18 +50,3 @@ export default class Queue extends React.PureComponent {
     );
   }
 }
-
-Queue.propTypes = {
-  queueData: PropTypes.arrayOf(
-    PropTypes.objectOf(
-      PropTypes.oneOfType(
-        [
-          PropTypes.string,
-          PropTypes.number,
-        ],
-      ),
-    ),
-  ).isRequired,
-  queueTotal: PropTypes.objectOf(PropTypes.number).isRequired,
-  availCores: PropTypes.number.isRequired,
-};

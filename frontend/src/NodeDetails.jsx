@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import JobText from "./JobText";
 import PropChart from "./PropChart";
 import CorePie from "./CorePie";
@@ -207,14 +206,26 @@ export default class NodeDetails extends React.Component {
       let jobMem = 0.0;
       let jobMemMax = 0.0;
       let jobMemRequested = 0.0;
+
       let jobUser = 0.0;
       let jobSystem = 0.0;
       let jobWait = 0.0;
+
+      let fredOssRead = 0.0;
+      let fredOssWrite = 0.0;
+      let fredMdsIops = 0.0;
+      let homeOssRead = 0.0;
+      let homeOssWrite = 0.0;
+      let homeMdsIops = 0.0;
+      let appsOssRead = 0.0;
+      let appsMdsIops = 0.0;
+      let imagesOssRead = 0.0;
+      let imagesMdsIops = 0.0;
+
       // Only if the job has started running
       if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
         const job = data.jobs[selectedJobId];
-
-        const usage = getNodeUsage(selectedJobId, data.jobs[selectedJobId], nodeData, name);
+        const usage = getNodeUsage(selectedJobId, job, nodeData, name);
 
         // Memory usage
         if (Object.prototype.hasOwnProperty.call(job.mem, name)) {
@@ -227,6 +238,30 @@ export default class NodeDetails extends React.Component {
         jobUser = usage.cpu.user;
         jobSystem = usage.cpu.system;
         jobWait = usage.cpu.wait;
+
+        // Lustre job stats
+        if (Object.keys(data.jobs[selectedJobId].lustre).length > 0) {
+          const jobLustre = data.jobs[selectedJobId].lustre;
+
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "dagg")) {
+            fredOssRead = jobLustre.dagg.oss.read_bytes;
+            fredOssWrite = jobLustre.dagg.oss.write_bytes;
+            fredMdsIops = jobLustre.dagg.mds.iops;
+          }
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "apps")) {
+            appsOssRead = jobLustre.apps.oss.read_bytes;
+            appsMdsIops = jobLustre.apps.mds.iops;
+          }
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "images")) {
+            imagesOssRead = jobLustre.images.oss.read_bytes;
+            imagesMdsIops = jobLustre.images.mds.iops;
+          }
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "home")) {
+            homeOssRead = jobLustre.home.oss.read_bytes;
+            homeOssWrite = jobLustre.home.oss.write_bytes;
+            homeMdsIops = jobLustre.home.mds.iops;
+          }
+        }
       }
 
       const d = new Date(data.timestamp * 1000);
@@ -244,6 +279,16 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
         swap: (nodeData.swap.total - nodeData.swap.free) * constants.mb,
+        fred_read: fredOssRead,
+        fred_write: fredOssWrite,
+        fred_iops: fredMdsIops,
+        home_read: homeOssRead,
+        home_write: homeOssWrite,
+        home_iops: homeMdsIops,
+        apps_read: appsOssRead,
+        apps_iops: appsMdsIops,
+        images_read: imagesOssRead,
+        images_iops: imagesMdsIops,
       };
 
       if (nodeData.infiniband !== null) {
@@ -417,7 +462,7 @@ export default class NodeDetails extends React.Component {
     );
   }
 
-  getJobPropCharts(historyChart) {
+  static getJobPropCharts(historyChart) {
     const style = getComputedStyle(document.documentElement);
 
     const charts = [];
@@ -443,51 +488,97 @@ export default class NodeDetails extends React.Component {
       />,
     );
 
-    if (this.hasMemStats()) {
-      charts.push(
-        <PropChart
-          key="mem"
-          name="Memory"
-          data={historyChart}
-          dataKeys={["job_mem", "job_mem_max", "job_mem_requested"]}
-          colors={[
-            style.getPropertyValue("--piecolor-mem"),
-            style.getPropertyValue("--piecolor-mem"),
-            style.getPropertyValue("--piecolor-mem"),
-          ]}
-          lineStyle={[
-            "fill",
-            "line",
-            "dashed",
-          ]}
-          unit="B"
-          stacked={false}
-        />,
-      );
-    }
+    charts.push(
+      <PropChart
+        key="mem"
+        name="Memory"
+        data={historyChart}
+        dataKeys={["job_mem", "job_mem_max", "job_mem_requested"]}
+        colors={[
+          style.getPropertyValue("--piecolor-mem"),
+          style.getPropertyValue("--piecolor-mem"),
+          style.getPropertyValue("--piecolor-mem"),
+        ]}
+        lineStyle={[
+          "fill",
+          "line",
+          "dashed",
+        ]}
+        unit="B"
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="job_lustre_read"
+        name="Lustre read"
+        data={historyChart}
+        dataKeys={["fred_read", "home_read", "apps_read", "images_read"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+          style.getPropertyValue("--piecycle-3"),
+          style.getPropertyValue("--piecycle-4"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        stacked
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="job_lustre_write"
+        name="Lustre write"
+        data={historyChart}
+        dataKeys={["fred_write", "home_write"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        stacked
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="job_lustre_iops"
+        name="Lustre IOPS"
+        data={historyChart}
+        dataKeys={["fred_iops", "home_iops", "apps_iops", "images_iops"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+          style.getPropertyValue("--piecycle-3"),
+          style.getPropertyValue("--piecycle-4"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+          "fill",
+          "fill",
+        ]}
+        unit="/s"
+        stacked
+      />,
+    );
 
     return (
       <div className="prop-charts">
         {charts}
       </div>
     );
-  }
-
-  hasMemStats() {
-    const {
-      historyData,
-      selectedJobId,
-    } = this.props;
-
-    for (let i = 0; i < historyData.length; i += 1) {
-      const data = historyData[i];
-      if (Object.keys(data.jobs).includes(selectedJobId)) {
-        if (data.jobs[selectedJobId].hasMem) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   render() {
@@ -586,7 +677,7 @@ export default class NodeDetails extends React.Component {
           Job resource usage
         </div>
 
-        {this.getJobPropCharts(historyChart)}
+        {NodeDetails.getJobPropCharts(historyChart)}
 
         <div className="heading">
           Node resource usage
@@ -615,110 +706,3 @@ export default class NodeDetails extends React.Component {
     );
   }
 }
-
-NodeDetails.propTypes = {
-  selectedJobId: PropTypes.string,
-  name: PropTypes.string,
-  username: PropTypes.string,
-  node: PropTypes.objectOf(
-    PropTypes.oneOfType(
-      [
-        PropTypes.string,
-        PropTypes.number,
-        PropTypes.objectOf(
-          PropTypes.oneOfType(
-            [
-              PropTypes.number,
-              PropTypes.arrayOf(
-                PropTypes.number,
-              ),
-              PropTypes.arrayOf(
-                PropTypes.arrayOf(
-                  PropTypes.number,
-                ),
-              ),
-            ],
-          ),
-        ),
-        PropTypes.bool,
-      ],
-    ),
-  ),
-  jobs: PropTypes.objectOf(
-    PropTypes.objectOf(
-      PropTypes.oneOfType(
-        [
-          PropTypes.string,
-          PropTypes.number,
-          PropTypes.objectOf(
-            PropTypes.number,
-          ),
-          PropTypes.objectOf(
-            PropTypes.arrayOf(
-              PropTypes.number,
-            ),
-          ),
-          PropTypes.bool,
-        ],
-      ),
-    ),
-  ),
-  warnings: PropTypes.objectOf(
-    PropTypes.objectOf(
-      PropTypes.objectOf(
-        PropTypes.objectOf(
-          PropTypes.number,
-        ),
-      ),
-    ),
-  ).isRequired,
-  onJobClick: PropTypes.func.isRequired,
-  changeTimeWindow: PropTypes.func.isRequired,
-  timeWindow: PropTypes.number.isRequired,
-  historyData: PropTypes.arrayOf(
-    PropTypes.objectOf(
-      PropTypes.oneOfType(
-        [
-          PropTypes.string,
-          PropTypes.number,
-          PropTypes.objectOf(
-            PropTypes.objectOf(
-              PropTypes.oneOfType(
-                [
-                  PropTypes.string,
-                  PropTypes.number,
-                  PropTypes.objectOf(
-                    PropTypes.oneOfType(
-                      [
-                        PropTypes.number,
-                        PropTypes.arrayOf(
-                          PropTypes.number,
-                        ),
-                        PropTypes.arrayOf(
-                          PropTypes.arrayOf(
-                            PropTypes.number,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  PropTypes.bool,
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ).isRequired,
-  timestamp: PropTypes.number.isRequired,
-  theme: PropTypes.string.isRequired,
-};
-
-NodeDetails.defaultProps = {
-  selectedJobId: null,
-  name: null,
-  username: null,
-  node: null,
-  jobs: null,
-};

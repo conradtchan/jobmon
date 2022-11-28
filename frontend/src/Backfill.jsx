@@ -8,7 +8,6 @@ import {
   Tooltip,
   BarChart,
 } from "recharts";
-import PropTypes from "prop-types";
 import config from "./config";
 
 function timeString(num) {
@@ -125,17 +124,3 @@ export default class Backfill extends React.PureComponent {
     );
   }
 }
-
-Backfill.propTypes = {
-  backfillData: PropTypes.objectOf(
-    PropTypes.objectOf(
-      PropTypes.objectOf(
-        PropTypes.number,
-      ),
-    ),
-  ),
-};
-
-Backfill.defaultProps = {
-  backfillData: null,
-};

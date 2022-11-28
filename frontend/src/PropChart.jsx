@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import {
   ResponsiveContainer,
   Tooltip,
@@ -186,20 +185,3 @@ export default class PropChart extends React.PureComponent {
     );
   }
 }
-
-PropChart.propTypes = {
-  dataKeys: PropTypes.arrayOf(PropTypes.string).isRequired,
-  lineStyle: PropTypes.arrayOf(PropTypes.string).isRequired,
-  stacked: PropTypes.bool.isRequired,
-  unit: PropTypes.string.isRequired,
-  colors: PropTypes.arrayOf(PropTypes.string).isRequired,
-  data: PropTypes.arrayOf(
-    PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
-  ).isRequired,
-  dataMax: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  name: PropTypes.string.isRequired,
-};
-
-PropChart.defaultProps = {
-  dataMax: null,
-};

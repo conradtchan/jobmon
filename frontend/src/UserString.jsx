@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 import config from "./config";
 
 export default class UserString extends React.Component {
@@ -102,19 +101,3 @@ export default class UserString extends React.Component {
     );
   }
 }
-
-UserString.propTypes = {
-  user: PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])).isRequired,
-  availCores: PropTypes.number.isRequired,
-  hoveredIndex: PropTypes.number,
-  mouseEnter: PropTypes.func.isRequired,
-  mouseLeave: PropTypes.func.isRequired,
-  onClick: PropTypes.func.isRequired,
-  warning: PropTypes.bool.isRequired,
-  badness: PropTypes.number.isRequired,
-  nameSort: PropTypes.string.isRequired,
-};
-
-UserString.defaultProps = {
-  hoveredIndex: null,
-};

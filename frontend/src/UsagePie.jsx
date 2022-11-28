@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 
 import {
   ResponsiveContainer,
@@ -190,20 +189,3 @@ export default class UsagePie extends React.Component {
     );
   }
 }
-
-UsagePie.propTypes = {
-  onMouseEnter: PropTypes.func.isRequired,
-  onMouseLeave: PropTypes.func.isRequired,
-  activeSectorSize: PropTypes.string.isRequired,
-  runningData: PropTypes.arrayOf(
-    PropTypes.objectOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
-  ).isRequired,
-  runningCores: PropTypes.number.isRequired,
-  availCores: PropTypes.number.isRequired,
-  activeIndex: PropTypes.number,
-  onPieClick: PropTypes.func.isRequired,
-};
-
-UsagePie.defaultProps = {
-  activeIndex: null,
-};

@@ -5,7 +5,7 @@ A Python script runs periodically on the management node to collect statistics a
 # Setup
 Jobmon is designed for use on the OzSTAR supercomputer (http://supercomputing.swin.edu.au), but it can be adapted for any computing cluster. Please get in touch if you would like to run this on your cluster. There will most likely be a lot of tweaking required to adapt it to your needs and I'm happy to point you in the right direction.
 
-Every system is different, so some configuration is required to get jobmon to gather stats from your setup. `backend/backend_base.py` contains a base class, which should be used as a template to write a class to interfae with your system. `backend/backend_ozstar.py` defines a derived class that is specific to OzSTAR, which provides an example of how to set things up. OzSTAR uses the Slurm scheduler, plus ganglia and influx to gather stats from the nodes. 
+Every system is different, so some configuration is required to get jobmon to gather stats from your setup. `backend/backend_base.py` contains a base class, which should be used as a template to write a class to interfae with your system. `backend/backend_ozstar.py` defines a derived class that is specific to OzSTAR, which provides an example of how to set things up. OzSTAR uses the Slurm scheduler, plus ganglia and influx to gather stats from the nodes.
 
 The following methods are overriden to make calls to the various interfaces (pyslurm, ganglia, influxdb):
 - `cpu_usage`
@@ -33,7 +33,6 @@ The following methods are overriden to make calls to the various interfaces (pys
 - `job_run_time`
 - `job_mem`
 - `job_mem_max`
-- `job_has_mem_stats`
 - `job_mem_request`
 - `core_usage`
 - `pre_update`
@@ -47,10 +46,10 @@ from backend_base import BackendBase
 class Backend(BackendBase):
   def cpu_usage(self):
     ...
-    
+
 ```
 
-`backend/jobmon_config.py` defines the configuration options for the back end. For example, if you've created `backend/backend_jarvis.py`, then you will need to set `BACKEND = "jarvis"`. 
+`backend/jobmon_config.py` defines the configuration options for the back end. For example, if you've created `backend/backend_jarvis.py`, then you will need to set `BACKEND = "jarvis"`.
 
 ## Backend configuration
 - `DATA_PATH`: Location to write JSON files
@@ -144,5 +143,3 @@ cp -r build/* /var/www/html/jobmon
 # Running
 
 Run `backend/jobmon.sh`, which manages the backend script `jobmon.py`. Set the `JOBMON_DIR` and `LOCKFILE` in `jobmon.sh`. Alternatively, run `python jobmon.py` directly. The backend generates gzip'd JSON files at `/var/spool/jobmon`. These JSON files are read by the web app.
-
-
