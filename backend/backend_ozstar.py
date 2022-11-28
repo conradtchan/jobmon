@@ -697,9 +697,9 @@ class Backend(BackendBase):
                         }
 
                     server = record.values["server"]
-                    lustre_data[job_id][fs][server][
-                        record.get_field()
-                    ] = record.get_value()
+                    lustre_data[job_id][fs][server][record.get_field()] = round(
+                        record.get_value(), 1
+                    )
 
         self.log.info(
             f"Lustre stats found for {len(jobs_with_stats)}/{self.n_running_jobs} jobs"
