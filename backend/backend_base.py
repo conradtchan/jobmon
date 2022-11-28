@@ -258,13 +258,6 @@ class BackendBase:
 
         return 0
 
-    def job_has_mem_stats(self, job_id):
-        """
-        Return True if the job has memory stats available
-        """
-
-        return False
-
     def job_mem_request(self, job_id):
         """
         Return the requested memory allocation in MB
@@ -390,7 +383,6 @@ class BackendBase:
             j[job_id]["startTime"] = self.job_start_time(job_id)
             j[job_id]["mem"] = self.job_mem(job_id)
             j[job_id]["memMax"] = self.job_mem_max(job_id)
-            j[job_id]["hasMem"] = self.job_has_mem_stats(job_id)
             j[job_id]["memReq"] = self.job_mem_request(job_id)
             j[job_id]["lustre"] = self.job_lustre(job_id)
 

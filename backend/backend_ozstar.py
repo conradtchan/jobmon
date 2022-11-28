@@ -643,9 +643,6 @@ class Backend(BackendBase):
         else:
             return 0
 
-    def job_has_mem_stats(self, job_id):
-        return job_id in self.mem_data
-
     def job_mem_request(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 

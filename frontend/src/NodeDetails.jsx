@@ -462,7 +462,7 @@ export default class NodeDetails extends React.Component {
     );
   }
 
-  getJobPropCharts(historyChart) {
+  static getJobPropCharts(historyChart) {
     const style = getComputedStyle(document.documentElement);
 
     const charts = [];
@@ -488,28 +488,26 @@ export default class NodeDetails extends React.Component {
       />,
     );
 
-    if (this.hasMemStats()) {
-      charts.push(
-        <PropChart
-          key="mem"
-          name="Memory"
-          data={historyChart}
-          dataKeys={["job_mem", "job_mem_max", "job_mem_requested"]}
-          colors={[
-            style.getPropertyValue("--piecolor-mem"),
-            style.getPropertyValue("--piecolor-mem"),
-            style.getPropertyValue("--piecolor-mem"),
-          ]}
-          lineStyle={[
-            "fill",
-            "line",
-            "dashed",
-          ]}
-          unit="B"
-          stacked={false}
-        />,
-      );
-    }
+    charts.push(
+      <PropChart
+        key="mem"
+        name="Memory"
+        data={historyChart}
+        dataKeys={["job_mem", "job_mem_max", "job_mem_requested"]}
+        colors={[
+          style.getPropertyValue("--piecolor-mem"),
+          style.getPropertyValue("--piecolor-mem"),
+          style.getPropertyValue("--piecolor-mem"),
+        ]}
+        lineStyle={[
+          "fill",
+          "line",
+          "dashed",
+        ]}
+        unit="B"
+        stacked={false}
+      />,
+    );
 
     charts.push(
       <PropChart
@@ -581,23 +579,6 @@ export default class NodeDetails extends React.Component {
         {charts}
       </div>
     );
-  }
-
-  hasMemStats() {
-    const {
-      historyData,
-      selectedJobId,
-    } = this.props;
-
-    for (let i = 0; i < historyData.length; i += 1) {
-      const data = historyData[i];
-      if (Object.keys(data.jobs).includes(selectedJobId)) {
-        if (data.jobs[selectedJobId].hasMem) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   render() {
@@ -696,7 +677,7 @@ export default class NodeDetails extends React.Component {
           Job resource usage
         </div>
 
-        {this.getJobPropCharts(historyChart)}
+        {NodeDetails.getJobPropCharts(historyChart)}
 
         <div className="heading">
           Node resource usage
