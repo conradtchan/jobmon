@@ -277,10 +277,7 @@ class BackendBase:
         Return the lustre jobstats
         """
 
-        return {
-            "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
-            "oss": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
-        }
+        return {}
 
     def core_usage(self, data, silent=False):
         """

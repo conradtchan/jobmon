@@ -175,10 +175,11 @@ class Backend(BackendBase):
         self.log.info("Querying Influx: lustre")
         # jobHarvest already reduces the data, so just query it by job
         query = f'from(bucket: "lustre-jobstats")\
-        |> range(start: -{config.UPDATE_INTERVAL*2}s)\
-        |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes")\
+        |> range(start: -{config.UPDATE_INTERVAL*20}s)\
+        |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
+        |> derivative(nonNegative: true)\
         |> last()\
-        |> group(columns: ["job"])'
+        |> group(columns: ["job", "fs", "server"])'
 
         return self.query_influx(query)
 
@@ -661,10 +662,7 @@ class Backend(BackendBase):
         if job_id in self.lustre_data:
             return self.lustre_data[job_id]
         else:
-            return {
-                "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
-                "oss": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
-            }
+            return {}
 
     def update_lustre_jobstats(self):
         influx_result = self.query_influx_lustre()
@@ -676,28 +674,39 @@ class Backend(BackendBase):
 
         for table in influx_result:
 
+            # Cycle loop if there are no records in this table
+            if len(table.records) == 0:
+                continue
+
             # Every record in this table has the same ID, so just use the first
             job_id = table.records[0]["job"]
 
             if self.job_state(job_id) == "RUNNING":
-
-                lustre_data[job_id] = {
-                    "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
-                    "oss": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
-                }
-
                 jobs_with_stats += [job_id]
+
+                if job_id not in lustre_data:
+                    lustre_data[job_id] = {}
 
                 # Unpack values
                 for record in table.records:
-                    lustre_data[job_id][record.get_measurement()][
+                    assert record["job"] == job_id
+
+                    fs = record.values["fs"]
+
+                    if fs not in lustre_data[job_id]:
+                        lustre_data[job_id][fs] = {
+                            "mds": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
+                            "oss": {"read_bytes": 0, "write_bytes": 0, "iops": 0},
+                        }
+
+                    server = record.values["server"]
+                    lustre_data[job_id][fs][server][
                         record.get_field()
                     ] = record.get_value()
 
         self.log.info(
             f"Lustre stats found for {len(jobs_with_stats)}/{self.n_running_jobs} jobs"
         )
-
         self.lustre_data = lustre_data
 
     def core_usage(self, data, silent=False):
