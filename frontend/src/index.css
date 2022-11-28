@@ -495,7 +495,7 @@ div:focus {outline: 0px;}
   border-style: solid;
   border-width: var(--border-width);
   border-color: var(--dark-shade);
-  justify-content: center;
+  justify-content: left;
 }
 
 .prop-chart-group {
