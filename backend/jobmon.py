@@ -49,9 +49,6 @@ if __name__ == "__main__":
             # Main data update
             b.update_data()
 
-            # Get core usage for new data
-            b.update_core_usage()
-
             # Calculate backfill
             b.update_backfill()
 

@@ -395,12 +395,16 @@ class BackendBase:
         Do not override this function
         """
         self.pre_update()
+
         data = {}
         data["api"] = API_VERSION
         data["timestamp"] = self.timestamp()
         data["nodes"] = self.nodes()
         data["jobs"] = self.jobs()
+
         self.data = data
+
+        self.update_core_usage()
 
     def update_core_usage(self, data=None):
         """
@@ -410,14 +414,16 @@ class BackendBase:
         """
 
         self.log.info("Updating core usage history")
-        # For loading in usage from disk
-        if data is None:
-            data = self.data
 
-        # Suppress printout to log
-        self.usage_cache["history"][data["timestamp"]] = self.core_usage(
-            data, silent=True
-        )
+        # For loading in usage from disk
+        if data is not None:
+            self.data = data
+
+        # Storage usage in self.data to reduce loading time in the future
+        if "usage" not in self.data:
+            self.data["usage"] = self.core_usage(self.data, silent=True)
+
+        self.usage_cache["history"][self.data["timestamp"]] = self.data["usage"]
 
     def usage_from_disk(self):
         """
