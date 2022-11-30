@@ -163,9 +163,10 @@ class Backend(BackendBase):
         # the last value of each task, and then group by job ID and host
         # Group by 1 minute range because Slurm updates every 30s
         query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
-        |> range(start: -1m)\
+        |> range(start: -2m)\
         |> filter(fn: (r) => r["_measurement"] == "RSS")\
         |> last()\
+        |> drop(columns: ["_start", "_stop", "_time"])\
         |> group(columns: ["job", "host"])\
         |> sum()'
 
@@ -179,6 +180,7 @@ class Backend(BackendBase):
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
         |> derivative(nonNegative: true)\
         |> last()\
+        |> drop(columns: ["_start", "_stop", "_time"])\
         |> group(columns: ["job", "fs", "server"])'
 
         return self.query_influx(query)
