@@ -389,7 +389,23 @@ class Backend(BackendBase):
         return 0
 
     def hostnames(self):
-        return self.ganglia_data.keys()
+        query = 'import "influxdata/influxdb/schema"\
+            schema.tagValues(bucket:"ozstar", tag:"host")\
+            |> sort()'
+        result = self.query_influx(query)
+        table = result[0]
+        hostnames = [x.get_value() for x in table]
+
+        filtered_hostnames = [x for x in hostnames if self.match_hostname(x)]
+
+        return filtered_hostnames
+
+    @staticmethod
+    def match_hostname(hostname):
+        for pattern in config.NODES:
+            if pattern in hostname:
+                return True
+        return False
 
     def job_ids(self):
         pyslurm_ids = self.pyslurm_job.keys()
