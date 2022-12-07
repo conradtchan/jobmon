@@ -16,7 +16,7 @@ import jobmon_config as config
 import pyslurm
 import showbf
 from backend_base import BackendBase
-from constants import KB
+from constants import KB, MB
 from influxdb_client import InfluxDBClient
 
 
@@ -271,13 +271,13 @@ class Backend(BackendBase):
             while True:
                 try:
                     core += [
-                        {
+                        [
                             tdata[f"cpu{i}"]["usage_user"],
                             tdata[f"cpu{i}"]["usage_nice"],
                             tdata[f"cpu{i}"]["usage_system"],
                             tdata[f"cpu{i}"]["usage_iowait"],
                             tdata[f"cpu{i}"]["usage_idle"],
-                        }
+                        ]
                     ]
                     i += 1
                 except KeyError:
@@ -309,38 +309,33 @@ class Backend(BackendBase):
             )
 
     def mem(self, name):
-        data = self.ganglia_data[name]
+        tdata = self.telegraf_data[name]["mem"]
 
         try:
-            used = (
-                float(data["mem_total"])
-                - float(data["mem_buffers"])
-                - float(data["mem_cached"])
-                - float(data["mem_free"])
-            )
-
             # convert to MB
             return {
-                "used": math.ceil(used / KB),
-                "total": math.ceil(float(data["mem_total"]) / KB),
+                "used": math.ceil(tdata["used"] / MB),
+                "total": math.ceil(tdata["total"] / MB),
             }
 
         except KeyError:
-            now = time.time()
-            if now - data["reported"] < config.NODE_DEAD_TIMEOUT:
-                self.log.error(f"{name} mem gmond data is incomplete")
+            self.log.error(f"{name} mem not in influx/telegraf")
+            return {
+                "used": 0,
+                "total": 0,
+            }
 
     def swap(self, name):
-        data = self.ganglia_data[name]
+        tdata = self.telegraf_data[name]["swap"]
 
         try:
             # convert to MB
             return {
-                "free": math.ceil(float(data["swap_free"]) / KB),
-                "total": math.ceil(float(data["swap_total"]) / KB),
+                "free": math.ceil(float(tdata["free"]) / MB),
+                "total": math.ceil(float(tdata["total"]) / MB),
             }
         except KeyError:
-            self.log.error(f"{name} swap not in ganglia")
+            self.log.error(f"{name} swap not in influx/telegraf")
             return {
                 "free": 0,
                 "total": 0,
