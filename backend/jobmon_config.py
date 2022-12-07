@@ -19,6 +19,9 @@ HISTORY_LENGTH = 86400
 # When to delete old history (seconds old)
 HISTORY_DELETE_AGE = 86400
 
+# Nodes to report
+NODES = ["john", "bryan", "sstar", "clarke", "trevor"]
+
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ["john", "bryan"]
 
@@ -30,9 +33,6 @@ HT_NODES = [["gina", 68, 4]]
 
 # Nodes to print backfill
 BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "knl", "trevor"]
-
-# CPU keys
-CPU_KEYS = ["user", "nice", "system", "wait", "idle"]
 
 # Enable backfill
 BACKFILL = True

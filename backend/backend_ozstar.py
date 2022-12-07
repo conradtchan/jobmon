@@ -16,7 +16,7 @@ import jobmon_config as config
 import pyslurm
 import showbf
 from backend_base import BackendBase
-from constants import KB
+from constants import KB, MB
 from influxdb_client import InfluxDBClient
 
 
@@ -56,7 +56,8 @@ class Backend(BackendBase):
         self.n_running_jobs = self.count_running_jobs()
 
         # Influx
-        self.log.info("Getting memory data")
+        self.log.info("Getting Influx data")
+        self.update_telegraf_data()
         self.update_mem_data()
         self.prune_mem_max()
         self.update_lustre_jobstats()
@@ -67,6 +68,48 @@ class Backend(BackendBase):
         )
         self.log.info(f"Counted {n} running jobs")
         return n
+
+    def update_telegraf_data(self):
+        telegraf_data = {}
+
+        # Some measurements have additional tags
+        measurements = {
+            "cpu": "cpu",
+            "mem": None,
+            "net": "interface",
+            "swap": None,
+            "diskio": "name",
+            "nvidia_smi": None,
+        }
+
+        influx_result = self.query_influx_telegraf(measurements.keys())
+        self.log.info(f"Influx returned {len(influx_result)} tables")
+
+        telegraf_data = {}
+
+        for table in influx_result:
+            record = table.records[0]
+
+            host = record["host"]
+            if host not in telegraf_data:
+                telegraf_data[host] = {}
+
+            measurement = record.get_measurement()
+            if measurement not in telegraf_data[host]:
+                telegraf_data[host][measurement] = {}
+
+            tag_name = measurements[measurement]
+            field = record.get_field()
+            floor_value = math.floor(record.get_value())
+            if tag_name is None:
+                telegraf_data[host][measurement][field] = floor_value
+            else:
+                tag = record.values[tag_name]
+                if tag not in telegraf_data[host][measurement]:
+                    telegraf_data[host][measurement][tag] = {}
+                telegraf_data[host][measurement][tag][field] = floor_value
+
+        self.telegraf_data = telegraf_data
 
     def update_mem_data(self):
         influx_result = self.query_influx_memory()
@@ -163,9 +206,10 @@ class Backend(BackendBase):
         # the last value of each task, and then group by job ID and host
         # Group by 1 minute range because Slurm updates every 30s
         query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
-        |> range(start: -1m)\
+        |> range(start: -2m)\
         |> filter(fn: (r) => r["_measurement"] == "RSS")\
         |> last()\
+        |> drop(columns: ["_start", "_stop", "_time"])\
         |> group(columns: ["job", "host"])\
         |> sum()'
 
@@ -175,11 +219,25 @@ class Backend(BackendBase):
         self.log.info("Querying Influx: lustre")
         # jobHarvest already reduces the data, so just query it by job
         query = f'from(bucket: "lustre-jobstats")\
-        |> range(start: -{config.UPDATE_INTERVAL*20}s)\
+        |> range(start: -{config.UPDATE_INTERVAL*3}s)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
         |> derivative(nonNegative: true)\
         |> last()\
+        |> drop(columns: ["_start", "_stop", "_time"])\
         |> group(columns: ["job", "fs", "server"])'
+
+        return self.query_influx(query)
+
+    def query_influx_telegraf(self, measurements):
+        # self.log.info(f"Querying Influx: telegraf {measurement} stats for {host}")
+
+        filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
+
+        query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
+        |> range(start: -60s)\
+        |> filter(fn: (r) => {filter})\
+        |> drop(columns: ["_start", "_stop", "_time"])\
+        |> last()'
 
         return self.query_influx(query)
 
@@ -194,31 +252,32 @@ class Backend(BackendBase):
         )
 
     def cpu_usage(self, name):
-        data = self.ganglia_data[name]
+        # CPU measurements are stored as an array for efficiency
+        # CPU key order: ["user", "nice", "system", "wait", "idle"]
 
         try:
-            total = {
-                "user": float(data["cpu_user"]),
-                "nice": float(data["cpu_nice"]),
-                "system": float(data["cpu_system"]),
-                "wait": float(data["cpu_wio"]),
-                "idle": float(data["cpu_idle"]),
-            }
+            tdata = self.telegraf_data[name]["cpu"]
 
-            total_array = [math.floor(total[x]) for x in config.CPU_KEYS]
+            total = [
+                tdata["cpu-total"]["usage_user"],
+                tdata["cpu-total"]["usage_nice"],
+                tdata["cpu-total"]["usage_system"],
+                tdata["cpu-total"]["usage_iowait"],
+                tdata["cpu-total"]["usage_idle"],
+            ]
 
             core = []
             i = 0
             while True:
                 try:
                     core += [
-                        {
-                            "user": float(data["multicpu_user{:}".format(i)]),
-                            "nice": float(data["multicpu_nice{:}".format(i)]),
-                            "system": float(data["multicpu_system{:}".format(i)]),
-                            "wait": float(data["multicpu_wio{:}".format(i)]),
-                            "idle": float(data["multicpu_idle{:}".format(i)]),
-                        }
+                        [
+                            tdata[f"cpu{i}"]["usage_user"],
+                            tdata[f"cpu{i}"]["usage_nice"],
+                            tdata[f"cpu{i}"]["usage_system"],
+                            tdata[f"cpu{i}"]["usage_iowait"],
+                            tdata[f"cpu{i}"]["usage_idle"],
+                        ]
                     ]
                     i += 1
                 except KeyError:
@@ -241,61 +300,40 @@ class Backend(BackendBase):
                         core_right += [x]
                 core = core_left + core_right
 
-            core_array = [[math.floor(c[x]) for x in config.CPU_KEYS] for c in core]
-
             # total_array and core_array are more memory efficient formats
-            return {"total": total_array, "core": core_array}
+            return {"total": total, "core": core}
 
         except KeyError:
-            self.log.error(f"{name} cpu user/nice/system/wio/idle not in ganglia")
-
-    def mem(self, name):
-        data = self.ganglia_data[name]
-
-        try:
-            used = (
-                float(data["mem_total"])
-                - float(data["mem_buffers"])
-                - float(data["mem_cached"])
-                - float(data["mem_free"])
+            self.log.error(
+                f"{name} cpu user/nice/system/wio/idle not in influx/telegraf"
             )
 
-            # convert to MB
-            return {
-                "used": math.ceil(used / KB),
-                "total": math.ceil(float(data["mem_total"]) / KB),
-            }
-
-        except KeyError:
-            now = time.time()
-            if now - data["reported"] < config.NODE_DEAD_TIMEOUT:
-                self.log.error(f"{name} mem gmond data is incomplete")
-
-    def swap(self, name):
-        data = self.ganglia_data[name]
-
+    def mem(self, name):
         try:
+            tdata = self.telegraf_data[name]["mem"]
             # convert to MB
             return {
-                "free": math.ceil(float(data["swap_free"]) / KB),
-                "total": math.ceil(float(data["swap_total"]) / KB),
+                "used": math.ceil(tdata["used"] / MB),
+                "total": math.ceil(tdata["total"] / MB),
             }
+
         except KeyError:
-            self.log.error(f"{name} swap not in ganglia")
+            self.log.error(f"{name} mem not in influx/telegraf")
             return {
-                "free": 0,
+                "used": 0,
                 "total": 0,
             }
 
-    def disk(self, name):
-        data = self.ganglia_data[name]
+    def swap(self, name):
         try:
+            tdata = self.telegraf_data[name]["swap"]
+            # convert to MB
             return {
-                "free": math.ceil(float(data["disk_free"])),
-                "total": math.ceil(float(data["disk_total"])),
+                "free": math.ceil(float(tdata["free"]) / MB),
+                "total": math.ceil(float(tdata["total"]) / MB),
             }
         except KeyError:
-            self.log.error(f"{name} disk not in ganglia")
+            self.log.error(f"{name} swap not in influx/telegraf")
             return {
                 "free": 0,
                 "total": 0,
@@ -387,7 +425,23 @@ class Backend(BackendBase):
         return 0
 
     def hostnames(self):
-        return self.ganglia_data.keys()
+        query = 'import "influxdata/influxdb/schema"\
+            schema.tagValues(bucket:"ozstar", tag:"host")\
+            |> sort()'
+        result = self.query_influx(query)
+        table = result[0]
+        hostnames = [x.get_value() for x in table]
+
+        filtered_hostnames = [x for x in hostnames if self.match_hostname(x)]
+
+        return filtered_hostnames
+
+    @staticmethod
+    def match_hostname(hostname):
+        for pattern in config.NODES:
+            if pattern in hostname:
+                return True
+        return False
 
     def job_ids(self):
         pyslurm_ids = self.pyslurm_job.keys()

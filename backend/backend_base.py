@@ -60,17 +60,6 @@ class BackendBase:
 
         return {}
 
-    def disk(self, name):
-        """
-        Returns the disk usage for the node
-        (in megabytes)
-
-        Example:
-            {"free": 1000, "total": 4000}
-        """
-
-        return {}
-
     def gpus(self, name):
         """
         Returns the GPU usage percentage for the node
@@ -348,7 +337,6 @@ class BackendBase:
             nodes[host]["cpu"] = self.cpu_usage(host)
             nodes[host]["mem"] = self.mem(host)
             nodes[host]["swap"] = self.swap(host)
-            nodes[host]["disk"] = self.disk(host)
             nodes[host]["gpus"] = self.gpus(host)
             nodes[host]["infiniband"] = self.infiniband(host)
             nodes[host]["lustre"] = self.lustre(host)
@@ -395,12 +383,16 @@ class BackendBase:
         Do not override this function
         """
         self.pre_update()
+
         data = {}
         data["api"] = API_VERSION
         data["timestamp"] = self.timestamp()
         data["nodes"] = self.nodes()
         data["jobs"] = self.jobs()
+
         self.data = data
+
+        self.update_core_usage()
 
     def update_core_usage(self, data=None):
         """
@@ -410,14 +402,16 @@ class BackendBase:
         """
 
         self.log.info("Updating core usage history")
-        # For loading in usage from disk
-        if data is None:
-            data = self.data
 
-        # Suppress printout to log
-        self.usage_cache["history"][data["timestamp"]] = self.core_usage(
-            data, silent=True
-        )
+        # For loading in usage from disk
+        if data is not None:
+            self.data = data
+
+        # Storage usage in self.data to reduce loading time in the future
+        if "usage" not in self.data:
+            self.data["usage"] = self.core_usage(self.data, silent=True)
+
+        self.usage_cache["history"][self.data["timestamp"]] = self.data["usage"]
 
     def usage_from_disk(self):
         """
