@@ -79,7 +79,7 @@ class Backend(BackendBase):
             "net": "interface",
             "swap": None,
             "diskio": "name",
-            "nvidia_smi": None,
+            "nvidia_smi": "index",
         }
 
         influx_result = self.query_influx_telegraf(measurements.keys())
@@ -340,15 +340,14 @@ class Backend(BackendBase):
             }
 
     def gpus(self, name):
-        data = self.ganglia_data[name]
         g = {}
-        gpu_count = 0
-        for i in range(7):
-            metric_name = "gpu{:d}_util".format(i)
-            if metric_name in data.keys():
-                gpu_count += 1
-                api_name = "gpu{:d}".format(i)
-                g[api_name] = float(data[metric_name])
+
+        # Not all nodes have GPUS
+        if "nvidia_smi" in self.telegraf_data[name]:
+            tdata = self.telegraf_data[name]["nvidia_smi"]
+
+            for i in tdata:
+                g[f"gpu{i}"] = tdata[i]["utilization_gpu"]
 
         return g
 
