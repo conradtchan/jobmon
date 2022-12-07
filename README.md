@@ -11,7 +11,6 @@ The following methods are overriden to make calls to the various interfaces (pys
 - `cpu_usage`
 - `mem`
 - `swap`
-- `disk`
 - `gpus`
 - `infiniband`
 - `lustre`

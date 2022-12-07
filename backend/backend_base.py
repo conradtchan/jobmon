@@ -60,17 +60,6 @@ class BackendBase:
 
         return {}
 
-    def disk(self, name):
-        """
-        Returns the disk usage for the node
-        (in megabytes)
-
-        Example:
-            {"free": 1000, "total": 4000}
-        """
-
-        return {}
-
     def gpus(self, name):
         """
         Returns the GPU usage percentage for the node
@@ -348,7 +337,6 @@ class BackendBase:
             nodes[host]["cpu"] = self.cpu_usage(host)
             nodes[host]["mem"] = self.mem(host)
             nodes[host]["swap"] = self.swap(host)
-            nodes[host]["disk"] = self.disk(host)
             nodes[host]["gpus"] = self.gpus(host)
             nodes[host]["infiniband"] = self.infiniband(host)
             nodes[host]["lustre"] = self.lustre(host)

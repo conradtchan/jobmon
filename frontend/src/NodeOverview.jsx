@@ -94,11 +94,6 @@ export default class NodeOverview extends React.Component {
         if (!(nodes[nodeName].mem === null)) {
           memPercent = 100 * (job.mem[nodeName] / job.memReq);
         }
-
-        let diskPercent = 0.0;
-        if (!(nodes[nodeName].disk === null)) {
-          diskPercent = 100 * (1.0 - nodes[nodeName].disk.free / nodes[nodeName].disk.total);
-        }
         let swapPercent = 0.0;
         if (!(nodes[nodeName].swap === null)) {
           swapPercent = 100 * (1.0 - nodes[nodeName].swap.free / nodes[nodeName].swap.total);
@@ -133,7 +128,6 @@ export default class NodeOverview extends React.Component {
             nodeName={nodeName}
             cpuUsage={cpuUsage}
             mem={memPercent}
-            disk={diskPercent}
             gpu={gpuPercent}
             swap={swapPercent}
             onRowClick={(node) => onRowClick(node)}

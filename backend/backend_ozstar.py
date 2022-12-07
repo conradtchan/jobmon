@@ -341,20 +341,6 @@ class Backend(BackendBase):
                 "total": 0,
             }
 
-    def disk(self, name):
-        data = self.ganglia_data[name]
-        try:
-            return {
-                "free": math.ceil(float(data["disk_free"])),
-                "total": math.ceil(float(data["disk_total"])),
-            }
-        except KeyError:
-            self.log.error(f"{name} disk not in ganglia")
-            return {
-                "free": 0,
-                "total": 0,
-            }
-
     def gpus(self, name):
         data = self.ganglia_data[name]
         g = {}
