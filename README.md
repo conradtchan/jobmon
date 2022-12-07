@@ -64,7 +64,6 @@ class Backend(BackendBase):
 - `COLUMN_ORDER_CPUS`: CPUs that have column-ordered cores (row-ordered by default)
 - `HT_NODES`: Nodes with hyperthreading, and the layout
 - `BF_NODES`: Queues to display backfill for
-- `CPU_KEYS`: Map of CPU usage types to an array index
 
 ## Frontend configuration
 `frontend/src/config.js` contains the configuration options for the front end. You'll also want to use your own logo image: `frontend/src/logo.png`.

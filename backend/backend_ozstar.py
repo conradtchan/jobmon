@@ -56,7 +56,8 @@ class Backend(BackendBase):
         self.n_running_jobs = self.count_running_jobs()
 
         # Influx
-        self.log.info("Getting memory data")
+        self.log.info("Getting Influx data")
+        self.update_telegraf_data()
         self.update_mem_data()
         self.prune_mem_max()
         self.update_lustre_jobstats()
@@ -67,6 +68,48 @@ class Backend(BackendBase):
         )
         self.log.info(f"Counted {n} running jobs")
         return n
+
+    def update_telegraf_data(self):
+        telegraf_data = {}
+
+        # Some measurements have additional tags
+        measurements = {
+            "cpu": "cpu",
+            "mem": None,
+            "net": "interface",
+            "swap": None,
+            "diskio": "name",
+            "nvidia_smi": None,
+        }
+
+        influx_result = self.query_influx_telegraf(measurements.keys())
+        self.log.info(f"Influx returned {len(influx_result)} tables")
+
+        telegraf_data = {}
+
+        for table in influx_result:
+            record = table.records[0]
+
+            host = record["host"]
+            if host not in telegraf_data:
+                telegraf_data[host] = {}
+
+            measurement = record.get_measurement()
+            if measurement not in telegraf_data[host]:
+                telegraf_data[host][measurement] = {}
+
+            tag_name = measurements[measurement]
+            field = record.get_field()
+            floor_value = math.floor(record.get_value())
+            if tag_name is None:
+                telegraf_data[host][measurement][field] = floor_value
+            else:
+                tag = record.values[tag_name]
+                if tag not in telegraf_data[host][measurement]:
+                    telegraf_data[host][measurement][tag] = {}
+                telegraf_data[host][measurement][tag][field] = floor_value
+
+        self.telegraf_data = telegraf_data
 
     def update_mem_data(self):
         influx_result = self.query_influx_memory()
@@ -185,6 +228,19 @@ class Backend(BackendBase):
 
         return self.query_influx(query)
 
+    def query_influx_telegraf(self, measurements):
+        # self.log.info(f"Querying Influx: telegraf {measurement} stats for {host}")
+
+        filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
+
+        query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
+        |> range(start: -60s)\
+        |> filter(fn: (r) => {filter})\
+        |> drop(columns: ["_start", "_stop", "_time"])\
+        |> last()'
+
+        return self.query_influx(query)
+
     def prune_mem_max(self):
         n = 0
         for job_id in list(self.mem_max.keys()):
@@ -196,18 +252,19 @@ class Backend(BackendBase):
         )
 
     def cpu_usage(self, name):
-        data = self.ganglia_data[name]
+        tdata = self.telegraf_data[name]["cpu"]
+
+        # CPU measurements are stored as an array for efficiency
+        # CPU key order: ["user", "nice", "system", "wait", "idle"]
 
         try:
-            total = {
-                "user": float(data["cpu_user"]),
-                "nice": float(data["cpu_nice"]),
-                "system": float(data["cpu_system"]),
-                "wait": float(data["cpu_wio"]),
-                "idle": float(data["cpu_idle"]),
-            }
-
-            total_array = [math.floor(total[x]) for x in config.CPU_KEYS]
+            total = [
+                tdata["cpu-total"]["usage_user"],
+                tdata["cpu-total"]["usage_nice"],
+                tdata["cpu-total"]["usage_system"],
+                tdata["cpu-total"]["usage_iowait"],
+                tdata["cpu-total"]["usage_idle"],
+            ]
 
             core = []
             i = 0
@@ -215,11 +272,11 @@ class Backend(BackendBase):
                 try:
                     core += [
                         {
-                            "user": float(data["multicpu_user{:}".format(i)]),
-                            "nice": float(data["multicpu_nice{:}".format(i)]),
-                            "system": float(data["multicpu_system{:}".format(i)]),
-                            "wait": float(data["multicpu_wio{:}".format(i)]),
-                            "idle": float(data["multicpu_idle{:}".format(i)]),
+                            tdata[f"cpu{i}"]["usage_user"],
+                            tdata[f"cpu{i}"]["usage_nice"],
+                            tdata[f"cpu{i}"]["usage_system"],
+                            tdata[f"cpu{i}"]["usage_iowait"],
+                            tdata[f"cpu{i}"]["usage_idle"],
                         }
                     ]
                     i += 1
@@ -243,13 +300,13 @@ class Backend(BackendBase):
                         core_right += [x]
                 core = core_left + core_right
 
-            core_array = [[math.floor(c[x]) for x in config.CPU_KEYS] for c in core]
-
             # total_array and core_array are more memory efficient formats
-            return {"total": total_array, "core": core_array}
+            return {"total": total, "core": core}
 
         except KeyError:
-            self.log.error(f"{name} cpu user/nice/system/wio/idle not in ganglia")
+            self.log.error(
+                f"{name} cpu user/nice/system/wio/idle not in influx/telegraf"
+            )
 
     def mem(self, name):
         data = self.ganglia_data[name]
