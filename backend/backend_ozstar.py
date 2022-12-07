@@ -252,12 +252,12 @@ class Backend(BackendBase):
         )
 
     def cpu_usage(self, name):
-        tdata = self.telegraf_data[name]["cpu"]
-
         # CPU measurements are stored as an array for efficiency
         # CPU key order: ["user", "nice", "system", "wait", "idle"]
 
         try:
+            tdata = self.telegraf_data[name]["cpu"]
+
             total = [
                 tdata["cpu-total"]["usage_user"],
                 tdata["cpu-total"]["usage_nice"],
@@ -309,9 +309,8 @@ class Backend(BackendBase):
             )
 
     def mem(self, name):
-        tdata = self.telegraf_data[name]["mem"]
-
         try:
+            tdata = self.telegraf_data[name]["mem"]
             # convert to MB
             return {
                 "used": math.ceil(tdata["used"] / MB),
@@ -326,9 +325,8 @@ class Backend(BackendBase):
             }
 
     def swap(self, name):
-        tdata = self.telegraf_data[name]["swap"]
-
         try:
+            tdata = self.telegraf_data[name]["swap"]
             # convert to MB
             return {
                 "free": math.ceil(float(tdata["free"]) / MB),
