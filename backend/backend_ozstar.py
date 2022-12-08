@@ -401,9 +401,7 @@ class Backend(BackendBase):
             return j
 
     def node_up(self, name):
-        data = self.ganglia_data[name]
-        now = time.time()
-        return now - data["reported"] < config.NODE_DEAD_TIMEOUT
+        return name in self.telegraf_data
 
     def is_counted(self, name):
         if name in self.pyslurm_node.keys():
