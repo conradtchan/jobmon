@@ -352,22 +352,29 @@ class Backend(BackendBase):
         return g
 
     def infiniband(self, name):
-        data = self.ganglia_data[name]
-        n = {}
-        if "ib_bytes_in" in data.keys():
-            n["bytes_in"] = math.ceil(float(data["ib_bytes_in"]))
+        try:
+            tdata = self.telegraf_data[name]["net"]
 
-        if "ib_bytes_out" in data.keys():
-            n["bytes_out"] = math.ceil(float(data["ib_bytes_out"]))
+            interface = "ib0"
+            for eth_node in config.ETH_NODES:
+                if eth_node in name:
+                    interface = config.ETH_NODES[eth_node]
 
-        if "ib_pkts_in" in data.keys():
-            n["pkts_in"] = math.ceil(float(data["ib_pkts_in"]))
+            return {
+                "bytes_in": tdata[interface]["bytes_recv"],
+                "bytes_out": tdata[interface]["bytes_sent"],
+                "pkts_in": tdata[interface]["packets_recv"],
+                "pkts_out": tdata[interface]["packets_sent"],
+            }
 
-        if "ib_pkts_out" in data.keys():
-            n["pkts_out"] = math.ceil(float(data["ib_pkts_out"]))
-
-        if len(n.keys()) > 0:
-            return n
+        except KeyError:
+            self.log.error(f"{name} net not in influx/telegraf")
+            return {
+                "bytes_in": 0,
+                "bytes_out": 0,
+                "pkts_in": 0,
+                "pkts_out": 0,
+            }
 
     def lustre(self, name):
         data = self.ganglia_data[name]

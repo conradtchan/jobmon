@@ -36,3 +36,6 @@ BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "knl", "trevor"]
 
 # Enable backfill
 BACKFILL = True
+
+# Some nodes have ethernet interfaces instead of IB
+ETH_NODES = {"clarke": "eth1", "trevor": "eth1"}
