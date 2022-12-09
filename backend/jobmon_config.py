@@ -39,3 +39,11 @@ BACKFILL = True
 
 # Some nodes have ethernet interfaces instead of IB
 ETH_NODES = {"clarke": "eth1", "trevor": "eth1"}
+
+# Jobfs device name
+JOBFS_DEV = {
+    "default": "sda2",
+    "bryan": "nvme0n1p1",
+    "trevor": "vdb2",
+    "clarke": "vda1",
+}
