@@ -20,7 +20,7 @@ HISTORY_LENGTH = 86400
 HISTORY_DELETE_AGE = 86400
 
 # Nodes to report
-NODES = ["john", "bryan", "sstar", "clarke", "trevor"]
+NODES = ["john", "bryan", "sstar", "gstar", "clarke", "trevor"]
 
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ["john", "bryan"]
