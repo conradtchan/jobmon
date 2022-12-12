@@ -81,6 +81,7 @@ class Backend(BackendBase):
         }
         measurements_rate = {
             "net": "interface",
+            "infiniband": None,  # This input has a "device" tag, but ignore it, assuming only one device
             "diskio": "name",
         }
 
@@ -370,7 +371,18 @@ class Backend(BackendBase):
 
     def infiniband(self, name):
         if self.node_up(name, silent=True):
-            if "net" in self.telegraf_data[name]:
+            if "infiniband" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["infiniband"]
+
+                # IB counts octets (8 bits) divided by 4
+                return {
+                    "bytes_in": tdata["port_rcv_data"] * 4,
+                    "bytes_out": tdata["port_xmit_data"] * 4,
+                    "pkts_in": tdata["port_rcv_packets"],
+                    "pkts_out": tdata["port_xmit_packets"],
+                }
+
+            elif "net" in self.telegraf_data[name]:
                 tdata = self.telegraf_data[name]["net"]
 
                 interface = "ib0"
@@ -386,7 +398,7 @@ class Backend(BackendBase):
                 }
 
             else:
-                self.log.error(f"{name} net not in influx/telegraf")
+                self.log.error(f"{name} ib/net not in influx/telegraf")
 
     def lustre(self, name):
         if self.node_up(name, silent=True):
