@@ -656,7 +656,7 @@ class Backend(BackendBase):
         # - are a GPU job
         # - are actively running (otherwise scontrol will return an error)
         if self.job_ngpus(job_id) > 0 and self.job_state(job_id) == "RUNNING":
-            MAXSIZE = 10000
+            MAXSIZE = 30000
             if job_id in self.gpu_layout_cache:
                 self.log.debug(f"Job {job_id} recalled from GPU layout cache")
                 layout = self.gpu_layout_cache[job_id]
@@ -669,7 +669,7 @@ class Backend(BackendBase):
             # Minimise the number of scontrol calls by caching the results
             # - Assume that GPU affinity is fixed for the lifetime of the job
             # - scontrol should only be called once per job
-            # - Cache up to 10,000 jobs (there are typically 3000 jobs running on OzSTAR)
+            # - Cache up to 30,000 jobs (there are typically 3000 jobs running on OzSTAR)
             # - Cannot use lru_cache because specific values cannot be cleared
 
             # If expecting a layout but scontrol isn't returning it yet, don't cache
