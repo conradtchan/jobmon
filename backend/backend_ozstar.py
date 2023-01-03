@@ -73,16 +73,26 @@ class Backend(BackendBase):
         telegraf_data = {}
 
         # Some measurements have additional tags
-        measurements = {
+        measurements_value = {
             "cpu": "cpu",
             "mem": None,
-            "net": "interface",
             "swap": None,
+            "nvidia_smi": "index",
+        }
+        measurements_rate = {
+            "net": "interface",
+            "infiniband": None,  # This input has a "device" tag, but ignore it, assuming only one device
             "diskio": "name",
-            "nvidia_smi": None,
         }
 
-        influx_result = self.query_influx_telegraf(measurements.keys())
+        influx_value = self.query_influx_telegraf(measurements_value.keys())
+        # Statistics requiring a derivative
+        influx_rate = self.query_influx_telegraf_rate(measurements_rate.keys())
+
+        # Combine the results for conversion into a dict
+        influx_result = influx_value + influx_rate
+        measurements = {**measurements_value, **measurements_rate}
+
         self.log.info(f"Influx returned {len(influx_result)} tables")
 
         telegraf_data = {}
@@ -234,8 +244,22 @@ class Backend(BackendBase):
         filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
 
         query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
-        |> range(start: -60s)\
+        |> range(start: -100s)\
         |> filter(fn: (r) => {filter})\
+        |> drop(columns: ["_start", "_stop", "_time"])\
+        |> last()'
+
+        return self.query_influx(query)
+
+    def query_influx_telegraf_rate(self, measurements):
+        # self.log.info(f"Querying Influx: telegraf {measurement} stats for {host}")
+
+        filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
+
+        query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
+        |> range(start: -160s)\
+        |> filter(fn: (r) => {filter})\
+        |> derivative(nonNegative: true)\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> last()'
 
@@ -255,149 +279,171 @@ class Backend(BackendBase):
         # CPU measurements are stored as an array for efficiency
         # CPU key order: ["user", "nice", "system", "wait", "idle"]
 
-        try:
-            tdata = self.telegraf_data[name]["cpu"]
+        if self.node_up(name, silent=True):
+            if "cpu" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["cpu"]
 
-            total = [
-                tdata["cpu-total"]["usage_user"],
-                tdata["cpu-total"]["usage_nice"],
-                tdata["cpu-total"]["usage_system"],
-                tdata["cpu-total"]["usage_iowait"],
-                tdata["cpu-total"]["usage_idle"],
-            ]
+                total = [
+                    tdata["cpu-total"]["usage_user"],
+                    tdata["cpu-total"]["usage_nice"],
+                    tdata["cpu-total"]["usage_system"],
+                    tdata["cpu-total"]["usage_iowait"],
+                    tdata["cpu-total"]["usage_idle"],
+                ]
 
-            core = []
-            i = 0
-            while True:
-                try:
-                    core += [
-                        [
-                            tdata[f"cpu{i}"]["usage_user"],
-                            tdata[f"cpu{i}"]["usage_nice"],
-                            tdata[f"cpu{i}"]["usage_system"],
-                            tdata[f"cpu{i}"]["usage_iowait"],
-                            tdata[f"cpu{i}"]["usage_idle"],
+                core = []
+                i = 0
+                while True:
+                    try:
+                        core += [
+                            [
+                                tdata[f"cpu{i}"]["usage_user"],
+                                tdata[f"cpu{i}"]["usage_nice"],
+                                tdata[f"cpu{i}"]["usage_system"],
+                                tdata[f"cpu{i}"]["usage_iowait"],
+                                tdata[f"cpu{i}"]["usage_idle"],
+                            ]
                         ]
-                    ]
-                    i += 1
-                except KeyError:
-                    break
+                        i += 1
+                    except KeyError:
+                        break
 
-            # Some machines report cores with a different numbering, so we map to that
-            # Could generalize for n sockets
-            core_swap = False
-            for prefix in config.COLUMN_ORDER_CPUS:
-                if prefix in name:
-                    core_swap = True
+                # Some machines report cores with a different numbering, so we map to that
+                # Could generalize for n sockets
+                core_swap = False
+                for prefix in config.COLUMN_ORDER_CPUS:
+                    if prefix in name:
+                        core_swap = True
 
-            if core_swap:
-                core_left = []
-                core_right = []
-                for i, x in enumerate(core):
-                    if i % 2 == 0:
-                        core_left += [x]
-                    else:
-                        core_right += [x]
-                core = core_left + core_right
+                if core_swap:
+                    core_left = []
+                    core_right = []
+                    for i, x in enumerate(core):
+                        if i % 2 == 0:
+                            core_left += [x]
+                        else:
+                            core_right += [x]
+                    core = core_left + core_right
 
-            # total_array and core_array are more memory efficient formats
-            return {"total": total, "core": core}
+                # total_array and core_array are more memory efficient formats
+                return {"total": total, "core": core}
 
-        except KeyError:
-            self.log.error(
-                f"{name} cpu user/nice/system/wio/idle not in influx/telegraf"
-            )
+            else:
+                self.log.error(
+                    f"{name} cpu user/nice/system/wio/idle not in influx/telegraf"
+                )
 
     def mem(self, name):
-        try:
-            tdata = self.telegraf_data[name]["mem"]
-            # convert to MB
-            return {
-                "used": math.ceil(tdata["used"] / MB),
-                "total": math.ceil(tdata["total"] / MB),
-            }
+        if self.node_up(name, silent=True):
+            if "mem" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["mem"]
+                # convert to MB
+                return {
+                    "used": math.ceil(tdata["used"] / MB),
+                    "total": math.ceil(tdata["total"] / MB),
+                }
 
-        except KeyError:
-            self.log.error(f"{name} mem not in influx/telegraf")
-            return {
-                "used": 0,
-                "total": 0,
-            }
+            else:
+                self.log.error(f"{name} mem not in influx/telegraf")
 
     def swap(self, name):
-        try:
-            tdata = self.telegraf_data[name]["swap"]
-            # convert to MB
-            return {
-                "free": math.ceil(float(tdata["free"]) / MB),
-                "total": math.ceil(float(tdata["total"]) / MB),
-            }
-        except KeyError:
-            self.log.error(f"{name} swap not in influx/telegraf")
-            return {
-                "free": 0,
-                "total": 0,
-            }
+        if self.node_up(name, silent=True):
+            if "swap" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["swap"]
+                # convert to MB
+                return {
+                    "free": math.ceil(float(tdata["free"]) / MB),
+                    "total": math.ceil(float(tdata["total"]) / MB),
+                }
+            else:
+                self.log.error(f"{name} swap not in influx/telegraf")
 
     def gpus(self, name):
-        data = self.ganglia_data[name]
-        g = {}
-        gpu_count = 0
-        for i in range(7):
-            metric_name = "gpu{:d}_util".format(i)
-            if metric_name in data.keys():
-                gpu_count += 1
-                api_name = "gpu{:d}".format(i)
-                g[api_name] = float(data[metric_name])
+        if self.node_up(name, silent=True):
+            # Not all nodes have GPUS
+            if "nvidia_smi" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["nvidia_smi"]
+                g = {}
+                for i in tdata:
+                    g[f"gpu{i}"] = tdata[i]["utilization_gpu"]
 
-        return g
+                return g
 
     def infiniband(self, name):
-        data = self.ganglia_data[name]
-        n = {}
-        if "ib_bytes_in" in data.keys():
-            n["bytes_in"] = math.ceil(float(data["ib_bytes_in"]))
+        if self.node_up(name, silent=True):
+            if "infiniband" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["infiniband"]
 
-        if "ib_bytes_out" in data.keys():
-            n["bytes_out"] = math.ceil(float(data["ib_bytes_out"]))
+                # IB counts octets (8 bits) divided by 4
+                return {
+                    "bytes_in": tdata["port_rcv_data"] * 4,
+                    "bytes_out": tdata["port_xmit_data"] * 4,
+                    "pkts_in": tdata["port_rcv_packets"],
+                    "pkts_out": tdata["port_xmit_packets"],
+                }
 
-        if "ib_pkts_in" in data.keys():
-            n["pkts_in"] = math.ceil(float(data["ib_pkts_in"]))
+            elif "net" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["net"]
 
-        if "ib_pkts_out" in data.keys():
-            n["pkts_out"] = math.ceil(float(data["ib_pkts_out"]))
+                interface = "ib0"
+                for eth_node in config.ETH_NODES:
+                    if eth_node in name:
+                        interface = config.ETH_NODES[eth_node]
 
-        if len(n.keys()) > 0:
-            return n
+                return {
+                    "bytes_in": tdata[interface]["bytes_recv"],
+                    "bytes_out": tdata[interface]["bytes_sent"],
+                    "pkts_in": tdata[interface]["packets_recv"],
+                    "pkts_out": tdata[interface]["packets_sent"],
+                }
+
+            else:
+                self.log.error(f"{name} ib/net not in influx/telegraf")
 
     def lustre(self, name):
-        data = self.ganglia_data[name]
-        lustre_data = {}
-        if "farnarkle_fred_read_bytes" in data.keys():
-            lustre_data["read"] = math.ceil(float(data["farnarkle_fred_read_bytes"]))
+        if self.node_up(name, silent=True):
+            data = self.ganglia_data[name]
+            lustre_data = {}
+            if "farnarkle_fred_read_bytes" in data.keys():
+                lustre_data["read"] = math.ceil(
+                    float(data["farnarkle_fred_read_bytes"])
+                )
 
-        if "farnarkle_fred_write_bytes" in data.keys():
-            lustre_data["write"] = math.ceil(float(data["farnarkle_fred_write_bytes"]))
+            if "farnarkle_fred_write_bytes" in data.keys():
+                lustre_data["write"] = math.ceil(
+                    float(data["farnarkle_fred_write_bytes"])
+                )
 
-        if len(lustre_data.keys()) > 0:
-            return lustre_data
+            if len(lustre_data.keys()) > 0:
+                return lustre_data
 
     def jobfs(self, name):
-        data = self.ganglia_data[name]
-        j = {}
-        if "diskstat_sda_read_bytes_per_sec" in data.keys():
-            j["read"] = math.ceil(float(data["diskstat_sda_read_bytes_per_sec"]))
+        if self.node_up(name, silent=True):
+            if "diskio" in self.telegraf_data[name]:
+                tdata = self.telegraf_data[name]["diskio"]
 
-        if "diskstat_sda_write_bytes_per_sec" in data.keys():
-            j["write"] = math.ceil(float(data["diskstat_sda_write_bytes_per_sec"]))
+                device = config.JOBFS_DEV["default"]
+                for pattern in config.JOBFS_DEV:
+                    if pattern in name:
+                        device = config.JOBFS_DEV[pattern]
 
-        if len(j.keys()) > 0:
-            return j
+                if device in tdata:
+                    return {
+                        "read": tdata[device]["read_bytes"],
+                        "write": tdata[device]["write_bytes"],
+                    }
+                else:
+                    self.log.error(
+                        f"{name} diskio device {device} not in influx/telegraf"
+                    )
+            else:
+                self.log.error(f"{name} diskio not in influx/telegraf")
 
-    def node_up(self, name):
-        data = self.ganglia_data[name]
-        now = time.time()
-        return now - data["reported"] < config.NODE_DEAD_TIMEOUT
+    def node_up(self, name, silent=False):
+        up = name in self.telegraf_data
+        if not up and not silent:
+            self.log.error(f"{name} is down")
+        return up
 
     def is_counted(self, name):
         if name in self.pyslurm_node.keys():
@@ -610,7 +656,7 @@ class Backend(BackendBase):
         # - are a GPU job
         # - are actively running (otherwise scontrol will return an error)
         if self.job_ngpus(job_id) > 0 and self.job_state(job_id) == "RUNNING":
-            MAXSIZE = 10000
+            MAXSIZE = 30000
             if job_id in self.gpu_layout_cache:
                 self.log.debug(f"Job {job_id} recalled from GPU layout cache")
                 layout = self.gpu_layout_cache[job_id]
@@ -623,7 +669,7 @@ class Backend(BackendBase):
             # Minimise the number of scontrol calls by caching the results
             # - Assume that GPU affinity is fixed for the lifetime of the job
             # - scontrol should only be called once per job
-            # - Cache up to 10,000 jobs (there are typically 3000 jobs running on OzSTAR)
+            # - Cache up to 30,000 jobs (there are typically 3000 jobs running on OzSTAR)
             # - Cannot use lru_cache because specific values cannot be cleared
 
             # If expecting a layout but scontrol isn't returning it yet, don't cache
