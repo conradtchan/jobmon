@@ -228,8 +228,9 @@ class Backend(BackendBase):
     def query_influx_lustre(self):
         self.log.info("Querying Influx: lustre")
         # jobHarvest already reduces the data, so just query it by job
-        query = f'from(bucket: "lustre-jobstats")\
-        |> range(start: -{config.UPDATE_INTERVAL*4}s)\
+        # the timestamp is the collection time, which is delayed by 20s
+        query = 'from(bucket: "lustre-jobstats")\
+        |> range(start: -60s stop: -30s)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
         |> derivative(nonNegative: true)\
         |> last()\
