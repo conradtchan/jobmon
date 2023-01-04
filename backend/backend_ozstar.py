@@ -244,7 +244,7 @@ class Backend(BackendBase):
         filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
 
         query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
-        |> range(start: -100s)\
+        |> range(start: -160s)\
         |> filter(fn: (r) => {filter})\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> last()'
