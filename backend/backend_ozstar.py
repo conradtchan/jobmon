@@ -372,15 +372,7 @@ class Backend(BackendBase):
     def infiniband(self, name):
         if self.node_up(name, silent=True):
             if "infiniband" in self.telegraf_data[name]:
-                tdata = self.telegraf_data[name]["infiniband"]
-
-                # IB counts octets (8 bits) divided by 4
-                return {
-                    "bytes_in": tdata["port_rcv_data"] * 4,
-                    "bytes_out": tdata["port_xmit_data"] * 4,
-                    "pkts_in": tdata["port_rcv_packets"],
-                    "pkts_out": tdata["port_xmit_packets"],
-                }
+                return self.telegraf_data[name]["infiniband"]
 
             elif "net" in self.telegraf_data[name]:
                 tdata = self.telegraf_data[name]["net"]
