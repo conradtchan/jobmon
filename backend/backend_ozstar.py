@@ -39,6 +39,7 @@ class Backend(BackendBase):
             url=influx_config.URL,
             org=influx_config.ORG,
             token=influx_config.TOKEN,
+            timeout="30s",
         )
         self.influx_query_api = self.influx_client.query_api()
 
@@ -230,7 +231,7 @@ class Backend(BackendBase):
         # jobHarvest already reduces the data, so just query it by job
         # the timestamp is the collection time, which is delayed by 20s
         query = 'from(bucket: "lustre-jobstats")\
-        |> range(start: -60s stop: -30s)\
+        |> range(start: -80s, stop: -30s)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
         |> derivative(nonNegative: true)\
         |> last()\
