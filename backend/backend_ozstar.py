@@ -391,7 +391,17 @@ class Backend(BackendBase):
                 }
 
             else:
-                self.log.error(f"{name} ib/net not in influx/telegraf")
+                # Try to get data from ganglia (sstar nodes)
+                data = self.ganglia_data[name]
+                if "ib_bytes_in" in data.keys():
+                    return {
+                        "bytes_in": data["ib_bytes_in"],
+                        "bytes_out": data["ib_bytes_out"],
+                        "pkts_in": data["ib_pkts_in"],
+                        "pkts_out": data["ib_pkts_out"],
+                    }
+                else:
+                    self.log.error(f"{name} ib/net not in influx or ganglia")
 
     def lustre(self, name):
         if self.node_up(name, silent=True):
