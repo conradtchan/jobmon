@@ -43,6 +43,9 @@ class Backend(BackendBase):
         )
         self.influx_query_api = self.influx_client.query_api()
 
+        # Get hostnames for converting lustre client IPs to hostnames
+        self.get_etc_hostnames()
+
     def pre_update(self):
         # Ganglia
         self.log.info("Getting Ganglia data")
@@ -62,6 +65,7 @@ class Backend(BackendBase):
         self.update_mem_data()
         self.prune_mem_max()
         self.update_lustre_jobstats()
+        self.update_lustre_per_node()
 
     def count_running_jobs(self):
         n = len(
@@ -241,7 +245,7 @@ class Backend(BackendBase):
         return self.query_influx(query)
 
     def query_influx_telegraf(self, measurements):
-        # self.log.info(f"Querying Influx: telegraf {measurement} stats for {host}")
+        self.log.info("Querying Influx: telegraf measurements")
 
         filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
 
@@ -254,7 +258,7 @@ class Backend(BackendBase):
         return self.query_influx(query)
 
     def query_influx_telegraf_rate(self, measurements):
-        # self.log.info(f"Querying Influx: telegraf {measurement} stats for {host}")
+        self.log.info("Querying Influx: telegraf rates")
 
         filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
 
@@ -264,6 +268,22 @@ class Backend(BackendBase):
         |> derivative(nonNegative: true)\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> last()'
+
+        return self.query_influx(query)
+
+    def query_influx_lustre_per_node(self):
+        self.log.info("Querying Influx: lustre per node")
+
+        query = 'from(bucket: "ozstar")\
+        |> range(start: -80s)\
+        |> filter(fn: (r) => r["_measurement"] == "lustre2")\
+        |> filter(fn: (r) => r["_field"] == "write_bytes" or r["_field"] == "read_bytes")\
+        |> filter(fn: (r) => exists(r["client"]))\
+        |> derivative(nonNegative: true)\
+        |> last()\
+        |> drop(columns: ["_start", "_stop", "_time"])\
+        |> group(columns: ["client", "_field"])\
+        |> sum()'
 
         return self.query_influx(query)
 
@@ -406,19 +426,12 @@ class Backend(BackendBase):
 
     def lustre(self, name):
         if self.node_up(name, silent=True):
-            data = self.ganglia_data[name]
-            lustre_data = {}
-            if "farnarkle_fred_read_bytes" in data.keys():
-                lustre_data["read"] = math.ceil(
-                    float(data["farnarkle_fred_read_bytes"])
-                )
+            if name in self.lustre_per_node_data:
+                lustre_data = {}
+                data = self.lustre_per_node_data[name]
+                lustre_data["read"] = math.ceil(data["read_bytes"])
+                lustre_data["write"] = math.ceil(data["write_bytes"])
 
-            if "farnarkle_fred_write_bytes" in data.keys():
-                lustre_data["write"] = math.ceil(
-                    float(data["farnarkle_fred_write_bytes"])
-                )
-
-            if len(lustre_data.keys()) > 0:
                 return lustre_data
 
     def jobfs(self, name):
@@ -818,6 +831,35 @@ class Backend(BackendBase):
         )
         self.lustre_data = lustre_data
 
+    def update_lustre_per_node(self):
+        influx_result = self.query_influx_lustre_per_node()
+
+        lustre_per_node_data = {}
+
+        for table in influx_result:
+
+            # Cycle loop if there are no records in this table
+            if len(table.records) == 0:
+                continue
+
+            client = table.records[0]["client"]
+            ip = client.split("@")[0]
+
+            # If IP is not in /etc/hosts, ignore it
+            if ip in self.hosts:
+                # Assume the first hostname is the full hostname
+                hostname = self.hosts[ip][0]
+
+                if hostname not in lustre_per_node_data:
+                    lustre_per_node_data[hostname] = {}
+
+                for record in table.records:
+                    lustre_per_node_data[hostname][
+                        record.get_field()
+                    ] = record.get_value()
+
+        self.lustre_per_node_data = lustre_per_node_data
+
     def core_usage(self, data, silent=False):
         usage = {"avail": 0, "running": 0, "users": {}}
 
@@ -882,3 +924,22 @@ class Backend(BackendBase):
                 bf[node_type][i] = {"count": b.cnt(i), "tMax": tmax, "tMin": tmin}
 
         return bf
+
+    def get_etc_hostnames(self):
+        """
+        Parses /etc/hosts file and returns a dict of the hostnames of each IP
+        Adapted from https://stackoverflow.com/a/48917507
+        """
+        with open("/etc/hosts", "r") as f:
+            hostlines = f.readlines()
+        hostlines = [
+            line.strip()
+            for line in hostlines
+            if not line.startswith("#") and line.strip() != ""
+        ]
+        self.hosts = {}
+        for line in hostlines:
+            values = line.split("#")[0].split()
+            ip = values[0]
+            hostnames = values[1:]
+            self.hosts[ip] = hostnames
