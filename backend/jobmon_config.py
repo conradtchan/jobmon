@@ -32,7 +32,7 @@ COLUMN_ORDER_CPUS = ["john", "bryan"]
 HT_NODES = [["gina", 68, 4]]
 
 # Nodes to print backfill
-BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "knl", "trevor"]
+BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "trevor"]
 
 # Enable backfill
 BACKFILL = True
