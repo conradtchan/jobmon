@@ -20,7 +20,7 @@ HISTORY_LENGTH = 86400
 HISTORY_DELETE_AGE = 86400
 
 # Nodes to report
-NODES = ["john", "bryan", "sstar", "gstar", "clarke", "trevor"]
+NODES = ["john", "bryan", "sstar", "gstar", "clarke", "trevor", "dave"]
 
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ["john", "bryan"]
@@ -46,4 +46,5 @@ JOBFS_DEV = {
     "bryan": "nvme0n1p1",
     "trevor": "vdb2",
     "clarke": "vda1",
+    "dave": "nvme0n1",
 }
