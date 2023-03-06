@@ -78,26 +78,17 @@ class Backend(BackendBase):
         telegraf_data = {}
 
         # Some measurements have additional tags
-        measurements_value = {
+        measurements = {
             "cpu": "cpu",
             "mem": None,
             "swap": None,
             "nvidia_smi": "index",
-        }
-        measurements_rate = {
             "net": "interface",
             "infiniband": None,  # This input has a "device" tag, but ignore it, assuming only one device
             "diskio": "name",
         }
 
-        influx_value = self.query_influx_telegraf(measurements_value.keys())
-        # Statistics requiring a derivative
-        influx_rate = self.query_influx_telegraf_rate(measurements_rate.keys())
-
-        # Combine the results for conversion into a dict
-        influx_result = influx_value + influx_rate
-        measurements = {**measurements_value, **measurements_rate}
-
+        influx_result = self.query_influx_telegraf(measurements.keys())
         self.log.info(f"Influx returned {len(influx_result)} tables")
 
         telegraf_data = {}
@@ -274,7 +265,7 @@ class Backend(BackendBase):
     def query_influx_lustre_per_node(self):
         self.log.info("Querying Influx: lustre per node")
 
-        query = 'from(bucket: "ozstar")\
+        query = f'from(bucket: "{influx_config.BUCKET_TELEGRAF}")\
         |> range(start: -80s)\
         |> filter(fn: (r) => r["_measurement"] == "lustre2")\
         |> filter(fn: (r) => r["_field"] == "write_bytes" or r["_field"] == "read_bytes")\
@@ -488,8 +479,8 @@ class Backend(BackendBase):
         return 0
 
     def hostnames(self):
-        query = 'import "influxdata/influxdb/schema"\
-            schema.tagValues(bucket:"ozstar", tag:"host")\
+        query = f'import "influxdata/influxdb/schema"\
+            schema.tagValues(bucket:"{influx_config.BUCKET_TELEGRAF}", tag:"host")\
             |> sort()'
         result = self.query_influx(query)
         table = result[0]
