@@ -226,7 +226,7 @@ class Backend(BackendBase):
         # jobHarvest already reduces the data, so just query it by job
         # the timestamp is the collection time, which is delayed by 20s
         query = 'from(bucket: "lustre-jobstats")\
-        |> range(start: -80s, stop: -30s)\
+        |> range(start: -80s)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
         |> derivative(nonNegative: true)\
         |> last()\
@@ -243,20 +243,6 @@ class Backend(BackendBase):
         query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
         |> range(start: -160s)\
         |> filter(fn: (r) => {filter})\
-        |> drop(columns: ["_start", "_stop", "_time"])\
-        |> last()'
-
-        return self.query_influx(query)
-
-    def query_influx_telegraf_rate(self, measurements):
-        self.log.info("Querying Influx: telegraf rates")
-
-        filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
-
-        query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
-        |> range(start: -160s)\
-        |> filter(fn: (r) => {filter})\
-        |> derivative(nonNegative: true)\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> last()'
 
