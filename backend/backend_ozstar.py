@@ -77,43 +77,77 @@ class Backend(BackendBase):
     def update_telegraf_data(self):
         telegraf_data = {}
 
-        # Some measurements have additional tags
-        measurements = {
-            "cpu": "cpu",
-            "mem": None,
-            "swap": None,
-            "nvidia_smi": "index",
-            "net": "interface",
-            "infiniband": None,  # This input has a "device" tag, but ignore it, assuming only one device
-            "diskio": "name",
-        }
+        bucket_telegraf = influx_config.BUCKET_TELEGRAF
+        bucket_derivs = bucket_telegraf + "-derivs"
 
-        influx_result = self.query_influx_telegraf(measurements.keys())
-        self.log.info(f"Influx returned {len(influx_result)} tables")
+        # window = buffer (10s) + update interval (30s) + frequency
+        # for derivatives: + derivative task interval (5s) + frequency
+        measurements = {
+            "cpu": {
+                "tag_name": "cpu",
+                "window": 10 + 30 + 10,
+                "bucket": bucket_telegraf,
+            },
+            "mem": {
+                "tag_name": None,
+                "window": 10 + 30 + 30,
+                "bucket": bucket_telegraf,
+            },
+            "swap": {
+                "tag_name": None,
+                "window": 10 + 30 + 30,
+                "bucket": bucket_telegraf,
+            },
+            "nvidia_smi": {
+                "tag_name": "index",
+                "window": 10 + 30 + 10,
+                "bucket": bucket_telegraf,
+            },
+            "net": {
+                "tag_name": "interface",
+                "window": 10 + 30 + 15 + 5 + 15,
+                "bucket": bucket_derivs,
+            },
+            "infiniband": {
+                "tag_name": None,  # This input has a "device" tag, but ignore it, assuming only one device
+                "window": 10 + 30 + 10 + 5 + 10,
+                "bucket": bucket_derivs,
+            },
+            "diskio": {
+                "tag_name": "name",
+                "window": 10 + 30 + 30 + 5 + 30,
+                "bucket": bucket_derivs,
+            },
+        }
 
         telegraf_data = {}
 
-        for table in influx_result:
-            record = table.records[0]
+        for key, settings in measurements.items():
+            influx_result = self.query_influx_telegraf(
+                key, settings["window"], settings["bucket"]
+            )
+            self.log.info(f"Influx returned {len(influx_result)} tables")
 
-            host = record["host"]
-            if host not in telegraf_data:
-                telegraf_data[host] = {}
+            for table in influx_result:
+                record = table.records[0]
 
-            measurement = record.get_measurement()
-            if measurement not in telegraf_data[host]:
-                telegraf_data[host][measurement] = {}
+                host = record["host"]
+                if host not in telegraf_data:
+                    telegraf_data[host] = {}
 
-            tag_name = measurements[measurement]
-            field = record.get_field()
-            floor_value = math.floor(record.get_value())
-            if tag_name is None:
-                telegraf_data[host][measurement][field] = floor_value
-            else:
-                tag = record.values[tag_name]
-                if tag not in telegraf_data[host][measurement]:
-                    telegraf_data[host][measurement][tag] = {}
-                telegraf_data[host][measurement][tag][field] = floor_value
+                measurement = record.get_measurement()
+                if measurement not in telegraf_data[host]:
+                    telegraf_data[host][measurement] = {}
+
+                field = record.get_field()
+                floor_value = math.floor(record.get_value())
+                if settings["tag_name"] is None:
+                    telegraf_data[host][measurement][field] = floor_value
+                else:
+                    tag = record.values[settings["tag_name"]]
+                    if tag not in telegraf_data[host][measurement]:
+                        telegraf_data[host][measurement][tag] = {}
+                    telegraf_data[host][measurement][tag][field] = floor_value
 
         self.telegraf_data = telegraf_data
 
@@ -210,9 +244,8 @@ class Backend(BackendBase):
         self.log.info("Querying Influx: memory")
         # Sum up the memory usage of all tasks in a job using
         # the last value of each task, and then group by job ID and host
-        # Group by 1 minute range because Slurm updates every 30s
         query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
-        |> range(start: -2m)\
+        |> range(start: -90s)\
         |> filter(fn: (r) => r["_measurement"] == "RSS")\
         |> last()\
         |> drop(columns: ["_start", "_stop", "_time"])\
@@ -226,7 +259,7 @@ class Backend(BackendBase):
         # jobHarvest already reduces the data, so just query it by job
         # the timestamp is the collection time, which is delayed by 20s
         query = 'from(bucket: "lustre-jobstats")\
-        |> range(start: -80s)\
+        |> range(start: -90s)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
         |> derivative(nonNegative: true)\
         |> last()\
@@ -235,14 +268,12 @@ class Backend(BackendBase):
 
         return self.query_influx(query)
 
-    def query_influx_telegraf(self, measurements):
-        self.log.info("Querying Influx: telegraf measurements")
+    def query_influx_telegraf(self, key, window, bucket):
+        self.log.info(f"Querying Influx: telegraf ({key})")
 
-        filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
-
-        query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
-        |> range(start: -160s)\
-        |> filter(fn: (r) => {filter})\
+        query = f'from(bucket:"{bucket}")\
+        |> range(start: -{window}s)\
+        |> filter(fn: (r) => r["_measurement"] == "{key}")\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> last()'
 
@@ -252,7 +283,7 @@ class Backend(BackendBase):
         self.log.info("Querying Influx: lustre per node")
 
         query = f'from(bucket: "{influx_config.BUCKET_TELEGRAF}")\
-        |> range(start: -80s)\
+        |> range(start: -90s)\
         |> filter(fn: (r) => r["_measurement"] == "lustre2")\
         |> filter(fn: (r) => r["_field"] == "write_bytes" or r["_field"] == "read_bytes")\
         |> filter(fn: (r) => exists(r["client"]))\
