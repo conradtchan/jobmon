@@ -282,16 +282,10 @@ class Backend(BackendBase):
     def query_influx_lustre_per_node(self):
         self.log.info("Querying Influx: lustre per node")
 
-        query = f'from(bucket: "{influx_config.BUCKET_TELEGRAF}")\
+        query = 'from(bucket: "lustre-per-node")\
         |> range(start: -90s)\
-        |> filter(fn: (r) => r["_measurement"] == "lustre2")\
-        |> filter(fn: (r) => r["_field"] == "write_bytes" or r["_field"] == "read_bytes")\
-        |> filter(fn: (r) => exists(r["client"]))\
-        |> derivative(nonNegative: true)\
         |> last()\
-        |> drop(columns: ["_start", "_stop", "_time"])\
-        |> group(columns: ["client", "_field"])\
-        |> sum()'
+        |> drop(columns: ["_start", "_stop", "_time"])'
 
         return self.query_influx(query)
 
