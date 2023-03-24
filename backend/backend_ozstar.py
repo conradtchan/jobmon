@@ -80,42 +80,42 @@ class Backend(BackendBase):
         bucket_telegraf = influx_config.BUCKET_TELEGRAF
         bucket_derivs = bucket_telegraf + "-derivs"
 
-        # window = buffer (10s) + update interval (30s) + frequency
+        # window = buffer (20s) + update interval (30s) + frequency
         # for derivatives: + derivative task interval (5s) + frequency
         measurements = {
             "cpu": {
                 "tag_name": "cpu",
-                "window": 10 + 30 + 10,
+                "window": 20 + 30 + 10,
                 "bucket": bucket_telegraf,
             },
             "mem": {
                 "tag_name": None,
-                "window": 10 + 30 + 30,
+                "window": 20 + 30 + 30,
                 "bucket": bucket_telegraf,
             },
             "swap": {
                 "tag_name": None,
-                "window": 10 + 30 + 30,
+                "window": 20 + 30 + 30,
                 "bucket": bucket_telegraf,
             },
             "nvidia_smi": {
                 "tag_name": "index",
-                "window": 10 + 30 + 10,
+                "window": 20 + 30 + 10,
                 "bucket": bucket_telegraf,
             },
             "net": {
                 "tag_name": "interface",
-                "window": 10 + 30 + 15 + 5 + 15,
+                "window": 20 + 30 + 15 + 5 + 15,
                 "bucket": bucket_derivs,
             },
             "infiniband": {
                 "tag_name": None,  # This input has a "device" tag, but ignore it, assuming only one device
-                "window": 10 + 30 + 10 + 5 + 10,
+                "window": 20 + 30 + 10 + 5 + 10,
                 "bucket": bucket_derivs,
             },
             "diskio": {
                 "tag_name": "name",
-                "window": 10 + 30 + 30 + 5 + 30,
+                "window": 20 + 30 + 30 + 5 + 30,
                 "bucket": bucket_derivs,
             },
         }
