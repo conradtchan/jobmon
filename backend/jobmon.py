@@ -64,7 +64,7 @@ if __name__ == "__main__":
             )
 
         except Exception as e:
-            log.error("Error:", e)
+            print(e)
             log.error("Trying again next cycle")
             sleep_time = config.UPDATE_INTERVAL
 
