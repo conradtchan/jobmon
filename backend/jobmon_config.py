@@ -20,7 +20,7 @@ HISTORY_LENGTH = 86400
 HISTORY_DELETE_AGE = 86400
 
 # Nodes to report
-NODES = ["john", "bryan", "sstar", "gstar", "clarke", "trevor", "dave"]
+NODES = ["john", "bryan", "sstar", "gstar", "clarke", "trevor", "dave", "data-mover"]
 
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ["john", "bryan"]
@@ -38,7 +38,7 @@ BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "trevor"]
 BACKFILL = True
 
 # Some nodes have ethernet interfaces instead of IB
-ETH_NODES = {"clarke": "eth1", "trevor": "eth1"}
+ETH_NODES = {"clarke": "eth1", "trevor": "eth1", "data-mover": "ens256"}
 
 # Jobfs device name
 JOBFS_DEV = {
