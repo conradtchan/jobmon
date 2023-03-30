@@ -694,15 +694,6 @@ class Backend(BackendBase):
 
         layout = copy.deepcopy(job["cpus_alloc_layout"])
 
-        # Expand to HT core labelling if necessary
-        for node in layout.keys():
-            for ht_node in config.HT_NODES:
-                if ht_node[0] in node:
-                    extra_layout = []
-                    for i in range(1, ht_node[2]):
-                        extra_layout += [x + i * ht_node[1] for x in layout[node]]
-                    layout[node] += extra_layout
-
         return layout
 
     def job_gpu_layout(self, job_id):

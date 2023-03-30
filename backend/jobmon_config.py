@@ -20,16 +20,23 @@ HISTORY_LENGTH = 86400
 HISTORY_DELETE_AGE = 86400
 
 # Nodes to report
-NODES = ["john", "bryan", "sstar", "gstar", "clarke", "trevor", "dave", "data-mover"]
+NODES = [
+    "john",
+    "bryan",
+    "sstar",
+    "gstar",
+    "clarke",
+    "trevor",
+    "dave",
+    "gina",
+    "data-mover",
+]
 
 # Nodes which contribute to the total count
 CORE_COUNT_NODES = ["john", "bryan"]
 
 # Nodes which have column-ordered CPUs
 COLUMN_ORDER_CPUS = ["john", "bryan"]
-
-# Nodes with HT
-HT_NODES = [["gina", 68, 4]]
 
 # Nodes to print backfill
 BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "trevor"]
@@ -47,4 +54,5 @@ JOBFS_DEV = {
     "trevor": "vdb2",
     "clarke": "vda1",
     "dave": "nvme0n1",
+    "gina": "nvme0n1",
 }
