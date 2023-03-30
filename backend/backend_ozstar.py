@@ -90,18 +90,20 @@ class Backend(BackendBase):
             |> group(columns: ["_measurement", "_field", "client"])\
             |> aggregateWindow(every: 20s, fn: sum, createEmpty: false)\
             |> derivative(nonNegative: true)\
-            |> range(start: -1m)\
+            |> range(start: -90s)\
             |> to(bucket: "lustre-per-node")',
             "Derivatives": 'from(bucket: "ozstar")\
-            |> range(start: -90s)\
+            |> range(start: -2m)\
             |> filter(fn: (r) => r["_measurement"] =~ /net|infiniband/)\
-            |> derivative()\
+            |> derivative(nonNegative: true)\
+            |> range(start: -90s)\
             |> to(bucket: "ozstar-derivs")\
             from(bucket: "ozstar")\
-            |> range(start: -90s)\
+            |> range(start: -2m)\
             |> filter(fn: (r) => r["_measurement"] == "diskio")\
             |> filter(fn: (r) => r["name"] =~ /sda2|nvme0n1p1|vdb2|vda1|nvme0n1/)\
-            |> derivative()\
+            |> derivative(nonNegative: true)\
+            |> range(start: -90s)\
             |> to(bucket: "ozstar-derivs")',
         }
 
