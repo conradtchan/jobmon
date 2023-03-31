@@ -61,7 +61,6 @@ class Backend(BackendBase):
 - `HISTORY_DELETE_AGE`: The purge age for old history records (seconds)
 - `CORE_COUNT_NODES`: Which nodes contribute to the total count
 - `COLUMN_ORDER_CPUS`: CPUs that have column-ordered cores (row-ordered by default)
-- `HT_NODES`: Nodes with hyperthreading, and the layout
 - `BF_NODES`: Queues to display backfill for
 
 ## Frontend configuration

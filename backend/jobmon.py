@@ -59,12 +59,13 @@ if __name__ == "__main__":
             time_taken = time_finish - time_start
             sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
 
+            log.info(
+                f"Cycle completed in {time_taken} seconds, now sleeping for {sleep_time} seconds...\n"
+            )
+
         except Exception as e:
-            log.error("Error:", e)
+            print(e)
             log.error("Trying again next cycle")
             sleep_time = config.UPDATE_INTERVAL
 
-        log.info(
-            f"Cycle completed in {time_taken} seconds, now sleeping for {sleep_time} seconds...\n"
-        )
         time.sleep(sleep_time)

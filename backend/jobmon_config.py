@@ -20,25 +20,32 @@ HISTORY_LENGTH = 86400
 HISTORY_DELETE_AGE = 86400
 
 # Nodes to report
-NODES = ["john", "bryan", "sstar", "gstar", "clarke", "trevor"]
+NODES = [
+    "john",
+    "bryan",
+    "sstar",
+    "gstar",
+    "clarke",
+    "trevor",
+    "dave",
+    "gina",
+    "data-mover",
+]
 
 # Nodes which contribute to the total count
-CORE_COUNT_NODES = ["john", "bryan"]
+CORE_COUNT_NODES = ["john", "bryan", "dave", "gina", "trevor"]
 
 # Nodes which have column-ordered CPUs
 COLUMN_ORDER_CPUS = ["john", "bryan"]
 
-# Nodes with HT
-HT_NODES = [["gina", 68, 4]]
-
 # Nodes to print backfill
-BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "knl", "trevor"]
+BF_NODES = ["milan", "trevor", "skylake"]
 
 # Enable backfill
 BACKFILL = True
 
 # Some nodes have ethernet interfaces instead of IB
-ETH_NODES = {"clarke": "eth1", "trevor": "eth1"}
+ETH_NODES = {"clarke": "eth1", "trevor": "eth1", "data-mover": "ens256"}
 
 # Jobfs device name
 JOBFS_DEV = {
@@ -46,4 +53,6 @@ JOBFS_DEV = {
     "bryan": "nvme0n1p1",
     "trevor": "vdb2",
     "clarke": "vda1",
+    "dave": "nvme0n1",
+    "gina": "nvme0n1",
 }

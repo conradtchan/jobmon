@@ -39,8 +39,12 @@ class Backend(BackendBase):
             url=influx_config.URL,
             org=influx_config.ORG,
             token=influx_config.TOKEN,
+            timeout="30s",
         )
         self.influx_query_api = self.influx_client.query_api()
+
+        # Get hostnames for converting lustre client IPs to hostnames
+        self.get_etc_hostnames()
 
     def pre_update(self):
         # Ganglia
@@ -57,10 +61,12 @@ class Backend(BackendBase):
 
         # Influx
         self.log.info("Getting Influx data")
+        self.trigger_influx_tasks()
         self.update_telegraf_data()
         self.update_mem_data()
         self.prune_mem_max()
         self.update_lustre_jobstats()
+        self.update_lustre_per_node()
 
     def count_running_jobs(self):
         n = len(
@@ -69,55 +75,116 @@ class Backend(BackendBase):
         self.log.info(f"Counted {n} running jobs")
         return n
 
+    def trigger_influx_tasks(self):
+        """
+        Queries that should run as InfluxDB tasks, but triggered via jobmon instead
+        """
+        self.log.info("Triggering InfluDB tasks")
+        tasks = {
+            "Spoof per-node lustre stats": 'from(bucket: "ozstar")\
+            |> range(start: -2m)\
+            |> filter(fn: (r) => r["_measurement"] == "lustre2")\
+            |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes")\
+            |> filter(fn: (r) => exists r["client"])\
+            |> aggregateWindow(every: 20s, fn: mean, createEmpty: false)\
+            |> group(columns: ["_measurement", "_field", "client"])\
+            |> aggregateWindow(every: 20s, fn: sum, createEmpty: false)\
+            |> derivative(nonNegative: true)\
+            |> range(start: -90s)\
+            |> to(bucket: "lustre-per-node")',
+            "Derivatives": 'from(bucket: "ozstar")\
+            |> range(start: -2m)\
+            |> filter(fn: (r) => r["_measurement"] =~ /net|infiniband/)\
+            |> derivative(nonNegative: true)\
+            |> range(start: -90s)\
+            |> to(bucket: "ozstar-derivs")\
+            from(bucket: "ozstar")\
+            |> range(start: -2m)\
+            |> filter(fn: (r) => r["_measurement"] == "diskio")\
+            |> filter(fn: (r) => r["name"] =~ /sda2|nvme0n1p1|vdb2|vda1|nvme0n1/)\
+            |> derivative(nonNegative: true)\
+            |> range(start: -90s)\
+            |> to(bucket: "ozstar-derivs")',
+        }
+
+        for name, query in tasks.items():
+            self.log.info(f"Task: {name}")
+            self.query_influx(query)
+
     def update_telegraf_data(self):
         telegraf_data = {}
 
-        # Some measurements have additional tags
-        measurements_value = {
-            "cpu": "cpu",
-            "mem": None,
-            "swap": None,
-            "nvidia_smi": "index",
+        bucket_telegraf = influx_config.BUCKET_TELEGRAF
+        bucket_derivs = bucket_telegraf + "-derivs"
+
+        # window = buffer (20s) + update interval (30s) + frequency
+        # for derivatives: + derivative task interval (5s) + frequency
+        measurements = {
+            "cpu": {
+                "tag_name": "cpu",
+                "window": 20 + 30 + 10,
+                "bucket": bucket_telegraf,
+            },
+            "mem": {
+                "tag_name": None,
+                "window": 20 + 30 + 30,
+                "bucket": bucket_telegraf,
+            },
+            "swap": {
+                "tag_name": None,
+                "window": 20 + 30 + 30,
+                "bucket": bucket_telegraf,
+            },
+            "nvidia_smi": {
+                "tag_name": "index",
+                "window": 20 + 30 + 10,
+                "bucket": bucket_telegraf,
+            },
+            "net": {
+                "tag_name": "interface",
+                "window": 20 + 30 + 15 + 5 + 15,
+                "bucket": bucket_derivs,
+            },
+            "infiniband": {
+                "tag_name": None,  # This input has a "device" tag, but ignore it, assuming only one device
+                "window": 20 + 30 + 10 + 5 + 10,
+                "bucket": bucket_derivs,
+            },
+            "diskio": {
+                "tag_name": "name",
+                "window": 20 + 30 + 30 + 5 + 30,
+                "bucket": bucket_derivs,
+            },
         }
-        measurements_rate = {
-            "net": "interface",
-            "infiniband": None,  # This input has a "device" tag, but ignore it, assuming only one device
-            "diskio": "name",
-        }
-
-        influx_value = self.query_influx_telegraf(measurements_value.keys())
-        # Statistics requiring a derivative
-        influx_rate = self.query_influx_telegraf_rate(measurements_rate.keys())
-
-        # Combine the results for conversion into a dict
-        influx_result = influx_value + influx_rate
-        measurements = {**measurements_value, **measurements_rate}
-
-        self.log.info(f"Influx returned {len(influx_result)} tables")
 
         telegraf_data = {}
 
-        for table in influx_result:
-            record = table.records[0]
+        for key, settings in measurements.items():
+            influx_result = self.query_influx_telegraf(
+                key, settings["window"], settings["bucket"]
+            )
+            self.log.info(f"Influx returned {len(influx_result)} tables")
 
-            host = record["host"]
-            if host not in telegraf_data:
-                telegraf_data[host] = {}
+            for table in influx_result:
+                record = table.records[0]
 
-            measurement = record.get_measurement()
-            if measurement not in telegraf_data[host]:
-                telegraf_data[host][measurement] = {}
+                host = record["host"]
+                if host not in telegraf_data:
+                    telegraf_data[host] = {}
 
-            tag_name = measurements[measurement]
-            field = record.get_field()
-            floor_value = math.floor(record.get_value())
-            if tag_name is None:
-                telegraf_data[host][measurement][field] = floor_value
-            else:
-                tag = record.values[tag_name]
-                if tag not in telegraf_data[host][measurement]:
-                    telegraf_data[host][measurement][tag] = {}
-                telegraf_data[host][measurement][tag][field] = floor_value
+                measurement = record.get_measurement()
+                if measurement not in telegraf_data[host]:
+                    telegraf_data[host][measurement] = {}
+
+                field = record.get_field()
+                floor_value = math.floor(record.get_value())
+                if settings["tag_name"] is None:
+                    telegraf_data[host][measurement][field] = floor_value
+                else:
+                    tag = record.values[settings["tag_name"]]
+                    if tag not in telegraf_data[host][measurement]:
+                        telegraf_data[host][measurement][tag] = {}
+                    telegraf_data[host][measurement][tag][field] = floor_value
 
         self.telegraf_data = telegraf_data
 
@@ -214,9 +281,8 @@ class Backend(BackendBase):
         self.log.info("Querying Influx: memory")
         # Sum up the memory usage of all tasks in a job using
         # the last value of each task, and then group by job ID and host
-        # Group by 1 minute range because Slurm updates every 30s
         query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
-        |> range(start: -2m)\
+        |> range(start: -90s)\
         |> filter(fn: (r) => r["_measurement"] == "RSS")\
         |> last()\
         |> drop(columns: ["_start", "_stop", "_time"])\
@@ -228,8 +294,9 @@ class Backend(BackendBase):
     def query_influx_lustre(self):
         self.log.info("Querying Influx: lustre")
         # jobHarvest already reduces the data, so just query it by job
-        query = f'from(bucket: "lustre-jobstats")\
-        |> range(start: -{config.UPDATE_INTERVAL*3}s)\
+        # the timestamp is the collection time, which is delayed by 20s
+        query = 'from(bucket: "lustre-jobstats")\
+        |> range(start: -90s)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
         |> derivative(nonNegative: true)\
         |> last()\
@@ -238,30 +305,24 @@ class Backend(BackendBase):
 
         return self.query_influx(query)
 
-    def query_influx_telegraf(self, measurements):
-        # self.log.info(f"Querying Influx: telegraf {measurement} stats for {host}")
+    def query_influx_telegraf(self, key, window, bucket):
+        self.log.info(f"Querying Influx: telegraf ({key})")
 
-        filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
-
-        query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
-        |> range(start: -100s)\
-        |> filter(fn: (r) => {filter})\
+        query = f'from(bucket:"{bucket}")\
+        |> range(start: -{window}s)\
+        |> filter(fn: (r) => r["_measurement"] == "{key}")\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> last()'
 
         return self.query_influx(query)
 
-    def query_influx_telegraf_rate(self, measurements):
-        # self.log.info(f"Querying Influx: telegraf {measurement} stats for {host}")
+    def query_influx_lustre_per_node(self):
+        self.log.info("Querying Influx: lustre per node")
 
-        filter = " or ".join([f'r["_measurement"] == "{m}"' for m in measurements])
-
-        query = f'from(bucket:"{influx_config.BUCKET_TELEGRAF}")\
-        |> range(start: -160s)\
-        |> filter(fn: (r) => {filter})\
-        |> derivative(nonNegative: true)\
-        |> drop(columns: ["_start", "_stop", "_time"])\
-        |> last()'
+        query = 'from(bucket: "lustre-per-node")\
+        |> range(start: -90s)\
+        |> last()\
+        |> drop(columns: ["_start", "_stop", "_time"])'
 
         return self.query_influx(query)
 
@@ -372,15 +433,7 @@ class Backend(BackendBase):
     def infiniband(self, name):
         if self.node_up(name, silent=True):
             if "infiniband" in self.telegraf_data[name]:
-                tdata = self.telegraf_data[name]["infiniband"]
-
-                # IB counts octets (8 bits) divided by 4
-                return {
-                    "bytes_in": tdata["port_rcv_data"] * 4,
-                    "bytes_out": tdata["port_xmit_data"] * 4,
-                    "pkts_in": tdata["port_rcv_packets"],
-                    "pkts_out": tdata["port_xmit_packets"],
-                }
+                return self.telegraf_data[name]["infiniband"]
 
             elif "net" in self.telegraf_data[name]:
                 tdata = self.telegraf_data[name]["net"]
@@ -398,23 +451,26 @@ class Backend(BackendBase):
                 }
 
             else:
-                self.log.error(f"{name} ib/net not in influx/telegraf")
+                # Try to get data from ganglia (sstar nodes)
+                data = self.ganglia_data[name]
+                if "ib_bytes_in" in data.keys():
+                    return {
+                        "bytes_in": data["ib_bytes_in"],
+                        "bytes_out": data["ib_bytes_out"],
+                        "pkts_in": data["ib_pkts_in"],
+                        "pkts_out": data["ib_pkts_out"],
+                    }
+                else:
+                    self.log.error(f"{name} ib/net not in influx or ganglia")
 
     def lustre(self, name):
         if self.node_up(name, silent=True):
-            data = self.ganglia_data[name]
-            lustre_data = {}
-            if "farnarkle_fred_read_bytes" in data.keys():
-                lustre_data["read"] = math.ceil(
-                    float(data["farnarkle_fred_read_bytes"])
-                )
+            if name in self.lustre_per_node_data:
+                lustre_data = {}
+                data = self.lustre_per_node_data[name]
+                lustre_data["read"] = math.ceil(data["read_bytes"])
+                lustre_data["write"] = math.ceil(data["write_bytes"])
 
-            if "farnarkle_fred_write_bytes" in data.keys():
-                lustre_data["write"] = math.ceil(
-                    float(data["farnarkle_fred_write_bytes"])
-                )
-
-            if len(lustre_data.keys()) > 0:
                 return lustre_data
 
     def jobfs(self, name):
@@ -471,8 +527,8 @@ class Backend(BackendBase):
         return 0
 
     def hostnames(self):
-        query = 'import "influxdata/influxdb/schema"\
-            schema.tagValues(bucket:"ozstar", tag:"host")\
+        query = f'import "influxdata/influxdb/schema"\
+            schema.tagValues(bucket:"{influx_config.BUCKET_TELEGRAF}", tag:"host")\
             |> sort()'
         result = self.query_influx(query)
         table = result[0]
@@ -640,52 +696,51 @@ class Backend(BackendBase):
 
         layout = copy.deepcopy(job["cpus_alloc_layout"])
 
-        # Expand to HT core labelling if necessary
-        for node in layout.keys():
-            for ht_node in config.HT_NODES:
-                if ht_node[0] in node:
-                    extra_layout = []
-                    for i in range(1, ht_node[2]):
-                        extra_layout += [x + i * ht_node[1] for x in layout[node]]
-                    layout[node] += extra_layout
-
         return layout
 
     def job_gpu_layout(self, job_id):
+        # Default empty dict if layout cannot be found
+        layout = {}
+
         # Only get GPU layout for jobs that:
         # - are a GPU job
         # - are actively running (otherwise scontrol will return an error)
-        if self.job_ngpus(job_id) > 0 and self.job_state(job_id) == "RUNNING":
-            MAXSIZE = 30000
-            if job_id in self.gpu_layout_cache:
-                self.log.debug(f"Job {job_id} recalled from GPU layout cache")
-                layout = self.gpu_layout_cache[job_id]
-            else:
-                self.log.debug(
-                    f"Job {job_id} not in GPU layout cache; getting from scontrol"
-                )
-                layout = self.scontrol_gpu(job_id)
+        if self.job_ngpus(job_id) > 0:
+            state = self.job_state(job_id)
+            if state == "RUNNING":
+                MAXSIZE = 10000
+                if job_id in self.gpu_layout_cache:
+                    self.log.debug(f"Job {job_id} recalled from GPU layout cache")
+                    layout = self.gpu_layout_cache[job_id]
+                else:
+                    self.log.debug(
+                        f"Job {job_id} not in GPU layout cache; getting from scontrol"
+                    )
+                    layout = self.scontrol_gpu(job_id)
 
-            # Minimise the number of scontrol calls by caching the results
-            # - Assume that GPU affinity is fixed for the lifetime of the job
-            # - scontrol should only be called once per job
-            # - Cache up to 30,000 jobs (there are typically 3000 jobs running on OzSTAR)
-            # - Cannot use lru_cache because specific values cannot be cleared
+                # Minimise the number of scontrol calls by caching the results
+                # - Assume that GPU affinity is fixed for the lifetime of the job
+                # - scontrol should only be called once per job
+                # - Cache up to 10,000 jobs (there are typically 3000 jobs running on OzSTAR)
+                # - Cannot use lru_cache because specific values cannot be cleared
 
-            # If expecting a layout but scontrol isn't returning it yet, don't cache
-            if layout is {} and self.job_ngpus(job_id) > 0:
-                return layout
-            else:
-                self.gpu_layout_cache[job_id] = layout
+                # If expecting a layout but scontrol isn't returning it yet, don't cache
+                if layout is {} and self.job_ngpus(job_id) > 0:
+                    return layout
+                else:
+                    self.gpu_layout_cache[job_id] = layout
 
-            while len(self.gpu_layout_cache) > MAXSIZE:
-                self.log.warn(
-                    f"GPU layout cache size ({MAXSIZE}) exceeded; removing earliest item"
-                )
-                # Remove earliest item
-                self.gpu_layout_cache.popitem(last=False)
-        else:
-            layout = {}
+                while len(self.gpu_layout_cache) > MAXSIZE:
+                    self.log.warn(
+                        f"GPU layout cache size ({MAXSIZE}) exceeded; removing earliest item"
+                    )
+                    # Remove earliest item
+                    self.gpu_layout_cache.popitem(last=False)
+
+            # Job has already finished
+            elif state != "PENDING":
+                # Remove from layout
+                self.gpu_layout_cache.pop(job_id, None)
 
         return layout
 
@@ -806,6 +861,35 @@ class Backend(BackendBase):
         )
         self.lustre_data = lustre_data
 
+    def update_lustre_per_node(self):
+        influx_result = self.query_influx_lustre_per_node()
+
+        lustre_per_node_data = {}
+
+        for table in influx_result:
+
+            # Cycle loop if there are no records in this table
+            if len(table.records) == 0:
+                continue
+
+            client = table.records[0]["client"]
+            ip = client.split("@")[0]
+
+            # If IP is not in /etc/hosts, ignore it
+            if ip in self.hosts:
+                # Assume the first hostname is the full hostname
+                hostname = self.hosts[ip][0]
+
+                if hostname not in lustre_per_node_data:
+                    lustre_per_node_data[hostname] = {}
+
+                for record in table.records:
+                    lustre_per_node_data[hostname][
+                        record.get_field()
+                    ] = record.get_value()
+
+        self.lustre_per_node_data = lustre_per_node_data
+
     def core_usage(self, data, silent=False):
         usage = {"avail": 0, "running": 0, "users": {}}
 
@@ -870,3 +954,22 @@ class Backend(BackendBase):
                 bf[node_type][i] = {"count": b.cnt(i), "tMax": tmax, "tMin": tmin}
 
         return bf
+
+    def get_etc_hostnames(self):
+        """
+        Parses /etc/hosts file and returns a dict of the hostnames of each IP
+        Adapted from https://stackoverflow.com/a/48917507
+        """
+        with open("/etc/hosts", "r") as f:
+            hostlines = f.readlines()
+        hostlines = [
+            line.strip()
+            for line in hostlines
+            if not line.startswith("#") and line.strip() != ""
+        ]
+        self.hosts = {}
+        for line in hostlines:
+            values = line.split("#")[0].split()
+            ip = values[0]
+            hostnames = values[1:]
+            self.hosts[ip] = hostnames
