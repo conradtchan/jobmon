@@ -12,12 +12,9 @@ import pyslurm
 PARTITIONS = {
     "skylake-gpu": ["john", "bryan"],
     "skylake": ["john", "bryan"],
-    "sstar": ["sstar"],
-    "gstar": ["gstar"],
-    "knl": ["gina"],
     "trevor": ["trevor"],
+    "milan": ["dave", "gina"],
 }
-CORE_COUNT_NODES = PARTITIONS["skylake"]
 partitionResGpuCores = {
     "skylake": 4,
     "skylake-gpu": 4,
@@ -25,6 +22,7 @@ partitionResGpuCores = {
     "gstar": 0,
     "knl": 0,
     "trevor": 0,
+    "milan": 0,
 }
 partitionMaxCpuCores = {
     "skylake": [32],
@@ -33,6 +31,8 @@ partitionMaxCpuCores = {
     "gstar": [32, 12],
     "knl": [272],
     "trevor": [12],
+    "dave": [64],
+    "gina": [64],
 }
 # arbitrary thresholds for what constitutes a low mem/core or low disk/core situation
 partitionLowMem = {
@@ -42,6 +42,8 @@ partitionLowMem = {
     "gstar": 1000,
     "knl": 200,
     "trevor": 1000,
+    "dave": 1000,
+    "gina": 1000,
 }  # MB per core
 partitionLowDisk = {
     "skylake": 3000,
@@ -50,6 +52,8 @@ partitionLowDisk = {
     "gstar": 3000,
     "knl": 600,
     "trevor": 3000,
+    "dave": 3000,
+    "gina": 3000,
 }
 # max allowed walltime
 TMAX = 24 * 7 * 3600

@@ -33,13 +33,13 @@ NODES = [
 ]
 
 # Nodes which contribute to the total count
-CORE_COUNT_NODES = ["john", "bryan"]
+CORE_COUNT_NODES = ["john", "bryan", "dave", "gina", "trevor"]
 
 # Nodes which have column-ordered CPUs
 COLUMN_ORDER_CPUS = ["john", "bryan"]
 
 # Nodes to print backfill
-BF_NODES = ["skylake", "skylake-gpu", "sstar", "gstar", "trevor"]
+BF_NODES = ["milan", "trevor", "skylake"]
 
 # Enable backfill
 BACKFILL = True
