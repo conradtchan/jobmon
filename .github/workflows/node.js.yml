@@ -19,17 +19,17 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      OPENSSL_CONF: openssl.cnf
+      OPENSSL_CONF: /tmp/openssl.cnf
 
     steps:
       - uses: actions/checkout@v2
 
       - uses: "finnp/create-file-action@master"
         env:
-          FILE_NAME: "openssl.cnf"
+          FILE_NAME: "/tmp/openssl.cnf"
           FILE_BASE64: "W3Byb3ZpZGVyX3NlY3RdCmRlZmF1bHQgPSBkZWZhdWx0X3NlY3QKbGVnYWN5ID0gbGVnYWN5X3NlY3QKCltkZWZhdWx0X3NlY3RdCmFjdGl2YXRlID0gMQoKW2xlZ2FjeV9zZWN0XQphY3RpdmF0ZSA9IDEK"
 
-      - run: cat openssl.cnf
+      - run: cat /tmp/openssl.cnf
       - run: pwd
 
       - run: yarn install
