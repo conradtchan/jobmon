@@ -18,25 +18,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    env:
-      OPENSSL_CONF: /tmp/openssl.cnf
-
     steps:
-      - uses: DamianReeves/write-file-action@master
-        with:
-          path: /tmp/openssl.cnf
-          contents: |
-            [provider_sect]
-            default = default_sect
-            legacy = legacy_sect
-
-            [default_sect]
-            activate = 1
-
-            [legacy_sect]
-            activate = 1
-          write-mode: append
-
       - uses: actions/checkout@v2
       - run: yarn install
       - run: yarn build
