@@ -386,7 +386,6 @@ class Backend(BackendBase):
                             core_right += [x]
                     core = core_left + core_right
 
-                # total_array and core_array are more memory efficient formats
                 return {"total": total, "core": core}
 
             else:
@@ -468,8 +467,11 @@ class Backend(BackendBase):
             if name in self.lustre_per_node_data:
                 lustre_data = {}
                 data = self.lustre_per_node_data[name]
-                lustre_data["read"] = math.ceil(data["read_bytes"])
-                lustre_data["write"] = math.ceil(data["write_bytes"])
+                if "read_bytes" in data.keys():
+                    lustre_data["read"] = math.ceil(data["read_bytes"])
+                    lustre_data["write"] = math.ceil(data["write_bytes"])
+                else:
+                    self.log.error(f"{name} has no lustre per-node stats")
 
                 return lustre_data
 
