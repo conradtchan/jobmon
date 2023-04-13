@@ -19,7 +19,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      NODE_OPTIONS: --openssl-legacy-provider
       OPENSSL_CONF: openssl.cnf
 
     steps:
