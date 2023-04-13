@@ -386,7 +386,6 @@ class Backend(BackendBase):
                             core_right += [x]
                     core = core_left + core_right
 
-                # total_array and core_array are more memory efficient formats
                 return {"total": total, "core": core}
 
             else:
@@ -443,17 +442,35 @@ class Backend(BackendBase):
                     if eth_node in name:
                         interface = config.ETH_NODES[eth_node]
 
-                return {
-                    "bytes_in": tdata[interface]["bytes_recv"],
-                    "bytes_out": tdata[interface]["bytes_sent"],
-                    "pkts_in": tdata[interface]["packets_recv"],
-                    "pkts_out": tdata[interface]["packets_sent"],
-                }
+                use_net_data = False
+                if interface in tdata.keys():
+                    if {
+                        "bytes_recv",
+                        "bytes_sent",
+                        "packets_recv",
+                        "packets_sent",
+                    } <= tdata[interface].keys():
+                        use_net_data = True
+
+                if use_net_data:
+                    return {
+                        "bytes_in": tdata[interface]["bytes_recv"],
+                        "bytes_out": tdata[interface]["bytes_sent"],
+                        "pkts_in": tdata[interface]["packets_recv"],
+                        "pkts_out": tdata[interface]["packets_sent"],
+                    }
+                else:
+                    self.log.error(f"{name} ib/net not in influx")
 
             else:
                 # Try to get data from ganglia (sstar nodes)
                 data = self.ganglia_data[name]
-                if "ib_bytes_in" in data.keys():
+                if {
+                    "ib_bytes_in",
+                    "ib_bytes_out",
+                    "ib_pkts_in",
+                    "ib_pkts_out",
+                } <= data.keys():
                     return {
                         "bytes_in": data["ib_bytes_in"],
                         "bytes_out": data["ib_bytes_out"],
@@ -461,15 +478,18 @@ class Backend(BackendBase):
                         "pkts_out": data["ib_pkts_out"],
                     }
                 else:
-                    self.log.error(f"{name} ib/net not in influx or ganglia")
+                    self.log.error(f"{name} ib/net not in ganglia or influx")
 
     def lustre(self, name):
         if self.node_up(name, silent=True):
             if name in self.lustre_per_node_data:
                 lustre_data = {}
                 data = self.lustre_per_node_data[name]
-                lustre_data["read"] = math.ceil(data["read_bytes"])
-                lustre_data["write"] = math.ceil(data["write_bytes"])
+                if {"read_bytes", "write_bytes"} <= data.keys():
+                    lustre_data["read"] = math.ceil(data["read_bytes"])
+                    lustre_data["write"] = math.ceil(data["write_bytes"])
+                else:
+                    self.log.error(f"{name} has no lustre per-node stats")
 
                 return lustre_data
 
