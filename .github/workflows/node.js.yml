@@ -20,9 +20,16 @@ jobs:
 
     env:
       NODE_OPTIONS: --openssl-legacy-provider
+      OPENSSL_CONF: openssl.cnf
 
     steps:
       - uses: actions/checkout@v2
+
+      - uses: "finnp/create-file-action@master"
+        env:
+          FILE_NAME: "openssl.cnf"
+          FILE_BASE64: "W3Byb3ZpZGVyX3NlY3RdCmRlZmF1bHQgPSBkZWZhdWx0X3NlY3QKbGVnYWN5ID0gbGVnYWN5X3NlY3QKCltkZWZhdWx0X3NlY3RdCmFjdGl2YXRlID0gMQoKW2xlZ2FjeV9zZWN0XQphY3RpdmF0ZSA9IDEK"
+
       - run: yarn install
       - run: yarn build
       - run: yarn test
