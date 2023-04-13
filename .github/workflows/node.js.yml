@@ -22,8 +22,6 @@ jobs:
       OPENSSL_CONF: /tmp/openssl.cnf
 
     steps:
-      - uses: actions/checkout@v2
-
       - uses: DamianReeves/write-file-action@master
         with:
           path: /tmp/openssl.cnf
@@ -39,9 +37,9 @@ jobs:
             activate = 1
           write-mode: append
 
-      - run: cat /tmp/openssl.cnf
-      - run: pwd
-
+      - uses: actions/checkout@v2
       - run: yarn install
       - run: yarn build
+        env:
+          NODE_OPTONS: --openssl-legacy-provider
       - run: yarn test
