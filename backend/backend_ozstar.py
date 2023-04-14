@@ -82,7 +82,7 @@ class Backend(BackendBase):
         self.log.info("Triggering InfluDB tasks")
         tasks = {
             "Spoof per-node lustre stats": 'from(bucket: "ozstar")\
-            |> range(start: -2m)\
+            |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] == "lustre2")\
             |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes")\
             |> filter(fn: (r) => exists r["client"])\
@@ -93,13 +93,13 @@ class Backend(BackendBase):
             |> range(start: -90s)\
             |> to(bucket: "lustre-per-node")',
             "Derivatives": 'from(bucket: "ozstar")\
-            |> range(start: -2m)\
+            |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] =~ /net|infiniband/)\
             |> derivative(nonNegative: true)\
             |> range(start: -90s)\
             |> to(bucket: "ozstar-derivs")\
             from(bucket: "ozstar")\
-            |> range(start: -2m)\
+            |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] == "diskio")\
             |> filter(fn: (r) => r["name"] =~ /sda2|nvme0n1p1|vdb2|vda1|nvme0n1/)\
             |> derivative(nonNegative: true)\
