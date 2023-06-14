@@ -90,6 +90,7 @@ class Backend(BackendBase):
             "Derivatives": 'from(bucket: "ozstar")\
             |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] =~ /net|infiniband/)\
+            |> filter(fn: (r) => exists r["host"])\
             |> derivative(nonNegative: true)\
             |> range(start: -90s)\
             |> to(bucket: "ozstar-derivs")\
@@ -97,6 +98,7 @@ class Backend(BackendBase):
             |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] == "diskio")\
             |> filter(fn: (r) => r["name"] =~ /sda2|nvme0n1p1|vdb2|vda1|nvme0n1/)\
+            |> filter(fn: (r) => exists r["host"])\
             |> derivative(nonNegative: true)\
             |> range(start: -90s)\
             |> to(bucket: "ozstar-derivs")',
