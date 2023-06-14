@@ -10,7 +10,6 @@ from collections import OrderedDict
 from glob import glob
 from os import path
 
-import ganglia
 import influx_config
 import jobmon_config as config
 import pyslurm
@@ -47,10 +46,6 @@ class Backend(BackendBase):
         self.get_etc_hostnames()
 
     def pre_update(self):
-        # Ganglia
-        self.log.info("Getting Ganglia data")
-        self.ganglia_data = ganglia.Stats(do_cpus=True).all
-
         # Slurm
         self.log.info("Getting Slurm data")
         self.pyslurm_node = pyslurm.node().get()
@@ -463,22 +458,7 @@ class Backend(BackendBase):
                     self.log.error(f"{name} ib/net not in influx")
 
             else:
-                # Try to get data from ganglia (sstar nodes)
-                data = self.ganglia_data[name]
-                if {
-                    "ib_bytes_in",
-                    "ib_bytes_out",
-                    "ib_pkts_in",
-                    "ib_pkts_out",
-                } <= data.keys():
-                    return {
-                        "bytes_in": data["ib_bytes_in"],
-                        "bytes_out": data["ib_bytes_out"],
-                        "pkts_in": data["ib_pkts_in"],
-                        "pkts_out": data["ib_pkts_out"],
-                    }
-                else:
-                    self.log.error(f"{name} ib/net not in ganglia or influx")
+                self.log.error(f"{name} ib/net not in influx")
 
     def lustre(self, name):
         if self.node_up(name, silent=True):
