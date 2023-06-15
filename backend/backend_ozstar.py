@@ -10,7 +10,6 @@ from collections import OrderedDict
 from glob import glob
 from os import path
 
-import ganglia
 import influx_config
 import jobmon_config as config
 import pyslurm
@@ -47,10 +46,6 @@ class Backend(BackendBase):
         self.get_etc_hostnames()
 
     def pre_update(self):
-        # Ganglia
-        self.log.info("Getting Ganglia data")
-        self.ganglia_data = ganglia.Stats(do_cpus=True).all
-
         # Slurm
         self.log.info("Getting Slurm data")
         self.pyslurm_node = pyslurm.node().get()
@@ -82,7 +77,7 @@ class Backend(BackendBase):
         self.log.info("Triggering InfluDB tasks")
         tasks = {
             "Spoof per-node lustre stats": 'from(bucket: "ozstar")\
-            |> range(start: -2m)\
+            |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] == "lustre2")\
             |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes")\
             |> filter(fn: (r) => exists r["client"])\
@@ -93,15 +88,17 @@ class Backend(BackendBase):
             |> range(start: -90s)\
             |> to(bucket: "lustre-per-node")',
             "Derivatives": 'from(bucket: "ozstar")\
-            |> range(start: -2m)\
+            |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] =~ /net|infiniband/)\
+            |> filter(fn: (r) => exists r["host"])\
             |> derivative(nonNegative: true)\
             |> range(start: -90s)\
             |> to(bucket: "ozstar-derivs")\
             from(bucket: "ozstar")\
-            |> range(start: -2m)\
+            |> range(start: -2m, stop:-30s)\
             |> filter(fn: (r) => r["_measurement"] == "diskio")\
             |> filter(fn: (r) => r["name"] =~ /sda2|nvme0n1p1|vdb2|vda1|nvme0n1/)\
+            |> filter(fn: (r) => exists r["host"])\
             |> derivative(nonNegative: true)\
             |> range(start: -90s)\
             |> to(bucket: "ozstar-derivs")',
@@ -463,22 +460,7 @@ class Backend(BackendBase):
                     self.log.error(f"{name} ib/net not in influx")
 
             else:
-                # Try to get data from ganglia (sstar nodes)
-                data = self.ganglia_data[name]
-                if {
-                    "ib_bytes_in",
-                    "ib_bytes_out",
-                    "ib_pkts_in",
-                    "ib_pkts_out",
-                } <= data.keys():
-                    return {
-                        "bytes_in": data["ib_bytes_in"],
-                        "bytes_out": data["ib_bytes_out"],
-                        "pkts_in": data["ib_pkts_in"],
-                        "pkts_out": data["ib_pkts_out"],
-                    }
-                else:
-                    self.log.error(f"{name} ib/net not in ganglia or influx")
+                self.log.error(f"{name} ib/net not in influx")
 
     def lustre(self, name):
         if self.node_up(name, silent=True):

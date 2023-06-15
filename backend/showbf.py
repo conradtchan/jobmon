@@ -18,18 +18,12 @@ PARTITIONS = {
 partitionResGpuCores = {
     "skylake": 4,
     "skylake-gpu": 4,
-    "sstar": 0,
-    "gstar": 0,
-    "knl": 0,
     "trevor": 0,
     "milan": 0,
 }
 partitionMaxCpuCores = {
     "skylake": [32],
     "skylake-gpu": [4],
-    "sstar": [32, 16],
-    "gstar": [32, 12],
-    "knl": [272],
     "trevor": [12],
     "dave": [64],
     "gina": [64],
@@ -38,9 +32,6 @@ partitionMaxCpuCores = {
 partitionLowMem = {
     "skylake": 1000,
     "skylake-gpu": 1000,
-    "sstar": 1000,
-    "gstar": 1000,
-    "knl": 200,
     "trevor": 1000,
     "dave": 1000,
     "gina": 1000,
@@ -48,9 +39,6 @@ partitionLowMem = {
 partitionLowDisk = {
     "skylake": 3000,
     "skylake-gpu": 3000,
-    "sstar": 3000,
-    "gstar": 3000,
-    "knl": 600,
     "trevor": 3000,
     "dave": 3000,
     "gina": 3000,
@@ -404,14 +392,7 @@ def get_core_usage(data):
             if hostname in [
                 "john6",
                 "john99",
-                "gstar102",
-                "sstar011",
-                "sstar107",
-                "sstar301",
-                "gstar201",
                 "bryan1",
-                "gstar040",
-                "gina3",
                 "john32",
                 "john34",
             ]:
@@ -923,7 +904,7 @@ def compact(list_in):
 
 
 def toCexec(c):
-    mp = {"bryan": "b", "gina": "g", "john": "j", "sstar": "ss", "gstar": "gs"}
+    mp = {"bryan": "b", "gina": "g", "john": "j"}
     cc = ""
     for i in c.keys():
         if i in mp.keys():
@@ -1078,7 +1059,7 @@ if __name__ == "__main__":
     # print(u)
 
     if n == "spart.py":
-        for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
+        for k in ["skylake", "skylake-gpu"]:
             # percent avail/tot
             perc = {}
             for i in ["nodes", "cores", "gpus"]:
@@ -1086,7 +1067,7 @@ if __name__ == "__main__":
                 if u[k][i]["t"] > 0:
                     perc[i] = 100 * u[k][i]["a"] / u[k][i]["t"]
 
-            if k in ["skylake", "knl"]:
+            if k in ["skylake"]:
                 print(
                     "%12s" % k,
                     "idle cores",
@@ -1141,10 +1122,10 @@ if __name__ == "__main__":
         if len(sys.argv) > 1 and sys.argv[1] == "-s":
             # output a bit like sinfo -s
             s = {}
-            for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
+            for k in ["skylake", "skylake-gpu"]:
                 for i in ["cores", "nodes", "gpus"]:
                     d = u[k][i]
-                    if k in ["skylake", "knl"]:
+                    if k in ["skylake"]:
                         s[(k, i)] = "%d/%d/%d/%d/%d" % (
                             d["a"],
                             d["i"],
@@ -1173,7 +1154,7 @@ if __name__ == "__main__":
             length = {}
             for i in ["cores", "nodes", "gpus"]:
                 length[i] = 0
-                for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
+                for k in ["skylake", "skylake-gpu"]:
                     length[i] = max(length[i], len(s[(k, i)]))
 
             spc = 2
@@ -1186,13 +1167,13 @@ if __name__ == "__main__":
                 + " " * (spc + max(0, length["gpus"] - 15))
                 + "GPUS(A/I/O/B/T)"
             )
-            for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
+            for k in ["skylake", "skylake-gpu"]:
                 print(k + " " * (13 - len(k)), end="")
                 for i in ["nodes", "cores", "gpus"]:
                     fudge = 0
                     if i == "gpus" and k != "skylake-gpu":
                         fudge = 1
-                    if k in ["skylake", "knl"] and i == "gpus":
+                    if k in ["skylake"] and i == "gpus":
                         print(" " * (spc + fudge + int(length[i] / 2)) + "-", end="")
                     elif k == "skylake-gpu" and i == "cores":
                         print(
@@ -1233,7 +1214,7 @@ if __name__ == "__main__":
             cw = {}
             for i in cols:
                 cw[i] = 1
-                for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
+                for k in ["skylake", "skylake-gpu"]:
                     d = u[k][i]
                     for j, v in d.items():
                         # print(j,v)
@@ -1245,9 +1226,6 @@ if __name__ == "__main__":
                 "queue/",
                 "skylake",
                 "skylake-gpu",
-                "sstar",
-                "gstar",
-                "knl",
             ]:
                 cw["queue"] = max(cw["queue"], len(k))
             # print(cw)
@@ -1274,7 +1252,7 @@ if __name__ == "__main__":
                 else:
                     print((5 * cw[i]) * "-", end="")
             print()
-            for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
+            for k in ["skylake", "skylake-gpu"]:
                 print(k + (cw["queue"] - len(k) + colGap) * " ", end="")
                 for i in cols:
                     for j in ["a", "i", "o", "b", "t"]:
@@ -1299,11 +1277,11 @@ if __name__ == "__main__":
         # short version
         print("               Idle/Available")
         print("Partition    Nodes  Cores   Gpus")
-        for k in ["skylake", "skylake-gpu", "sstar", "gstar", "knl"]:
+        for k in ["skylake", "skylake-gpu"]:
             print(k + " " * (11 - len(k)), end="")
             for i in ["nodes", "cores", "gpus"]:
                 d = u[k][i]
-                if k in ["skylake", "knl"] and i == "gpus":
+                if k in ["skylake"] and i == "gpus":
                     print("      -", end="")
                 else:
                     print("%7d" % d["i"], end="")
@@ -1316,7 +1294,7 @@ if __name__ == "__main__":
         elif len(sys.argv) > 1 and sys.argv[1] == "-vv":
             printNodes = 2
 
-        for k in ["skylake", "sstar", "gstar", "knl"]:
+        for k in ["skylake"]:
             print(k)
             printFreeBins(
                 bcu[k],

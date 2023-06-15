@@ -23,8 +23,6 @@ HISTORY_DELETE_AGE = 86400
 NODES = [
     "john",
     "bryan",
-    "sstar",
-    "gstar",
     "clarke",
     "trevor",
     "dave",
