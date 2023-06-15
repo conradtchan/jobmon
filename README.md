@@ -1,6 +1,8 @@
-Originally forked from https://github.com/plaguedbypenguins/bobMonitor, but now rewritten from the ground up, with an emphasis on providing information to users.
+A tool for users to see their live jobs on the OzSTAR supercomputer (https://supercomputing.swin.edu.au/monitor/)
 
 A Python script runs periodically on the management node to collect statistics and write them to a JSON file, which is served to the browser by a minimal backend. Most of the processing is performed in the browser, which will allow user customisation further down the track.
+
+Originally forked from https://github.com/plaguedbypenguins/bobMonitor, but now rewritten from the ground up, with an emphasis on providing information to users.
 
 # Setup
 Jobmon is designed for use on the OzSTAR supercomputer (http://supercomputing.swin.edu.au), but it can be adapted for any computing cluster. Please get in touch if you would like to run this on your cluster. There will most likely be a lot of tweaking required to adapt it to your needs and I'm happy to point you in the right direction.
