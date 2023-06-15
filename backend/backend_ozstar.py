@@ -74,7 +74,7 @@ class Backend(BackendBase):
         """
         Queries that should run as InfluxDB tasks, but triggered via jobmon instead
         """
-        self.log.info("Triggering InfluDB tasks")
+        self.log.info("Triggering InfluxDB tasks")
         tasks = {
             "Spoof per-node lustre stats": 'from(bucket: "ozstar")\
             |> range(start: -2m, stop:-30s)\
