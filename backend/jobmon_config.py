@@ -8,7 +8,7 @@ FILE_NAME_HISTORY = "history.json.gz"
 FILE_NAME_BACKFILL = "backfill.json.gz"
 
 # Time between updating API
-UPDATE_INTERVAL = 15
+UPDATE_INTERVAL = 30
 
 # Time-out for a dead node
 NODE_DEAD_TIMEOUT = 60
