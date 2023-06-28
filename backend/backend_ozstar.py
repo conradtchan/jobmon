@@ -199,7 +199,6 @@ class Backend(BackendBase):
             slurm_job_id = int(record["job"])
 
             if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
-
                 # Convert to full ID
                 job_id = self.full_id[slurm_job_id]
 
@@ -214,7 +213,6 @@ class Backend(BackendBase):
                 mem_data[job_id]["mem"][node] = mem
 
         for job_id in mem_data:
-
             # Initialise max memory record
             if job_id not in self.mem_max:
                 self.mem_max[job_id] = 0
@@ -564,7 +562,6 @@ class Backend(BackendBase):
                     self.id_map[full_ids[-1]] = job_id
 
             else:
-
                 # Change the running job ID to a full ID
                 if (
                     job_entry["array_task_id"] is not None
@@ -835,7 +832,6 @@ class Backend(BackendBase):
         jobs_with_stats = []
 
         for table in influx_result:
-
             # Cycle loop if there are no records in this table
             if len(table.records) == 0:
                 continue
@@ -877,7 +873,6 @@ class Backend(BackendBase):
         lustre_per_node_data = {}
 
         for table in influx_result:
-
             # Cycle loop if there are no records in this table
             if len(table.records) == 0:
                 continue

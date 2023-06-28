@@ -119,7 +119,6 @@ def jobs():
     j = {}
 
     for id, s in slurm_jobs.items():
-
         j[id] = {
             "nCpus": s["num_cpus"],
             "state": s["job_state"],
