@@ -698,6 +698,14 @@ class Backend(BackendBase):
 
         layout = copy.deepcopy(job["cpus_alloc_layout"])
 
+        # Remove node from layout if the job is running but influx doesn't report it as up
+        # This means that something is out of sync of the job has crashed
+        if self.job_state(job_id) == "RUNNING":
+            for node in list(layout.keys()):
+                if self.node_up(node) is False:
+                    self.log.warn(f"Removing node {node} from layout for job {job_id}")
+                    del layout[node]
+
         return layout
 
     def job_gpu_layout(self, job_id):
