@@ -36,7 +36,7 @@ const config = {
   historyResolutionMultiplier: 3,
 
   // Number of bars to show on the time machine
-  timeMachineBars: 300,
+  timeMachineBars: 200,
 
   // Maximum number of CPU cores to show per row
   maxPiesPerRow: 20,
