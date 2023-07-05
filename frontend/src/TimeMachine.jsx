@@ -99,22 +99,28 @@ export default class TimeMachine extends React.Component {
     const data = [];
     const times = Object.keys(history);
     const historyLength = times.length;
-    let nSkip = 1;
-    if (historyLength > config.timeMachineBars) {
-      nSkip = parseInt((historyLength / config.timeMachineBars).toFixed(0), 10);
-    }
+
+    // Calculate time spanned
+    const timeSpan = parseInt(times[historyLength - 1], 10) - parseInt(times[0], 10);
+
+    // Target amount of time between bars, as integer
+    const targetBarTimeStep = parseInt(timeSpan / config.timeMachineBars, 10);
+
+    // Target time
+    let targetTime = parseInt(times[0], 10);
 
     for (let i = 0; i < times.length; i += 1) {
-      const time = times[i];
-      if (i % nSkip === 0) {
+      const time = parseInt(times[i], 10);
+      // If the time is past the target time, add a bar
+      if (time >= targetTime) {
+        // Increment targetTime
+        targetTime = time + targetBarTimeStep;
         let { running } = history[time];
-
         if (Object.keys(history[time].users).includes(userFilter)) {
           running = history[time].users[userFilter];
         } else if (userFilter !== "") {
           running = 0;
         }
-
         data.push({
           time,
           running,
