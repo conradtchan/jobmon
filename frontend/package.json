@@ -31,7 +31,7 @@
     "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-react-hooks": "^4.1.0",
     "fetch-mock": "^9.10.7",
-    "stylelint": "^13.6.1",
+    "stylelint": "^15.10.1",
     "stylelint-config-standard": "^20.0.0"
   },
   "browserslist": {
