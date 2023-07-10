@@ -888,8 +888,6 @@ class Backend(BackendBase):
         Return True if stale, False if not
         """
 
-        half_window = 0.5 * influx_config.LUSTRE_JOBSTATS_DERIVATIVE_WINDOW
-
         try:
             previous_value = self.lustre_data[job_id][fs][server][field]
         except KeyError:
@@ -902,8 +900,8 @@ class Backend(BackendBase):
             try:
                 previous_ts = self.jobstats_frequency[(job_id, fs, server, field)]["ts"]
             except KeyError:
-                # Assume half of the max frequency by default, since the check is for 2x frequency
-                previous_ts = ts - half_window
+                # Assume the update interval as the frequency by default
+                previous_ts = ts - config.UPDATE_INTERVAL
 
             # Record timestamp and frequency
             self.jobstats_frequency[(job_id, fs, server, field)] = {
