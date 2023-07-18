@@ -500,7 +500,15 @@ class Backend(BackendBase):
                 self.log.error(f"{name} diskio not in influx/telegraf")
 
     def node_up(self, name, silent=False):
-        up = name in self.telegraf_data
+        up = False
+
+        # Cannot just check for the host because infiniband values
+        # are spoofed. So check specifically for CPU values instead.
+        if name in self.telegraf_data:
+            measurements = self.telegraf_data[name]
+            if "cpu" in measurements:
+                up = True
+
         if not up and not silent:
             self.log.error(f"{name} is down")
         return up
