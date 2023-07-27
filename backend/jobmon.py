@@ -5,7 +5,6 @@ import sys
 import time
 
 import jobmon_config as config
-from influx_reporting import report_cadence
 
 logging.basicConfig(
     stream=sys.stdout,
@@ -43,7 +42,7 @@ if __name__ == "__main__":
         sys.exit()
 
     while True:
-        time_start = b.timestamp()
+        b.time_start = b.timestamp()
 
         # Get all data
         try:
@@ -57,14 +56,13 @@ if __name__ == "__main__":
             b.write()
 
             time_finish = b.timestamp()
-            time_taken = time_finish - time_start
-            sleep_time = max(0, config.UPDATE_INTERVAL - time_taken)
+            b.time_taken = time_finish - b.time_start
+            sleep_time = max(0, config.UPDATE_INTERVAL - b.time_taken)
 
-            if config.REPORT_PERFORMANCE:
-                report_cadence(time_taken, time_start)
+            b.write_influx()
 
             log.info(
-                f"Cycle completed in {time_taken} seconds, now sleeping for {sleep_time} seconds...\n"
+                f"Cycle completed in {b.time_taken} seconds, now sleeping for {sleep_time} seconds...\n"
             )
 
         except Exception as e:

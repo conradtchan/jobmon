@@ -290,6 +290,11 @@ class BackendBase:
 
         return {}
 
+    def write_influx():
+        """
+        Write data to influxdb, such as telemetry data or statistics used by other applications (optional)
+        """
+
     def __init__(self, no_history):
         # Logging
         self.log = logging.getLogger("jobmon")
@@ -303,6 +308,10 @@ class BackendBase:
         self.backfill = {}
 
         self.init()
+
+        # Performance statistics
+        self.time_start = 0
+        self.time_taken = 0
 
         # Load usage from disk
         self.usage_cache = {"history": {}}

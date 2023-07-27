@@ -1,14 +1,10 @@
 import copy
-import gzip
-import json
 import math
 import pwd
 import re
 import subprocess
 import time
 from collections import OrderedDict
-from glob import glob
-from os import path
 
 import influx_config
 import jobmon_config as config
@@ -21,6 +17,15 @@ from influxdb_client import InfluxDBClient
 
 class Backend(BackendBase):
     def init(self):
+        # InfluxDB client query API
+        self.influx_client = InfluxDBClient(
+            url=influx_config.URL,
+            org=influx_config.ORG,
+            token=influx_config.TOKEN,
+            timeout="30s",
+        )
+        self.influx_query_api = self.influx_client.query_api()
+
         # Dict of username mappings
         self.usernames = {}
 
@@ -36,15 +41,6 @@ class Backend(BackendBase):
         # Lustre jobstats update frequency cache
         self.lustre_data = {}
         self.jobstats_frequency = {}
-
-        # InfluxDB client query API
-        self.influx_client = InfluxDBClient(
-            url=influx_config.URL,
-            org=influx_config.ORG,
-            token=influx_config.TOKEN,
-            timeout="30s",
-        )
-        self.influx_query_api = self.influx_client.query_api()
 
         # Get hostnames for converting lustre client IPs to hostnames
         self.get_etc_hostnames()
@@ -241,37 +237,23 @@ class Backend(BackendBase):
         self.mem_data = mem_data
 
     def load_max_mem_usage(self):
-        filenames = config.FILE_NAME_PATTERN.format("*")
-        filepaths = path.join(config.DATA_PATH, filenames)
-        data_files = glob(filepaths)
-        times = []
-        for x in data_files:
-            filename = path.basename(x)
-            match = re.search(config.FILE_NAME_PATTERN.format(r"(\d+)"), filename)
-            if match is not None:
-                times += [match.group(1)]
+        """
+        Read previous max memory usage from influxdb
+        """
 
-        if len(times) > 0:
-            t_latest = max(times)
+        influx_result = self.query_influx_max_mem()
 
-            self.log.info("Loading max memory data from {:}".format(t_latest))
+        mem_max = {}
 
-            filename = config.FILE_NAME_PATTERN.format(t_latest)
-            filepath = path.join(config.DATA_PATH, filename)
-            with gzip.open(filepath, "r") as f:
-                json_text = f.read().decode("utf-8")
-                data = json.loads(json_text)
+        for table in influx_result:
+            record = table.records[0]
 
-                for job_id, job in data["jobs"].items():
-                    if job["state"] == "RUNNING":
-                        if id not in self.mem_max:
-                            self.mem_max[job_id] = 0
-                        self.mem_max[job_id] = int(
-                            max(self.mem_max[job_id], job["memMax"])
-                        )
+            job_id = int(record["job_id"])
+            mem_max[job_id] = int(record["_value"])
 
-        else:
-            self.log.error("No files found to load max memory data from")
+        self.mem_max = mem_max
+
+        self.log.info(f"Loaded {len(mem_max)} max memory usage records from influxdb")
 
     def query_influx(self, query):
         return self.influx_query_api.query(query=query, org=influx_config.ORG)
@@ -320,6 +302,17 @@ class Backend(BackendBase):
 
         query = 'from(bucket: "lustre-per-node")\
         |> range(start: -90s)\
+        |> last()\
+        |> drop(columns: ["_start", "_stop", "_time"])'
+
+        return self.query_influx(query)
+
+    def query_influx_max_mem(self):
+        self.log.info("Querying Influx: max mem")
+
+        query = 'from(bucket: "jobmon-stats")\
+        |> range(start: -1d)\
+        |> filter(fn: (r) => r["_measurement"] == "job_max_memory")\
         |> last()\
         |> drop(columns: ["_start", "_stop", "_time"])'
 
@@ -1055,3 +1048,48 @@ class Backend(BackendBase):
             ip = values[0]
             hostnames = values[1:]
             self.hosts[ip] = hostnames
+
+    def write_influx(self):
+        """
+        Write statistics to InfluxDB
+        """
+
+        # Set up write API
+        write_api = self.influx_client.write_api()
+
+        # Report jobmon performance (how long it takes to run)
+        write_api.write(
+            bucket=influx_config.BUCKET_JOBMON,
+            org=influx_config.ORG,
+            record=[
+                {
+                    "measurement": "jobmon_cadence",
+                    "fields": {"value": self.time_taken},
+                    "time": self.time_start,
+                }
+            ],
+            write_precision="s",
+        )
+
+        # Report job max memory usage
+        data = []
+        for job_id in self.mem_max:
+            data += [
+                {
+                    "measurement": "job_max_memory",
+                    "tags": {
+                        "job_id": job_id,
+                    },
+                    "fields": {"value": self.mem_max[job_id]},
+                    "time": self.time_start,
+                }
+            ]
+            write_api.write(
+                bucket=influx_config.BUCKET_JOBMON,
+                org=influx_config.ORG,
+                record=data,
+                write_precision="s",
+            )
+
+        # Close write API
+        write_api.close()

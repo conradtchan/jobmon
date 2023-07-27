@@ -54,6 +54,3 @@ JOBFS_DEV = {
     "dave": "nvme0n1",
     "gina": "nvme0n1",
 }
-
-# Report performance to influx
-REPORT_PERFORMANCE = True
