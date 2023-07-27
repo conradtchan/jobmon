@@ -66,6 +66,10 @@ if __name__ == "__main__":
                 f"Cycle completed in {b.time_taken} seconds, now sleeping for {sleep_time} seconds...\n"
             )
 
+            # Don't include reporting time as part of cycle time, but subtract it from the sleep
+            report_time = b.timestamp() - time_finish
+            sleep_time = max(0, sleep_time - report_time)
+
         except Exception as e:
             print(e)
             log.error("Trying again next cycle")
