@@ -1053,6 +1053,7 @@ class Backend(BackendBase):
         """
         Write statistics to InfluxDB
         """
+        self.log.info("Writing stats to Influx")
 
         # Set up write API
         write_api = self.influx_client.write_api()
@@ -1084,12 +1085,65 @@ class Backend(BackendBase):
                     "time": self.time_start,
                 }
             ]
-            write_api.write(
-                bucket=influx_config.BUCKET_JOBMON,
-                org=influx_config.ORG,
-                record=data,
-                write_precision="s",
-            )
+        write_api.write(
+            bucket=influx_config.BUCKET_JOBMON,
+            org=influx_config.ORG,
+            record=data,
+            write_precision="s",
+        )
+
+        # Report job instantaneous average CPU usage
+        data = []
+        cpu_usage = self.job_average_cpu_usage()
+        for job_id in cpu_usage:
+            data += [
+                {
+                    "measurement": "average_cpu_usage",
+                    "tags": {
+                        "job_id": job_id,
+                    },
+                    "fields": {"value": cpu_usage[job_id]},
+                    "time": self.time_start,
+                }
+            ]
+        write_api.write(
+            bucket=influx_config.BUCKET_JOBMON,
+            org=influx_config.ORG,
+            record=data,
+            write_precision="s",
+        )
 
         # Close write API
         write_api.close()
+
+    def job_average_cpu_usage(self):
+        """
+        Calculate the average CPU usage of a job using the layout provided by Slurm
+        """
+
+        # Initialize dictionary to store CPU usage for each job
+        cpu_usage = {}
+
+        # For each job
+        for job_id, job in self.data["jobs"].items():
+            # If the job is running
+            if job["state"] == "RUNNING":
+                # Create entry in dictionary for this job
+                cpu_usage[job_id] = 0
+
+                # For each host in the layout
+                for hostname in job["layout"]:
+                    # If the node has data
+                    if hostname in self.data["nodes"]:
+                        # Get the average CPU usage of the cores being used on the host
+                        node = self.data["nodes"][hostname]
+
+                        for core in job["layout"][hostname]:
+                            cpu_usage[job_id] += node["cpu"]["core"][core][
+                                0
+                            ]  # index 0 for cpu_user
+
+                # Divide by the number of cores
+                cpu_usage[job_id] /= job["nCpus"]
+
+        return cpu_usage
