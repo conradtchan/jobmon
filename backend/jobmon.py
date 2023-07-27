@@ -39,6 +39,7 @@ if __name__ == "__main__":
         log.info("Testing backend, not writing any data")
         b.update_data()
         b.update_backfill()
+        b.job_average_cpu_usage()
         sys.exit()
 
     while True:
