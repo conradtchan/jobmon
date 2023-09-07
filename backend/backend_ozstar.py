@@ -782,7 +782,11 @@ class Backend(BackendBase):
                 )
                 if match is not None:
                     range_string = match.group(1)
-                    layout[host] = [int(x) for x in range_string.split("-")]
+                    # Convert range into list of individual GPUs,
+                    # e.g. 0-1 -> [0, 1]
+                    # e.g. 0,2,3 -> [0, 2, 3]
+                    # e.g. 0-1,3 -> [0, 1, 3]
+                    layout[host] = self.expand_array_range(range_string)
 
         return layout
 
