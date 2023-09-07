@@ -2,13 +2,13 @@
 
 repos:
   - repo: https://github.com/ambv/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
       - id: black
         exclude: ^node_modules/
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+    rev: 6.1.0
     hooks:
       - id: flake8
 
@@ -30,7 +30,7 @@ repos:
       - id: isort
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: 'v8.43.0'
+    rev: 'v8.48.0'
     hooks:
       - id: eslint
         args: ['--fix']
