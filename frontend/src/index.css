@@ -590,7 +590,7 @@ div:focus {outline: 0px;}
 }
 
 .circle.gpu {
-  background: var(--piecolor-gpu);
+  background: var(--piecolor-gpu-1);
 }
 
 .switch-parent {

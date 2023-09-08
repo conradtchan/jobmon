@@ -42,7 +42,7 @@ export default class NodePie extends React.PureComponent {
 
     const gpuColors = [
       style.getPropertyValue("--piecolor-blank"),
-      style.getPropertyValue("--piecolor-gpu"),
+      style.getPropertyValue("--piecolor-gpu-1"),
     ];
 
     const data = {
