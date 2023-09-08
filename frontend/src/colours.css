@@ -27,7 +27,10 @@
     --piecolor-nice: #ccc;
     --piecolor-mem: #e5b81f;
     --piecolor-disk: #3a2cc2;
-    --piecolor-gpu: #9a3fc2;
+    --piecolor-gpu-1: #9a3fc2;
+    --piecolor-gpu-2: #d93bad;
+    --piecolor-gpu-3: #cf3c38;
+    --piecolor-gpu-4: #5531c3;
 
     /* Pie cycle colors */
     --piecycle-1: #0088fe;

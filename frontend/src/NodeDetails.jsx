@@ -385,7 +385,10 @@ export default class NodeDetails extends React.Component {
           data={historyChart}
           dataKeys={gpuNames}
           colors={[
-            style.getPropertyValue("--piecolor-gpu"),
+            style.getPropertyValue("--piecolor-gpu-1"),
+            style.getPropertyValue("--piecolor-gpu-2"),
+            style.getPropertyValue("--piecolor-gpu-3"),
+            style.getPropertyValue("--piecolor-gpu-4"),
           ]}
           lineStyle={[
             "fill",

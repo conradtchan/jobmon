@@ -329,7 +329,7 @@ export default class NodeOverview extends React.Component {
           data={historyChart}
           dataKeys={["gpu"]}
           colors={[
-            style.getPropertyValue("--piecolor-gpu"),
+            style.getPropertyValue("--piecolor-gpu-1"),
           ]}
           lineStyle={[
             "fill",
