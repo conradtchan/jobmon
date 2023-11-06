@@ -51,6 +51,7 @@ const config = {
   warnMem: 70, // If memory usage % less than
   baseMem: 2048, // Megabytes of "free" memory per core not to warn
   baseMemSingle: 4096, // Megabytes of memory for the first core
+  warnGpuUtil: 30, // If GPU usage % less than
   graceTime: 5, // Minutes: give jobs  time to get setup without warning
 
   // Warnings over time
