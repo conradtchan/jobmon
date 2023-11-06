@@ -7,7 +7,7 @@ JOBMON_DIR=/home/cchan/backend
 LOCKFILE=/tmp/.jobmon.lockfile
 
 # Dependencies
-export PYTHONPATH=/apps/pyslurm/21.08.7-8febf210-py3/lib64/python3.6/site-packages:/apps/influxdb-client/1.34.0-py3/lib64/python3.6/site-packages:$PYTHONPATH
+export PYTHONPATH=/apps/influxdb-client/1.34.0-py3/lib64/python3.6/site-packages:/apps/pyslurm/23.2.x-20230910-py3/lib64/python3.6/site-packages:$PYTHONPATH
 
 (
 flock -n 9 || exit 1
