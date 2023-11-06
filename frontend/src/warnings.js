@@ -114,6 +114,30 @@ export function instantWarnings(data) {
           warnings[memNodeName].jobs[jobId].memUtil = (criteria - job.memMax) / 1024;
         }
       }
+
+      // GPU use
+      if (job.nGpus > 0) {
+        let nGpus = 0;
+        let gpuPercent = 0;
+        const gpuNodeNames = Object.keys(job.gpuLayout);
+
+        for (let k = 0; k < gpuNodeNames.length; k += 1) {
+          const gpuNodeName = gpuNodeNames[k];
+          for (let j = 0; j < job.gpuLayout[gpuNodeName].length; j += 1) {
+            const gpuIndex = job.gpuLayout[gpuNodeName][j];
+            nGpus += 1;
+            gpuPercent += data.nodes[gpuNodeName].gpus["gpu".concat(gpuIndex.toString())];
+
+            gpuPercent /= nGpus;
+
+            // If below utilisation
+            if (gpuPercent < config.warnGpuUtil) {
+              // Score = percentage wasted
+              warnings[gpuNodeName].jobs[jobId].gpuUtil = config.warnGpuUtil - gpuPercent;
+            }
+          }
+        }
+      }
     }
   }
 

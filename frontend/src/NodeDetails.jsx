@@ -126,6 +126,9 @@ export default class NodeDetails extends React.Component {
         if (jobWarns.memUtil) {
           warningText.push("Job underutilizes requested memory");
         }
+        if (jobWarns.gpuUtil) {
+          warningText.push("Job underutilizes requested GPUs");
+        }
       }
     }
 
