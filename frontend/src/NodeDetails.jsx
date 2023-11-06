@@ -211,6 +211,8 @@ export default class NodeDetails extends React.Component {
       let jobSystem = 0.0;
       let jobWait = 0.0;
 
+      let jobGpu = -1.0; // -1 means no GPU
+
       let fredOssRead = 0.0;
       let fredOssWrite = 0.0;
       let fredMdsIops = 0.0;
@@ -262,6 +264,11 @@ export default class NodeDetails extends React.Component {
             homeMdsIops = jobLustre.home.mds.iops;
           }
         }
+
+        // GPU usage
+        if (nodeData.nGpus > 0) {
+          jobGpu = usage.gpu.total;
+        }
       }
 
       const d = new Date(data.timestamp * 1000);
@@ -278,6 +285,7 @@ export default class NodeDetails extends React.Component {
         job_mem: jobMem * constants.mb,
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
+        job_gpu: jobGpu,
         swap: (nodeData.swap.total - nodeData.swap.free) * constants.mb,
         fred_read: fredOssRead,
         fred_write: fredOssWrite,
@@ -576,6 +584,27 @@ export default class NodeDetails extends React.Component {
         stacked
       />,
     );
+
+    // Display a per-job GPU total if there are GPUs in this job
+    if (historyChart[0].job_gpu >= 0) {
+      charts.push(
+        <PropChart
+          key="job_gpu"
+          name="GPU"
+          data={historyChart}
+          dataKeys={["job_gpu"]}
+          colors={[
+            style.getPropertyValue("--piecolor-gpu-1"),
+          ]}
+          lineStyle={[
+            "fill",
+          ]}
+          unit="%"
+          dataMax={100}
+          stacked
+        />,
+      );
+    }
 
     return (
       <div className="prop-charts">
