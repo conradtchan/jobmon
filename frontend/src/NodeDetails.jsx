@@ -589,7 +589,7 @@ export default class NodeDetails extends React.Component {
     );
 
     // Display a per-job GPU total if there are GPUs in this job
-    if (historyChart[0].job_gpu >= 0) {
+    if (historyChart.length > 0 && historyChart[0].job_gpu >= 0) {
       charts.push(
         <PropChart
           key="job_gpu"
