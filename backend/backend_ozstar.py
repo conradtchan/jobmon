@@ -818,11 +818,17 @@ class Backend(BackendBase):
         job = self.pyslurm_job[self.id_map[job_id]]
 
         if job["min_memory_cpu"] is not None:
-            return (
-                job["min_memory_cpu"]
-                * max(job["ntasks_per_node"], 1)
-                * max(job["cpus_per_task"], 1)
-            )
+            if job["ntasks_per_node"] > 0 and job["cpus_per_task"] > 0:
+                return (
+                    job["min_memory_cpu"]
+                    * job["ntasks_per_node"]
+                    * job["cpus_per_task"]
+                )
+            elif job["num_cpus"] > 0 and job["num_nodes"] > 0:
+                return job["min_memory_cpu"] * job["num_cpus"] / job["num_nodes"]
+            else:
+                self.log.error(f"Job {job_id} has no valid memory request")
+                return 0
         else:
             return job["min_memory_node"]
 
