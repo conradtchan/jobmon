@@ -137,6 +137,11 @@ class Backend(BackendBase):
                 "window": 20 + 30 + 10,
                 "bucket": bucket_telegraf,
             },
+            "jobfs": {
+                "tag_name": None,
+                "window": 20 + 30 + 60,
+                "bucket": bucket_telegraf,
+            },
             "net": {
                 "tag_name": "interface",
                 "window": 20 + 30 + 15 + 5 + 15,
@@ -491,6 +496,14 @@ class Backend(BackendBase):
                     )
             else:
                 self.log.error(f"{name} diskio not in influx/telegraf")
+
+    def jobfs_usage(self, job_id):
+        usage = {}
+        for name in self.job_layout(job_id):
+            if name in self.telegraf_data:
+                usage[name] = self.telegraf_data[name]["jobfs"]["size"]
+
+        return usage
 
     def node_up(self, name, silent=False):
         up = False
