@@ -10,6 +10,7 @@ export function getNodeUsage(jid, job, node, host) {
     infiniband: { bytes_in: 0, bytes_out: 0 },
     lustre: { read: 0, write: 0 },
     gpu: { total: 0 },
+    jobfs: { used: 0 },
   };
 
   if (Object.prototype.hasOwnProperty.call(job.layout, host)) {
@@ -69,6 +70,8 @@ export function getNodeUsage(jid, job, node, host) {
       usage.lustre.read = node.lustre.read;
       usage.lustre.write = node.lustre.write;
     }
+
+    usage.jobfs.used = job.jobfs[host];
 
     const nCores = layout.length;
     usage.cpu.user /= nCores;
