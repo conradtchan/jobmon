@@ -520,6 +520,9 @@ class Backend(BackendBase):
                 for gres in job["tres_alloc_str"].split(","):
                     if "gres/tmp=" in gres:
                         request = int(gres.split("=")[1]) / MB
+
+                        # The request is a total across all nodes, so divide by the number of nodes
+                        request /= int(job["num_nodes"])
                         break
 
         return request
