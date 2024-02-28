@@ -108,7 +108,7 @@ class BackendBase:
 
         return {}
 
-    def job_jobfs_usage(self, job_id):
+    def jobfs_usage(self, job_id):
         """
         Returns the amount of JOBFS used by the job in MB per node
 
@@ -117,6 +117,14 @@ class BackendBase:
         """
 
         return {}
+
+    def jobfs_request(self, job_id):
+        """
+        Returns the amount of JOBFS requested by the job in MB per node
+
+        Example:
+            100
+        """
 
     def node_up(self, name):
         """
@@ -393,6 +401,7 @@ class BackendBase:
             j[job_id]["memReq"] = self.job_mem_request(job_id)
             j[job_id]["lustre"] = self.job_lustre(job_id)
             j[job_id]["jobfs"] = self.jobfs_usage(job_id)
+            j[job_id]["jobfsReq"] = self.jobfs_request(job_id)
 
         return j
 
