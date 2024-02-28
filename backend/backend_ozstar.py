@@ -838,7 +838,7 @@ class Backend(BackendBase):
         if job_id in self.mem_data:
             return self.mem_data[job_id]["mem"]
         else:
-            return 0
+            return {}
 
     def job_mem_max(self, job_id):
         if job_id in self.mem_data:
