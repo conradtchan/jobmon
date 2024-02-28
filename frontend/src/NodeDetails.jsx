@@ -604,8 +604,8 @@ export default class NodeDetails extends React.Component {
         data={historyChart}
         dataKeys={["jobfs_used", "jobfs_requested"]}
         colors={[
-          style.getPropertyValue("--piecolor-mem"),
-          style.getPropertyValue("--piecolor-mem"),
+          style.getPropertyValue("--piecycle-4"),
+          style.getPropertyValue("--piecycle-4"),
         ]}
         lineStyle={[
           "fill",

@@ -138,7 +138,7 @@ class Backend(BackendBase):
                 "bucket": bucket_telegraf,
             },
             "jobfs": {
-                "tag_name": None,
+                "tag_name": "jobid",
                 "window": 20 + 30 + 60,
                 "bucket": bucket_telegraf,
             },
@@ -500,8 +500,10 @@ class Backend(BackendBase):
     def jobfs_usage(self, job_id):
         usage = {}
         for name in self.job_layout(job_id):
-            if name in self.telegraf_data:
-                usage[name] = self.telegraf_data[name]["jobfs"]["size"]
+            node_data = self.telegraf_data.get(name, {})
+            job_data = node_data.get("jobfs", {}).get(job_id, {})
+            if job_data:
+                usage[name] = job_data.get("size", 0)
 
         return usage
 
