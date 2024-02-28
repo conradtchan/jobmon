@@ -137,6 +137,11 @@ class Backend(BackendBase):
                 "window": 20 + 30 + 10,
                 "bucket": bucket_telegraf,
             },
+            "jobfs": {
+                "tag_name": "jobid",
+                "window": 20 + 30 + 60,
+                "bucket": bucket_telegraf,
+            },
             "net": {
                 "tag_name": "interface",
                 "window": 20 + 30 + 15 + 5 + 15,
@@ -492,6 +497,33 @@ class Backend(BackendBase):
             else:
                 self.log.error(f"{name} diskio not in influx/telegraf")
 
+    def jobfs_usage(self, job_id):
+        usage = {}
+        for name in self.job_layout(job_id):
+            node_data = self.telegraf_data.get(name, {})
+            job_data = node_data.get("jobfs", {}).get(job_id, {})
+            if job_data:
+                usage[name] = job_data.get("size", 0)
+
+        return usage
+
+    def jobfs_request(self, job_id):
+        job = self.pyslurm_job[self.id_map[job_id]]
+
+        # Default value
+        request = 0
+
+        if "tres_alloc_str" in job:
+            # The string looks like this: 'cpu=32,mem=150G,node=1,billing=32,gres/tmp=161061273600'
+            # Get the /tmp size in MB
+            if job["tres_alloc_str"] is not None:
+                for gres in job["tres_alloc_str"].split(","):
+                    if "gres/tmp=" in gres:
+                        request = int(gres.split("=")[1]) / MB
+                        break
+
+        return request
+
     def node_up(self, name, silent=False):
         up = False
 
@@ -806,7 +838,7 @@ class Backend(BackendBase):
         if job_id in self.mem_data:
             return self.mem_data[job_id]["mem"]
         else:
-            return 0
+            return {}
 
     def job_mem_max(self, job_id):
         if job_id in self.mem_data:

@@ -227,6 +227,9 @@ export default class NodeDetails extends React.Component {
       let imagesOssRead = 0.0;
       let imagesMdsIops = 0.0;
 
+      let jobfs = 0.0;
+      let jobfsRequested = 0.0;
+
       // Only if the job has started running
       if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
         const job = data.jobs[selectedJobId];
@@ -243,6 +246,10 @@ export default class NodeDetails extends React.Component {
         jobUser = usage.cpu.user;
         jobSystem = usage.cpu.system;
         jobWait = usage.cpu.wait;
+
+        // JOBFS usage
+        jobfs = usage.jobfs.used;
+        jobfsRequested = job.jobfsReq;
 
         // Lustre job stats
         if (Object.keys(data.jobs[selectedJobId].lustre).length > 0) {
@@ -300,6 +307,8 @@ export default class NodeDetails extends React.Component {
         apps_iops: appsMdsIops,
         images_read: imagesOssRead,
         images_iops: imagesMdsIops,
+        jobfs_used: jobfs * constants.mb,
+        jobfs_requested: jobfsRequested * constants.mb,
       };
 
       if (nodeData.infiniband !== null) {
@@ -584,6 +593,25 @@ export default class NodeDetails extends React.Component {
           "fill",
         ]}
         unit="/s"
+        stacked
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="jobfs"
+        name="JOBFS usage"
+        data={historyChart}
+        dataKeys={["jobfs_used", "jobfs_requested"]}
+        colors={[
+          style.getPropertyValue("--piecycle-4"),
+          style.getPropertyValue("--piecycle-4"),
+        ]}
+        lineStyle={[
+          "fill",
+          "dashed",
+        ]}
+        unit="B"
         stacked
       />,
     );

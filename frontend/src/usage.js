@@ -10,6 +10,7 @@ export function getNodeUsage(jid, job, node, host) {
     infiniband: { bytes_in: 0, bytes_out: 0 },
     lustre: { read: 0, write: 0 },
     gpu: { total: 0 },
+    jobfs: { used: 0 },
   };
 
   if (Object.prototype.hasOwnProperty.call(job.layout, host)) {
@@ -54,7 +55,9 @@ export function getNodeUsage(jid, job, node, host) {
       }
     }
 
-    usage.mem.used = job.mem[host];
+    if (host in job.mem) {
+      usage.mem.used = job.mem[host];
+    }
     usage.mem.max = job.memMax;
     usage.mem.total = node.mem.total;
     if (node.infiniband !== null) {
@@ -69,6 +72,8 @@ export function getNodeUsage(jid, job, node, host) {
       usage.lustre.read = node.lustre.read;
       usage.lustre.write = node.lustre.write;
     }
+
+    usage.jobfs.used = job.jobfs[host];
 
     const nCores = layout.length;
     usage.cpu.user /= nCores;
@@ -109,7 +114,9 @@ export function getJobUsage(jid, job, nodes) {
       usage.cpu.system += nodeUsage.cpu.system * nCores;
       usage.cpu.wait += nodeUsage.cpu.wait * nCores;
       usage.cpu.idle += nodeUsage.cpu.idle * nCores;
-      usage.mem.used += job.mem[host];
+      if (host in job.mem) {
+        usage.mem.used += job.mem[host];
+      }
       usage.mem.total += nodeUsage.mem.total;
       usage.infiniband.bytes_in += nodeUsage.infiniband.bytes_in;
       usage.infiniband.bytes_out += nodeUsage.infiniband.bytes_out;

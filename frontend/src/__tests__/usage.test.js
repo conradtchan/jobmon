@@ -1,3 +1,4 @@
+// import fs from "fs";
 import { getJobUsage, getNodeUsage } from "../usage";
 
 const testData = require("./test_data.json");
@@ -36,8 +37,8 @@ it("per-job resource usage for a specific node", () => {
     }
   }
 
-  // Output to generate reference data
-  // console.log(JSON.stringify(ref))
+  // Save reference to JSON file
+  // fs.writeFileSync("./src/__tests__/reference_nodeUsage.json", JSON.stringify(ref));
 });
 
 it("per-job resource usage", () => {
@@ -62,8 +63,6 @@ it("per-job resource usage", () => {
     }
   }
 
-  // Output to generate reference data
-  // console.log(JSON.stringify(ref))
-
-  expect(1).toEqual(1);
+  // Save reference to JSON file
+  // fs.writeFileSync("./src/__tests__/reference_jobUsage.json", JSON.stringify(ref));
 });
