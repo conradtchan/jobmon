@@ -966,8 +966,8 @@ class Backend(BackendBase):
                 # Always will be false if there is no previous timestamp
                 return False
 
-            # If the current timestamp is greater than the previous timestamp + 2x frequency, then the value is stale
-            if ts > previous_ts + 2 * freq:
+            # If the current timestamp is greater than the previous timestamp + frequency, then the value is stale
+            if ts > previous_ts + freq:
                 # Assume the value has stopped changing, and don't update the frequency
                 return True
             else:
