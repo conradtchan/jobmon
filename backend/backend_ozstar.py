@@ -38,9 +38,8 @@ class Backend(BackendBase):
         # GPU_layout_cache
         self.gpu_layout_cache = OrderedDict()
 
-        # Lustre jobstats update frequency cache
+        # Lustre jobstats
         self.lustre_data = {}
-        self.jobstats_frequency = {}
 
         # Get hostnames for converting lustre client IPs to hostnames
         self.get_etc_hostnames()
@@ -875,12 +874,6 @@ class Backend(BackendBase):
 
     def update_lustre_jobstats(self):
         influx_result = self.query_influx_lustre()
-
-        # Timestamp used to determine data update interval, assume 15s delay from jobHarvest
-        ts = self.timestamp() - 15
-        stale_counter = 0
-        self.prune_jobstats_frequency()
-
         lustre_data = {}
 
         # Jobs with lustre stats found
@@ -915,72 +908,12 @@ class Backend(BackendBase):
                     server = record.values["server"]
                     value = round(record.get_value(), 2)
                     field = record.get_field()
-
-                    if self.stale_jobstat_check(value, job_id, fs, server, field, ts):
-                        stale_counter += 1
-                        value = 0.0
-
                     lustre_data[job_id][fs][server][field] = value
 
         self.log.info(
             f"Lustre stats found for {len(jobs_with_stats)}/{self.n_running_jobs} jobs"
         )
-        self.log.info(f"Dropping {stale_counter} stale lustre stats")
         self.lustre_data = lustre_data
-
-    def stale_jobstat_check(self, value, job_id, fs, server, field, ts):
-        """
-        Check if value is stale
-        Return True if stale, False if not
-        """
-
-        try:
-            previous_value = self.lustre_data[job_id][fs][server][field]
-        except KeyError:
-            # Causes value != previous_value
-            previous_value = None
-
-        # If the value has changed, then record the update frequency
-        # If it is zero, then assume it has changed as well
-        if previous_value != 0.0 and value != previous_value:
-            try:
-                previous_ts = self.jobstats_frequency[(job_id, fs, server, field)]["ts"]
-            except KeyError:
-                # Assume the update interval as the frequency by default
-                previous_ts = ts - config.UPDATE_INTERVAL
-
-            # Record timestamp and frequency
-            self.jobstats_frequency[(job_id, fs, server, field)] = {
-                "ts": ts,
-                "freq": ts - previous_ts,
-            }
-
-            return False
-
-        # If the value hasn't changed, then check whether it is stale using the frequency
-        else:
-            try:
-                previous_ts = self.jobstats_frequency[(job_id, fs, server, field)]["ts"]
-                freq = self.jobstats_frequency[(job_id, fs, server, field)]["freq"]
-            except KeyError:
-                # Always will be false if there is no previous timestamp
-                return False
-
-            # If the current timestamp is greater than the previous timestamp + frequency, then the value is stale
-            if ts > previous_ts + freq:
-                # Assume the value has stopped changing, and don't update the frequency
-                return True
-            else:
-                return False
-
-    def prune_jobstats_frequency(self):
-        n = 0
-        ntotal = len(self.jobstats_frequency)
-        for job_id, _fs, _server, _field in list(self.jobstats_frequency.keys()):
-            if job_id not in self.id_map.keys():
-                n += 1
-                del self.jobstats_frequency[job_id, _fs, _server, _field]
-        self.log.info("Pruned {:}/{:} old jobstats frequency records".format(n, ntotal))
 
     def update_lustre_per_node(self):
         influx_result = self.query_influx_lustre_per_node()
