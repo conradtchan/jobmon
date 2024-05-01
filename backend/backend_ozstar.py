@@ -281,9 +281,8 @@ class Backend(BackendBase):
         # jobHarvest already reduces the data, so just query it by job
         # the timestamp is the collection time, which is delayed by 20s
         query = f'from(bucket: "{influx_config.BUCKET_LUSTRE_JOBSTATS}")\
-        |> range(start: -{influx_config.LUSTRE_JOBSTATS_DERIVATIVE_WINDOW}s,)\
+        |> range(start: -50s,)\
         |> filter(fn: (r) => r["_field"] == "read_bytes" or r["_field"] == "write_bytes" or r["_field"] == "iops")\
-        |> derivative(nonNegative: true)\
         |> last()\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> group(columns: ["job", "fs", "server"])'
