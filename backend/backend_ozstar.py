@@ -941,6 +941,7 @@ class Backend(BackendBase):
         )
         self.lustre_data = lustre_data
         self.lustre_data_rate = lustre_data_rate
+        self.previous_lustre_ts = now
 
     def update_lustre_per_node(self):
         influx_result = self.query_influx_lustre_per_node()
