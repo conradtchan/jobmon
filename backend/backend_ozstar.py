@@ -893,6 +893,8 @@ class Backend(BackendBase):
             if self.job_state(job_id) == "RUNNING":
                 jobs_with_stats += [job_id]
 
+                run_time = self.job_run_time(job_id)
+
                 for d in [lustre_data, lustre_data_rate]:
                     if job_id not in d:
                         d[job_id] = {}
@@ -916,12 +918,12 @@ class Backend(BackendBase):
 
                     # Calculate derivative using previous value
                     if (
-                        job_id in lustre_data
-                        and fs in lustre_data[job_id]
-                        and server in lustre_data[job_id][fs]
-                        and field in lustre_data[job_id][fs][server]
+                        job_id in self.lustre_data
+                        and fs in self.lustre_data[job_id]
+                        and server in self.lustre_data[job_id][fs]
+                        and field in self.lustre_data[job_id][fs][server]
                     ):
-                        prev_value = lustre_data[job_id][fs][server][field]
+                        prev_value = self.lustre_data[job_id][fs][server][field]
                         time_diff = now - self.previous_lustre_ts
                         if time_diff > 0:
                             derivative = (value - prev_value) / time_diff
@@ -929,9 +931,12 @@ class Backend(BackendBase):
                             self.log.error(
                                 f"Time difference between lustre jobstats is {time_diff} seconds"
                             )
-                    else:
+                    elif run_time <= 1:
+                        # The job has been running for less than a minute
                         # First value, so approximate derivative using sampling frequency
                         derivative = value / config.UPDATE_INTERVAL
+                    else:
+                        derivative = 0
 
                     lustre_data[job_id][fs][server][field] = value
                     lustre_data_rate[job_id][fs][server][field] = derivative
