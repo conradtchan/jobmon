@@ -656,7 +656,8 @@ class Backend(BackendBase):
                 if ss[1] == "...":
                     c.append(int(ss[0]))
                 else:
-                    for j in range(int(ss[0]), int(ss[1]) + 1):
+                    # Range may be followed by "...", but is still complete
+                    for j in range(int(ss[0]), int(ss[1].strip("...")) + 1):
                         c.append(j)
             else:
                 if "..." in i:
