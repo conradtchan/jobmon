@@ -656,8 +656,16 @@ class Backend(BackendBase):
                 if ss[1] == "...":
                     c.append(int(ss[0]))
                 else:
+                    start = ss[0]
+                    end = ss[1]
+                    if "..." in end:
+                        if end.strip("...") > start:
+                            end = end.strip("...")
+                        else:
+                            # Just append the first number
+                            end = start
                     # Range may be followed by "...", but is still complete
-                    for j in range(int(ss[0]), int(ss[1].strip("...")) + 1):
+                    for j in range(int(start), int(end) + 1):
                         c.append(j)
             else:
                 if "..." in i:
