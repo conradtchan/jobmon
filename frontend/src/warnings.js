@@ -123,21 +123,26 @@ export function instantWarnings(data) {
 
         for (let k = 0; k < gpuNodeNames.length; k += 1) {
           const gpuNodeName = gpuNodeNames[k];
-          for (let j = 0; j < job.gpuLayout[gpuNodeName].length; j += 1) {
-            // Sometimes the GPU stats are missing and .gpus is null
-            if (data.nodes[gpuNodeName].gpus !== null) {
-              const gpuIndex = job.gpuLayout[gpuNodeName][j];
-              nGpus += 1;
-              gpuPercent += data.nodes[gpuNodeName].gpus["gpu".concat(gpuIndex.toString())];
+
+          // If this job is not running on this node, there has been a mistake in the backend
+          // Skip this node
+          if (jobNodeNames.includes(gpuNodeName)) {
+            for (let j = 0; j < job.gpuLayout[gpuNodeName].length; j += 1) {
+              // Sometimes the GPU stats are missing and .gpus is null
+              if (data.nodes[gpuNodeName].gpus !== null) {
+                const gpuIndex = job.gpuLayout[gpuNodeName][j];
+                nGpus += 1;
+                gpuPercent += data.nodes[gpuNodeName].gpus["gpu".concat(gpuIndex.toString())];
+              }
             }
-          }
 
-          gpuPercent /= nGpus;
+            gpuPercent /= nGpus;
 
-          // If below utilisation
-          if (gpuPercent < config.warnGpuUtil) {
-            // Score = percentage wasted
-            warnings[gpuNodeName].jobs[jobId].gpuUtil = config.warnGpuUtil - gpuPercent;
+            // If below utilisation
+            if (gpuPercent < config.warnGpuUtil) {
+              // Score = percentage wasted
+              warnings[gpuNodeName].jobs[jobId].gpuUtil = config.warnGpuUtil - gpuPercent;
+            }
           }
         }
       }

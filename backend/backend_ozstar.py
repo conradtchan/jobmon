@@ -774,6 +774,15 @@ class Backend(BackendBase):
                     )
                     layout = self.scontrol_gpu(job_id)
 
+                    # Make sure each item in the GPU layout is also in the CPU layout
+                    # This is in case scontrol returns an incorrect value
+                    for node in layout:
+                        if node not in self.job_layout(job_id):
+                            self.log.warn(
+                                f"Node {node} in GPU layout for job {job_id} not in CPU layout"
+                            )
+                            del layout[node]
+
                 # Minimise the number of scontrol calls by caching the results
                 # - Assume that GPU affinity is fixed for the lifetime of the job
                 # - scontrol should only be called once per job
