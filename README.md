@@ -98,21 +98,31 @@ The `"homepage"` property in `package.json` should be set to the URL of the job 
 
 ## Backend
 
-Python 3 (3.4 or higher) is required on the machine running the back end.
+Dependencies:
+- Python 3.9+
+
+Dependencies for OzSTAR backend:
+- [InfluxDB Client](https://pypi.org/project/influxdb-client/)
+- [PySlurm](https://github.com/PySlurm/pyslurm)
+
+Create a user to run the daemon
+```
+useradd -m jobmon
+```
+
+Copy the `backend` directory to `/opt/jobmon` or another directory of your choice. Alternatively, you may run the backend directory from the `backend` directory in the repository.
 
 Make the data directory where JSON output is written to (set in the backend config)
 ```
 mkdir /var/spool/jobmon
+chown jobmon:jobmon /var/spool/jobmon
 ```
 
-Install the cgi-bin Python scripts
+Edit the systemd service file. Add/remove to the `PYTHONPATH` environmnent variable to suit the system being deployed to (InfluxDB and PySlurm are neede for OzSTAR). Modify `WorkingDirectory` to if you have placed the backend somewhere other than `/opt/jobmon`. Copy the systemd service file to `/etc/systemd/system/jobmon.service`.
+
+Install the cgi-bin Python scripts for serving the data.
 ```
 cp cgi-bin/* /var/www/cgi-bin/
-```
-
-Install the backend
-```
-cp backend/* /usr/lib/jobmon
 ```
 
 ## Frontend
@@ -141,4 +151,14 @@ cp -r build/* /var/www/html/jobmon
 
 # Running
 
-Run `backend/jobmon.sh`, which manages the backend script `jobmon.py`. Set the `JOBMON_DIR` and `LOCKFILE` in `jobmon.sh`. Alternatively, run `python jobmon.py` directly. The backend generates gzip'd JSON files at `/var/spool/jobmon`. These JSON files are read by the web app.
+Start the service
+```
+systemctl start jobmon
+```
+
+The backend generates gzip'd JSON files at `/var/spool/jobmon`. These JSON files are read by the web app.
+
+To test one cycle without writing anything to a file:
+```
+python jobmon.py test
+```
