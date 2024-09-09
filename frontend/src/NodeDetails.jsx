@@ -330,7 +330,9 @@ export default class NodeDetails extends React.Component {
 
       for (let j = 0; j < nodeData.nGpus; j += 1) {
         const gpuName = `gpu${j.toString()}`;
-        x[gpuName] = nodeData.gpus[gpuName];
+        if (nodeData.gpus && gpuName in nodeData.gpus) {
+          x[gpuName] = nodeData.gpus[gpuName];
+        }
       }
 
       historyChart.push(x);
