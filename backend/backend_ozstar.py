@@ -1101,8 +1101,10 @@ class Backend(BackendBase):
             write_precision="s",
         )
 
-        # Report job max memory usage
+        # Data to write
         data = []
+
+        # Report job max memory usage
         for job_id in self.mem_max:
             data += [
                 {
@@ -1114,15 +1116,8 @@ class Backend(BackendBase):
                     "time": self.time_start,
                 }
             ]
-        write_api.write(
-            bucket=influx_config.BUCKET_JOBMON,
-            org=influx_config.ORG,
-            record=data,
-            write_precision="s",
-        )
 
         # Report job instantaneous average CPU usage
-        data = []
         cpu_usage = self.job_average_cpu_usage()
         for job_id in cpu_usage:
             data += [
@@ -1135,6 +1130,21 @@ class Backend(BackendBase):
                     "time": self.time_start,
                 }
             ]
+
+        # Report job instantaneous average GPU usage
+        gpu_usage = self.job_average_gpu_usage()
+        for job_id in gpu_usage:
+            data += [
+                {
+                    "measurement": "average_gpu_usage",
+                    "tags": {
+                        "job_id": job_id,
+                    },
+                    "fields": {"value": gpu_usage[job_id]},
+                    "time": self.time_start,
+                }
+            ]
+
         write_api.write(
             bucket=influx_config.BUCKET_JOBMON,
             org=influx_config.ORG,
@@ -1147,7 +1157,7 @@ class Backend(BackendBase):
 
     def job_average_cpu_usage(self):
         """
-        Calculate the average CPU usage of a job using the layout provided by Slurm
+        Calculate the average CPU usage of every job using the layout provided by Slurm
         """
 
         # Initialize dictionary to store CPU usage for each job
@@ -1176,3 +1186,32 @@ class Backend(BackendBase):
                 cpu_usage[job_id] /= job["nCpus"]
 
         return cpu_usage
+
+    def job_average_gpu_usage(self):
+        """
+        Calculate the average GPU usage of every job using the layout provided by Slurm
+        """
+
+        # Initialize dictionary to store GPU usage for each job
+        gpu_usage = {}
+
+        # For each job
+        for job_id, job in self.data["jobs"].items():
+            # If the job is running and uses GPUs
+            if job["state"] == "RUNNING" and job["nGpus"] > 0:
+                # Create entry in dictionary for this job
+                gpu_usage[job_id] = 0
+
+                # For each host in the GPU layout
+                for hostname in job["gpuLayout"]:
+                    # If the node has data
+                    if hostname in self.data["nodes"]:
+                        # Get the average GPU usage of the GPUs being used on the host
+                        node = self.data["nodes"][hostname]
+                        for gpu in job["gpuLayout"][hostname]:
+                            gpu_usage[job_id] += node["gpus"][f"gpu{gpu}"]
+
+                # Divide by the number of GPUs
+                gpu_usage[job_id] /= job["nGpus"]
+
+        return gpu_usage
