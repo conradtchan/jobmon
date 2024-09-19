@@ -41,6 +41,7 @@ export function getNodeUsage(jid, job, node, host) {
         }
       }
 
+      // If the mapping is not known, then the usage will remain zero
       for (let j = 0; j < gpuNumbers.length; j += 1) {
         const iGpu = gpuNumbers[j];
         usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
