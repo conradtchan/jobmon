@@ -28,27 +28,20 @@ export function getNodeUsage(jid, job, node, host) {
       }
     }
 
-    // If thif is a GPU job
+    // If this is a GPU job
     let gpuNumbers = [];
-    if (job.nGpus > 0) {
+    if (job.nGpus > 0 && node.gpus) {
       // Zero if unknown
       usage.gpu.total = 0;
-
-      // TODO: currently hardcoded to 2,
-      // but can make this general from the API
-      const nGpuMax = 2;
 
       // If the GPU mapping is known
       if (Object.prototype.hasOwnProperty.call(job.gpuLayout, host)) {
         if (job.gpuLayout[host].length > 0) {
           gpuNumbers = job.gpuLayout[host];
         }
-      // If both GPUs are used in a 2 GPU job, then mapping doesn't matter
-      } else if (job.nGpus === nGpuMax) {
-        for (let j = 0; j < nGpuMax; j += 1) {
-          gpuNumbers.push(j);
-        }
       }
+
+      // If the mapping is not known, then the usage will remain zero
       for (let j = 0; j < gpuNumbers.length; j += 1) {
         const iGpu = gpuNumbers[j];
         usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
