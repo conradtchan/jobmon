@@ -677,3 +677,7 @@ input[type=text] {
   font-size: medium;
   text-align: center;
 }
+
+.radio-label {
+  margin-right: 10px;
+}

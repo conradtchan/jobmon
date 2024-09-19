@@ -703,38 +703,38 @@ export default class NodeDetails extends React.Component {
         {warningList}
 
         <div className="time-selector">
-          <label htmlFor="5h">
+          <label htmlFor="8h" className="radio-label">
             <input
               type="radio"
-              id="5h"
+              id="8h"
               name="timeWindow"
-              value="5h"
-              onChange={() => changeTimeWindow(18000)}
-              checked={timeWindow === 18000}
+              value="8h"
+              onChange={() => changeTimeWindow(28800)}
+              checked={timeWindow === 28800}
             />
-            5 hours
+            8 hours
           </label>
-          <label htmlFor="1h">
+          <label htmlFor="2h" className="radio-label">
             <input
               type="radio"
-              id="1h"
+              id="2h"
               name="timeWindow"
-              value="1h"
-              onChange={() => changeTimeWindow(3600)}
-              checked={timeWindow === 3600}
+              value="2h"
+              onChange={() => changeTimeWindow(7200)}
+              checked={timeWindow === 7200}
             />
-            1 hour
+            2 hours
           </label>
-          <label htmlFor="10m">
+          <label htmlFor="30m" className="radio-label">
             <input
               type="radio"
-              id="10m"
+              id="30m"
               name="timeWindow"
-              value="10m"
-              onChange={() => changeTimeWindow(600)}
-              checked={timeWindow === 600}
+              value="30m"
+              onChange={() => changeTimeWindow(1800)}
+              checked={timeWindow === 1800}
             />
-            10 minutes
+            30 minutes
           </label>
         </div>
         <br />
