@@ -44,7 +44,7 @@ class App extends React.Component {
       holdSnap: false,
       history: null,
       historyData: [],
-      historyDataWindow: 600, // seconds
+      historyDataWindow: 1800, // seconds
       future: false,
       backfill: null,
       warnings: {},
