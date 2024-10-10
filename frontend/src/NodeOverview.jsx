@@ -9,6 +9,38 @@ import constants from "./constants";
 export default class NodeOverview extends React.Component {
   static whyDidYouRender = true
 
+  static addJobToList(jobList, job, jobText, allNodesUp) {
+    if (job.state === "RUNNING" && allNodesUp) {
+      jobList.running.push(jobText);
+    } else if (job.state === "PENDING") {
+      jobList.pending.push(jobText);
+    } else if (job.state === "COMPLETED") {
+      jobList.completed.push(jobText);
+    } else if (job.state === "CANCELLED") {
+      jobList.cancelled.push(jobText);
+    } else if (job.state === "FAILED") {
+      jobList.failed.push(jobText);
+    }
+  }
+
+  static checkAllNodesUp(job, nodes) {
+    return Object.keys(job.layout).every((node) => nodes[node] && nodes[node].up === true);
+  }
+
+  static countRunningJobs(userJobs) {
+    return Object.values(userJobs).filter((job) => job.state === "RUNNING").length;
+  }
+
+  static filterUserJobs(jobs, username) {
+    return Object.keys(jobs).reduce((acc, jid) => {
+      const job = jobs[jid];
+      if (job.username === username) {
+        return { ...acc, [jid]: job };
+      }
+      return acc;
+    }, {});
+  }
+
   shouldComponentUpdate(nextProps) {
     const {
       timestamp,
@@ -142,14 +174,12 @@ export default class NodeOverview extends React.Component {
 
   getUserJobList() {
     const {
-      apiData,
+      apiData: { jobs, nodes },
       username,
       onJobClick,
       jobId,
       warnings,
     } = this.props;
-
-    const { jobs, nodes } = apiData;
 
     const warnedJobs = getWarnedJobs(warnings);
 
@@ -161,90 +191,26 @@ export default class NodeOverview extends React.Component {
       failed: [],
     };
 
-    const userJobs = {};
-    let nRunningJobs = 0;
-    const jobIds = Object.keys(jobs);
-    for (let i = 0; i < jobIds.length; i += 1) {
-      const jid = jobIds[i];
-      const job = jobs[jid];
-      if (job.username === username) {
-        userJobs[jid] = job;
-        if (job.state === "RUNNING") nRunningJobs += 1;
-      }
-    }
+    const userJobs = NodeOverview.filterUserJobs(jobs, username);
+    const nRunningJobs = NodeOverview.countRunningJobs(userJobs);
 
-    const userJobIds = Object.keys(userJobs);
-    for (let i = 0; i < userJobIds.length; i += 1) {
-      const jid = userJobIds[i];
+    Object.keys(userJobs).forEach((jid) => {
       const job = userJobs[jid];
+      const allNodesUp = NodeOverview.checkAllNodesUp(job, nodes);
 
-      // For each node running on this job, check if the node is up
-      let allNodesUp = true;
-      for (let j = 0; j < Object.keys(job.layout).length; j += 1) {
-        const nodeName = Object.keys(job.layout)[j];
-        if (Object.prototype.hasOwnProperty.call(nodes, nodeName)) {
-          if (nodes[nodeName].up !== true) {
-            allNodesUp = false;
-            break;
-          }
-        }
-      }
+      const jobText = this.generateJobText(
+        jid,
+        job,
+        allNodesUp,
+        nRunningJobs,
+        jobId,
+        warnedJobs,
+        onJobClick,
+      );
 
-      if (job.state === "RUNNING" && allNodesUp === true) {
-        const jobText = (
-          <div key={jid}>
-            <button
-              className="running-job-row"
-              onClick={() => onJobClick(jid)}
-              type="button"
-            >
-              <div className="running-job-text">
-                <JobText
-                  id={jid}
-                  job={job}
-                  warn={warnedJobs.includes(jid)}
-                />
-              </div>
-              {((nRunningJobs <= 10) || (jid === jobId))
-              && (
-                <div className="running-job-chart">
-                  {this.getRunningJobChart(job, jid)}
-                </div>
-              )}
-            </button>
-            {(jid === jobId)
-            && (
-              <div>
-                <div className="overview-pies">
-                  {this.getNodePies()}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-        jobList.running.push(jobText);
-      } else {
-        const jobText = (
-          <div key={jid} className="other-job-row">
-            <JobText
-              id={jid}
-              job={job}
-              warn={warnedJobs.includes(jid)}
-              onClick={() => onJobClick(jid)}
-            />
-          </div>
-        );
-        if (job.state === "PENDING") {
-          jobList.pending.push(jobText);
-        } else if (job.state === "COMPLETED") {
-          jobList.completed.push(jobText);
-        } else if (job.state === "CANCELLED") {
-          jobList.cancelled.push(jobText);
-        } else if (job.state === "FAILED") {
-          jobList.failed.push(jobText);
-        }
-      }
-    }
+      NodeOverview.addJobToList(jobList, job, jobText, allNodesUp);
+    });
+
     return jobList;
   }
 
@@ -353,6 +319,51 @@ export default class NodeOverview extends React.Component {
           hasGpu={job.nGpus > 0}
         />
         )}
+      </div>
+    );
+  }
+
+  generateJobText(jid, job, allNodesUp, nRunningJobs, jobId, warnedJobs, onJobClick) {
+    if (job.state === "RUNNING" && allNodesUp) {
+      return (
+        <div key={jid}>
+          <button
+            className="running-job-row"
+            onClick={() => onJobClick(jid)}
+            type="button"
+          >
+            <div className="running-job-text">
+              <JobText
+                id={jid}
+                job={job}
+                warn={warnedJobs.includes(jid)}
+              />
+            </div>
+            {((nRunningJobs <= 10) || (jid === jobId)) && (
+              <div className="running-job-chart">
+                {this.getRunningJobChart(job, jid)}
+              </div>
+            )}
+          </button>
+          {(jid === jobId) && (
+            <div>
+              <div className="overview-pies">
+                {this.getNodePies()}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div key={jid} className="other-job-row">
+        <JobText
+          id={jid}
+          job={job}
+          warn={warnedJobs.includes(jid)}
+          onClick={() => onJobClick(jid)}
+        />
       </div>
     );
   }
