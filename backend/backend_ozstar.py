@@ -501,7 +501,9 @@ class Backend(BackendBase):
         usage = {}
         for name in self.job_layout(job_id):
             node_data = self.telegraf_data.get(name, {})
-            job_data = node_data.get("jobfs", {}).get(job_id, {})
+            # The quota command (/usr/sbin/xfs_quota -xc report /jobfs/local)
+            # uses the full job ID rather than the array ID
+            job_data = node_data.get("jobfs", {}).get(str(self.id_map[job_id]), {})
             if job_data:
                 usage[name] = job_data.get("size", 0)
 
