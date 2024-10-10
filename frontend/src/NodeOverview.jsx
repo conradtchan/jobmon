@@ -149,7 +149,7 @@ export default class NodeOverview extends React.Component {
       warnings,
     } = this.props;
 
-    const { jobs } = apiData;
+    const { jobs, nodes } = apiData;
 
     const warnedJobs = getWarnedJobs(warnings);
 
@@ -177,7 +177,20 @@ export default class NodeOverview extends React.Component {
     for (let i = 0; i < userJobIds.length; i += 1) {
       const jid = userJobIds[i];
       const job = userJobs[jid];
-      if (job.state === "RUNNING") {
+
+      // For each node running on this job, check if the node is up
+      let allNodesUp = true;
+      for (let j = 0; j < Object.keys(job.layout).length; j += 1) {
+        const nodeName = Object.keys(job.layout)[j];
+        if (Object.prototype.hasOwnProperty.call(nodes, nodeName)) {
+          if (nodes[nodeName].up !== true) {
+            allNodesUp = false;
+            break;
+          }
+        }
+      }
+
+      if (job.state === "RUNNING" && allNodesUp === true) {
         const jobText = (
           <div key={jid}>
             <button
