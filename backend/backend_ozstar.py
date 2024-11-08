@@ -872,19 +872,33 @@ class Backend(BackendBase):
     def job_mem_request(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 
+        # Check if the job has a minimum memory per CPU specified
         if job["min_memory_cpu"] is not None:
+            # If the job specifies tasks per node and CPUs per task
             if job["ntasks_per_node"] > 0 and job["cpus_per_task"] > 0:
+                # Calculate the total memory request based on tasks per node and CPUs per task
                 return (
                     job["min_memory_cpu"]
                     * job["ntasks_per_node"]
                     * job["cpus_per_task"]
                 )
+            # If the job specifies the number of CPUs and nodes
             elif job["num_cpus"] > 0 and job["num_nodes"] > 0:
+                # Calculate the total memory request based on the number of CPUs and nodes
                 return job["min_memory_cpu"] * job["num_cpus"] / job["num_nodes"]
             else:
+                # Log an error if the job does not have a valid memory request
                 self.log.error(f"Job {job_id} has no valid memory request")
                 return 0
+
+        # Check if the job is requesting memory per gpu (e.g. --mem-per-gpu=160GB)
+        if job["mem_per_tres"] is not None:
+            # Example value: 'gres/gpu:163840'
+            mem_per_gpu = int(job["mem_per_tres"].split(":")[1])
+            return mem_per_gpu * self.job_ngpus(job_id)
+
         else:
+            # If no minimum memory per CPU is specified, return the minimum memory per node
             return job["min_memory_node"]
 
     def job_lustre(self, job_id):
