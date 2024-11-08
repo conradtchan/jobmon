@@ -49,16 +49,25 @@ export function instantWarnings(data) {
         if (node.cpu.core.length > 0) {
           for (let k = 0; k < nCores; k += 1) {
             const iLayout = layout[k];
-            cpuUsage += node.cpu.core[iLayout][config.cpuKeys.user]
+
+            // Check if iLayout is in node.cpu.core
+            if (iLayout <= node.cpu.core.length) {
+              cpuUsage += node.cpu.core[iLayout][config.cpuKeys.user]
               + node.cpu.core[iLayout][config.cpuKeys.system]
               + node.cpu.core[iLayout][config.cpuKeys.nice];
-            cpuSys += node.cpu.core[iLayout][config.cpuKeys.system];
-            cpuWait += node.cpu.core[iLayout][config.cpuKeys.wait];
+              cpuSys += node.cpu.core[iLayout][config.cpuKeys.system];
+              cpuWait += node.cpu.core[iLayout][config.cpuKeys.wait];
+            } else {
+              // If the core is not reported, there is likely a transient issue with telegraf
+              // Set usage to 100 if per-core usage is not reported
+              // to prevent false alarm
+              cpuUsage += 100;
+            }
           }
         } else {
           // Set usage to 100 if per-core usage is not reported
           // to prevent false alarm
-          cpuUsage += 100;
+          cpuUsage += 100 * nCores;
         }
 
         // Perform util check unless this is a single-core GPU job
