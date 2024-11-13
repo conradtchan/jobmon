@@ -832,7 +832,7 @@ class Backend(BackendBase):
 
                 match = re.search(
                     f"Nodes={host_base}.*{host_number}"
-                    + r".*GRES=gpu:.*\d\(IDX:(.{1,3})\)",
+                    + r".*GRES=.*gpu:.*\d\(IDX:(.{1,3})\)",
                     output,
                 )
                 if match is not None:
