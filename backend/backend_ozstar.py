@@ -24,7 +24,6 @@ class Backend(BackendBase):
             token=influx_config.TOKEN,
             timeout="30s",
         )
-        self.influx_query_api = self.influx_client.query_api()
 
         # Dict of username mappings
         self.usernames = {}
@@ -262,7 +261,10 @@ class Backend(BackendBase):
         self.log.info(f"Loaded {len(mem_max)} max memory usage records from influxdb")
 
     def query_influx(self, query):
-        return self.influx_query_api.query(query=query, org=influx_config.ORG)
+        query_api = self.influx_client.query_api()
+        result = query_api.query(query=query, org=influx_config.ORG)
+        del query_api
+        return result
 
     def query_influx_memory(self):
         self.log.info("Querying Influx: memory")
