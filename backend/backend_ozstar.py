@@ -569,8 +569,10 @@ class Backend(BackendBase):
         return 0
 
     def hostnames(self):
+        # Filter to 1h and mem only to avoid an expensive query
         query = f'import "influxdata/influxdb/schema"\
-            schema.tagValues(bucket:"{influx_config.BUCKET_TELEGRAF}", tag:"host")\
+            schema.tagValues(bucket:"{influx_config.BUCKET_TELEGRAF}",\
+            tag:"host", start: -1h, predicate: (r) => r._measurement == "mem",)\
             |> sort()'
         result = self.query_influx(query)
         table = result[0]
