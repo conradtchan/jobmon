@@ -1,4 +1,5 @@
 import config from "./config";
+import constants from "./constants";
 
 // Get the per job usage for a specific node
 export function getNodeUsage(jid, job, node, host) {
@@ -62,8 +63,9 @@ export function getNodeUsage(jid, job, node, host) {
 
           // Add GPU memory if available
           if (typeof node.gpus[gpuKey] === "object" && node.gpus[gpuKey].memory) {
-            usage.gpu.memory.used += node.gpus[gpuKey].memory.used;
-            usage.gpu.memory.total += node.gpus[gpuKey].memory.total;
+            // Convert from MiB to bytes
+            usage.gpu.memory.used += node.gpus[gpuKey].memory.used * constants.mb;
+            usage.gpu.memory.total += node.gpus[gpuKey].memory.total * constants.mb;
           }
         }
       }
