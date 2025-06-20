@@ -342,9 +342,11 @@ export default class NodeDetails extends React.Component {
             if (nodeData.gpus[gpuName].memory) {
               const memTotal = nodeData.gpus[gpuName].memory.total;
               const memUsed = nodeData.gpus[gpuName].memory.used;
-              // Store memory usage percentage
+              // Convert MiB to bytes and store memory usage
               if (memTotal > 0) {
-                x[gpuMemName] = (memUsed / memTotal) * 100;
+                // Convert from MiB to bytes
+                x[gpuMemName] = memUsed * constants.mb;
+                x[`${gpuMemName}_total`] = memTotal * constants.mb; // Store total for y-axis limit
               }
             }
           } else {
@@ -379,10 +381,21 @@ export default class NodeDetails extends React.Component {
     return gpuMemNames;
   }
 
+  getGpuMemoryTotalNames() {
+    const { node } = this.props;
+    const gpuMemTotalNames = [];
+    for (let i = 0; i < node.nGpus; i += 1) {
+      const gpuMemTotalName = `gpu${i.toString()}_mem_total`;
+      gpuMemTotalNames.push(gpuMemTotalName);
+    }
+    return gpuMemTotalNames;
+  }
+
   getPropCharts(historyChart, gpuNames) {
     const { node } = this.props;
     const style = getComputedStyle(document.documentElement);
     const gpuMemNames = this.getGpuMemoryNames();
+    const gpuMemTotalNames = this.getGpuMemoryTotalNames();
 
     return (
       <div className="prop-charts">
@@ -462,8 +475,14 @@ export default class NodeDetails extends React.Component {
           lineStyle={[
             "fill",
           ]}
-          unit="%"
-          dataMax={100}
+          unit="B"
+          dataMax={
+            historyChart.length > 0 && historyChart[0][gpuMemTotalNames[0]]
+              ? Math.max(...gpuMemTotalNames.map((name) => (
+                Math.max(...historyChart.map((point) => point[name] || 0))
+              )))
+              : "dataMax"
+          }
           stacked={false}
         />
         <PropChart
