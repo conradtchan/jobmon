@@ -215,6 +215,8 @@ export default class NodeDetails extends React.Component {
       let jobWait = 0.0;
 
       let jobGpu = -1.0; // -1 means no GPU
+      let jobGpuMem = 0.0; // GPU memory used by job
+      let jobGpuMemTotal = 0.0; // Total GPU memory available
 
       let fredOssRead = 0.0;
       let fredOssWrite = 0.0;
@@ -278,6 +280,12 @@ export default class NodeDetails extends React.Component {
         // GPU usage
         if (nodeData.nGpus > 0) {
           jobGpu = usage.gpu.total;
+
+          // GPU memory usage
+          if (usage.gpu.memory && usage.gpu.memory.total > 0) {
+            jobGpuMem = usage.gpu.memory.used;
+            jobGpuMemTotal = usage.gpu.memory.total;
+          }
         }
       }
 
@@ -296,6 +304,8 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
         job_gpu: jobGpu,
+        job_gpu_mem: jobGpuMem * constants.mb,
+        job_gpu_mem_total: jobGpuMemTotal * constants.mb,
         swap: (nodeData.swap.total - nodeData.swap.free) * constants.mb,
         fred_read: fredOssRead,
         fred_write: fredOssWrite,
@@ -689,7 +699,7 @@ export default class NodeDetails extends React.Component {
       charts.push(
         <PropChart
           key="job_gpu"
-          name="GPU"
+          name="GPU Utilization"
           data={historyChart}
           dataKeys={["job_gpu"]}
           colors={[
@@ -703,6 +713,29 @@ export default class NodeDetails extends React.Component {
           stacked
         />,
       );
+
+      // Display a per-job GPU memory usage if available
+      if (historyChart.length > 0 && historyChart[0].job_gpu_mem_total > 0) {
+        charts.push(
+          <PropChart
+            key="job_gpu_mem"
+            name="GPU Memory"
+            data={historyChart}
+            dataKeys={["job_gpu_mem"]}
+            colors={[
+              style.getPropertyValue("--piecolor-gpu-2"),
+            ]}
+            lineStyle={[
+              "fill",
+            ]}
+            unit="B"
+            dataMax={(historyChart[0].job_gpu_mem_total > 0)
+              ? historyChart[0].job_gpu_mem_total
+              : "dataMax"}
+            stacked={false}
+          />,
+        );
+      }
     }
 
     return (
