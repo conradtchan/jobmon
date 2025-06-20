@@ -422,8 +422,15 @@ class Backend(BackendBase):
                 tdata = self.telegraf_data[name]["nvidia_smi"]
                 g = {}
                 for i in tdata:
-                    g[f"gpu{i}"] = tdata[i]["utilization_gpu"]
+                    # Create an object with both utilization and memory info
+                    mem_total = tdata[i].get("memory_total", 0)
+                    mem_free = tdata[i].get("memory_free", 0)
+                    mem_used = mem_total - mem_free
 
+                    g[f"gpu{i}"] = {
+                        "util": tdata[i]["utilization_gpu"],
+                        "memory": {"total": mem_total, "used": mem_used},
+                    }
                 return g
 
     def infiniband(self, name):
