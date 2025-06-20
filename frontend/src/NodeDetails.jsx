@@ -330,8 +330,27 @@ export default class NodeDetails extends React.Component {
 
       for (let j = 0; j < nodeData.nGpus; j += 1) {
         const gpuName = `gpu${j.toString()}`;
+        const gpuMemName = `${gpuName}_mem`;
+
         if (nodeData.gpus && gpuName in nodeData.gpus) {
-          x[gpuName] = nodeData.gpus[gpuName];
+          // Handle both old and new data formats
+          if (typeof nodeData.gpus[gpuName] === "object" && nodeData.gpus[gpuName].util !== undefined) {
+            // New format with util and memory properties
+            x[gpuName] = nodeData.gpus[gpuName].util;
+
+            // Add GPU memory information if available
+            if (nodeData.gpus[gpuName].memory) {
+              const memTotal = nodeData.gpus[gpuName].memory.total;
+              const memUsed = nodeData.gpus[gpuName].memory.used;
+              // Store memory usage percentage
+              if (memTotal > 0) {
+                x[gpuMemName] = (memUsed / memTotal) * 100;
+              }
+            }
+          } else {
+            // Old format (just utilization value)
+            x[gpuName] = nodeData.gpus[gpuName];
+          }
         }
       }
 
@@ -350,9 +369,20 @@ export default class NodeDetails extends React.Component {
     return gpuNames;
   }
 
+  getGpuMemoryNames() {
+    const { node } = this.props;
+    const gpuMemNames = [];
+    for (let i = 0; i < node.nGpus; i += 1) {
+      const gpuMemName = `gpu${i.toString()}_mem`;
+      gpuMemNames.push(gpuMemName);
+    }
+    return gpuMemNames;
+  }
+
   getPropCharts(historyChart, gpuNames) {
     const { node } = this.props;
     const style = getComputedStyle(document.documentElement);
+    const gpuMemNames = this.getGpuMemoryNames();
 
     return (
       <div className="prop-charts">
@@ -403,9 +433,26 @@ export default class NodeDetails extends React.Component {
           stacked={false}
         />
         <PropChart
-          name="GPU"
+          name="GPU Utilization"
           data={historyChart}
           dataKeys={gpuNames}
+          colors={[
+            style.getPropertyValue("--piecolor-gpu-1"),
+            style.getPropertyValue("--piecolor-gpu-2"),
+            style.getPropertyValue("--piecolor-gpu-3"),
+            style.getPropertyValue("--piecolor-gpu-4"),
+          ]}
+          lineStyle={[
+            "fill",
+          ]}
+          unit="%"
+          dataMax={100}
+          stacked={false}
+        />
+        <PropChart
+          name="GPU Memory"
+          data={historyChart}
+          dataKeys={gpuMemNames}
           colors={[
             style.getPropertyValue("--piecolor-gpu-1"),
             style.getPropertyValue("--piecolor-gpu-2"),

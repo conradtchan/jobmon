@@ -9,7 +9,10 @@ export function getNodeUsage(jid, job, node, host) {
     mem: { used: 0, total: 0 },
     infiniband: { bytes_in: 0, bytes_out: 0 },
     lustre: { read: 0, write: 0 },
-    gpu: { total: 0 },
+    gpu: {
+      total: 0,
+      memory: { used: 0, total: 0 },
+    },
     jobfs: { used: 0 },
   };
 
@@ -33,6 +36,8 @@ export function getNodeUsage(jid, job, node, host) {
     if (job.nGpus > 0 && node.gpus) {
       // Zero if unknown
       usage.gpu.total = 0;
+      usage.gpu.memory.used = 0;
+      usage.gpu.memory.total = 0;
 
       // If the GPU mapping is known
       if (Object.prototype.hasOwnProperty.call(job.gpuLayout, host)) {
@@ -44,7 +49,23 @@ export function getNodeUsage(jid, job, node, host) {
       // If the mapping is not known, then the usage will remain zero
       for (let j = 0; j < gpuNumbers.length; j += 1) {
         const iGpu = gpuNumbers[j];
-        usage.gpu.total += node.gpus["gpu".concat(iGpu.toString())];
+        const gpuKey = "gpu".concat(iGpu.toString());
+
+        if (node.gpus[gpuKey]) {
+          // Add GPU utilization
+          if (typeof node.gpus[gpuKey] === "object" && node.gpus[gpuKey].util !== undefined) {
+            usage.gpu.total += node.gpus[gpuKey].util;
+          } else {
+            // For backwards compatibility with old data format
+            usage.gpu.total += node.gpus[gpuKey];
+          }
+
+          // Add GPU memory if available
+          if (typeof node.gpus[gpuKey] === "object" && node.gpus[gpuKey].memory) {
+            usage.gpu.memory.used += node.gpus[gpuKey].memory.used;
+            usage.gpu.memory.total += node.gpus[gpuKey].memory.total;
+          }
+        }
       }
     }
 
@@ -76,7 +97,14 @@ export function getNodeUsage(jid, job, node, host) {
     if (job.nGpus > 0) {
       // Divide by the total number of GPUs on this node
       // (minimum of 1, in case the mapping is unknown)
-      usage.gpu.total /= Math.max(gpuNumbers.length, 1);
+      const numGpus = Math.max(gpuNumbers.length, 1);
+      usage.gpu.total /= numGpus;
+
+      // Also normalize the GPU memory metrics if we have them
+      if (usage.gpu.memory.total > 0) {
+        usage.gpu.memory.used /= numGpus;
+        usage.gpu.memory.total /= numGpus;
+      }
     }
   }
 
@@ -92,7 +120,10 @@ export function getJobUsage(jid, job, nodes) {
     mem: { used: 0, max: 0, total: 0 },
     infiniband: { bytes_in: 0, bytes_out: 0 },
     lustre: { read: 0, write: 0 },
-    gpu: { total: 0 },
+    gpu: {
+      total: 0,
+      memory: { used: 0, total: 0 },
+    },
   };
 
   let nCpus = 0;
@@ -117,6 +148,12 @@ export function getJobUsage(jid, job, nodes) {
       usage.lustre.write += nodeUsage.lustre.write;
       if (job.nGpus > 0) {
         usage.gpu.total += nodeUsage.gpu.total;
+
+        // Add GPU memory metrics if available
+        if (nodeUsage.gpu.memory) {
+          usage.gpu.memory.used += nodeUsage.gpu.memory.used;
+          usage.gpu.memory.total += nodeUsage.gpu.memory.total;
+        }
       }
 
       // Count number of CPUs (job.nCpus gives the total amount, not the subset)
@@ -130,7 +167,15 @@ export function getJobUsage(jid, job, nodes) {
   usage.cpu.system /= nCpus;
   usage.cpu.wait /= nCpus;
   usage.cpu.idle /= nCpus;
-  usage.gpu.total /= Object.keys(job.layout).length;
+
+  const numNodes = Object.keys(job.layout).length;
+  usage.gpu.total /= numNodes;
+
+  // Also normalize the GPU memory metrics if we have them
+  if (usage.gpu.memory.total > 0) {
+    usage.gpu.memory.used /= numNodes;
+    usage.gpu.memory.total /= numNodes;
+  }
 
   return usage;
 }
