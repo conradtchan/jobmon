@@ -278,7 +278,7 @@ export default class NodeDetails extends React.Component {
         }
 
         // GPU usage
-        if (nodeData.nGpus > 0) {
+        if (job.nGpus > 0) {
           jobGpu = usage.gpu.total;
 
           // GPU memory usage
