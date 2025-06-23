@@ -10,7 +10,7 @@ from os import path, remove
 import jobmon_config as config
 from file_utils import write_data
 
-API_VERSION = 14
+API_VERSION = 15
 
 
 class BackendBase:
