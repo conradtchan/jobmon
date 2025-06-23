@@ -215,6 +215,8 @@ export default class NodeDetails extends React.Component {
       let jobWait = 0.0;
 
       let jobGpu = -1.0; // -1 means no GPU
+      let jobGpuMem = 0.0; // GPU memory used by job
+      let jobGpuMemTotal = 0.0; // Total GPU memory available
 
       let fredOssRead = 0.0;
       let fredOssWrite = 0.0;
@@ -276,8 +278,14 @@ export default class NodeDetails extends React.Component {
         }
 
         // GPU usage
-        if (nodeData.nGpus > 0) {
+        if (job.nGpus > 0) {
           jobGpu = usage.gpu.total;
+
+          // GPU memory usage
+          if (usage.gpu.memory && usage.gpu.memory.total > 0) {
+            jobGpuMem = usage.gpu.memory.used;
+            jobGpuMemTotal = usage.gpu.memory.total;
+          }
         }
       }
 
@@ -296,6 +304,8 @@ export default class NodeDetails extends React.Component {
         job_mem_max: jobMemMax * constants.mb,
         job_mem_requested: jobMemRequested * constants.mb,
         job_gpu: jobGpu,
+        job_gpu_mem: jobGpuMem * constants.mb,
+        job_gpu_mem_total: jobGpuMemTotal * constants.mb,
         swap: (nodeData.swap.total - nodeData.swap.free) * constants.mb,
         fred_read: fredOssRead,
         fred_write: fredOssWrite,
@@ -330,8 +340,23 @@ export default class NodeDetails extends React.Component {
 
       for (let j = 0; j < nodeData.nGpus; j += 1) {
         const gpuName = `gpu${j.toString()}`;
+        const gpuMemName = `${gpuName}_mem`;
+
         if (nodeData.gpus && gpuName in nodeData.gpus) {
-          x[gpuName] = nodeData.gpus[gpuName];
+          // Use GPU utilization from the data
+          x[gpuName] = nodeData.gpus[gpuName].util;
+
+          // Add GPU memory information
+          if (nodeData.gpus[gpuName].memory) {
+            const memTotal = nodeData.gpus[gpuName].memory.total;
+            const memUsed = nodeData.gpus[gpuName].memory.used;
+            // Convert MiB to bytes and store memory usage
+            if (memTotal > 0) {
+              // Convert from MiB to bytes
+              x[gpuMemName] = memUsed * constants.mb;
+              x[`${gpuMemName}_total`] = memTotal * constants.mb; // Store total for y-axis limit
+            }
+          }
         }
       }
 
@@ -350,9 +375,31 @@ export default class NodeDetails extends React.Component {
     return gpuNames;
   }
 
+  getGpuMemoryNames() {
+    const { node } = this.props;
+    const gpuMemNames = [];
+    for (let i = 0; i < node.nGpus; i += 1) {
+      const gpuMemName = `gpu${i.toString()}_mem`;
+      gpuMemNames.push(gpuMemName);
+    }
+    return gpuMemNames;
+  }
+
+  getGpuMemoryTotalNames() {
+    const { node } = this.props;
+    const gpuMemTotalNames = [];
+    for (let i = 0; i < node.nGpus; i += 1) {
+      const gpuMemTotalName = `gpu${i.toString()}_mem_total`;
+      gpuMemTotalNames.push(gpuMemTotalName);
+    }
+    return gpuMemTotalNames;
+  }
+
   getPropCharts(historyChart, gpuNames) {
     const { node } = this.props;
     const style = getComputedStyle(document.documentElement);
+    const gpuMemNames = this.getGpuMemoryNames();
+    const gpuMemTotalNames = this.getGpuMemoryTotalNames();
 
     return (
       <div className="prop-charts">
@@ -403,7 +450,7 @@ export default class NodeDetails extends React.Component {
           stacked={false}
         />
         <PropChart
-          name="GPU"
+          name="GPU Utilization"
           data={historyChart}
           dataKeys={gpuNames}
           colors={[
@@ -417,6 +464,29 @@ export default class NodeDetails extends React.Component {
           ]}
           unit="%"
           dataMax={100}
+          stacked={false}
+        />
+        <PropChart
+          name="GPU Memory"
+          data={historyChart}
+          dataKeys={gpuMemNames}
+          colors={[
+            style.getPropertyValue("--piecolor-gpu-1"),
+            style.getPropertyValue("--piecolor-gpu-2"),
+            style.getPropertyValue("--piecolor-gpu-3"),
+            style.getPropertyValue("--piecolor-gpu-4"),
+          ]}
+          lineStyle={[
+            "fill",
+          ]}
+          unit="B"
+          dataMax={
+            historyChart.length > 0 && historyChart[0][gpuMemTotalNames[0]]
+              ? Math.max(...gpuMemTotalNames.map((name) => (
+                Math.max(...historyChart.map((point) => point[name] || 0))
+              )))
+              : "dataMax"
+          }
           stacked={false}
         />
         <PropChart
@@ -623,7 +693,7 @@ export default class NodeDetails extends React.Component {
       charts.push(
         <PropChart
           key="job_gpu"
-          name="GPU"
+          name="GPU Utilization"
           data={historyChart}
           dataKeys={["job_gpu"]}
           colors={[
@@ -637,6 +707,29 @@ export default class NodeDetails extends React.Component {
           stacked
         />,
       );
+
+      // Display a per-job GPU memory usage if available
+      if (historyChart.length > 0 && historyChart[0].job_gpu_mem_total > 0) {
+        charts.push(
+          <PropChart
+            key="job_gpu_mem"
+            name="GPU Memory"
+            data={historyChart}
+            dataKeys={["job_gpu_mem"]}
+            colors={[
+              style.getPropertyValue("--piecolor-gpu-2"),
+            ]}
+            lineStyle={[
+              "fill",
+            ]}
+            unit="B"
+            dataMax={(historyChart[0].job_gpu_mem_total > 0)
+              ? historyChart[0].job_gpu_mem_total
+              : "dataMax"}
+            stacked={false}
+          />,
+        );
+      }
     }
 
     return (

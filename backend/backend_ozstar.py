@@ -424,8 +424,15 @@ class Backend(BackendBase):
                 tdata = self.telegraf_data[name]["nvidia_smi"]
                 g = {}
                 for i in tdata:
-                    g[f"gpu{i}"] = tdata[i]["utilization_gpu"]
+                    # Create an object with both utilization and memory info
+                    mem_total = tdata[i].get("memory_total", 0)
+                    mem_free = tdata[i].get("memory_free", 0)
+                    mem_used = mem_total - mem_free
 
+                    g[f"gpu{i}"] = {
+                        "util": tdata[i]["utilization_gpu"],
+                        "memory": {"total": mem_total, "used": mem_used},
+                    }
                 return g
 
     def infiniband(self, name):
@@ -1229,7 +1236,9 @@ class Backend(BackendBase):
                         # Get the average GPU usage of the GPUs being used on the host
                         node = self.data["nodes"][hostname]
                         for gpu in job["gpuLayout"][hostname]:
-                            gpu_usage[job_id] += node["gpus"][f"gpu{gpu}"]
+                            gpu_key = f"gpu{gpu}"
+                            # Get GPU utilization
+                            gpu_usage[job_id] += node["gpus"][gpu_key]["util"]
 
                 # Divide by the number of GPUs
                 gpu_usage[job_id] /= job["nGpus"]
