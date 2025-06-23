@@ -53,18 +53,11 @@ export function getNodeUsage(jid, job, node, host) {
 
         if (node.gpus[gpuKey]) {
           // Add GPU utilization
-          if (typeof node.gpus[gpuKey] === "object" && node.gpus[gpuKey].util !== undefined) {
-            usage.gpu.total += node.gpus[gpuKey].util;
-          } else {
-            // For backwards compatibility with old data format
-            usage.gpu.total += node.gpus[gpuKey];
-          }
+          usage.gpu.total += node.gpus[gpuKey].util;
 
-          // Add GPU memory if available
-          if (typeof node.gpus[gpuKey] === "object" && node.gpus[gpuKey].memory) {
-            usage.gpu.memory.used += node.gpus[gpuKey].memory.used;
-            usage.gpu.memory.total += node.gpus[gpuKey].memory.total;
-          }
+          // Add GPU memory
+          usage.gpu.memory.used += node.gpus[gpuKey].memory.used;
+          usage.gpu.memory.total += node.gpus[gpuKey].memory.total;
         }
       }
     }

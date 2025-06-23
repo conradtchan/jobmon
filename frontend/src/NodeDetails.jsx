@@ -343,25 +343,19 @@ export default class NodeDetails extends React.Component {
         const gpuMemName = `${gpuName}_mem`;
 
         if (nodeData.gpus && gpuName in nodeData.gpus) {
-          // Handle both old and new data formats
-          if (typeof nodeData.gpus[gpuName] === "object" && nodeData.gpus[gpuName].util !== undefined) {
-            // New format with util and memory properties
-            x[gpuName] = nodeData.gpus[gpuName].util;
+          // Use GPU utilization from the data
+          x[gpuName] = nodeData.gpus[gpuName].util;
 
-            // Add GPU memory information if available
-            if (nodeData.gpus[gpuName].memory) {
-              const memTotal = nodeData.gpus[gpuName].memory.total;
-              const memUsed = nodeData.gpus[gpuName].memory.used;
-              // Convert MiB to bytes and store memory usage
-              if (memTotal > 0) {
-                // Convert from MiB to bytes
-                x[gpuMemName] = memUsed * constants.mb;
-                x[`${gpuMemName}_total`] = memTotal * constants.mb; // Store total for y-axis limit
-              }
+          // Add GPU memory information
+          if (nodeData.gpus[gpuName].memory) {
+            const memTotal = nodeData.gpus[gpuName].memory.total;
+            const memUsed = nodeData.gpus[gpuName].memory.used;
+            // Convert MiB to bytes and store memory usage
+            if (memTotal > 0) {
+              // Convert from MiB to bytes
+              x[gpuMemName] = memUsed * constants.mb;
+              x[`${gpuMemName}_total`] = memTotal * constants.mb; // Store total for y-axis limit
             }
-          } else {
-            // Old format (just utilization value)
-            x[gpuName] = nodeData.gpus[gpuName];
           }
         }
       }

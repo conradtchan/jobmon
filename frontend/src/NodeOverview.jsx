@@ -139,27 +139,15 @@ export default class NodeOverview extends React.Component {
               const gpuIndex = job.gpuLayout[nodeName][j];
               nGpus += 1;
               const gpuKey = "gpu".concat(gpuIndex.toString());
-
-              if (typeof nodes[nodeName].gpus[gpuKey] === "object" && nodes[nodeName].gpus[gpuKey].util !== undefined) {
-                // New format with util property
-                gpuPercent += nodes[nodeName].gpus[gpuKey].util;
-              } else {
-                // Old format (just utilization value)
-                gpuPercent += nodes[nodeName].gpus[gpuKey];
-              }
+              // Get GPU utilization
+              gpuPercent += nodes[nodeName].gpus[gpuKey].util;
             }
           } else if (job.nGpus === nGpuMax) {
             for (let j = 0; j < nGpuMax; j += 1) {
               nGpus += 1;
               const gpuKey = "gpu".concat(j.toString());
-
-              if (typeof nodes[nodeName].gpus[gpuKey] === "object" && nodes[nodeName].gpus[gpuKey].util !== undefined) {
-                // New format with util property
-                gpuPercent += nodes[nodeName].gpus[gpuKey].util;
-              } else {
-                // Old format (just utilization value)
-                gpuPercent += nodes[nodeName].gpus[gpuKey];
-              }
+              // Get GPU utilization
+              gpuPercent += nodes[nodeName].gpus[gpuKey].util;
             }
           }
           gpuPercent /= nGpus;

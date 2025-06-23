@@ -1234,7 +1234,9 @@ class Backend(BackendBase):
                         # Get the average GPU usage of the GPUs being used on the host
                         node = self.data["nodes"][hostname]
                         for gpu in job["gpuLayout"][hostname]:
-                            gpu_usage[job_id] += node["gpus"][f"gpu{gpu}"]
+                            gpu_key = f"gpu{gpu}"
+                            # Get GPU utilization
+                            gpu_usage[job_id] += node["gpus"][gpu_key]["util"]
 
                 # Divide by the number of GPUs
                 gpu_usage[job_id] /= job["nGpus"]
