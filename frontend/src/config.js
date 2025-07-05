@@ -7,7 +7,7 @@ const config = {
   address: "https://supercomputing.swin.edu.au/monitor/api/",
 
   // API version
-  apiVersion: 14,
+  apiVersion: 15,
 
   // Page title
   pageTitle: "Job Monitor",
