@@ -1,9 +1,6 @@
 import math
 import pwd
-import re
-import subprocess
 import time
-from collections import OrderedDict
 
 import influx_config
 import jobmon_config as config
@@ -32,9 +29,6 @@ class Backend(BackendBase):
 
         # Load max usage
         self.load_max_mem_usage()
-
-        # GPU_layout_cache
-        self.gpu_layout_cache = OrderedDict()
 
         # Lustre jobstats
         self.lustre_data = {}
@@ -782,40 +776,6 @@ class Backend(BackendBase):
 
                     if gpu_indexes:
                         layout[node_name] = gpu_indexes
-
-        return layout
-
-    def scontrol_gpu(self, job_id):
-        layout = {}
-        hostlist = list(self.job_layout(job_id).keys())
-
-        # Don't call scontrol unless there is a hostlist
-        if len(hostlist) > 0:
-            process = subprocess.run(
-                "/apps/slurm/latest/bin/scontrol show job -d {:}".format(job_id),
-                shell=True,
-                stdout=subprocess.PIPE,
-            )
-            output = process.stdout.decode()
-
-            # Iterate over hosts
-            for host in hostlist:
-                split_name = re.split(r"(\d+)", host)
-                host_base = split_name[0]
-                host_number = split_name[1]
-
-                match = re.search(
-                    f"Nodes={host_base}.*{host_number}"
-                    + r".*GRES=.*gpu:.*\d\(IDX:(.{1,3})\)",
-                    output,
-                )
-                if match is not None:
-                    range_string = match.group(1)
-                    # Convert range into list of individual GPUs,
-                    # e.g. 0-1 -> [0, 1]
-                    # e.g. 0,2,3 -> [0, 2, 3]
-                    # e.g. 0-1,3 -> [0, 1, 3]
-                    layout[host] = self.expand_array_range(range_string)
 
         return layout
 
