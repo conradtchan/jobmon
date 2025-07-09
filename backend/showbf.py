@@ -122,7 +122,17 @@ def jobs():
     j = {}
     for job_id in jobs_api:
         job = jobs_api[job_id]
-        s = job.to_dict()
+        try:
+            s = job.to_dict()
+        except OverflowError:
+            # Handle overflow by extracting only the fields we need
+            s = {
+                "cpus": getattr(job, "cpus", 0),
+                "state": getattr(job, "state", None),
+                "time_limit": getattr(job, "time_limit", None),
+                "scheduled_nodes": getattr(job, "scheduled_nodes", None),
+                "start_time": getattr(job, "start_time", 0),
+            }
         # Convert new API layout dict to old list-of-ints format
         raw_layout = job.get_resource_layout_per_node()
         layout = {}
