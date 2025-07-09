@@ -49,24 +49,7 @@ class Backend(BackendBase):
         self.log.info("Getting Slurm data")
         self.pyslurm_node = pyslurm.node().get()
 
-        # self.pyslurm_job = pyslurm.job().get()
-
-        self.pyslurm_job = {}
-        jobs = pyslurm.Jobs.load()
-        jobs.load_steps()
-        for job_id in jobs:
-            job = jobs[job_id]
-
-            # Skip cancelled jobs
-            if job.state == "CANCELLED":
-                continue
-
-            jdict = job.to_dict()
-
-            # Get the resource layout
-            jdict["resource_layout"] = job.get_resource_layout_per_node()
-
-            self.pyslurm_job[job.id] = jdict
+        self.pyslurm_job = self._load_all_jobs()
 
         # Get active jobs (and call job_ids which generates full ID mapping)
         self.n_running_jobs = self.count_running_jobs()
@@ -1217,3 +1200,21 @@ class Backend(BackendBase):
                 gpu_usage[job_id] /= job["nGpus"]
 
         return gpu_usage
+
+    def _load_all_jobs(self):
+        """
+        Load all jobs using the new pyslurm.Jobs API and return a dict mapping Slurm job IDs to job dictionaries.
+        """
+        jobs_dict = {}
+        jobs = pyslurm.Jobs.load()
+        jobs.load_steps()
+        for job_id in jobs:
+            job = jobs[job_id]
+            # Skip cancelled jobs
+            if job.state == "CANCELLED":
+                continue
+            jdict = job.to_dict()
+            # Get the resource layout
+            jdict["resource_layout"] = job.get_resource_layout_per_node()
+            jobs_dict[job.id] = jdict
+        return jobs_dict
