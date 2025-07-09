@@ -27,9 +27,6 @@ class Backend(BackendBase):
         # Maximum memory usage of a job
         self.mem_max = {}
 
-        # Load max usage
-        self.load_max_mem_usage()
-
         # Lustre jobstats
         self.lustre_data = {}
         self.lustre_data_rate = {}
@@ -53,7 +50,6 @@ class Backend(BackendBase):
         self.trigger_influx_tasks()
         self.update_telegraf_data()
         self.update_mem_data()
-        self.prune_mem_max()
         self.update_lustre_jobstats()
         self.update_lustre_per_node()
 
@@ -185,46 +181,35 @@ class Backend(BackendBase):
         self.telegraf_data = telegraf_data
 
     def update_mem_data(self):
+        # Query both RSS and VMSize measurements in a single call
         influx_result = self.query_influx_memory()
 
         mem_data = {}
-
-        # Jobs with memory stats found
         jobs_with_stats = []
 
         for table in influx_result:
             record = table.records[0]
-
             slurm_job_id = int(record["job"])
+            measurement = record.get_measurement()
 
             if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
                 # Convert to full ID
                 job_id = self.full_id[slurm_job_id]
 
-                jobs_with_stats += [job_id]
-
-                node = record["host"]
-                mem = record["_value"]
-
                 if job_id not in mem_data:
                     mem_data[job_id] = {"mem": {}, "memMax": 0}
 
-                mem_data[job_id]["mem"][node] = mem
+                measurement = record.get_measurement()
 
-        for job_id in mem_data:
-            # Initialise max memory record
-            if job_id not in self.mem_max:
-                self.mem_max[job_id] = 0
-
-            for node in mem_data[job_id]["mem"]:
-                # Convert KB to MB
-                mem_data[job_id]["mem"][node] = math.ceil(
-                    mem_data[job_id]["mem"][node] / KB
-                )
-                self.mem_max[job_id] = int(
-                    max(self.mem_max[job_id], mem_data[job_id]["mem"][node])
-                )
-                mem_data[job_id]["memMax"] = self.mem_max[job_id]
+                if measurement == "RSS":
+                    jobs_with_stats.append(job_id)
+                    node = record["host"]
+                    mem = math.ceil(record.get_value() / KB)
+                    mem_data[job_id]["mem"][node] = mem
+                elif measurement == "VMSize":
+                    mem_max = math.ceil(record.get_value() / KB)
+                    self.mem_max[job_id] = mem_max
+                    mem_data[job_id]["memMax"] = mem_max
 
         # Turn list of jobs with memory stats into a set to remove duplicates
         jobs_with_stats = set(jobs_with_stats)
@@ -235,25 +220,6 @@ class Backend(BackendBase):
 
         self.mem_data = mem_data
 
-    def load_max_mem_usage(self):
-        """
-        Read previous max memory usage from influxdb
-        """
-
-        influx_result = self.query_influx_max_mem()
-
-        mem_max = {}
-
-        for table in influx_result:
-            record = table.records[0]
-
-            job_id = int(record["job_id"])
-            mem_max[job_id] = int(record["_value"])
-
-        self.mem_max = mem_max
-
-        self.log.info(f"Loaded {len(mem_max)} max memory usage records from influxdb")
-
     def query_influx(self, query):
         query_api = self.influx_client.query_api()
         result = query_api.query(query=query, org=influx_config.ORG)
@@ -261,15 +227,14 @@ class Backend(BackendBase):
         return result
 
     def query_influx_memory(self):
-        self.log.info("Querying Influx: memory")
-        # Sum up the memory usage of all tasks in a job using
-        # the last value of each task, and then group by job ID and host
+        self.log.info("Querying Influx: memory (RSS and VMSize)")
+        # Query both RSS and VMSize measurements
         query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
         |> range(start: -90s)\
-        |> filter(fn: (r) => r["_measurement"] == "RSS")\
+        |> filter(fn: (r) => r["_measurement"] == "RSS" or r["_measurement"] == "VMSize")\
         |> last()\
         |> drop(columns: ["_start", "_stop", "_time"])\
-        |> group(columns: ["job", "host"])\
+        |> group(columns: ["job", "host", "_measurement"])\
         |> sum()'
 
         return self.query_influx(query)
@@ -307,27 +272,6 @@ class Backend(BackendBase):
         |> drop(columns: ["_start", "_stop", "_time"])'
 
         return self.query_influx(query)
-
-    def query_influx_max_mem(self):
-        self.log.info("Querying Influx: max mem")
-
-        query = 'from(bucket: "jobmon-stats")\
-        |> range(start: -1d)\
-        |> filter(fn: (r) => r["_measurement"] == "job_max_memory")\
-        |> last()\
-        |> drop(columns: ["_start", "_stop", "_time"])'
-
-        return self.query_influx(query)
-
-    def prune_mem_max(self):
-        n = 0
-        for job_id in list(self.mem_max.keys()):
-            if job_id not in self.id_map.keys():
-                n += 1
-                del self.mem_max[job_id]
-        self.log.info(
-            "Pruned {:}/{:} old max memory records".format(n, len(self.mem_max))
-        )
 
     def cpu_usage(self, name):
         # CPU measurements are stored as an array for efficiency
