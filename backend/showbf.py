@@ -122,30 +122,19 @@ def jobs():
     j = {}
     for job_id in jobs_api:
         job = jobs_api[job_id]
-        try:
-            s = job.to_dict()
-        except OverflowError:
-            # Handle overflow by extracting only the fields we need
-            s = {
-                "cpus": getattr(job, "cpus", 0),
-                "state": getattr(job, "state", None),
-                "time_limit": getattr(job, "time_limit", None),
-                "scheduled_nodes": getattr(job, "scheduled_nodes", None),
-                "start_time": getattr(job, "start_time", 0),
-            }
-        # Convert new API layout dict to old list-of-ints format
+        # Extract only the fields we need
         raw_layout = job.get_resource_layout_per_node()
         layout = {}
         for host, info in raw_layout.items():
             cpu_ids_str = info.get("cpu_ids", "")
             layout[host] = parseCpuList(cpu_ids_str)
         j[job_id] = {
-            "nCpus": s.get("cpus", 0),
-            "state": s.get("state"),
+            "nCpus": getattr(job, "cpus", 0),
+            "state": getattr(job, "state", None),
             "layout": layout,
-            "timeLimit": s.get("time_limit"),  # minutes
-            "schedNodes": s.get("scheduled_nodes"),
-            "startTime": s.get("start_time"),  # 0 or seconds
+            "timeLimit": getattr(job, "time_limit", None),  # minutes
+            "schedNodes": getattr(job, "scheduled_nodes", None),
+            "startTime": getattr(job, "start_time", 0),  # 0 or seconds
         }
         # Count GPUs via layout's gres info
         gpu_count = 0
