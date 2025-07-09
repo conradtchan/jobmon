@@ -192,24 +192,33 @@ class Backend(BackendBase):
             slurm_job_id = int(record["job"])
             measurement = record.get_measurement()
 
+            # Only process running jobs
             if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
-                # Convert to full ID
+                # Convert Slurm ID to full job ID (handles array jobs)
                 job_id = self.full_id[slurm_job_id]
 
+                # Initialize job entry if not exists
                 if job_id not in mem_data:
                     mem_data[job_id] = {"mem": {}, "memMax": 0}
 
-                measurement = record.get_measurement()
-
+                # Process memory measurements
                 if measurement == "RSS":
+                    # Per-node current memory usage
                     jobs_with_stats.append(job_id)
                     node = record["host"]
                     mem = math.ceil(record.get_value() / KB)
                     mem_data[job_id]["mem"][node] = mem
                 elif measurement == "VMSize":
+                    # Job maximum memory usage across all nodes
                     mem_max = math.ceil(record.get_value() / KB)
-                    self.mem_max[job_id] = mem_max
-                    mem_data[job_id]["memMax"] = mem_max
+
+                    # Update the global maximum for this job
+                    if job_id not in self.mem_max:
+                        self.mem_max[job_id] = mem_max
+                    else:
+                        self.mem_max[job_id] = max(self.mem_max[job_id], mem_max)
+
+                    mem_data[job_id]["memMax"] = self.mem_max[job_id]
 
         # Turn list of jobs with memory stats into a set to remove duplicates
         jobs_with_stats = set(jobs_with_stats)
