@@ -1,10 +1,8 @@
 import gzip
 import json
 import logging
-import re
 import time
 from datetime import datetime
-from glob import glob
 from os import path, remove
 
 import jobmon_config as config
@@ -446,32 +444,46 @@ class BackendBase:
 
         Do not override this function
         """
-        filenames = config.FILE_NAME_PATTERN.format("*")
-        filepaths = path.join(config.DATA_PATH, filenames)
-        data_files = glob(filepaths)
-        times = []
-        for x in data_files:
-            filename = path.basename(x)
-            match = re.search(config.FILE_NAME_PATTERN.format(r"(\d+)"), filename)
+        # Load from optimized history file instead of processing all individual data files
+        history_file = path.join(config.DATA_PATH, config.FILE_NAME_HISTORY)
 
-            if match is not None:
-                times += [match.group(1)]
+        try:
+            self.log.info(
+                "Loading usage history from {}".format(config.FILE_NAME_HISTORY)
+            )
+            with gzip.open(history_file, "r") as f:
+                json_text = f.read().decode("utf-8")
+                history_data = json.loads(json_text)
 
-        for t in times:
-            self.log.info("Loading timestamp {:}".format(t))
-            filename = config.FILE_NAME_PATTERN.format(t)
-            filepath = path.join(config.DATA_PATH, filename)
+                # Load the history directly into the cache
+                if "history" in history_data:
+                    # Convert string timestamps back to integers and load into cache
+                    for timestamp_str, usage_data in history_data["history"].items():
+                        timestamp = int(timestamp_str)
+                        self.usage_cache["history"][timestamp] = usage_data
 
-            # Try to open the file, but it may have been deleted already
-            try:
-                with gzip.open(filepath, "r") as f:
-                    json_text = f.read().decode("utf-8")
-                    data = json.loads(json_text)
-                    self.update_core_usage(data=data)
-            except FileNotFoundError:
-                self.log.info(
-                    "File not found: it may have been deleted by another process"
+                    self.log.info(
+                        "Loaded {} historical usage data points".format(
+                            len(history_data["history"])
+                        )
+                    )
+                else:
+                    self.log.info(
+                        "No history data found in {}".format(config.FILE_NAME_HISTORY)
+                    )
+
+        except FileNotFoundError:
+            self.log.info(
+                "History file {} not found - starting with empty history".format(
+                    config.FILE_NAME_HISTORY
                 )
+            )
+        except Exception as e:
+            self.log.error(
+                "Error loading history file {}: {}".format(
+                    config.FILE_NAME_HISTORY, str(e)
+                )
+            )
 
     def history(self):
         """
@@ -484,7 +496,8 @@ class BackendBase:
         h = {"history": {}}
         for t in sorted(list(self.usage_cache["history"].keys())):
             if now - t < config.HISTORY_LENGTH:
-                h["history"][t] = self.usage_cache["history"][t]
+                # Convert timestamp to string for JSON serialization
+                h["history"][str(t)] = self.usage_cache["history"][t]
             elif now - t > config.HISTORY_DELETE_AGE:
                 filename = config.FILE_NAME_PATTERN.format(t)
                 filepath = path.join(config.DATA_PATH, filename)
