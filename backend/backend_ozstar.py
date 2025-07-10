@@ -1,10 +1,6 @@
-import copy
 import math
 import pwd
-import re
-import subprocess
 import time
-from collections import OrderedDict
 
 import influx_config
 import jobmon_config as config
@@ -31,12 +27,6 @@ class Backend(BackendBase):
         # Maximum memory usage of a job
         self.mem_max = {}
 
-        # Load max usage
-        self.load_max_mem_usage()
-
-        # GPU_layout_cache
-        self.gpu_layout_cache = OrderedDict()
-
         # Lustre jobstats
         self.lustre_data = {}
         self.lustre_data_rate = {}
@@ -49,7 +39,8 @@ class Backend(BackendBase):
         # Slurm
         self.log.info("Getting Slurm data")
         self.pyslurm_node = pyslurm.node().get()
-        self.pyslurm_job = pyslurm.job().get()
+
+        self.pyslurm_job = self._load_all_jobs()
 
         # Get active jobs (and call job_ids which generates full ID mapping)
         self.n_running_jobs = self.count_running_jobs()
@@ -59,7 +50,6 @@ class Backend(BackendBase):
         self.trigger_influx_tasks()
         self.update_telegraf_data()
         self.update_mem_data()
-        self.prune_mem_max()
         self.update_lustre_jobstats()
         self.update_lustre_per_node()
 
@@ -191,46 +181,44 @@ class Backend(BackendBase):
         self.telegraf_data = telegraf_data
 
     def update_mem_data(self):
+        # Query both RSS and VMSize measurements in a single call
         influx_result = self.query_influx_memory()
 
         mem_data = {}
-
-        # Jobs with memory stats found
         jobs_with_stats = []
 
         for table in influx_result:
             record = table.records[0]
-
             slurm_job_id = int(record["job"])
+            measurement = record.get_measurement()
 
+            # Only process running jobs
             if self.job_state(slurm_job_id=slurm_job_id) == "RUNNING":
-                # Convert to full ID
+                # Convert Slurm ID to full job ID (handles array jobs)
                 job_id = self.full_id[slurm_job_id]
 
-                jobs_with_stats += [job_id]
-
-                node = record["host"]
-                mem = record["_value"]
-
+                # Initialize job entry if not exists
                 if job_id not in mem_data:
                     mem_data[job_id] = {"mem": {}, "memMax": 0}
 
-                mem_data[job_id]["mem"][node] = mem
+                # Process memory measurements
+                if measurement == "RSS":
+                    # Per-node current memory usage
+                    jobs_with_stats.append(job_id)
+                    node = record["host"]
+                    mem = math.ceil(record.get_value() / KB)
+                    mem_data[job_id]["mem"][node] = mem
+                elif measurement == "VMSize":
+                    # Job maximum memory usage across all nodes
+                    mem_max = math.ceil(record.get_value() / KB)
 
-        for job_id in mem_data:
-            # Initialise max memory record
-            if job_id not in self.mem_max:
-                self.mem_max[job_id] = 0
+                    # Update the global maximum for this job
+                    if job_id not in self.mem_max:
+                        self.mem_max[job_id] = mem_max
+                    else:
+                        self.mem_max[job_id] = max(self.mem_max[job_id], mem_max)
 
-            for node in mem_data[job_id]["mem"]:
-                # Convert KB to MB
-                mem_data[job_id]["mem"][node] = math.ceil(
-                    mem_data[job_id]["mem"][node] / KB
-                )
-                self.mem_max[job_id] = int(
-                    max(self.mem_max[job_id], mem_data[job_id]["mem"][node])
-                )
-                mem_data[job_id]["memMax"] = self.mem_max[job_id]
+                    mem_data[job_id]["memMax"] = self.mem_max[job_id]
 
         # Turn list of jobs with memory stats into a set to remove duplicates
         jobs_with_stats = set(jobs_with_stats)
@@ -241,25 +229,6 @@ class Backend(BackendBase):
 
         self.mem_data = mem_data
 
-    def load_max_mem_usage(self):
-        """
-        Read previous max memory usage from influxdb
-        """
-
-        influx_result = self.query_influx_max_mem()
-
-        mem_max = {}
-
-        for table in influx_result:
-            record = table.records[0]
-
-            job_id = int(record["job_id"])
-            mem_max[job_id] = int(record["_value"])
-
-        self.mem_max = mem_max
-
-        self.log.info(f"Loaded {len(mem_max)} max memory usage records from influxdb")
-
     def query_influx(self, query):
         query_api = self.influx_client.query_api()
         result = query_api.query(query=query, org=influx_config.ORG)
@@ -267,15 +236,14 @@ class Backend(BackendBase):
         return result
 
     def query_influx_memory(self):
-        self.log.info("Querying Influx: memory")
-        # Sum up the memory usage of all tasks in a job using
-        # the last value of each task, and then group by job ID and host
+        self.log.info("Querying Influx: memory (RSS and VMSize)")
+        # Query both RSS and VMSize measurements
         query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
         |> range(start: -90s)\
-        |> filter(fn: (r) => r["_measurement"] == "RSS")\
+        |> filter(fn: (r) => r["_measurement"] == "RSS" or r["_measurement"] == "VMSize")\
         |> last()\
         |> drop(columns: ["_start", "_stop", "_time"])\
-        |> group(columns: ["job", "host"])\
+        |> group(columns: ["job", "host", "_measurement"])\
         |> sum()'
 
         return self.query_influx(query)
@@ -313,27 +281,6 @@ class Backend(BackendBase):
         |> drop(columns: ["_start", "_stop", "_time"])'
 
         return self.query_influx(query)
-
-    def query_influx_max_mem(self):
-        self.log.info("Querying Influx: max mem")
-
-        query = 'from(bucket: "jobmon-stats")\
-        |> range(start: -1d)\
-        |> filter(fn: (r) => r["_measurement"] == "job_max_memory")\
-        |> last()\
-        |> drop(columns: ["_start", "_stop", "_time"])'
-
-        return self.query_influx(query)
-
-    def prune_mem_max(self):
-        n = 0
-        for job_id in list(self.mem_max.keys()):
-            if job_id not in self.id_map.keys():
-                n += 1
-                del self.mem_max[job_id]
-        self.log.info(
-            "Pruned {:}/{:} old max memory records".format(n, len(self.mem_max))
-        )
 
     def cpu_usage(self, name):
         # CPU measurements are stored as an array for efficiency
@@ -599,42 +546,31 @@ class Backend(BackendBase):
         return False
 
     def job_ids(self):
-        pyslurm_ids = self.pyslurm_job.keys()
+        """
+        Generate list of full job IDs and map between Slurm job IDs and full IDs.
 
-        full_ids = []
+        Returns:
+            List[str]: Full job IDs ("<array_job_id>_<array_task_id>" for array jobs, else Slurm ID).
+        """
+        # Reset mappings
         self.id_map = {}
         self.full_id = {}
 
-        for job_id in pyslurm_ids:
-            job_entry = self.pyslurm_job[job_id]
-
-            # Expand queued queued array jobs into sub jobs
-            if job_entry["array_task_str"] is not None:
-                for sub_id in self.expand_array(job_entry["array_task_str"]):
-                    full_ids += [str(job_id) + "_" + str(sub_id)]
-                    self.id_map[full_ids[-1]] = job_id
-
+        full_ids = []
+        # Iterate over Slurm job entries
+        for slurm_id, job_entry in self.pyslurm_job.items():
+            array_job = job_entry.get("array_job_id")
+            array_task = job_entry.get("array_task_id")
+            # Determine full ID for array or regular job
+            if array_job is not None and array_task is not None:
+                full = f"{array_job}_{array_task}"
             else:
-                # Change the running job ID to a full ID
-                if (
-                    job_entry["array_task_id"] is not None
-                    and job_entry["array_job_id"] is not None
-                ):
-                    full_ids += [
-                        str(job_entry["array_job_id"])
-                        + "_"
-                        + str(job_entry["array_task_id"])
-                    ]
+                full = str(slurm_id)
 
-                # Regular running job
-                else:
-                    full_ids += [str(job_id)]
-
-                # Map between the full ID back to the original ID
-                self.id_map[full_ids[-1]] = job_id
-
-                # Map between the the original ID to the full ID
-                self.full_id[job_id] = full_ids[-1]
+            full_ids.append(full)
+            # Map full ID to original Slurm ID and vice versa
+            self.id_map[full] = slurm_id
+            self.full_id[slurm_id] = full
 
         return full_ids
 
@@ -724,16 +660,20 @@ class Backend(BackendBase):
 
     def job_ncpus(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
-        return job["num_cpus"]
+        return job.get("cpus", 0)
 
     def job_ngpus(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 
-        if job["tres_alloc_str"] is not None:
-            if "gpu=" in job["tres_alloc_str"]:
-                return int(job["tres_alloc_str"].split("gpu=")[1][0])
+        total_gpus = 0
+        if job["resource_layout"] is not None:
+            for node_name, node_resources in job["resource_layout"].items():
+                if "gres" in node_resources:
+                    for gres_name, gres_info in node_resources["gres"].items():
+                        if gres_name.startswith("gpu"):
+                            total_gpus += gres_info["count"]
 
-        return 0
+        return total_gpus
 
     def job_state(self, job_id=None, slurm_job_id=None):
         if job_id is not None:
@@ -747,15 +687,18 @@ class Backend(BackendBase):
             else:
                 job = None
 
-        if job is None:
-            return None
-        else:
-            return job["job_state"]
+        return None if job is None else job.get("state")
 
     def job_layout(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 
-        layout = copy.deepcopy(job["cpus_alloc_layout"])
+        layout = {}
+        # Convert CPU range strings to lists of integers
+        for node in job["resource_layout"]:
+            layout[node] = {}
+            if "cpu_ids" in job["resource_layout"][node]:
+                cpu_range = job["resource_layout"][node]["cpu_ids"]
+                layout[node] = self.expand_array_range(cpu_range)
 
         # Remove node from layout if the job is running but influx doesn't report it as up
         # This means that something is out of sync of the job has crashed
@@ -771,88 +714,21 @@ class Backend(BackendBase):
         # Default empty dict if layout cannot be found
         layout = {}
 
-        # Only get GPU layout for jobs that:
-        # - are a GPU job
-        # - are actively running (otherwise scontrol will return an error)
-        if self.job_ngpus(job_id) > 0:
-            state = self.job_state(job_id)
-            if state == "RUNNING":
-                MAXSIZE = 10000
-                if job_id in self.gpu_layout_cache:
-                    self.log.debug(f"Job {job_id} recalled from GPU layout cache")
-                    layout = self.gpu_layout_cache[job_id]
-                else:
-                    self.log.debug(
-                        f"Job {job_id} not in GPU layout cache; getting from scontrol"
-                    )
-                    layout = self.scontrol_gpu(job_id)
+        # Get the job's resource layout
+        job = self.pyslurm_job[self.id_map[job_id]]
 
-                    # Make sure each item in the GPU layout is also in the CPU layout
-                    # This is in case scontrol returns an incorrect value
-                    for node in layout:
-                        if node not in self.job_layout(job_id):
-                            self.log.warn(
-                                f"Node {node} in GPU layout for job {job_id} not in CPU layout"
-                            )
-                            del layout[node]
+        if job["resource_layout"] is not None:
+            for node_name, node_resources in job["resource_layout"].items():
+                if "gres" in node_resources:
+                    gpu_indexes = []
+                    for gres_name, gres_info in node_resources["gres"].items():
+                        if gres_name.startswith("gpu"):
+                            # Parse the indexes string (e.g., "2" or "0,1" or "0-1")
+                            indexes_str = gres_info["indexes"]
+                            gpu_indexes.extend(self.expand_array_range(indexes_str))
 
-                # Minimise the number of scontrol calls by caching the results
-                # - Assume that GPU affinity is fixed for the lifetime of the job
-                # - scontrol should only be called once per job
-                # - Cache up to 10,000 jobs (there are typically 3000 jobs running on OzSTAR)
-                # - Cannot use lru_cache because specific values cannot be cleared
-
-                # If expecting a layout but scontrol isn't returning it yet, don't cache
-                if layout is {} and self.job_ngpus(job_id) > 0:
-                    return layout
-                else:
-                    self.gpu_layout_cache[job_id] = layout
-
-                while len(self.gpu_layout_cache) > MAXSIZE:
-                    self.log.warn(
-                        f"GPU layout cache size ({MAXSIZE}) exceeded; removing earliest item"
-                    )
-                    # Remove earliest item
-                    self.gpu_layout_cache.popitem(last=False)
-
-            # Job has already finished
-            elif state != "PENDING":
-                # Remove from layout
-                self.gpu_layout_cache.pop(job_id, None)
-
-        return layout
-
-    def scontrol_gpu(self, job_id):
-        layout = {}
-        hostlist = list(self.job_layout(job_id).keys())
-
-        # Don't call scontrol unless there is a hostlist
-        if len(hostlist) > 0:
-            process = subprocess.run(
-                "/apps/slurm/latest/bin/scontrol show job -d {:}".format(job_id),
-                shell=True,
-                stdout=subprocess.PIPE,
-            )
-            output = process.stdout.decode()
-
-            # Iterate over hosts
-            for host in hostlist:
-                split_name = re.split(r"(\d+)", host)
-                host_base = split_name[0]
-                host_number = split_name[1]
-
-                match = re.search(
-                    f"Nodes={host_base}.*{host_number}"
-                    + r".*GRES=.*gpu:.*\d\(IDX:(.{1,3})\)",
-                    output,
-                )
-                if match is not None:
-                    range_string = match.group(1)
-                    # Convert range into list of individual GPUs,
-                    # e.g. 0-1 -> [0, 1]
-                    # e.g. 0,2,3 -> [0, 2, 3]
-                    # e.g. 0-1,3 -> [0, 1, 3]
-                    layout[host] = self.expand_array_range(range_string)
+                    if gpu_indexes:
+                        layout[node_name] = gpu_indexes
 
         return layout
 
@@ -883,34 +759,27 @@ class Backend(BackendBase):
     def job_mem_request(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 
-        # Check if the job has a minimum memory per CPU specified
-        if job["min_memory_cpu"] is not None:
-            # If the job specifies tasks per node and CPUs per task
-            if job["ntasks_per_node"] > 0 and job["cpus_per_task"] > 0:
-                # Calculate the total memory request based on tasks per node and CPUs per task
-                return (
-                    job["min_memory_cpu"]
-                    * job["ntasks_per_node"]
-                    * job["cpus_per_task"]
-                )
-            # If the job specifies the number of CPUs and nodes
-            elif job["num_cpus"] > 0 and job["num_nodes"] > 0:
-                # Calculate the total memory request based on the number of CPUs and nodes
-                return job["min_memory_cpu"] * job["num_cpus"] / job["num_nodes"]
-            else:
-                # Log an error if the job does not have a valid memory request
-                self.log.error(f"Job {job_id} has no valid memory request")
-                return 0
+        # 1) memory per CPU (--mem-per-cpu)
+        mem_cpu = job.get("memory_per_cpu")
+        if mem_cpu is not None:
+            # tasks-per-node * cpus-per-task
+            tpn = job.get("ntasks_per_node")
+            cpt = job.get("cpus_per_task")
+            if tpn and cpt:
+                return mem_cpu * tpn * cpt
+            # fallback: total cpus / nodes
+            cpus = job.get("cpus", 0)
+            nodes = job.get("num_nodes", 1)
+            return mem_cpu * cpus / nodes
 
-        # Check if the job is requesting memory per gpu (e.g. --mem-per-gpu=160GB)
-        if job["mem_per_tres"] is not None:
-            # Example value: 'gres/gpu:163840'
-            mem_per_gpu = int(job["mem_per_tres"].split(":")[1])
-            return mem_per_gpu * self.job_ngpus(job_id)
+        # 2) memory per GPU (--mem-per-gpu)
+        mem_gpu = job.get("memory_per_gpu")
+        if mem_gpu is not None:
+            per = int(mem_gpu.split(":")[1])
+            return per * self.job_ngpus(job_id)
 
-        else:
-            # If no minimum memory per CPU is specified, return the minimum memory per node
-            return job["min_memory_node"]
+        # 3) memory per node (--mem)
+        return job.get("memory_per_node", 0)
 
     def job_lustre(self, job_id):
         if job_id in self.lustre_data_rate:
@@ -1244,3 +1113,21 @@ class Backend(BackendBase):
                 gpu_usage[job_id] /= job["nGpus"]
 
         return gpu_usage
+
+    def _load_all_jobs(self):
+        """
+        Load all jobs using the new pyslurm.Jobs API and return a dict mapping Slurm job IDs to job dictionaries.
+        """
+        jobs_dict = {}
+        jobs = pyslurm.Jobs.load()
+        jobs.load_steps()
+        for job_id in jobs:
+            job = jobs[job_id]
+            # Skip cancelled jobs
+            if job.state == "CANCELLED":
+                continue
+            jdict = job.to_dict()
+            # Get the resource layout
+            jdict["resource_layout"] = job.get_resource_layout_per_node()
+            jobs_dict[job.id] = jdict
+        return jobs_dict

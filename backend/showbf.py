@@ -114,39 +114,41 @@ def nodes():
 
 
 def jobs():
-    slurm_jobs = pyslurm.job().get()
-
+    """
+    Retrieve jobs using the new pyslurm.Jobs API.
+    """
+    jobs_api = pyslurm.Jobs.load()
+    jobs_api.load_steps()
     j = {}
-
-    for id, s in slurm_jobs.items():
-        j[id] = {
-            "nCpus": s["num_cpus"],
-            "state": s["job_state"],
-            "layout": s["cpus_alloc_layout"],
-            "timeLimit": s["time_limit"],  # minutes
-            # pyslurm 18
-            "schedNodes": s["sched_nodes"],  # None or eg. bryan[1-4,6-8],john[1-3]
-            "startTime": s["start_time"],  # 0 or seconds
+    for job_id in jobs_api:
+        job = jobs_api[job_id]
+        # Extract only the fields we need
+        raw_layout = job.get_resource_layout_per_node()
+        layout = {}
+        for host, info in raw_layout.items():
+            cpu_ids_str = info.get("cpu_ids", "")
+            layout[host] = parseCpuList(cpu_ids_str)
+        j[job_id] = {
+            "nCpus": getattr(job, "cpus", 0),
+            "state": getattr(job, "state", None),
+            "layout": layout,
+            "timeLimit": getattr(job, "time_limit", None),  # minutes
+            "schedNodes": getattr(job, "scheduled_nodes", None),
+            "startTime": getattr(job, "start_time", 0),  # 0 or seconds
         }
-
-        j[id]["nGpus"] = 0
-        # pyslurm 17
-        # for gres in s['gres']:
-        # pyslurm 18
-        if s["tres_per_node"] is not None:
-            for gres in s["tres_per_node"].split(","):
-                g = gres.split(":")
-                # print(id, gres, g, g[-1])
-                if g[0] == "gpu":  # eg. gpu:p100:2  gpu:2  gpu
-                    try:
-                        j[id]["nGpus"] += int(g[-1])
-                    except ValueError:
-                        j[id]["nGpus"] += 1
-
-        if debug:
-            if j[id]["startTime"] != 0 and j[id]["schedNodes"] is not None:
-                print(id, j[id])
-
+        # Count GPUs via layout's gres info
+        gpu_count = 0
+        for info in raw_layout.values():
+            for tres_name, tres_info in info.get("gres", {}).items():
+                if tres_name.startswith("gpu"):
+                    gpu_count += tres_info.get("count", 0)
+        j[job_id]["nGpus"] = gpu_count
+        if (
+            debug
+            and j[job_id]["startTime"] != 0
+            and j[job_id]["schedNodes"] is not None
+        ):
+            print(job_id, j[job_id])
     return j
 
 
@@ -459,11 +461,11 @@ def get_core_usage(data):
                                         "+",
                                         s1,
                                         "!=",
-                                        node["nCpuCores"],
+                                        node["nCpus"],
                                         "node",
                                         node,
                                     )
-                                if g0 + g1 != node["nGpuCores"]:
+                                if g0 + g1 != node["nGpus"]:
                                     print(
                                         hostname,
                                         "err: gpu: ",
@@ -471,7 +473,7 @@ def get_core_usage(data):
                                         "+",
                                         g1,
                                         "!=",
-                                        node["nGpuCores"],
+                                        node["nGpus"],
                                         "node",
                                         node,
                                     )

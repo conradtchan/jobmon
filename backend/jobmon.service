@@ -8,7 +8,7 @@ User=jobmon
 WorkingDirectory=/opt/jobmon
 ExecStart=/usr/bin/python3 jobmon.py
 Restart=on-failure
-Environment=PYTHONPATH=/apps/influxdb-client/1.44.0/lib64/python3.9/site-packages:/apps/pyslurm/23.11.x-20240803-py3/lib64/python3.9/site-packages/pyslurm-23.11.0-py3.9-linux-x86_64.egg
+Environment=PYTHONPATH=/apps/influxdb-client/1.44.0/lib64/python3.9/site-packages:/apps/pyslurm/24.11.x-20250703/lib64/python3.9/site-packages/pyslurm-24.11.0-py3.9-linux-x86_64.egg
 
 [Install]
 WantedBy=multi-user.target
