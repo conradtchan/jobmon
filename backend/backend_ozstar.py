@@ -468,22 +468,8 @@ class Backend(BackendBase):
     def jobfs_request(self, job_id):
         job = self.pyslurm_job[self.id_map[job_id]]
 
-        # Default value
-        request = 0
-
-        if "tres_alloc_str" in job:
-            # The string looks like this: 'cpu=32,mem=150G,node=1,billing=32,gres/tmp=161061273600'
-            # Get the /tmp size in MB
-            if job["tres_alloc_str"] is not None:
-                for gres in job["tres_alloc_str"].split(","):
-                    if "gres/tmp=" in gres:
-                        request = int(gres.split("=")[1]) / MB
-
-                        # The request is a total across all nodes, so divide by the number of nodes
-                        request /= int(job["num_nodes"])
-                        break
-
-        return request
+        # Get temporary disk per node in MB
+        return job.get("temporary_disk_per_node", 0)
 
     def node_up(self, name, silent=False):
         up = False
