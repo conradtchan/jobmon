@@ -1104,6 +1104,26 @@ class Backend(BackendBase):
         """
         Load all jobs using the new pyslurm.Jobs API and return a dict mapping Slurm job IDs to job dictionaries.
         """
+        # List of required attributes - this bypasses unnecessary calls
+        required_attrs = [
+            "temporary_disk_per_node",
+            "array_job_id",
+            "array_task_id",
+            "name",
+            "user_id",
+            "cpus",
+            "state",
+            "time_limit",
+            "run_time",
+            "start_time",
+            "memory_per_cpu",
+            "ntasks_per_node",
+            "cpus_per_task",
+            "num_nodes",
+            "memory_per_gpu",
+            "memory_per_node",
+        ]
+
         jobs_dict = {}
         jobs = pyslurm.Jobs.load()
         jobs.load_steps()
@@ -1112,8 +1132,18 @@ class Backend(BackendBase):
             # Skip cancelled jobs
             if job.state == "CANCELLED":
                 continue
-            jdict = job.to_dict()
-            # Get the resource layout
-            jdict["resource_layout"] = job.get_resource_layout_per_node()
+
+            # Create dictionary with only required attributes
+            jdict = {}
+            for attr_name in required_attrs:
+                jdict[attr_name] = getattr(job, attr_name, None)
+
+            # Get the resource layout (always needed)
+            try:
+                jdict["resource_layout"] = job.get_resource_layout_per_node()
+            except Exception as e:
+                self.log.warning(f"Failed to get resource layout for job {job_id}: {e}")
+                jdict["resource_layout"] = {}
+
             jobs_dict[job.id] = jdict
         return jobs_dict
