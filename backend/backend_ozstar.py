@@ -536,7 +536,7 @@ class Backend(BackendBase):
         Generate list of full job IDs and map between Slurm job IDs and full IDs.
 
         Returns:
-            List[str]: Full job IDs ("<array_job_id>_<array_task_id>" for array jobs, else Slurm ID).
+            List[str]: Full job IDs ("<array_id>_<array_task_id>" for array jobs, else Slurm ID).
         """
         # Reset mappings
         self.id_map = {}
@@ -545,7 +545,7 @@ class Backend(BackendBase):
         full_ids = []
         # Iterate over Slurm job entries
         for slurm_id, job_entry in self.pyslurm_job.items():
-            array_job = job_entry.get("array_job_id")
+            array_job = job_entry.get("array_id")
             array_task = job_entry.get("array_task_id")
             # Determine full ID for array or regular job
             if array_job is not None and array_task is not None:
@@ -1107,7 +1107,7 @@ class Backend(BackendBase):
         # List of required attributes - this bypasses unnecessary calls
         required_attrs = [
             "temporary_disk_per_node",
-            "array_job_id",
+            "array_id",
             "array_task_id",
             "name",
             "user_id",
