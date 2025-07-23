@@ -468,6 +468,53 @@ div:focus {outline: 0px;}
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* Custom scrollbar styling for all browsers */
+.main-item {
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--medium-shade) transparent;
+}
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+.main-item::-webkit-scrollbar {
+  width: 8px;
+  background: transparent;
+}
+
+.main-item::-webkit-scrollbar-track {
+  background: transparent !important;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+}
+
+.main-item::-webkit-scrollbar-track-piece {
+  background: transparent !important;
+  border: none;
+}
+
+.main-item::-webkit-scrollbar-thumb {
+  background: var(--medium-shade);
+  border-radius: 4px;
+  border: none;
+  transition: background 0.2s ease;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+}
+
+.main-item::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-shade);
+}
+
+.main-item::-webkit-scrollbar-thumb:active {
+  background: var(--accent-color);
+}
+
+.main-item::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
 .main-item.left {
   height: 74vh;
   position: relative;
