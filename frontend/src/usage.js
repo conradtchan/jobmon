@@ -23,11 +23,14 @@ export function getNodeUsage(jid, job, node, host) {
     if (node.cpu.core.length > 0) {
       for (let i = 0; i < layout.length; i += 1) {
         const iLayout = layout[i];
-        usage.cpu.user += node.cpu.core[iLayout][config.cpuKeys.user]
-                + node.cpu.core[iLayout][config.cpuKeys.nice];
-        usage.cpu.system += node.cpu.core[iLayout][config.cpuKeys.system];
-        usage.cpu.wait += node.cpu.core[iLayout][config.cpuKeys.wait];
-        usage.cpu.idle += node.cpu.core[iLayout][config.cpuKeys.idle];
+        // Check if the specific core exists in the data
+        if (iLayout < node.cpu.core.length && node.cpu.core[iLayout]) {
+          usage.cpu.user += node.cpu.core[iLayout][config.cpuKeys.user]
+                  + node.cpu.core[iLayout][config.cpuKeys.nice];
+          usage.cpu.system += node.cpu.core[iLayout][config.cpuKeys.system];
+          usage.cpu.wait += node.cpu.core[iLayout][config.cpuKeys.wait];
+          usage.cpu.idle += node.cpu.core[iLayout][config.cpuKeys.idle];
+        }
       }
     }
 

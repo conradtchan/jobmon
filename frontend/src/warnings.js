@@ -50,8 +50,8 @@ export function instantWarnings(data) {
           for (let k = 0; k < nCores; k += 1) {
             const iLayout = layout[k];
 
-            // Check if iLayout is in node.cpu.core
-            if (iLayout <= node.cpu.core.length) {
+            // Check if iLayout is in node.cpu.core and the core data exists
+            if (iLayout < node.cpu.core.length && node.cpu.core[iLayout]) {
               cpuUsage += node.cpu.core[iLayout][config.cpuKeys.user]
               + node.cpu.core[iLayout][config.cpuKeys.system]
               + node.cpu.core[iLayout][config.cpuKeys.nice];
