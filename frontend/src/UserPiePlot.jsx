@@ -200,7 +200,6 @@ export default class UserPiePlot extends React.Component {
                       and impacting other users
                     </div>
                     )}
-          <br />
           <div className="heading">
             Running
           </div>
