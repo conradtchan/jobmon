@@ -5,6 +5,9 @@ body {
   padding: 0;
   font-family: 'Rubik', sans-serif;
   background-color: var(--background);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button {
@@ -30,7 +33,8 @@ div:focus {outline: 0px;}
   flex: 1;
   margin: auto;
   font-size: xx-large;
-  font-weight: 300;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 #header-right {
@@ -68,8 +72,12 @@ div:focus {outline: 0px;}
 }
 
 #time-machine-title {
-  font-size: x-large;
+  font-size: 1.3em;
+  font-weight: 600;
   text-align: center;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: 0.01em;
 }
 
 #timeline {
@@ -78,7 +86,9 @@ div:focus {outline: 0px;}
 }
 
 #clock {
-  font-size: x-large;
+  font-size: 1.3em;
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
 #theme-switch {
@@ -171,9 +181,11 @@ div:focus {outline: 0px;}
 }
 
 .job-names.heading {
-  font-size: large;
-  font-weight: 500;
-  margin: 0;
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
 }
 
 .job-name {
@@ -192,10 +204,12 @@ div:focus {outline: 0px;}
 }
 
 .job-name-title {
-  font-weight: 500;
+  font-weight: 600;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  font-size: 0.95em;
+  margin-bottom: 4px;
 }
 
 .job-name-title-item-l {
@@ -242,7 +256,8 @@ div:focus {outline: 0px;}
   text-align: left;
   background-color: var(--light-shade);
   box-sizing: border-box;
-  padding: var(--box-padding);
+  padding: 20px;
+  margin-bottom: 16px;
   border-radius: var(--rounding-radius);
   overflow-y: scroll;
   min-height: 600px;
@@ -274,6 +289,9 @@ div:focus {outline: 0px;}
   bottom: 0;
   left: 54%;
   width: 41%;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
 }
 
 .main-item.center-right {
@@ -332,8 +350,9 @@ div:focus {outline: 0px;}
 .user-string-username {
   flex: 0 0 25%;
   text-align: right;
-  padding-right: 5px;
-  font-weight: 500;
+  padding-right: 8px;
+  font-weight: 600;
+  font-size: 0.95em;
 }
 
 .user-string-percent {
@@ -378,8 +397,9 @@ div:focus {outline: 0px;}
 .queue-string-username {
   flex: 0 0 15%;
   text-align: right;
-  padding-right: 5px;
-  font-weight: 500;
+  padding-right: 8px;
+  font-weight: 600;
+  font-size: 0.95em;
 }
 
 .queue-string-hours {
@@ -417,20 +437,28 @@ div:focus {outline: 0px;}
 }
 
 #username-title {
-  font-size: x-large;
+  font-size: 1.4em;
+  font-weight: 600;
   text-align: center;
-  color: var(--text-color);
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: 0.01em;
 }
 
 #nodename-title {
   text-align: center;
+  margin-bottom: 12px;
 }
 
 #id-button {
   all: unset;
-  font-size: x-large;
-  color: var(--text-color);
+  font-size: 1.3em;
+  font-weight: 600;
+  color: var(--text-primary);
   cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 #id-button:active {
@@ -439,8 +467,10 @@ div:focus {outline: 0px;}
 
 .copyhint {
   font-style: italic;
-  color: var(--text-color);
-  display: none
+  color: var(--text-secondary);
+  font-size: 0.85em;
+  display: none;
+  margin-top: 4px;
 }
 
 #id-button:hover + .copyhint {
@@ -450,18 +480,22 @@ div:focus {outline: 0px;}
 
 #nodename-subtitle {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
   white-space: pre-wrap;      /* CSS3 */
   white-space: -moz-pre-wrap; /* Firefox */
   white-space: -pre-wrap;     /* Opera <7 */
   white-space: -o-pre-wrap;   /* Opera 7 */
   word-wrap: break-word;      /* IE */
-  color: var(--text-color);
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  font-weight: 500;
 }
 
 .time-selector {
   text-align: center;
-  color: var(--text-color);
+  color: var(--text-primary);
+  margin: 16px 0;
+  font-size: 0.95em;
 }
 
 .core-grid {
@@ -528,13 +562,25 @@ div:focus {outline: 0px;}
 .instruction {
   font-style: italic;
   text-align: center;
-  color: var(--text-color);
+  color: var(--text-secondary);
+  font-size: 0.95em;
+  line-height: 1.5;
+  margin: 16px 0;
 }
 
 .heading {
-  font-size: large;
+  font-weight: 600;
+  font-size: 1.1em;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.label {
+  font-size: 0.9em;
   font-weight: 500;
-  color: var(--text-color);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
 }
 
 #cpu-legend {
@@ -679,5 +725,8 @@ input[type=text] {
 }
 
 .radio-label {
-  margin-right: 10px;
+  margin-right: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
 }

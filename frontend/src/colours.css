@@ -10,6 +10,9 @@
     /* Text colors */
     --text-color: #000;
     --text-color-alt: #000;
+    --text-color-secondary: #666;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
 
     /* CPU core ring color */
     --core-ring: #000;
@@ -65,6 +68,8 @@
 
   --text-color: #eee;
   --text-color-alt: #333;
+  --text-primary: #f8f9fa;
+  --text-secondary: #9ca3af;
 
   --hover-outline-color: #555;
   --hover-shade: #000;
