@@ -420,55 +420,70 @@ export default class NodeDetails extends React.Component {
     const gpuMemNames = this.getGpuMemoryNames();
     const gpuMemTotalNames = this.getGpuMemoryTotalNames();
 
-    return (
-      <div className="prop-charts">
+    const charts = [];
+
+    charts.push(
+      <PropChart
+        key="cpu-total"
+        name="CPU total"
+        data={historyChart}
+        dataKeys={["user", "system", "wait"]}
+        colors={[
+          style.getPropertyValue("--piecolor-user"),
+          style.getPropertyValue("--piecolor-system"),
+          style.getPropertyValue("--piecolor-wait"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+          "fill",
+        ]}
+        unit="%"
+        dataMax={100}
+        stacked
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="memory"
+        name="Memory"
+        data={historyChart}
+        dataKeys={["mem"]}
+        colors={[
+          style.getPropertyValue("--piecolor-mem"),
+        ]}
+        lineStyle={[
+          "fill",
+        ]}
+        unit="B"
+        dataMax={node.mem.total * constants.mb}
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="swap"
+        name="Swap"
+        data={historyChart}
+        dataKeys={["swap"]}
+        colors={[
+          style.getPropertyValue("--piecolor-wait"),
+        ]}
+        lineStyle={[
+          "fill",
+        ]}
+        unit="B"
+        dataMax={node.swap.total * constants.mb}
+        stacked={false}
+      />,
+    );
+
+    if (gpuNames.length > 0) {
+      charts.push(
         <PropChart
-          name="CPU total"
-          data={historyChart}
-          dataKeys={["user", "system", "wait"]}
-          colors={[
-            style.getPropertyValue("--piecolor-user"),
-            style.getPropertyValue("--piecolor-system"),
-            style.getPropertyValue("--piecolor-wait"),
-          ]}
-          lineStyle={[
-            "fill",
-            "fill",
-            "fill",
-          ]}
-          unit="%"
-          dataMax={100}
-          stacked
-        />
-        <PropChart
-          name="Memory"
-          data={historyChart}
-          dataKeys={["mem"]}
-          colors={[
-            style.getPropertyValue("--piecolor-mem"),
-          ]}
-          lineStyle={[
-            "fill",
-          ]}
-          unit="B"
-          dataMax={node.mem.total * constants.mb}
-          stacked={false}
-        />
-        <PropChart
-          name="Swap"
-          data={historyChart}
-          dataKeys={["swap"]}
-          colors={[
-            style.getPropertyValue("--piecolor-wait"),
-          ]}
-          lineStyle={[
-            "fill",
-          ]}
-          unit="B"
-          dataMax={node.swap.total * constants.mb}
-          stacked={false}
-        />
-        <PropChart
+          key="gpu-utilization"
           name="GPU Utilization"
           data={historyChart}
           dataKeys={gpuNames}
@@ -484,8 +499,14 @@ export default class NodeDetails extends React.Component {
           unit="%"
           dataMax={100}
           stacked={false}
-        />
+        />,
+      );
+    }
+
+    if (gpuMemNames.length > 0) {
+      charts.push(
         <PropChart
+          key="gpu-memory"
           name="GPU Memory"
           data={historyChart}
           dataKeys={gpuMemNames}
@@ -507,71 +528,93 @@ export default class NodeDetails extends React.Component {
               : "dataMax"
           }
           stacked={false}
-        />
-        <PropChart
-          name="InfiniBand traffic"
-          data={historyChart}
-          dataKeys={["infiniband_in", "infiniband_out"]}
-          colors={[
-            style.getPropertyValue("--piecycle-1"),
-            style.getPropertyValue("--piecycle-2"),
-          ]}
-          lineStyle={[
-            "fill",
-            "fill",
-          ]}
-          unit="B/s"
-          dataMax="dataMax"
-          stacked={false}
-        />
-        <PropChart
-          name="InfiniBand packet rate"
-          data={historyChart}
-          dataKeys={["infiniband_pkts_in", "infiniband_pkts_out"]}
-          colors={[
-            style.getPropertyValue("--piecycle-3"),
-            style.getPropertyValue("--piecycle-4"),
-          ]}
-          lineStyle={[
-            "fill",
-            "fill",
-          ]}
-          unit="/s"
-          dataMax="dataMax"
-          stacked={false}
-        />
-        <PropChart
-          name="Lustre access"
-          data={historyChart}
-          dataKeys={["lustre_read", "lustre_write"]}
-          colors={[
-            style.getPropertyValue("--piecycle-1"),
-            style.getPropertyValue("--piecycle-2"),
-          ]}
-          lineStyle={[
-            "fill",
-            "fill",
-          ]}
-          unit="B/s"
-          dataMax="dataMax"
-          stacked={false}
-        />
-        <PropChart
-          name="JOBFS access"
-          data={historyChart}
-          dataKeys={["jobfs_read", "jobfs_write"]}
-          colors={[
-            style.getPropertyValue("--piecycle-1"),
-            style.getPropertyValue("--piecycle-2"),
-          ]}
-          lineStyle={[
-            "fill",
-            "fill",
-          ]}
-          unit="B/s"
-          dataMax="dataMax"
-          stacked={false}
-        />
+        />,
+      );
+    }
+
+    charts.push(
+      <PropChart
+        key="infiniband-traffic"
+        name="InfiniBand traffic"
+        data={historyChart}
+        dataKeys={["infiniband_in", "infiniband_out"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        dataMax="dataMax"
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="infiniband-packets"
+        name="InfiniBand packet rate"
+        data={historyChart}
+        dataKeys={["infiniband_pkts_in", "infiniband_pkts_out"]}
+        colors={[
+          style.getPropertyValue("--piecycle-3"),
+          style.getPropertyValue("--piecycle-4"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+        ]}
+        unit="/s"
+        dataMax="dataMax"
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="lustre-access"
+        name="Lustre access"
+        data={historyChart}
+        dataKeys={["lustre_read", "lustre_write"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        dataMax="dataMax"
+        stacked={false}
+      />,
+    );
+
+    charts.push(
+      <PropChart
+        key="jobfs-access"
+        name="JOBFS access"
+        data={historyChart}
+        dataKeys={["jobfs_read", "jobfs_write"]}
+        colors={[
+          style.getPropertyValue("--piecycle-1"),
+          style.getPropertyValue("--piecycle-2"),
+        ]}
+        lineStyle={[
+          "fill",
+          "fill",
+        ]}
+        unit="B/s"
+        dataMax="dataMax"
+        stacked={false}
+      />,
+    );
+
+    return (
+      <div className="prop-charts">
+        {charts}
       </div>
     );
   }
