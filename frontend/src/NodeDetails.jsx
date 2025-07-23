@@ -235,6 +235,13 @@ export default class NodeDetails extends React.Component {
       // Only if the job has started running
       if (Object.prototype.hasOwnProperty.call(data.jobs, selectedJobId)) {
         const job = data.jobs[selectedJobId];
+
+        // Skip this data point if the job is not in RUNNING state
+        if (job.state !== "RUNNING") {
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
         const usage = getNodeUsage(selectedJobId, job, nodeData, name);
 
         // Memory usage
