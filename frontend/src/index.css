@@ -107,10 +107,11 @@ div:focus {outline: 0px;}
   text-align: center;
   color: var(--hover-shade);
   background: var(--bad-job-color);
-  padding: 6px 8px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  font-size: 0.85em;
+  padding: 4px 6px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  line-height: 1.2;
 }
 
 .overview-pies {
@@ -261,7 +262,7 @@ div:focus {outline: 0px;}
   text-align: left;
   background-color: var(--light-shade);
   box-sizing: border-box;
-  padding: 16px;
+  padding: 12px;
   margin-bottom: 16px;
   border-radius: 12px;
   overflow-y: scroll;
@@ -318,11 +319,11 @@ div:focus {outline: 0px;}
 
   width: 100%;
 
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--light-shade);
   border: 1px solid var(--dark-shade);
-  margin-bottom: 4px;
-  padding: 8px;
+  margin-bottom: 2px;
+  padding: 4px 6px;
 
   -o-transition: var(--transition-time);
   -ms-transition: var(--transition-time);
@@ -357,20 +358,23 @@ div:focus {outline: 0px;}
 .user-string-username {
   flex: 0 0 25%;
   text-align: right;
-  padding-right: 6px;
+  padding-right: 4px;
   font-weight: 600;
-  font-size: 0.9em;
+  font-size: 0.8em;
+  line-height: 1.2;
 }
 
 .user-string-percent {
   flex: 0 0 15%;
-  padding-right: 4px;
-  font-size: 0.9em;
+  padding-right: 3px;
+  font-size: 0.8em;
+  line-height: 1.2;
 }
 
 .user-string-jobs {
   flex: 0 0 40%;
-  font-size: 0.9em;
+  font-size: 0.8em;
+  line-height: 1.2;
 }
 
 .user-strings {
@@ -380,13 +384,13 @@ div:focus {outline: 0px;}
 
 .user-strings-halfcol-left {
   flex: 1 1 50%;
-  margin-left: 4px;
-  margin-right: 4px;
+  margin-left: 2px;
+  margin-right: 2px;
 }
 
 .user-strings-halfcol-right {
   flex: 1 1 50%;
-  margin-right: 4px;
+  margin-right: 2px;
 }
 
 .user-strings-col {
@@ -586,12 +590,10 @@ div:focus {outline: 0px;}
 
 .heading {
   font-weight: 600;
-  font-size: 1.0em;
-  margin-bottom: 8px;
+  font-size: 0.95em;
+  margin-bottom: 6px;
   color: var(--text-primary);
   letter-spacing: 0.02em;
-  padding-bottom: 2px;
-  border-bottom: 2px solid var(--dark-shade);
 }
 
 .label {
@@ -723,35 +725,36 @@ div:focus {outline: 0px;}
 
 .sort-selector {
   color: var(--text-color);
-  margin-bottom: 6px;
-  font-size: 0.9em;
+  margin-bottom: 4px;
+  font-size: 0.8em;
 }
 
 .input-box {
   text-align: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 input[type=text] {
-  padding: 6px;
+  padding: 4px;
   border-radius: var(--rounding-radius);
   border: var(--border-width) solid var(--medium-shade);
   background-color: var(--background);
   color: var(--text-color);
   font-family: inherit;
-  font-size: 0.9em;
+  font-size: 0.8em;
   text-align: center;
 }
 
 .radio-label {
-  margin-right: 16px;
+  margin-right: 12px;
   font-weight: 500;
   color: var(--text-primary);
   cursor: pointer;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 6px;
   transition: all 0.2s ease;
   border: 1px solid transparent;
+  font-size: 0.8em;
 }
 
 .radio-label:hover {
@@ -760,5 +763,5 @@ input[type=text] {
 }
 
 .radio-label input[type="radio"] {
-  margin-right: 6px;
+  margin-right: 4px;
 }
