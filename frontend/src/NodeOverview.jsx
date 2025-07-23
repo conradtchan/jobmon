@@ -348,14 +348,12 @@ export default class NodeOverview extends React.Component {
                 {this.getRunningJobChart(job, jid)}
               </div>
             )}
-          </button>
-          {(jid === jobId) && (
-            <div>
+            {(jid === jobId) && (
               <div className="overview-pies">
                 {this.getNodePies()}
               </div>
-            </div>
-          )}
+            )}
+          </button>
         </div>
       );
     }
