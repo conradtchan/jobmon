@@ -76,6 +76,12 @@ export default class NodeDetails extends React.Component {
     const corePies = [];
     for (let i = 0; i < node.cpu.core.length; i += 1) {
       const core = node.cpu.core[i];
+      // Skip if core data is missing
+      if (!core) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+
       let coreSelected = false;
       if (!(jobCores === null)) {
         coreSelected = jobCores.includes(i);
@@ -300,9 +306,15 @@ export default class NodeDetails extends React.Component {
       const x = {
         time: data.timestamp,
         timeString: `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`,
-        user: nodeData.cpu.total[config.cpuKeys.user] + nodeData.cpu.total[config.cpuKeys.nice],
-        system: nodeData.cpu.total[config.cpuKeys.system],
-        wait: nodeData.cpu.total[config.cpuKeys.wait],
+        user: (nodeData.cpu.total && nodeData.cpu.total[config.cpuKeys.user] !== undefined)
+          ? nodeData.cpu.total[config.cpuKeys.user] + nodeData.cpu.total[config.cpuKeys.nice]
+          : 0,
+        system: (nodeData.cpu.total && nodeData.cpu.total[config.cpuKeys.system] !== undefined)
+          ? nodeData.cpu.total[config.cpuKeys.system]
+          : 0,
+        wait: (nodeData.cpu.total && nodeData.cpu.total[config.cpuKeys.wait] !== undefined)
+          ? nodeData.cpu.total[config.cpuKeys.wait]
+          : 0,
         mem: nodeData.mem.used * constants.mb,
         job_user: jobUser,
         job_system: jobSystem,
