@@ -197,12 +197,9 @@ export default class UserPiePlot extends React.Component {
                     && (
                     <div className="terrible-job">
                       Highlighted users are severely underutilizing resources
-                      and impacting other users
+                      or impacting other users
                     </div>
                     )}
-          <div className="heading">
-            Running
-          </div>
           <div className="sort-selector">
             <label htmlFor="alpha">
               <input type="radio" id="alpha" name="nameSort" value="alpha" onChange={() => this.setState({ nameSort: "alpha" })} checked={nameSort === "alpha"} />
