@@ -121,7 +121,18 @@ export default class NodePie extends React.PureComponent {
     };
 
     return (
-      <button type="button" className="overview-pie" onClick={handleNodePieClick}>
+      <div
+        className="overview-pie"
+        onClick={handleNodePieClick}
+        role="button"
+        tabIndex="0"
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleNodePieClick(event);
+          }
+        }}
+      >
         <ResponsiveContainer>
           <PieChart
             onMouseEnter={() => this.setState({ expanded: true })}
@@ -204,7 +215,7 @@ export default class NodePie extends React.PureComponent {
             )}
           </PieChart>
         </ResponsiveContainer>
-      </button>
+      </div>
     );
   }
 }

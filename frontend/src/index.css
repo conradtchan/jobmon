@@ -155,11 +155,17 @@ div:focus {outline: 0px;}
   padding: 0;
   transition: all 0.2s ease;
   border-radius: 50%;
+  cursor: pointer;
 }
 
 .overview-pie:hover {
   transform: scale(1.1);
   filter: brightness(1.1);
+}
+
+.overview-pie:focus {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
 }
 
 .other-job-row {
@@ -353,6 +359,55 @@ div:focus {outline: 0px;}
   border-radius: 3px;
   flex-shrink: 0;
   white-space: nowrap;
+}
+
+.job-status {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.job-status:nth-child(1) {
+  background-color: var(--piecolor-system);
+  color: var(--background);
+}
+
+/* Status-specific styling */
+.job-name-title-item-c .job-status {
+  background-color: var(--text-secondary);
+  color: var(--background);
+}
+
+/* Running jobs - green */
+.job-name-title:has(.job-status:contains("RUNNING")) .job-status,
+.job-status[data-status="RUNNING"] {
+  background-color: var(--piecolor-system);
+  color: var(--background);
+}
+
+/* Pending jobs - orange */
+.job-status[data-status="PENDING"] {
+  background-color: var(--piecolor-wait);
+  color: var(--background);
+}
+
+/* Completed jobs - blue */
+.job-status[data-status="COMPLETED"] {
+  background-color: var(--accent-color);
+  color: var(--background);
+}
+
+/* Failed/Cancelled jobs - red */
+.job-status[data-status="FAILED"],
+.job-status[data-status="CANCELLED"] {
+  background-color: var(--bad-job-color);
+  color: var(--background);
 }
 
 .cohab-job {
@@ -669,29 +724,40 @@ div:focus {outline: 0px;}
   font-weight: 500;
 }
 
-#username-title {
-  font-size: 1.5em;
-  font-weight: 700;
-  text-align: center;
-  color: var(--text-primary);
+/* Compact username header section for center panel */
+.username-section {
   margin-bottom: 20px;
-  letter-spacing: 0.02em;
-  padding: 12px 16px;
+  padding: 20px 16px 16px 16px;
   background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--dark-shade);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   position: relative;
-  overflow: hidden;
 }
 
-#username-title::after {
-  content: "";
+.username-section::before {
+  content: "Selected User";
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: var(--dark-shade);
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+#username-title {
+  font-size: 1.3em;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-primary);
+  margin: 8px 0 0 0;
+  padding: 0;
+  background: none;
+  border: none;
+  letter-spacing: 0.01em;
 }
 
 /* New unified job info header with compact grey styling */
@@ -1042,30 +1108,72 @@ div:focus {outline: 0px;}
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  background: var(--light-shade);
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
   margin-bottom: var(--block-spacing);
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 10px;
+  padding: 16px 12px 12px 12px;
   box-sizing: border-box;
   border: 1px solid var(--dark-shade);
   color: var(--text-color);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+#cpu-legend::before {
+  content: "Resource Legend";
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
 }
 
 .cpu-legend-item {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
-  width: 33%;
+  align-items: center;
+  width: 20%;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.cpu-legend-item:hover {
+  background: var(--background);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.cpu-legend-label {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .circle {
-  width: 1em;
-  height: 1em;
+  width: 12px;
+  height: 12px;
   -webkit-border-radius: 50%;
   -moz-border-radius: 50%;
   border-radius: 50%;
-  margin-right: 0.3em;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.cpu-legend-item:hover .circle {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .circle.user {

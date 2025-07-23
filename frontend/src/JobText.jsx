@@ -19,6 +19,7 @@ export default class JobText extends React.PureComponent {
             {id}
           </div>
           <div className="job-name-title-item-c">
+            <span className="job-status" data-status={job.state}>{job.state}</span>
             {timeConvert(job.runTime)}
             {" "}
             /

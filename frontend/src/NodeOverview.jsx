@@ -385,7 +385,7 @@ export default class NodeOverview extends React.Component {
                     &nbsp;
           </div>
           <div className="cpu-legend-label">
-            user
+            User
           </div>
         </div>
         <div className="cpu-legend-item">
@@ -393,7 +393,7 @@ export default class NodeOverview extends React.Component {
                     &nbsp;
           </div>
           <div className="cpu-legend-label">
-            sys
+            System
           </div>
         </div>
         <div className="cpu-legend-item">
@@ -401,7 +401,7 @@ export default class NodeOverview extends React.Component {
                     &nbsp;
           </div>
           <div className="cpu-legend-label">
-            wait
+            Wait
           </div>
         </div>
         <div className="cpu-legend-item">
@@ -409,7 +409,7 @@ export default class NodeOverview extends React.Component {
                     &nbsp;
           </div>
           <div className="cpu-legend-label">
-            mem
+            Memory
           </div>
         </div>
         <div className="cpu-legend-item">
@@ -417,7 +417,7 @@ export default class NodeOverview extends React.Component {
                     &nbsp;
           </div>
           <div className="cpu-legend-label">
-            gpu
+            GPU
           </div>
         </div>
       </div>
@@ -442,63 +442,20 @@ export default class NodeOverview extends React.Component {
 
     return (
       <div className="main-item center">
-        <div id="username-title">
-          {username}
+        <div className="username-section">
+          <div id="username-title">
+            {username}
+          </div>
         </div>
         {legend}
 
         <br />
-        <div className="heading">
-          Running
-        </div>
-        {jobList.running}
-        <br />
-
         <div className="job-names">
-          {(jobList.pending.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Pending
-              </div>
-              <div>
-                {jobList.pending}
-              </div>
-            </div>
-          )}
-          {(jobList.completed.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Completed
-              </div>
-              <div>
-                {jobList.completed}
-              </div>
-            </div>
-          )}
-          {(jobList.cancelled.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Cancelled
-              </div>
-              <div>
-                {jobList.cancelled}
-              </div>
-            </div>
-          )}
-          {(jobList.failed.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Failed
-              </div>
-              <div>
-                {jobList.failed}
-              </div>
-            </div>
-          )}
+          {jobList.running}
+          {jobList.pending}
+          {jobList.completed}
+          {jobList.cancelled}
+          {jobList.failed}
         </div>
       </div>
     );
