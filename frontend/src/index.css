@@ -447,7 +447,7 @@ div:focus {outline: 0px;}
 
 #nodename-title {
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 1px;
 }
 
 #id-button {
@@ -456,7 +456,6 @@ div:focus {outline: 0px;}
   font-weight: 600;
   color: var(--text-primary);
   cursor: pointer;
-  padding: 8px 12px;
   border-radius: 6px;
   transition: all 0.2s ease;
 }
@@ -480,7 +479,7 @@ div:focus {outline: 0px;}
 
 #nodename-subtitle {
   text-align: center;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
   white-space: pre-wrap;      /* CSS3 */
   white-space: -moz-pre-wrap; /* Firefox */
   white-space: -pre-wrap;     /* Opera <7 */
@@ -494,7 +493,7 @@ div:focus {outline: 0px;}
 .time-selector {
   text-align: center;
   color: var(--text-primary);
-  margin: 16px 0;
+  margin: 6px 0;
   font-size: 0.95em;
 }
 

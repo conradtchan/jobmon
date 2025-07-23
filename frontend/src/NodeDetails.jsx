@@ -807,7 +807,6 @@ export default class NodeDetails extends React.Component {
           <div className="copyhint">
             Click on job ID to copy to clipboard
           </div>
-
         </div>
         <div id="nodename-subtitle">
           {(selectedJobId !== null) && jobs[selectedJobId].name}
@@ -849,7 +848,6 @@ export default class NodeDetails extends React.Component {
             30 minutes
           </label>
         </div>
-        <br />
         <div className="heading">
           Job resource usage
         </div>
