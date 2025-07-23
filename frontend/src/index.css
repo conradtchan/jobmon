@@ -1106,10 +1106,10 @@ div:focus {outline: 0px;}
   font-style: italic;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 1.0em;
-  line-height: 1.6;
-  margin: 24px 0;
-  padding: 16px;
+  font-size: 0.9em;
+  line-height: 1.4;
+  margin: 8px 0;
+  padding: 8px 12px;
   background: var(--light-shade);
   border-radius: 6px;
 }

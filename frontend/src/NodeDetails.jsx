@@ -819,7 +819,6 @@ export default class NodeDetails extends React.Component {
           <div className="instruction">
             Select a running job to view nodes
           </div>
-          <br />
           {selectedJobId === null ? null
             : (
               <div className="instruction">
