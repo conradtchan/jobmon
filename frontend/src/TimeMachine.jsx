@@ -154,9 +154,6 @@ export default class TimeMachine extends React.Component {
             {timeString(parseInt(timeAgo, 10))}
             {" ago"}
           </div>
-          <div className="instruction">
-            Click on the chart to jump to that time
-          </div>
         </div>
         <div id="timeline">
           <ResponsiveContainer width="100%" height={100}>
@@ -193,6 +190,9 @@ export default class TimeMachine extends React.Component {
               <Tooltip labelFormatter={(unixTime) => moment.unix(unixTime).format("HH:mm dddd")} />
             </ComposedChart>
           </ResponsiveContainer>
+        </div>
+        <div className="instruction">
+          Click on the chart to jump to that time
         </div>
       </div>
     );
