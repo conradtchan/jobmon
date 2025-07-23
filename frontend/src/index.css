@@ -356,10 +356,8 @@ div:focus {outline: 0px;}
 }
 
 .cohab-job {
-  width: 48%;
+  flex: 0 0 calc(50% - 4px);
   cursor: pointer;
-  margin-right: var(--inter-item-spacing);
-  margin-bottom: var(--inter-item-spacing);
   background-color: var(--light-shade);
   border-radius: 8px;
   padding: 14px 16px;
@@ -367,6 +365,8 @@ div:focus {outline: 0px;}
   border: 1px solid var(--dark-shade);
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  min-width: 0;
+  max-width: calc(50% - 4px);
 }
 
 .cohab-job:hover {
@@ -694,9 +694,111 @@ div:focus {outline: 0px;}
   background: var(--dark-shade);
 }
 
+/* New unified job info header with compact grey styling */
+.job-info-header {
+  margin-bottom: 20px;
+  padding: 20px 16px 16px 16px;
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  border-radius: 10px;
+  border: 1px solid var(--dark-shade);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.job-info-header::before {
+  content: "Job Information";
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.job-info-header #id-button {
+  all: unset;
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--accent-color);
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  background: var(--background);
+  border: 2px solid var(--accent-color);
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+.job-info-header #id-button:hover {
+  background: var(--accent-color);
+  color: var(--background);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 122, 255, 0.3);
+}
+
+.job-info-header #id-button:active {
+  transform: translateY(0);
+}
+
+.job-info-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.job-info-details .node-name {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.job-info-details .job-name {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.job-info-header .copyhint {
+  font-style: italic;
+  color: var(--text-secondary);
+  font-size: 0.8em;
+  display: none;
+  position: absolute;
+  bottom: 4px;
+  right: 12px;
+}
+
+.job-info-header #id-button:hover + .job-info-details + .copyhint,
+.job-info-header #id-button:hover ~ .copyhint {
+  display: block;
+}
+
 #nodename-title {
   text-align: center;
-  margin-bottom: 1px;
+  margin-bottom: 20px;
+  font-size: 1.5em;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  border-radius: 8px;
+  border: 1px solid var(--dark-shade);
+  position: relative;
+  overflow: hidden;
 }
 
 #id-button {
@@ -718,55 +820,112 @@ div:focus {outline: 0px;}
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-#id-button:active {
-  color: var(--hover-shade);
-  transform: translateY(0);
+/* Compact time selector integrated into job info header */
+.time-selector-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
-.copyhint {
-  font-style: italic;
+.time-selector-compact::before {
+  content: "Time Window";
+  font-size: 0.65em;
+  font-weight: 600;
   color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.time-select {
+  background: var(--background);
+  border: 1px solid var(--medium-shade);
+  border-radius: 6px;
+  padding: 4px 8px;
   font-size: 0.85em;
-  display: none;
-  margin-top: 4px;
-}
-
-#id-button:hover + .copyhint {
-  display: block;
-}
-
-
-#nodename-subtitle {
-  text-align: center;
-  margin-bottom: 4px;
-  white-space: pre-wrap;      /* CSS3 */
-  white-space: -moz-pre-wrap; /* Firefox */
-  white-space: -pre-wrap;     /* Opera <7 */
-  white-space: -o-pre-wrap;   /* Opera 7 */
-  word-wrap: break-word;      /* IE */
-  color: var(--text-secondary);
-  font-size: 0.9em;
   font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 60px;
+  text-align: center;
+}
+
+.time-select:hover {
+  border-color: var(--accent-color);
+  background: var(--light-shade);
+}
+
+.time-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(99, 122, 255, 0.2);
 }
 
 .time-selector {
   text-align: center;
   color: var(--text-primary);
-  margin: 6px 0;
-  font-size: 0.95em;
+  margin: 6px 0 16px 0;
+  font-size: 0.8em;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  border-radius: 8px;
+  border: 1px solid var(--dark-shade);
+  position: relative;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.time-selector::before {
+  content: "Time Window";
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.time-selector label {
+  display: inline-block;
+  margin-top: 8px;
+  margin-right: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  font-size: 0.85em;
+}
+
+.time-selector label:hover {
+  background: var(--background);
+  border-color: var(--medium-shade);
+}
+
+.time-selector label input[type="radio"] {
+  margin-right: 6px;
+  accent-color: var(--accent-color);
 }
 
 .core-grid {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  background: var(--light-shade);
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 8px;
   box-sizing: border-box;
   margin-bottom: var(--inter-item-spacing);
-  border: 1px solid var(--dark-shade);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+  background: none;
+  box-shadow: none;
 }
 
 .core-pie {
@@ -778,13 +937,13 @@ div:focus {outline: 0px;}
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  background: var(--light-shade);
-  border-radius: 8px;
-  padding: 16px;
+  border-radius: 6px;
+  padding: 8px;
   box-sizing: border-box;
   margin-bottom: var(--block-spacing);
-  border: 1px solid var(--dark-shade);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: none;
+  background: none;
+  box-shadow: none;
   justify-content: left;
 }
 
@@ -843,18 +1002,39 @@ div:focus {outline: 0px;}
 }
 
 .heading {
-  font-weight: 600;
-  font-size: 0.95em;
-  margin-bottom: 6px;
+  font-weight: 700;
+  font-size: 1.1em;
+  margin: 20px 0 12px 0;
   color: var(--text-primary);
   letter-spacing: 0.02em;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  border-radius: 6px;
+  border: 1px solid var(--dark-shade);
+  position: relative;
+}
+
+.heading::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 30%;
+  height: 2px;
+  background: var(--accent-color);
+  border-radius: 0 0 6px 0;
 }
 
 .label {
   font-size: 0.9em;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 12px 0 8px 0;
+  padding: 6px 10px;
+  background: linear-gradient(135deg, var(--medium-shade) 0%, var(--light-shade) 100%);
+  border-radius: 4px;
+  border: 1px solid var(--dark-shade);
+  letter-spacing: 0.01em;
 }
 
 #cpu-legend {
@@ -1100,4 +1280,86 @@ div:focus {outline: 0px;}
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 0 2px rgba(99, 122, 255, 0.2);
+}
+
+/* Enhanced right panel resource section containers */
+
+.resource-section {
+  margin-bottom: 24px;
+  padding: 20px 16px 16px 16px;
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  border-radius: 10px;
+  border: 1px solid var(--dark-shade);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+/* Apply compact grey heading style like left panel to resource sections */
+.job-usage-section::before {
+  content: "Job Resource Usage";
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.cpu-cores-section::before {
+  content: "CPU Cores";
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.node-usage-section::before {
+  content: "Node Resource Usage";
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.cohabitant-jobs-section::before {
+  content: "Cohabitant Jobs";
+  position: absolute;
+  top: 4px;
+  left: 12px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
+}
+
+.resource-section .heading {
+  display: none;
+}
+
+/* CPU cores section styling */
+.cpu-cores-section .core-grid {
+  margin-bottom: 0;
+}
+
+.cohabitant-jobs-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  justify-content: flex-start;
 }
