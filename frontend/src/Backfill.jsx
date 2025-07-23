@@ -69,37 +69,39 @@ export default class Backfill extends React.PureComponent {
         }
 
         backfillCharts.push(
-          <div className="label" key={partition}>
-            {partition}
-            <ResponsiveContainer width="100%" height={100}>
-              <BarChart
-                data={data}
-                layout="horizontal"
-                barSize={20}
-                barGap={0}
-              >
-                <XAxis
-                  dataKey="cores"
-                  unit={unit}
-                  interval={0}
-                  tick={{ fill: tickColor }}
-                />
-                <YAxis
-                  type="number"
-                  domain={[0, (dataMax) => Math.min(dataMax, config.tMaxRes)]}
-                  allowDataOverflow
-                  tickFormatter={(value) => timeString(value)}
-                  tick={{ fill: tickColor }}
-                />
-                <Tooltip
-                  labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? "s" : ""} available)`}
-                  formatter={(value) => timeString(value)}
-                  labelStyle={{ color: textColor }}
-                />
-                <Bar dataKey="shortest" fill="#8884d8" />
-                <Bar dataKey="longest" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="backfill-partition" key={partition}>
+            <div className="backfill-partition-name">{partition}</div>
+            <div className="backfill-partition-chart">
+              <ResponsiveContainer width="100%" height={100}>
+                <BarChart
+                  data={data}
+                  layout="horizontal"
+                  barSize={20}
+                  barGap={0}
+                >
+                  <XAxis
+                    dataKey="cores"
+                    unit={unit}
+                    interval={0}
+                    tick={{ fill: tickColor }}
+                  />
+                  <YAxis
+                    type="number"
+                    domain={[0, (dataMax) => Math.min(dataMax, config.tMaxRes)]}
+                    allowDataOverflow
+                    tickFormatter={(value) => timeString(value)}
+                    tick={{ fill: tickColor }}
+                  />
+                  <Tooltip
+                    labelFormatter={(cores) => `${cores} cores (${count[cores]} slot${count[cores] > 1 ? "s" : ""} available)`}
+                    formatter={(value) => timeString(value)}
+                    labelStyle={{ color: textColor }}
+                  />
+                  <Bar dataKey="shortest" fill="#8884d8" />
+                  <Bar dataKey="longest" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>,
         );
       }
@@ -107,18 +109,57 @@ export default class Backfill extends React.PureComponent {
 
     return (
       <div className="main-item center-right">
-        <div className="heading">
-          Available Resources (Backfill)
+        <div className="backfill-header">
+          AVAILABLE RESOURCES
         </div>
-        <div className="instruction">
-          Jobs with time requests shorter than the longest slot (mouseover)
-          may be able to start instantly, subject to memory constraints.
-          Jobs that request time beyond what is available in backfill will
-          be scheduled to start in the future.
-          <br />
-          <br />
+
+        <div className="backfill-summary">
+          <div className="backfill-summary-title">
+            Backfill Opportunities
+          </div>
+          <div className="backfill-summary-description">
+            Jobs with shorter time requests may start instantly, subject to memory constraints.
+          </div>
         </div>
-        {backfillCharts}
+
+        <div className="backfill-partitions">
+          <div className="backfill-charts">
+            {backfillCharts}
+          </div>
+        </div>
+
+        <div className="backfill-legend">
+          <div className="backfill-legend-title">How to read this chart:</div>
+          <div className="backfill-legend-explanation">
+            Each chart shows available compute slots for a partition.
+            {" "}
+            The horizontal axis shows the number
+            {" "}
+            of CPU cores, and the vertical axis shows the maximum time duration available.
+          </div>
+          <div className="backfill-legend-items">
+            <div className="backfill-legend-item">
+              <div className="backfill-legend-color backfill-legend-shortest" />
+              <span>Shortest available slot duration</span>
+            </div>
+            <div className="backfill-legend-item">
+              <div className="backfill-legend-color backfill-legend-longest" />
+              <span>Longest available slot duration</span>
+            </div>
+          </div>
+          <div className="backfill-legend-usage">
+            <strong>Quick scheduling:</strong>
+            {" "}
+            If your job needs X cores for Y time, find the X-core column and check if Y
+            {" "}
+            is shorter than the green bar.
+            {" "}
+            If so, your job may start immediately instead of waiting in the queue.
+          </div>
+          <div className="backfill-legend-note">
+            Hover over bars for detailed slot counts and exact timing information
+          </div>
+        </div>
 
       </div>
     );

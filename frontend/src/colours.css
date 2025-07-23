@@ -3,10 +3,14 @@
 
     /* Box colors */
     --background: #fff;
+    --background-secondary: #f8f9fa;
+    --background-hover: #f5f6f7;
     --light-shade: #eee;
     --medium-shade: #ddd;
     --dark-shade: #ccc;
     --accent-color: #637aff;
+    --border-color: #e1e5e9;
+    --border-light: #f0f2f5;
 
     /* Text colors */
     --text-color: #000;
@@ -63,10 +67,14 @@
   --bad-job-color: #E05243;
 
   --background: #1a1a1a;
+  --background-secondary: #252525;
+  --background-hover: #2a2a2a;
   --light-shade: #2a2a2a;
   --medium-shade: #363636;
   --dark-shade: #4a4a4a;
   --accent-color: #7c93ff;
+  --border-color: #404040;
+  --border-light: #333333;
 
   --text-color: #e5e5e5;
   --text-color-alt: #1a1a1a;

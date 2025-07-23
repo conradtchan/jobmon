@@ -21,31 +21,45 @@ export default class Queue extends React.PureComponent {
 
     return (
       <div className="main-item left">
-        <div className="heading">
-          Queue
+        <div className="queue-header">
+          QUEUE
         </div>
-        <div className="label">
-          {queueTotal.size}
-          {" "}
-          job
-          {(queueTotal.size !== 1) ? "s" : ""}
-          {" "}
-          for
-          {" "}
-          {queueTotal.cpuHours.toFixed(0)}
-          {" "}
-          cpu-h
+
+        <div className="queue-summary">
+          <div className="queue-summary-primary">
+            <span className="queue-summary-number">{queueTotal.size}</span>
+            <span className="queue-summary-label">
+              job
+              {(queueTotal.size !== 1) ? "s" : ""}
+            </span>
+          </div>
+          <div className="queue-summary-secondary">
+            <div className="queue-summary-detail">
+              {queueTotal.cpuHours.toFixed(0)}
+              {" "}
+              cpu-h
+            </div>
+            <div className="queue-summary-detail">
+              (
+              {(queueTotal.cpuHours / availCores).toFixed(0)}
+              {" "}
+              machine-h)
+            </div>
+          </div>
         </div>
-        <div className="label">
-          (
-          {(queueTotal.cpuHours / availCores).toFixed(0)}
-          {" "}
-          machine-h)
-          <br />
-        </div>
-        <div className="queue-strings">
-          {queueStrings}
-        </div>
+
+        {queueStrings.length > 0 && (
+          <div className="queue-items">
+            <div className="queue-items-header">
+              <span className="queue-col-username">User</span>
+              <span className="queue-col-hours">CPU Hours</span>
+              <span className="queue-col-jobs">Jobs</span>
+            </div>
+            <div className="queue-strings">
+              {queueStrings}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
