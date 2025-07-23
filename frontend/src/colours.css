@@ -6,6 +6,7 @@
     --light-shade: #eee;
     --medium-shade: #ddd;
     --dark-shade: #ccc;
+    --accent-color: #637aff;
 
     /* Text colors */
     --text-color: #000;
@@ -65,6 +66,7 @@
   --light-shade: #2a2a2a;
   --medium-shade: #363636;
   --dark-shade: #4a4a4a;
+  --accent-color: #7c93ff;
 
   --text-color: #e5e5e5;
   --text-color-alt: #1a1a1a;

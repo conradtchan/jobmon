@@ -117,23 +117,61 @@ div:focus {outline: 0px;}
 .overview-pies {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
   width: 100%;
-  margin-bottom: 10px;
+  padding: 14px 16px;
+  background: var(--light-shade);
+  border-top: 2px solid var(--accent-color);
+  position: relative;
+  box-sizing: border-box;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.overview-pies::before {
+  content: "Node Usage";
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .overview-pie {
-  height: 64px;
-  width: 64px;
-  margin: 0 auto;
+  height: 56px;
+  width: 56px;
+  margin: 8px 6px 4px 6px;
   border: none;
   background: none;
   padding: 0;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+}
+
+.overview-pie:hover {
+  transform: scale(1.1);
+  filter: brightness(1.1);
 }
 
 .other-job-row {
-  margin-bottom: 5px;
+  margin-bottom: 8px;
   color: var(--text-color);
+  padding: 8px 12px;
+  background: var(--light-shade);
+  border-radius: 6px;
+  border: 1px solid var(--dark-shade);
+  transition: all 0.2s ease;
+}
+
+.other-job-row:hover {
+  background: var(--medium-shade);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 .running-job-row {
@@ -147,28 +185,76 @@ div:focus {outline: 0px;}
   /* ...and now for the proper property */
   transition: var(--transition-time);
   margin-bottom: var(--inter-item-spacing);
-  padding: 12px;
+  padding: 0;
   box-sizing: border-box;
   background-color: var(--light-shade);
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--dark-shade);
   color: var(--text-color);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  overflow: visible;
 }
-
 
 .running-job-row:hover {
   background: var(--medium-shade);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--accent-color);
+}
+
+.running-job-row:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-color), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--accent-color);
+}
+
+.running-job-row:active {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition-duration: 0.1s;
 }
 
 .running-job-text {
   width: 100%;
+  padding: 14px 12px 12px 14px;
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  box-sizing: border-box;
+  overflow: hidden;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+/* When running-job-text is the last section (no charts/pies), give it bottom rounded corners */
+.running-job-row .running-job-text:last-child {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
 }
 
 .running-job-chart {
   width: 100%;
+  padding: 12px 16px;
+  background: var(--background);
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* When running-job-chart is the last section (no overview-pies), give it bottom rounded corners */
+.running-job-row .running-job-chart:last-child {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+}
+
+.running-job-chart::before {
+  content: "Performance Charts";
+  position: absolute;
+  top: 4px;
+  left: 16px;
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.8;
 }
 
 .job-names {
@@ -181,11 +267,25 @@ div:focus {outline: 0px;}
 }
 
 .job-names.heading {
-  font-size: 1.2em;
-  font-weight: 600;
-  margin: 0 0 12px 0;
+  font-size: 1.25em;
+  font-weight: 700;
+  margin: 0 0 16px 0;
   color: var(--text-primary);
   letter-spacing: 0.01em;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent-color);
+  position: relative;
+}
+
+.job-names.heading::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: var(--accent-color);
+  filter: brightness(1.3);
 }
 
 .job-name {
@@ -197,6 +297,10 @@ div:focus {outline: 0px;}
   white-space: -o-pre-wrap;   /* Opera 7 */
   word-wrap: break-word;      /* IE */
   color: var(--text-color);
+  font-size: 0.9em;
+  line-height: 1.3;
+  margin-top: 2px;
+  font-weight: 500;
 }
 
 .job-name.warn {
@@ -208,21 +312,43 @@ div:focus {outline: 0px;}
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  font-size: 0.95em;
-  margin-bottom: 4px;
+  align-items: center;
+  font-size: 0.9em;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  gap: 4px;
+  min-height: 1.2em;
 }
 
 .job-name-title-item-l {
-  margin-right: 3px;
+  margin-right: 2px;
+  font-size: 1.05em;
+  font-weight: 700;
+  color: var(--accent-color);
+  flex-shrink: 0;
 }
 
 .job-name-title-item-c {
-  margin-left: 3px;
-  margin-right: 3px;
+  margin-left: 2px;
+  margin-right: 2px;
+  font-size: 0.82em;
+  color: var(--text-secondary);
+  font-weight: 500;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .job-name-title-item-r {
-  margin-left: 3px;
+  margin-left: 2px;
+  font-size: 0.78em;
+  color: var(--text-secondary);
+  font-weight: 600;
+  background: var(--dark-shade);
+  padding: 2px 5px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .cohab-job {
@@ -232,17 +358,29 @@ div:focus {outline: 0px;}
   margin-bottom: var(--inter-item-spacing);
   background-color: var(--light-shade);
   border-radius: 8px;
-  padding: 12px;
+  padding: 14px 16px;
   box-sizing: border-box;
   border: 1px solid var(--dark-shade);
   transition: all 0.2s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .cohab-job:hover {
   background-color: var(--medium-shade);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--accent-color);
+}
+
+.cohab-job:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-color), 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: var(--accent-color);
+}
+
+.cohab-job:active {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition-duration: 0.1s;
 }
 
 #node-description {
@@ -450,12 +588,28 @@ div:focus {outline: 0px;}
 }
 
 #username-title {
-  font-size: 1.4em;
-  font-weight: 600;
+  font-size: 1.5em;
+  font-weight: 700;
   text-align: center;
   color: var(--text-primary);
-  margin-bottom: 16px;
-  letter-spacing: 0.01em;
+  margin-bottom: 20px;
+  letter-spacing: 0.02em;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  border-radius: 8px;
+  border: 1px solid var(--dark-shade);
+  position: relative;
+  overflow: hidden;
+}
+
+#username-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--dark-shade);
 }
 
 #nodename-title {
@@ -566,26 +720,44 @@ div:focus {outline: 0px;}
   width: 50%;
   height: 30px;
   margin: 0 auto;
+  box-sizing: border-box;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .prop-chart-mini-3 {
   width: 33%;
   height: 30px;
   margin: 0 auto;
+  box-sizing: border-box;
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .mini-row {
   display: flex;
   flex-direction: row;
+  gap: 12px;
+  align-items: stretch;
+  padding: 16px 0 0 0;
+  margin-top: 4px;
+  border-radius: 6px;
+  background: var(--background);
+  box-sizing: border-box;
+  overflow: hidden;
+  width: 100%;
 }
 
 .instruction {
   font-style: italic;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.95em;
-  line-height: 1.5;
-  margin: 16px 0;
+  font-size: 1.0em;
+  line-height: 1.6;
+  margin: 24px 0;
+  padding: 16px;
+  background: var(--light-shade);
+  border-radius: 6px;
 }
 
 .heading {
@@ -764,4 +936,34 @@ input[type=text] {
 
 .radio-label input[type="radio"] {
   margin-right: 4px;
+}
+
+/* Responsive design for narrow containers */
+@container (max-width: 250px) {
+  .job-name-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .job-name-title-item-l,
+  .job-name-title-item-c,
+  .job-name-title-item-r {
+    margin: 0;
+  }
+}
+
+/* Media query fallback for older browsers */
+@media (max-width: 300px) {
+  .main-item.center .job-name-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .main-item.center .job-name-title-item-l,
+  .main-item.center .job-name-title-item-c,
+  .main-item.center .job-name-title-item-r {
+    margin: 0;
+  }
 }
