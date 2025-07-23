@@ -263,7 +263,7 @@ div:focus {outline: 0px;}
   background-color: var(--light-shade);
   box-sizing: border-box;
   padding: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   border-radius: 12px;
   overflow-y: scroll;
   min-height: 600px;
