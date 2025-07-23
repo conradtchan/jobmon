@@ -32,9 +32,12 @@ div:focus {outline: 0px;}
 #page-title {
   flex: 1;
   margin: auto;
-  font-size: xx-large;
-  font-weight: 400;
-  letter-spacing: 0.01em;
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: -0.025em;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 #header-right {
