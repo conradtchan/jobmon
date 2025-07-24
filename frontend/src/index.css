@@ -1813,7 +1813,115 @@ div:focus {outline: 0px;}
   opacity: 0.8;
 }
 
+/* Modern Resource Legend Styling */
+.resource-legend {
+  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
+  border: 1px solid var(--dark-shade);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.legend-title {
+  font-size: 0.7em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  opacity: 0.8;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+  transform: translateY(-1px);
+}
+
+.legend-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover .legend-indicator {
+  transform: scale(1.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.legend-label {
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Color assignments for legend indicators */
+.legend-user {
+  background: var(--piecolor-user);
+}
+
+.legend-system {
+  background: var(--piecolor-system);
+}
+
+.legend-wait {
+  background: var(--piecolor-wait);
+}
+
+.legend-memory {
+  background: var(--piecolor-mem);
+}
+
+.legend-gpu {
+  background: var(--piecolor-gpu-1);
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .legend-items {
+    gap: 12px;
+  }
+
+  .legend-item {
+    font-size: 0.8em;
+    gap: 5px;
+  }
+
+  .legend-indicator {
+    width: 10px;
+    height: 10px;
+  }
+}
+
 /* Dark theme adjustments */
-[data-theme="dark"] .backfill-partition:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+[data-theme="dark"] .resource-legend {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .legend-indicator {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .legend-item:hover .legend-indicator {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }

@@ -379,45 +379,28 @@ export default class NodeOverview extends React.Component {
     const jobList = this.getUserJobList();
 
     const legend = (
-      <div id="cpu-legend">
-        <div className="cpu-legend-item">
-          <div className="circle user">
-                    &nbsp;
+      <div className="resource-legend">
+        <div className="legend-title">Resource Usage</div>
+        <div className="legend-items">
+          <div className="legend-item">
+            <div className="legend-indicator legend-user" />
+            <span className="legend-label">User CPU</span>
           </div>
-          <div className="cpu-legend-label">
-            User
+          <div className="legend-item">
+            <div className="legend-indicator legend-system" />
+            <span className="legend-label">System CPU</span>
           </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle system">
-                    &nbsp;
+          <div className="legend-item">
+            <div className="legend-indicator legend-wait" />
+            <span className="legend-label">I/O Wait</span>
           </div>
-          <div className="cpu-legend-label">
-            System
+          <div className="legend-item">
+            <div className="legend-indicator legend-memory" />
+            <span className="legend-label">Memory</span>
           </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle wait">
-                    &nbsp;
-          </div>
-          <div className="cpu-legend-label">
-            Wait
-          </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle mem">
-                    &nbsp;
-          </div>
-          <div className="cpu-legend-label">
-            Memory
-          </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle gpu">
-                    &nbsp;
-          </div>
-          <div className="cpu-legend-label">
-            GPU
+          <div className="legend-item">
+            <div className="legend-indicator legend-gpu" />
+            <span className="legend-label">GPU</span>
           </div>
         </div>
       </div>
