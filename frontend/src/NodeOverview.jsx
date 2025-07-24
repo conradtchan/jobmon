@@ -427,14 +427,14 @@ export default class NodeOverview extends React.Component {
       return (
         <div className="main-item center">
           <div className="instruction">
-            Select a user on the left to view jobs
+            Choose a user from the sidebar to see their jobs
           </div>
           <br />
           {(Object.keys(warnedUsers).length > 0)
           && (
-            <div className="bad-job">
-              Red users and jobs may require attention
-            </div>
+          <div className="bad-job">
+            Users and jobs highlighted in red need attention
+          </div>
           )}
         </div>
       );
