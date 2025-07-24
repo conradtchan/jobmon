@@ -412,7 +412,6 @@ export default class NodeOverview extends React.Component {
           <div className="instruction">
             Choose a user from the sidebar to see their jobs
           </div>
-          <br />
           {(Object.keys(warnedUsers).length > 0)
           && (
           <div className="bad-job">
@@ -431,8 +430,6 @@ export default class NodeOverview extends React.Component {
           </div>
         </div>
         {legend}
-
-        <br />
         <div className="job-names">
           {jobList.running}
           {jobList.pending}

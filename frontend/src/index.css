@@ -105,6 +105,7 @@ div:focus {outline: 0px;}
 .bad-job {
   text-align: center;
   color: var(--bad-job-color);
+  margin-top: 16px;
 }
 
 .terrible-job {
@@ -274,6 +275,7 @@ div:focus {outline: 0px;}
 .job-names {
   text-align: left;
   width: 100%;
+  margin-top: 0;
 }
 
 .job-block {
@@ -1150,6 +1152,14 @@ div:focus {outline: 0px;}
   padding: 8px 12px;
   background: var(--light-shade);
   border-radius: 6px;
+  font-size: 1.1em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
 }
 
 .heading {
@@ -1924,4 +1934,29 @@ div:focus {outline: 0px;}
 
 [data-theme="dark"] .legend-item:hover .legend-indicator {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* NodeOverview spacing improvements */
+.instruction {
+  font-size: 1.1em;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+}
+
+.bad-job {
+  margin-top: 16px;
+}
+
+/* Improved spacing between legend and job list */
+.resource-legend {
+  margin-bottom: 24px;
+}
+
+.job-names {
+  margin-top: 0;
 }
