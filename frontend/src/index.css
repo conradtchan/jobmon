@@ -389,13 +389,37 @@ div:focus {outline: 0px;}
 .job-name-title-item-r {
   margin-left: 2px;
   font-size: 0.78em;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.core-badge {
+  display: inline-block;
   color: var(--text-secondary);
   font-weight: 600;
   background: var(--dark-shade);
   padding: 2px 5px;
   border-radius: 3px;
-  flex-shrink: 0;
-  white-space: nowrap;
+  font-size: 1em;
+  line-height: 1.2;
+  min-height: 1.2em;
+}
+
+.gpu-badge {
+  display: inline-block;
+  font-weight: 700;
+  color: var(--background);
+  background: var(--piecolor-gpu-1);
+  padding: 2px 5px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1em;
+  line-height: 1.2;
+  min-height: 1.2em;
 }
 
 .job-status {

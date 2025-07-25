@@ -26,16 +26,19 @@ export default class JobText extends React.PureComponent {
             {timeConvert(job.timeLimit)}
           </div>
           <div className="job-name-title-item-r">
-            {job.nCpus}
-            {" "}
-            core
-            {(job.nCpus > 1) ? "s" : ""}
+            <span className="core-badge">
+              {job.nCpus}
+              {" "}
+              core
+              {(job.nCpus > 1) ? "s" : ""}
+            </span>
+            {(job.nGpus > 0) && (
+              <span className="gpu-badge">GPU</span>
+            )}
           </div>
         </div>
         <div>
           {job.name}
-          {" "}
-          {(job.nGpus > 0) ? "(GPU)" : ""}
         </div>
       </div>
     );
