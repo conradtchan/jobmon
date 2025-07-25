@@ -254,6 +254,43 @@ div:focus {outline: 0px;}
   border-color: var(--accent-color);
 }
 
+/* Warning border styles for job containers with job warnings */
+.running-job-row:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 2px 8px rgba(194, 24, 7, 0.25);
+}
+
+.running-job-row:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 4px 16px rgba(194, 24, 7, 0.35);
+}
+
+.other-job-row:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 2px 8px rgba(194, 24, 7, 0.25);
+}
+
+.other-job-row:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 4px 16px rgba(194, 24, 7, 0.35);
+}
+
+.cohab-job:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 2px 8px rgba(194, 24, 7, 0.25);
+}
+
+.cohab-job:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 4px 16px rgba(194, 24, 7, 0.35);
+}
+
+.cohab-job:has(.job-name.warn):focus {
+  outline: none;
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 0 0 2px var(--bad-job-color), 0 4px 16px rgba(194, 24, 7, 0.4);
+}
+
 .running-job-row:active {
   transform: translateY(-1px);
   transition-duration: 0.1s;

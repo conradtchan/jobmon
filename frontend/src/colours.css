@@ -127,30 +127,37 @@
 
 /* Dark theme warning border adjustments */
 [data-theme="dark"] .running-job-row:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
   box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
 }
 
 [data-theme="dark"] .running-job-row:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
   box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
 }
 
 [data-theme="dark"] .other-job-row:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
   box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
 }
 
 [data-theme="dark"] .other-job-row:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
   box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
 }
 
 [data-theme="dark"] .cohab-job:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
   box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
 }
 
 [data-theme="dark"] .cohab-job:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
   box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
 }
 
 [data-theme="dark"] .cohab-job:has(.job-name.warn):focus {
+  border: 1px solid var(--bad-job-color);
   box-shadow: 0 0 0 2px var(--bad-job-color), 0 4px 12px rgba(194, 24, 7, 0.4);
 }
 
