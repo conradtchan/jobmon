@@ -86,6 +86,9 @@
   --hover-black: #000;
 
   --core-ring: #fff;
+
+  /* Dark theme pie colors */
+  --piecolor-blank: #444;
 }
 
 /* Dark mode specific box shadows */
@@ -166,4 +169,30 @@
   background: linear-gradient(135deg, rgba(224, 82, 67, 0.12) 0%, rgba(224, 82, 67, 0.16) 100%);
   border-color: rgba(224, 82, 67, 0.3);
   box-shadow: 0 2px 6px rgba(224, 82, 67, 0.15);
+}
+
+/* Dark theme styles for node pies */
+[data-theme="dark"] .overview-pie .recharts-surface {
+  /* Override default white stroke for pie chart segments */
+}
+
+[data-theme="dark"] .overview-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
+}
+
+[data-theme="dark"] .overview-pie .recharts-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
+}
+
+/* Dark theme styles for core pies - override default white strokes */
+[data-theme="dark"] .core-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
+}
+
+[data-theme="dark"] .core-pie .recharts-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
 }
