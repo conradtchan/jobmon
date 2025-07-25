@@ -19,18 +19,27 @@ export default class UsagePie extends React.Component {
       runningData,
       activeIndex,
       activeSectorSize,
+      badness,
     } = this.props;
 
     if (runningData.length !== nextProps.runningData.length) {
       return true;
     }
 
+    if (activeIndex !== nextProps.activeIndex) {
+      return true;
+    }
+
+    if (activeSectorSize !== nextProps.activeSectorSize) {
+      return true;
+    }
+
+    if (badness !== nextProps.badness) {
+      return true;
+    }
+
     for (let i = 0; i < runningData.length; i += 1) {
-      if (activeIndex !== nextProps.activeIndex) {
-        return true;
-      } if (activeSectorSize !== nextProps.activeSectorSize) {
-        return true;
-      } if (runningData[i].username !== nextProps.runningData[i].username) {
+      if (runningData[i].username !== nextProps.runningData[i].username) {
         return true;
       } if (runningData[i].cpus !== nextProps.runningData[i].cpus) {
         return true;
@@ -49,6 +58,24 @@ export default class UsagePie extends React.Component {
   handleResize = () => {
     this.forceUpdate();
   };
+
+  // Get color based on user efficiency/badness score
+  static getEfficiencyColor(badness) {
+    if (badness > 1000) {
+      // Very poor efficiency (terrible users) - red
+      return "#e53e3e";
+    }
+    if (badness > 100) {
+      // Low efficiency - orange
+      return "#ff8042";
+    }
+    if (badness > 10) {
+      // Medium efficiency - yellow
+      return "#ffbb28";
+    }
+    // High efficiency (low badness score) - green
+    return "#00c49f";
+  }
 
   pieMouseEnter(data, index) {
     const { onMouseEnter } = this.props;
@@ -92,20 +119,13 @@ export default class UsagePie extends React.Component {
   }
 
   render() {
-    const style = getComputedStyle(document.documentElement);
-    const pieColors = [
-      style.getPropertyValue("--piecycle-1"),
-      style.getPropertyValue("--piecycle-2"),
-      style.getPropertyValue("--piecycle-3"),
-      style.getPropertyValue("--piecycle-4"),
-    ];
-
     const {
       runningData,
       activeIndex,
       runningCores,
       availCores,
       onPieClick,
+      badness,
     } = this.props;
 
     const pieDiv = document.getElementById("usage-pie");
@@ -152,7 +172,7 @@ export default class UsagePie extends React.Component {
               innerRadius="60%"
               outerRadius="80%"
               fill="#8884d8"
-              paddingAngle={2}
+              paddingAngle={0.5}
               startAngle={90 + (360 * (1.0 - (runningCores / availCores)))}
               endAngle={450}
               onClick={(data, index) => onPieClick(data, index)}
@@ -162,13 +182,37 @@ export default class UsagePie extends React.Component {
             >
               {
                 runningData.map(
-                  (entry, index) => (
-                    <Cell
-                      key={entry.username}
-                      fill={pieColors[index % pieColors.length]}
-                      cursor="pointer"
-                    />
-                  ),
+                  (entry) => {
+                    let color;
+
+                    // Check if badness data is available and warnings have been calculated
+                    // badness will exist but all be 0 when warnings haven't been processed yet
+                    if (badness && Object.prototype.hasOwnProperty.call(badness, entry.username)) {
+                      // Check if any user has non-zero badness
+                      // (indicating warnings have been calculated)
+                      const hasMeaningfulBadnessData = Object.values(badness)
+                        .some((value) => value > 0);
+
+                      if (hasMeaningfulBadnessData) {
+                        // Use efficiency-based color for users with calculated badness
+                        color = UsagePie.getEfficiencyColor(badness[entry.username]);
+                      } else {
+                        // Use neutral grey when warnings haven't been calculated yet
+                        color = "#8b92a3"; // Neutral grey that works in both light and dark themes
+                      }
+                    } else {
+                      // Use neutral grey color for users without badness data
+                      color = "#8b92a3"; // Neutral grey that works in both light and dark themes
+                    }
+
+                    return (
+                      <Cell
+                        key={entry.username}
+                        fill={color}
+                        cursor="pointer"
+                      />
+                    );
+                  },
                 )
               }
               <Label

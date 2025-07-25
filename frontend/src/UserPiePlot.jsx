@@ -213,6 +213,7 @@ export default class UserPiePlot extends React.Component {
             onMouseLeave={() => this.restoreSelected()}
             activeIndex={usagePieActiveIndex}
             activeSectorSize={activeSectorSize}
+            badness={badness}
           />
           <div className="sort-selector">
             <div className="sort-toggle">
