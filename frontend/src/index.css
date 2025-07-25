@@ -1160,6 +1160,19 @@ div:focus {outline: 0px;}
   color: var(--text-color);
 }
 
+.chart-label {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-bottom: 6px;
+  padding: 2px 0;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
 .prop-chart {
   width: 100%;
   height: 100px;
@@ -2012,7 +2025,8 @@ div:focus {outline: 0px;}
 
 /* Dark theme adjustments */
 [data-theme="dark"] .resource-legend {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, var(--medium-shade) 0%, var(--background) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] .legend-indicator {
@@ -2023,79 +2037,8 @@ div:focus {outline: 0px;}
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
 
-/* NodeOverview spacing improvements */
-.instruction {
-  font-size: 1.1em;
+/* Dark theme support for chart labels */
+[data-theme="dark"] .chart-label {
   color: var(--text-secondary);
-  text-align: center;
-  margin-bottom: 20px;
-  padding: 20px;
-  background: var(--background-secondary);
-  border-radius: 8px;
-  border: 1px solid var(--border-light);
+  opacity: 0.8;
 }
-
-/* Center panel warning styling for user messages */
-.bad-job.center-message {
-  margin-top: 16px;
-  text-align: center;
-  background: none;
-  border: none;
-  box-shadow: none;
-  padding: 0;
-}
-
-.bad-job.center-message::before {
-  content: none;
-}
-
-/* Improved spacing between legend and job list */
-.resource-legend {
-  margin-bottom: 24px;
-}
-
-.job-names {
-  margin-top: 0;
-}
-
-/* Job container warning borders - similar to user warning styling */
-
-/* Running job rows with warnings */
-.running-job-row:has(.job-name.warn) {
-  border-color: var(--bad-job-color) !important;
-  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.15);
-}
-
-.running-job-row:has(.job-name.warn):hover {
-  border-color: var(--bad-job-color) !important;
-  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.25);
-}
-
-/* Other job rows with warnings */
-.other-job-row:has(.job-name.warn) {
-  border-color: var(--bad-job-color) !important;
-  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.15);
-}
-
-.other-job-row:has(.job-name.warn):hover {
-  border-color: var(--bad-job-color) !important;
-  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.25);
-}
-
-/* Cohabitant job containers with warnings */
-.cohab-job:has(.job-name.warn) {
-  border-color: var(--bad-job-color) !important;
-  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.15);
-}
-
-.cohab-job:has(.job-name.warn):hover {
-  border-color: var(--bad-job-color) !important;
-  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.25);
-}
-
-.cohab-job:has(.job-name.warn):focus {
-  border-color: var(--bad-job-color) !important;
-  box-shadow: 0 0 0 2px var(--bad-job-color), 0 4px 12px rgba(194, 24, 7, 0.25);
-}
-
-/* Dark theme adjustments for warning borders */
