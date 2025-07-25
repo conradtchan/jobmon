@@ -414,7 +414,7 @@ export default class NodeOverview extends React.Component {
           </div>
           {(Object.keys(warnedUsers).length > 0)
           && (
-          <div className="bad-job">
+          <div className="bad-job center-message">
             Users and jobs highlighted in red need attention
           </div>
           )}

@@ -140,16 +140,17 @@ export default class NodeDetails extends React.Component {
 
     const warningList = [];
     if (warningText.length > 0) {
-      for (let i = 0; i < warningText.length; i += 1) {
-        const w = warningText[i];
-        warningList.push(
-          <div key={w} className="bad-job">
-            Warning:
-            {" "}
-            {w}
-          </div>,
-        );
-      }
+      const warningElements = warningText.map((w) => (
+        <div key={w} className="bad-job">
+          {w}
+        </div>
+      ));
+
+      warningList.push(
+        <div key="warnings-container" className="warnings-container">
+          {warningElements}
+        </div>,
+      );
     }
     return warningList;
   }

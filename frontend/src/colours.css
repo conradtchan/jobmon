@@ -124,3 +124,45 @@
 [data-theme="dark"] .cohab-job:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
+
+/* Dark theme warning border adjustments */
+[data-theme="dark"] .running-job-row:has(.job-name.warn) {
+  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
+}
+
+[data-theme="dark"] .running-job-row:has(.job-name.warn):hover {
+  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+[data-theme="dark"] .other-job-row:has(.job-name.warn) {
+  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
+}
+
+[data-theme="dark"] .other-job-row:has(.job-name.warn):hover {
+  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+[data-theme="dark"] .cohab-job:has(.job-name.warn) {
+  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
+}
+
+[data-theme="dark"] .cohab-job:has(.job-name.warn):hover {
+  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+[data-theme="dark"] .cohab-job:has(.job-name.warn):focus {
+  box-shadow: 0 0 0 2px var(--bad-job-color), 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+/* Dark theme warning styling */
+[data-theme="dark"] .bad-job {
+  background: linear-gradient(135deg, rgba(224, 82, 67, 0.12) 0%, rgba(224, 82, 67, 0.16) 100%);
+  border-color: rgba(224, 82, 67, 0.3);
+  box-shadow: 0 2px 6px rgba(224, 82, 67, 0.15);
+}
+
+[data-theme="dark"] .bad-job:hover {
+  background: linear-gradient(135deg, rgba(224, 82, 67, 0.16) 0%, rgba(224, 82, 67, 0.2) 100%);
+  border-color: rgba(224, 82, 67, 0.4);
+  box-shadow: 0 4px 12px rgba(224, 82, 67, 0.2);
+}
