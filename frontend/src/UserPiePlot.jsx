@@ -61,6 +61,27 @@ export default class UserPiePlot extends React.Component {
       this.forceUpdate();
     };
 
+    getSortSelector() {
+      const { nameSort } = this.state;
+      const style = getComputedStyle(document.documentElement);
+
+      const divStyle = {};
+      if (nameSort === "alpha") {
+        divStyle.left = "2px";
+        divStyle.backgroundColor = style.getPropertyValue("--piecycle-1");
+      } else {
+        divStyle.left = "82px";
+        divStyle.backgroundColor = style.getPropertyValue("--piecycle-2");
+      }
+
+      return (
+        <div
+          className="sort-selector-indicator"
+          style={divStyle}
+        />
+      );
+    }
+
     updateActive(index) {
       this.setState({ usagePieActiveIndex: index });
       this.setState({ activeSectorSize: "big" });
@@ -193,6 +214,45 @@ export default class UserPiePlot extends React.Component {
             activeIndex={usagePieActiveIndex}
             activeSectorSize={activeSectorSize}
           />
+          <div className="sort-selector">
+            <div className="sort-toggle">
+              <div
+                className="sort-option"
+                onClick={() => this.setState({ nameSort: "alpha" })}
+                onKeyDown={() => this.setState({ nameSort: "alpha" })}
+                role="button"
+                tabIndex={0}
+              >
+                <input
+                  id="nameSort-alpha"
+                  type="radio"
+                  name="nameSort"
+                  value="alpha"
+                  onChange={() => this.setState({ nameSort: "alpha" })}
+                  checked={nameSort === "alpha"}
+                />
+                <span className="sort-label">A-Z</span>
+              </div>
+              <div
+                className="sort-option"
+                onClick={() => this.setState({ nameSort: "badness" })}
+                onKeyDown={() => this.setState({ nameSort: "badness" })}
+                role="button"
+                tabIndex={0}
+              >
+                <input
+                  id="nameSort-badness"
+                  type="radio"
+                  name="nameSort"
+                  value="badness"
+                  onChange={() => this.setState({ nameSort: "badness" })}
+                  checked={nameSort === "badness"}
+                />
+                <span className="sort-label">Efficiency</span>
+              </div>
+              {this.getSortSelector()}
+            </div>
+          </div>
           {(maxBadness > config.terribleThreshold && nameSort === "badness")
                     && (
                     <div className="terrible-job">
@@ -200,16 +260,6 @@ export default class UserPiePlot extends React.Component {
                       or impacting other users
                     </div>
                     )}
-          <div className="sort-selector">
-            <label htmlFor="alpha">
-              <input type="radio" id="alpha" name="nameSort" value="alpha" onChange={() => this.setState({ nameSort: "alpha" })} checked={nameSort === "alpha"} />
-              Alphabetical &nbsp;&nbsp;
-            </label>
-            <label htmlFor="badness">
-              <input type="radio" id="badness" name="nameSort" value="badness" onChange={() => this.setState({ nameSort: "badness" })} checked={nameSort === "badness"} />
-              Inefficiency
-            </label>
-          </div>
           {userStringsBlock}
         </div>
       );

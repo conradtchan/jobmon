@@ -1382,53 +1382,85 @@ div:focus {outline: 0px;}
   color: var(--text-color);
 }
 
+/* Modern Sort Selector - Consistent with switch3ways Design */
 .sort-selector {
-  color: var(--text-color);
-  margin-bottom: 12px;
-  font-size: 0.8em;
-  padding: 10px 12px;
-  background: linear-gradient(135deg, var(--light-shade) 0%, var(--background) 100%);
-  border-radius: 8px;
-  border: 1px solid var(--dark-shade);
-  position: relative;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .sort-selector::before {
-  content: "Sort Order";
-  position: absolute;
-  top: 4px;
-  left: 12px;
-  font-size: 0.7em;
+  content: "Sort:";
+  font-size: 0.75em;
   font-weight: 600;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   opacity: 0.8;
+  flex-shrink: 0;
 }
 
-.sort-selector label {
-  display: inline-block;
-  margin-top: 8px;
-  margin-right: 16px;
-  font-weight: 500;
-  color: var(--text-primary);
+.sort-toggle {
+  font-size: 1em;
+  height: 2em;
+  line-height: 2em;
+  border-radius: 8px;
+  background: var(--light-shade);
+  position: relative;
+  display: flex;
+  border: 1px solid var(--dark-shade);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sort-toggle input[type="radio"] {
+  display: none;
+}
+
+.sort-option {
+  width: 80px;
   cursor: pointer;
-  padding: 4px 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: 300ms ease-out;
+  z-index: 2;
+}
+
+.sort-option:hover {
+  color: var(--text-color);
+}
+
+.sort-label {
+  font-size: 0.8em;
+  font-weight: 500;
+  pointer-events: none;
+  transition: color 300ms ease-out;
+}
+
+/* Make the selected option's text white */
+.sort-toggle input[type="radio"]:checked + .sort-label {
+  color: white;
+}
+
+.sort-selector-indicator {
+  position: absolute;
+  width: 80px;
+  height: calc(100% - 4px);
+  top: 2px;
+  box-sizing: border-box;
+  transition: 300ms ease-out;
   border-radius: 6px;
-  transition: all 0.2s ease;
-  border: 1px solid transparent;
-  font-size: 0.85em;
+  z-index: 1;
 }
 
-.sort-selector label:hover {
-  background: var(--background);
-  border-color: var(--medium-shade);
-}
-
-.sort-selector label input[type="radio"] {
-  margin-right: 6px;
-  accent-color: var(--accent-color);
+/* Dark theme adjustments */
+[data-theme="dark"] .sort-toggle {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Responsive design for narrow containers */
