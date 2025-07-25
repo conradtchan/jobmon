@@ -167,9 +167,3 @@
   border-color: rgba(224, 82, 67, 0.3);
   box-shadow: 0 2px 6px rgba(224, 82, 67, 0.15);
 }
-
-[data-theme="dark"] .bad-job:hover {
-  background: linear-gradient(135deg, rgba(224, 82, 67, 0.16) 0%, rgba(224, 82, 67, 0.2) 100%);
-  border-color: rgba(224, 82, 67, 0.4);
-  box-shadow: 0 4px 12px rgba(224, 82, 67, 0.2);
-}

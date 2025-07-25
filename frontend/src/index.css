@@ -126,14 +126,6 @@ div:focus {outline: 0px;}
   font-size: 1.1em;
 }
 
-/* Hover effect for warnings */
-.bad-job:hover {
-  background: linear-gradient(135deg, rgba(194, 24, 7, 0.12) 0%, rgba(194, 24, 7, 0.16) 100%);
-  border-color: rgba(194, 24, 7, 0.3);
-  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.15);
-  transform: translateY(-1px);
-}
-
 /* Warning container for multiple warnings */
 .warnings-container {
   margin-bottom: 20px;
