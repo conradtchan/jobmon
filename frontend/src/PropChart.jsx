@@ -153,7 +153,7 @@ export default class PropChart extends React.PureComponent {
 
     return (
       <div className="prop-chart-group">
-        <div>
+        <div className="chart-label">
           {name}
         </div>
         <div className="prop-chart">

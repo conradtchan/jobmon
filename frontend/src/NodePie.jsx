@@ -115,8 +115,24 @@ export default class NodePie extends React.PureComponent {
     let dRing = 0;
     if (expanded) dRing = 10;
 
+    const handleNodePieClick = (event) => {
+      event.stopPropagation(); // Prevent event bubbling to parent job row button
+      onRowClick(nodeName);
+    };
+
     return (
-      <button type="button" className="overview-pie" onClick={() => onRowClick(nodeName)}>
+      <div
+        className="overview-pie"
+        onClick={handleNodePieClick}
+        role="button"
+        tabIndex="0"
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleNodePieClick(event);
+          }
+        }}
+      >
         <ResponsiveContainer>
           <PieChart
             onMouseEnter={() => this.setState({ expanded: true })}
@@ -199,7 +215,7 @@ export default class NodePie extends React.PureComponent {
             )}
           </PieChart>
         </ResponsiveContainer>
-      </button>
+      </div>
     );
   }
 }

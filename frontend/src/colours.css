@@ -3,13 +3,21 @@
 
     /* Box colors */
     --background: #fff;
+    --background-secondary: #f8f9fa;
+    --background-hover: #f5f6f7;
     --light-shade: #eee;
     --medium-shade: #ddd;
     --dark-shade: #ccc;
+    --accent-color: #637aff;
+    --border-color: #e1e5e9;
+    --border-light: #f0f2f5;
 
     /* Text colors */
     --text-color: #000;
     --text-color-alt: #000;
+    --text-color-secondary: #666;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b7280;
 
     /* CPU core ring color */
     --core-ring: #000;
@@ -45,9 +53,9 @@
     --switch-width: 100;
     --switch-widthpx: 100px;
 
-    --rounding-radius: 0.3em;
+    --rounding-radius: 8px;
     --box-padding: 1.0em;
-    --box-padding-inner: 0.6em;
+    --box-padding-inner: 16px;
     --block-spacing: 1.0em;
     --inter-item-spacing: 0.6em;
 
@@ -58,17 +66,133 @@
 [data-theme="dark"] {
   --bad-job-color: #E05243;
 
-  --background: #333;
-  --light-shade: #444;
-  --medium-shade: #333;
-  --dark-shade: #ddd;
+  --background: #1a1a1a;
+  --background-secondary: #252525;
+  --background-hover: #2a2a2a;
+  --light-shade: #2a2a2a;
+  --medium-shade: #363636;
+  --dark-shade: #4a4a4a;
+  --accent-color: #7c93ff;
+  --border-color: #404040;
+  --border-light: #333333;
 
-  --text-color: #eee;
-  --text-color-alt: #333;
+  --text-color: #e5e5e5;
+  --text-color-alt: #1a1a1a;
+  --text-primary: #ffffff;
+  --text-secondary: #a0a0a0;
 
-  --hover-outline-color: #555;
-  --hover-shade: #000;
+  --hover-outline-color: #666;
+  --hover-shade: #444;
   --hover-black: #000;
 
   --core-ring: #fff;
+
+  /* Dark theme pie colors */
+  --piecolor-blank: #444;
+}
+
+/* Dark mode specific box shadows */
+[data-theme="dark"] .main-item.right {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .main-item {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .prop-charts,
+[data-theme="dark"] .core-grid,
+[data-theme="dark"] #cpu-legend {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] #time-machine,
+[data-theme="dark"] .switch3ways {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .running-job-row,
+[data-theme="dark"] .user-string,
+[data-theme="dark"] .cohab-job {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] #id-button {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] #id-button:hover,
+[data-theme="dark"] .running-job-row:hover,
+[data-theme="dark"] .user-string.hovered,
+[data-theme="dark"] .cohab-job:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark theme warning border adjustments */
+[data-theme="dark"] .running-job-row:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
+}
+
+[data-theme="dark"] .running-job-row:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+[data-theme="dark"] .other-job-row:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
+}
+
+[data-theme="dark"] .other-job-row:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+[data-theme="dark"] .cohab-job:has(.job-name.warn) {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 2px 6px rgba(194, 24, 7, 0.3);
+}
+
+[data-theme="dark"] .cohab-job:has(.job-name.warn):hover {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+[data-theme="dark"] .cohab-job:has(.job-name.warn):focus {
+  border: 1px solid var(--bad-job-color);
+  box-shadow: 0 0 0 2px var(--bad-job-color), 0 4px 12px rgba(194, 24, 7, 0.4);
+}
+
+/* Dark theme warning styling */
+[data-theme="dark"] .bad-job {
+  background: linear-gradient(135deg, rgba(224, 82, 67, 0.12) 0%, rgba(224, 82, 67, 0.16) 100%);
+  border-color: rgba(224, 82, 67, 0.3);
+  box-shadow: 0 2px 6px rgba(224, 82, 67, 0.15);
+}
+
+/* Dark theme styles for node pies */
+[data-theme="dark"] .overview-pie .recharts-surface {
+  /* Override default white stroke for pie chart segments */
+}
+
+[data-theme="dark"] .overview-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
+}
+
+[data-theme="dark"] .overview-pie .recharts-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
+}
+
+/* Dark theme styles for core pies - override default white strokes */
+[data-theme="dark"] .core-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
+}
+
+[data-theme="dark"] .core-pie .recharts-pie .recharts-pie-sector {
+  stroke: var(--background);
+  stroke-width: 1;
 }

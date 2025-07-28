@@ -144,17 +144,15 @@ export default class TimeMachine extends React.Component {
     return (
       <div>
         <div className="label">
-          <div>
-            Showing data from
+          <div className="time-machine-label">
+            Historical Snapshot
           </div>
-          <div id="clock">
-            {snapshotTime.toTimeString()}
+          <div className="time-machine-clock">
+            {snapshotTime.toTimeString().split(" ")[0]}
           </div>
-          <div>
-            (
+          <div className="time-machine-label">
             {timeString(parseInt(timeAgo, 10))}
-            {" "}
-            ago)
+            {" ago"}
           </div>
         </div>
         <div id="timeline">
@@ -194,7 +192,7 @@ export default class TimeMachine extends React.Component {
           </ResponsiveContainer>
         </div>
         <div className="instruction">
-          View a previous state of the system by selecting a time
+          Click on the chart to jump to that time
         </div>
       </div>
     );

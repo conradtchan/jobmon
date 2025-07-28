@@ -348,14 +348,12 @@ export default class NodeOverview extends React.Component {
                 {this.getRunningJobChart(job, jid)}
               </div>
             )}
-          </button>
-          {(jid === jobId) && (
-            <div>
+            {(jid === jobId) && (
               <div className="overview-pies">
                 {this.getNodePies()}
               </div>
-            </div>
-          )}
+            )}
+          </button>
         </div>
       );
     }
@@ -381,45 +379,28 @@ export default class NodeOverview extends React.Component {
     const jobList = this.getUserJobList();
 
     const legend = (
-      <div id="cpu-legend">
-        <div className="cpu-legend-item">
-          <div className="circle user">
-                    &nbsp;
+      <div className="resource-legend">
+        <div className="legend-title">Resource Usage</div>
+        <div className="legend-items">
+          <div className="legend-item">
+            <div className="legend-indicator legend-user" />
+            <span className="legend-label">User CPU</span>
           </div>
-          <div className="cpu-legend-label">
-            user
+          <div className="legend-item">
+            <div className="legend-indicator legend-system" />
+            <span className="legend-label">System CPU</span>
           </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle system">
-                    &nbsp;
+          <div className="legend-item">
+            <div className="legend-indicator legend-wait" />
+            <span className="legend-label">I/O Wait</span>
           </div>
-          <div className="cpu-legend-label">
-            sys
+          <div className="legend-item">
+            <div className="legend-indicator legend-memory" />
+            <span className="legend-label">Memory</span>
           </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle wait">
-                    &nbsp;
-          </div>
-          <div className="cpu-legend-label">
-            wait
-          </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle mem">
-                    &nbsp;
-          </div>
-          <div className="cpu-legend-label">
-            mem
-          </div>
-        </div>
-        <div className="cpu-legend-item">
-          <div className="circle gpu">
-                    &nbsp;
-          </div>
-          <div className="cpu-legend-label">
-            gpu
+          <div className="legend-item">
+            <div className="legend-indicator legend-gpu" />
+            <span className="legend-label">GPU</span>
           </div>
         </div>
       </div>
@@ -429,14 +410,13 @@ export default class NodeOverview extends React.Component {
       return (
         <div className="main-item center">
           <div className="instruction">
-            Select a user on the left to view jobs
+            Choose a user from the sidebar to see their jobs
           </div>
-          <br />
           {(Object.keys(warnedUsers).length > 0)
           && (
-            <div className="bad-job">
-              Red users and jobs may require attention
-            </div>
+          <div className="bad-job center-message">
+            Users and jobs highlighted in red need attention
+          </div>
           )}
         </div>
       );
@@ -444,63 +424,18 @@ export default class NodeOverview extends React.Component {
 
     return (
       <div className="main-item center">
-        <div id="username-title">
-          {username}
+        <div className="username-section">
+          <div id="username-title">
+            {username}
+          </div>
         </div>
         {legend}
-
-        <br />
-        <div className="heading">
-          Running
-        </div>
-        {jobList.running}
-        <br />
-
         <div className="job-names">
-          {(jobList.pending.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Pending
-              </div>
-              <div>
-                {jobList.pending}
-              </div>
-            </div>
-          )}
-          {(jobList.completed.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Completed
-              </div>
-              <div>
-                {jobList.completed}
-              </div>
-            </div>
-          )}
-          {(jobList.cancelled.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Cancelled
-              </div>
-              <div>
-                {jobList.cancelled}
-              </div>
-            </div>
-          )}
-          {(jobList.failed.length > 0)
-          && (
-            <div>
-              <div className="job-names heading">
-                Failed
-              </div>
-              <div>
-                {jobList.failed}
-              </div>
-            </div>
-          )}
+          {jobList.running}
+          {jobList.pending}
+          {jobList.completed}
+          {jobList.cancelled}
+          {jobList.failed}
         </div>
       </div>
     );

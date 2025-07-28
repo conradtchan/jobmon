@@ -140,16 +140,17 @@ export default class NodeDetails extends React.Component {
 
     const warningList = [];
     if (warningText.length > 0) {
-      for (let i = 0; i < warningText.length; i += 1) {
-        const w = warningText[i];
-        warningList.push(
-          <div key={w} className="bad-job">
-            Warning:
-            {" "}
-            {w}
-          </div>,
-        );
-      }
+      const warningElements = warningText.map((w) => (
+        <div key={w} className="bad-job">
+          {w}
+        </div>
+      ));
+
+      warningList.push(
+        <div key="warnings-container" className="warnings-container">
+          {warningElements}
+        </div>,
+      );
     }
     return warningList;
   }
@@ -819,7 +820,6 @@ export default class NodeDetails extends React.Component {
           <div className="instruction">
             Select a running job to view nodes
           </div>
-          <br />
           {selectedJobId === null ? null
             : (
               <div className="instruction">
@@ -839,85 +839,63 @@ export default class NodeDetails extends React.Component {
 
     return (
       <div className="main-item right">
-        <div id="nodename-title">
+        <div className="job-info-header">
           <button id="id-button" onClick={() => idCopy(selectedJobId)} type="button">
             {selectedJobId}
-            {" "}
-            {(selectedJobId !== null) && "on"}
-            {" "}
-            {name}
           </button>
+          <div className="job-info-details">
+            <div className="node-name">{name}</div>
+            <div className="job-name">
+              {(selectedJobId !== null) && jobs[selectedJobId].name}
+            </div>
+          </div>
+          <div className="time-selector-compact">
+            <select
+              value={timeWindow}
+              onChange={(e) => changeTimeWindow(Number(e.target.value))}
+              className="time-select"
+            >
+              <option value={28800}>8h</option>
+              <option value={7200}>2h</option>
+              <option value={1800}>30m</option>
+            </select>
+          </div>
           <div className="copyhint">
             Click on job ID to copy to clipboard
           </div>
-
-        </div>
-        <div id="nodename-subtitle">
-          {(selectedJobId !== null) && jobs[selectedJobId].name}
         </div>
         {warningList}
 
-        <div className="time-selector">
-          <label htmlFor="8h" className="radio-label">
-            <input
-              type="radio"
-              id="8h"
-              name="timeWindow"
-              value="8h"
-              onChange={() => changeTimeWindow(28800)}
-              checked={timeWindow === 28800}
-            />
-            8 hours
-          </label>
-          <label htmlFor="2h" className="radio-label">
-            <input
-              type="radio"
-              id="2h"
-              name="timeWindow"
-              value="2h"
-              onChange={() => changeTimeWindow(7200)}
-              checked={timeWindow === 7200}
-            />
-            2 hours
-          </label>
-          <label htmlFor="30m" className="radio-label">
-            <input
-              type="radio"
-              id="30m"
-              name="timeWindow"
-              value="30m"
-              onChange={() => changeTimeWindow(1800)}
-              checked={timeWindow === 1800}
-            />
-            30 minutes
-          </label>
-        </div>
-        <br />
-        <div className="heading">
-          Job resource usage
+        <div className="resource-section job-usage-section">
+          <div className="heading">
+            Job resource usage
+          </div>
+          {NodeDetails.getJobPropCharts(historyChart)}
         </div>
 
-        {NodeDetails.getJobPropCharts(historyChart)}
-
-        <div className="heading">
-          Node resource usage
-        </div>
-        <div className="label">
-          CPU cores
-        </div>
-        <div className="core-grid">
-          {corePies}
+        <div className="resource-section cpu-cores-section">
+          <div className="heading">
+            CPU cores
+          </div>
+          <div className="core-grid">
+            {corePies}
+          </div>
         </div>
 
-        {this.getPropCharts(historyChart, gpuNames)}
+        <div className="resource-section node-usage-section">
+          <div className="heading">
+            Node resource usage
+          </div>
+          {this.getPropCharts(historyChart, gpuNames)}
+        </div>
 
         {(otherJobList.length > 0)
         && (
-          <div>
-            <div className="job-names heading">
+          <div className="resource-section cohabitant-jobs-section">
+            <div className="heading">
               Cohabitant jobs
             </div>
-            <div>
+            <div className="cohabitant-jobs-container">
               {otherJobList}
             </div>
           </div>
