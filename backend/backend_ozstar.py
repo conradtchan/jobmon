@@ -229,6 +229,15 @@ class Backend(BackendBase):
 
         self.mem_data = mem_data
 
+        # Prune self.mem_max for jobs that are no longer RUNNING
+        to_remove = [
+            job_id for job_id in self.mem_max if self.job_state(job_id) != "RUNNING"
+        ]
+        for job_id in to_remove:
+            del self.mem_max[job_id]
+        if to_remove:
+            self.log.info(f"Pruned {len(to_remove)} jobs from mem_max tracking.")
+
     def query_influx(self, query):
         query_api = self.influx_client.query_api()
         result = query_api.query(query=query, org=influx_config.ORG)
