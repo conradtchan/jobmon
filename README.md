@@ -110,12 +110,18 @@ Create a user to run the daemon
 useradd -m jobmon
 ```
 
-Copy the `backend` directory to `/opt/jobmon` or another directory of your choice. Alternatively, you may run the backend directory from the `backend` directory in the repository.
+Copy the `backend` directory to `/opt/jobmon` or another directory of your choice. Alternatively, you may run the backend directly from the `backend` directory in the repository.
 
 Make the data directory where JSON output is written to (set in the backend config)
 ```
 mkdir /var/spool/jobmon
 chown jobmon:jobmon /var/spool/jobmon
+```
+
+To allow Apache `httpd` to read files in `/var/spool/jobmon` under SELinux, you typically need to adjust the SELinux context of the directory and its contents to a context that `httpd` is allowed to read. The `httpd_sys_content_t` context is commonly used for content that should be accessible by Apache.
+```
+semanage fcontext -a -t httpd_sys_content_t "/var/spool/jobmon(/.*)?"
+restorecon -Rv /var/spool/jobmon
 ```
 
 Edit the systemd service file. Add/remove to the `PYTHONPATH` environmnent variable to suit the system being deployed to (InfluxDB and PySlurm are neede for OzSTAR). Modify `WorkingDirectory` to if you have placed the backend somewhere other than `/opt/jobmon`. Copy the systemd service file to `/etc/systemd/system/jobmon.service`.
@@ -149,6 +155,17 @@ Install the frontend by copying the contents of the build directory to the web s
 cp -r build/* /var/www/html/jobmon
 ```
 
+The machine hosting the frontend is separate to the management node, for practical and security purposes. The following nginx config is set on the web server to forward requests to the backend running on the management node:
+```
+ location /monitor/api {
+  proxy_pass http://transom4.hpc.sut/cgi-bin;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  client_max_body_size 0;
+ }
+```
+
 # Running
 
 Start the service
@@ -156,7 +173,7 @@ Start the service
 systemctl start jobmon
 ```
 
-The backend generates gzip'd JSON files at `/var/spool/jobmon`. These JSON files are read by the web app.
+The backend generates gzip'd JSON files at `/var/spool/jobmon`. These JSON files are read by the web app (forwarded through the web server).
 
 To test one cycle without writing anything to a file:
 ```
