@@ -181,7 +181,6 @@ class Backend(BackendBase):
         self.telegraf_data = telegraf_data
 
     def update_mem_data(self):
-        # Query both RSS and VMSize measurements in a single call
         influx_result = self.query_influx_memory()
 
         mem_data = {}
@@ -201,26 +200,18 @@ class Backend(BackendBase):
                 if job_id not in mem_data:
                     mem_data[job_id] = {"mem": {}, "memMax": 0}
 
-                # Process memory measurements
-                if measurement == "RSS":
-                    # Per-node current memory usage
+                if measurement == "VMSize":
                     jobs_with_stats.append(job_id)
                     node = record["host"]
                     mem = math.ceil(record.get_value() / KB)
                     mem_data[job_id]["mem"][node] = mem
-                elif measurement == "VMSize":
-                    # Job maximum memory usage across all nodes
-                    mem_max = math.ceil(record.get_value() / KB)
 
-                    # Update the global maximum for this job
                     if job_id not in self.mem_max:
-                        self.mem_max[job_id] = mem_max
+                        self.mem_max[job_id] = mem
                     else:
-                        self.mem_max[job_id] = max(self.mem_max[job_id], mem_max)
-
+                        self.mem_max[job_id] = max(self.mem_max[job_id], mem)
                     mem_data[job_id]["memMax"] = self.mem_max[job_id]
 
-        # Turn list of jobs with memory stats into a set to remove duplicates
         jobs_with_stats = set(jobs_with_stats)
 
         self.log.info(
@@ -245,11 +236,11 @@ class Backend(BackendBase):
         return result
 
     def query_influx_memory(self):
-        self.log.info("Querying Influx: memory (RSS and VMSize)")
-        # Query both RSS and VMSize measurements
+        self.log.info("Querying Influx: memory")
+        # Query only VMSize measurements
         query = f'from(bucket:"{influx_config.BUCKET_MEM}")\
         |> range(start: -90s)\
-        |> filter(fn: (r) => r["_measurement"] == "RSS" or r["_measurement"] == "VMSize")\
+        |> filter(fn: (r) => r["_measurement"] == "VMSize")\
         |> last()\
         |> drop(columns: ["_start", "_stop", "_time"])\
         |> group(columns: ["job", "host", "_measurement"])\
