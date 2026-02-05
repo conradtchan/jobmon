@@ -235,6 +235,9 @@ export default class NodeDetails extends React.Component {
       let appsMdsIops = 0.0;
       let imagesOssRead = 0.0;
       let imagesMdsIops = 0.0;
+      let scratchOssRead = 0.0;
+      let scratchOssWrite = 0.0;
+      let scratchMdsIops = 0.0;
 
       let jobfs = 0.0;
       let jobfsRequested = 0.0;
@@ -289,6 +292,11 @@ export default class NodeDetails extends React.Component {
             homeOssWrite = jobLustre.home.oss.write_bytes;
             homeMdsIops = jobLustre.home.mds.iops;
           }
+          if (Object.prototype.hasOwnProperty.call(jobLustre, "aphid")) {
+            scratchOssRead = jobLustre.aphid.oss.read_bytes;
+            scratchOssWrite = jobLustre.aphid.oss.write_bytes;
+            scratchMdsIops = jobLustre.aphid.mds.iops;
+          }
         }
 
         // GPU usage
@@ -337,6 +345,9 @@ export default class NodeDetails extends React.Component {
         apps_iops: appsMdsIops,
         images_read: imagesOssRead,
         images_iops: imagesMdsIops,
+        scratch_read: scratchOssRead,
+        scratch_write: scratchOssWrite,
+        scratch_iops: scratchMdsIops,
         jobfs_used: jobfs * constants.mb,
         jobfs_requested: jobfsRequested * constants.mb,
       };
@@ -672,14 +683,16 @@ export default class NodeDetails extends React.Component {
         key="job_lustre_read"
         name="Lustre read"
         data={historyChart}
-        dataKeys={["fred_read", "home_read", "apps_read", "images_read"]}
+        dataKeys={["fred_read", "home_read", "apps_read", "images_read", "scratch_read"]}
         colors={[
           style.getPropertyValue("--piecycle-1"),
           style.getPropertyValue("--piecycle-2"),
           style.getPropertyValue("--piecycle-3"),
           style.getPropertyValue("--piecycle-4"),
+          style.getPropertyValue("--piecycle-5"),
         ]}
         lineStyle={[
+          "fill",
           "fill",
           "fill",
           "fill",
@@ -695,12 +708,14 @@ export default class NodeDetails extends React.Component {
         key="job_lustre_write"
         name="Lustre write"
         data={historyChart}
-        dataKeys={["fred_write", "home_write"]}
+        dataKeys={["fred_write", "home_write", "scratch_write"]}
         colors={[
           style.getPropertyValue("--piecycle-1"),
           style.getPropertyValue("--piecycle-2"),
+          style.getPropertyValue("--piecycle-5"),
         ]}
         lineStyle={[
+          "fill",
           "fill",
           "fill",
         ]}
@@ -714,14 +729,16 @@ export default class NodeDetails extends React.Component {
         key="job_lustre_iops"
         name="Lustre IOPS"
         data={historyChart}
-        dataKeys={["fred_iops", "home_iops", "apps_iops", "images_iops"]}
+        dataKeys={["fred_iops", "home_iops", "apps_iops", "images_iops", "scratch_iops"]}
         colors={[
           style.getPropertyValue("--piecycle-1"),
           style.getPropertyValue("--piecycle-2"),
           style.getPropertyValue("--piecycle-3"),
           style.getPropertyValue("--piecycle-4"),
+          style.getPropertyValue("--piecycle-5"),
         ]}
         lineStyle={[
+          "fill",
           "fill",
           "fill",
           "fill",
