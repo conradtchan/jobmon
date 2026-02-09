@@ -128037,6 +128037,18 @@
                         "write_bytes": 0,
                         "iops": 0
                     }
+                },
+                "aphid": {
+                    "mds": {
+                        "read_bytes": 0,
+                        "write_bytes": 0,
+                        "iops": 12.5
+                    },
+                    "oss": {
+                        "read_bytes": 524288,
+                        "write_bytes": 262144,
+                        "iops": 5.0
+                    }
                 }
             },
             "jobfs": {
@@ -128163,6 +128175,18 @@
                         "read_bytes": 0,
                         "write_bytes": 0,
                         "iops": 0
+                    }
+                },
+                "aphid": {
+                    "mds": {
+                        "read_bytes": 0,
+                        "write_bytes": 0,
+                        "iops": 8.0
+                    },
+                    "oss": {
+                        "read_bytes": 1048576,
+                        "write_bytes": 524288,
+                        "iops": 3.0
                     }
                 }
             },
